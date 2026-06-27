@@ -1,0 +1,28 @@
+{
+  "id": "IMPL-5",
+  "status": "completed",
+  "title": "Other Income Double Entry And Taxability Consistency",
+  "description": "Ensure THR, bonus, kontanan/custom other income is represented once in gross and once in net deduction/tax/export where required.",
+  "depends_on": ["IMPL-4"],
+  "target_files": ["backend/src/services/reportService.ts", "backend/src/services/daftarUpahExcelService.ts", "backend/src/services/taxReportExcelService.ts", "frontend/src/utils/exportPayrollToExcel.js", "frontend/src/utils/employeePayrollBreakdown.js"],
+  "implementation": [
+    {
+      "step": 1,
+      "tdd_phase": "red",
+      "description": "Add tests for THR, BONUS, KONTANAN/custom type, total-only fallback, and detail-vs-total duplicate prevention in web/export/tax paths.",
+      "expected_failure": "A type is missing, duplicated, or represented only as total."
+    },
+    {
+      "step": 2,
+      "tdd_phase": "green",
+      "description": "Normalize other-income discovery and mapping at each output boundary with exact one-row/one-column expectations.",
+      "test_fix_cycle": { "max_iterations": 3, "auto_revert": true }
+    },
+    {
+      "step": 3,
+      "tdd_phase": "refactor",
+      "description": "Deduplicate label/type normalization helpers where module boundaries make it low risk."
+    }
+  ],
+  "verification": ["cd backend && bun test src/services/daftarUpahExcelService.test.ts src/services/taxReportExcelService.test.ts", "cd frontend && npx vitest run src/utils/exportPayrollToExcel.test.js src/utils/employeePayrollBreakdown.test.js"]
+}

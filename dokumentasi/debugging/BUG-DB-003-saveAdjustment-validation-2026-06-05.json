@@ -1,0 +1,623 @@
+# PHASE 3B BUG VALIDATION REPORT - saveAdjustment Transaction & Duplicate Risk
+
+**Date:** 2026-06-05
+**Task:** Audit payroll system - Phase 3B Hypothesis Testing
+**Status:** COMPLETE
+**Bug ID:** BUG-DB-003
+**Verdict:** CONFIRMED BUG — HIGH severity (multi-issue)
+
+---
+
+## 1. Verdict
+
+**CONFIRMED BUG — HIGH severity (multi-issue)**
+
+Dua bug terpisah terkonfirmasi:
+1. **Tidak ada transaction wrapper** — SELECT + UPDATE/INSERT adalah operasi terpisah tanpa atomic guarantee
+2. **Race condition / duplicate risk** — Tidak ada unique constraint + check-then-act pattern tanpa locking = duplicate record memungkinkan
+
+---
+
+## 2. Evidence Chain
+
+| # | File | Function | Line | Evidence | Interpretasi |
+|---|------|----------|------|----------|-------------|
+| 1 | `manualAdjustmentService.ts` | `saveAdjustment()` | 2191-2210 | SELECT existing query dengan 3 query params terpisah | Check-then-act tanpa locking |
+| 2 | `manualAdjustmentService.ts` | `saveAdjustment()` | 2212-2236 | UPDATE query — query terpisah dari SELECT | Tidak ada transaction wrapper |
+| 3 | `manualAdjustmentService.ts` | `saveAdjustment()` | 2238-2284 | INSERT query + preset upsert — query terpisah | 3+ operasi tanpa transaction |
+| 4 | `manualAdjustmentService.ts` | `saveAdjustment()` | 2254-2281 | Preset upsert dalam try-catch, fire-and-forget | Failure tidak di-rollback |
+| 5 | `client.ts` | `Database.transaction()` | 186-218 | Method transaction EXISTS tapi TIDAK DIPAKAI di saveAdjustment | Transaction API tersedia tapi tidak digunakan |
+| 6 | `manualAdjustmentService.ts` | Schema | Phase 2 | Tidak ada UNIQUE constraint di `payroll_manual_adjustments` | Duplicate prevention tidak ada di DB level |
+| 7 | `manualAdjustmentService.test.ts` | Multiple tests | 105-524 | Test coverage untuk INSERT, UPDATE, delete on zero — tapi TIDAK ADA test untuk concurrent save | Race condition tidak di-test |
+| 8 | `CustomPayrollTable.jsx` | `performSaveAllEdits()` | 2008-2009 | `setIsSavingEdits(true)` di awal — button disabled saat saving | Partial guard tapi ada race window |
+| 9 | `payroll.ts` | Route `/manual-edit` | 551-582 | Tidak ada period validation, tidak ada authorization check | Semua user bisa save ke periode apapun |
+| 10 | `payroll.ts` | Route `/manual-adjustment` | 654-676 | Validasi `adjustment_type` — tapi TIDAK ADA period_month/year validation | Invalid period tidak ditolak |
+| 11 | `payroll.ts` | Route `/locked/manual-edit` | 1970-1996 | Ada `currentUser` check → authorization ✅ | Tapi period validation tetap tidak ada |
+| 12 | `payroll.ts` | Route `/manual-adjustment/by-api-key` | 843-863 | API key bypass — tidak ada user identity | Audit trail rely on "api_key_bypass" string |
+| 13 | `manualAdjustmentService.ts` | `saveAdjustment()` | 2165 | `parseFloat(data.amount.toString()) || 0` — amount 0 diizinkan | Bisa trigger shouldDeleteStoredAdjustment |
+
+---
+
+## 3. saveAdjustment Flow
+
+```
+1. INPUT DITERIMA (dari API route)
+   └─ body: ManualAdjustment { period_month, period_year, emp_code, nik, gang_code, division_code, adjustment_type, adjustment_name, amount, remarks, metadata_json, ... }
+
+2. NORMALISASI (local, tidak ada DB call)
+   ├─ normalizeManualAdjustmentForSave() — POTONGAN_KOTOR prefix adjustment_name
+   ├─ parseFloat(amount) || 0 — parsedAmount
+   ├─ normalizeStoredAdjustmentName() — uppercase, collapse whitespace
+   ├─ normalizeManualAdjustmentDivisionCode() — 1A→P1A, ARB1→AB1, dll
+   ├─ serializeManualAdjustmentMetadata() — convert to JSON string
+   ├─ resolveDetailTotalSync() — sync amount dengan metadata_json.total_amount
+   ├─ validatePremiumAdjustmentDefinition() — cek nama sesuai premium_definitions.json
+   ├─ validateManualAdjustmentAdCode() — ADCode wajib untuk non-AUTO_BUFFER
+   └─ buildManualAdjustmentRemarks() — pipe-delimited string
+
+3. IDENTITY RESOLUTION (DB call #1)
+   └─ resolveManualAdjustmentIdentity(data)
+      ├─ employeeIdentityResolverService.resolve() — resolve NIK/emp_code ke empCode
+      ├─ resolveManualAdjustmentIdentityByContext() — lookup by emp_name + gang_code
+      └─ resolveManualAdjustmentIdentityByHistory() — lookup by history_hr_employee
+      └─ Result: identity = { empCode, nik, empName, originalIdentifier }
+
+4. PENDAPATAN_LAINNYA BRANCH
+   └─ Jika adjustment_type === 'PENDAPATAN_LAINNYA' → panggil saveOtherIncome()
+      └─ saveOtherIncome: cek by nik, fallback by emp_code, UPDATE atau INSERT
+
+5. STANDARD ADJUSTMENT BRANCH (PREMI, POTONGAN_KOTOR, POTONGAN_BERSIH)
+   ├─ 5a. SELECT existing (DB call #2)
+   │   └─ SELECT TOP 1 id FROM payroll_manual_adjustments
+   │       WHERE period_month = ? AND period_year = ?
+   │       AND (emp_code = ? OR nik = ? OR emp_code = ?)  ← DUPLICATE CONDITION
+   │       AND adjustment_type = ?
+   │       AND normalized_adjustment_name = ?
+   │       ORDER BY CASE WHEN emp_code = ? THEN 0 ... id DESC
+   │
+   ├─ 5b. JIKA ADA existing (existing !== null)
+   │   ├─ shouldDeleteStoredAdjustment(effectiveAmount)?
+   │   │   ├─ YA: DELETE WHERE id = ? (DB call #3)
+   │   │   └─ TIDAK: UPDATE SET ... WHERE id = ? (DB call #3)
+   │   └─ return existing.id
+   │
+   └─ 5c. JIKA TIDAK ADA (existing === null)
+       ├─ shouldDeleteStoredAdjustment(effectiveAmount)?
+       │   ├─ YA: return 0 (jangan insert amount 0)
+       │   └─ TIDAK: INSERT INTO payroll_manual_adjustments ... (DB call #3)
+       │       └─ OUTPUT INSERTED.id
+       │
+       └─ 5d. AUTO-PRESET UPSERT (DB call #4, fire-and-forget)
+           └─ try { manualAdjustmentPresetService.upsertPreset() } catch { silent fail }
+
+6. CACHE CLEAR
+   └─ cacheService.clearByPattern(`:${period_month}:${period_year}`)
+
+7. RETURN
+   └─ return id (number) atau 0
+```
+
+**Total DB calls dalam saveAdjustment:** 2-4 query (exclude identity resolution yang complex) — **tidak ada transaction wrapper**.
+
+---
+
+## 4. Existing Record Matching Logic
+
+| Field | Digunakan di SELECT? | Risk |
+|-------|---------------------|------|
+| `id` | ❌ Tidak | Tidak bisa target record spesifik. Jika employee punya 2 record "PREMI PRUNING" di gang berbeda, keduanya matched. |
+| `period_month` | ✅ Ya | Wajib filter. |
+| `period_year` | ✅ Ya | Wajib filter. |
+| `emp_code` | ✅ Ya (2x OR) | OR kondisi: `emp_code = identity.empCode OR nik = identity.nik OR emp_code = identity.originalIdentifier`. OR ketiga = DUPLIKAT dari OR pertama karena originalIdentifier sering = empCode. |
+| `nik` | ✅ Ya | Bisa null jika tidak supplied. |
+| `gang_code` | ❌ Tidak | Jika employee B0077 punya PREMI PRUNING di gang B1H dan C2H, keduanya matched → UPDATE/DELETE salah satu. |
+| `division_code` | ❌ Tidak | Division tidak dipakai di matching. |
+| `adjustment_type` | ✅ Ya | PREMI, POTONGAN_KOTOR, POTONGAN_BERSIH. |
+| `adjustment_name` | ✅ Ya | Normalized via `buildNormalizedSqlNameExpression()`. |
+
+**Risk utama:** `gang_code` tidak ada di matching → user bisa punya MULTIPLE adjustment record untuk employee yang sama dalam periode yang sama tapi gang berbeda. Query akan match SEMUA record yang ada, dan UPDATE akan mengupdate record pertama berdasarkan `ORDER BY id DESC` — behaviour yang tidak predictable.
+
+---
+
+## 5. Duplicate Risk Scenario
+
+**Skenario Race Condition:**
+
+```
+Timeline:
+─────────────────────────────────────────────────────────────
+T0  User A buka payroll Mei 2026, edit cell PREMI PRUNING untuk B0077
+T1  User B buka payroll Mei 2026, edit cell PREMI PRUNING untuk B0077 (komputer berbeda)
+T2  User A klik "Simpan Perubahan" — request A dikirim ke API
+T3  Request A tiba di backend: saveAdjustment() dipanggil
+T4  DB: SELECT id FROM ... WHERE period=5/2026 AND emp_code=B0077 AND type=PREMI AND name=PREMI PRUNING
+T5  DB: result = [] (tidak ada record existing)
+T6  Request B tiba di backend: saveAdjustment() dipanggil
+T7  DB: SELECT id FROM ... (same query)
+T8  DB: result = [] (request A belum commit!)
+T9  Request A: INSERT ... → id=100 (DB transaction started)
+T10 Request B: INSERT ... → id=101 (DB transaction started) ← RACE WINDOW
+T11 Request A: transaction committed → id=100 committed
+T12 Request B: transaction committed → id=101 committed
+─────────────────────────────────────────────────────────────
+RESULT: 2 DUPLICATE RECORDS untuk B0077, PREMI PRUNING, Mei 2026
+```
+
+**Dampak ke Report Payroll:**
+- Employee B0077 muncul 2x di payroll report untuk PREMI PRUNING
+- Total PREMI PRUNING di-gang/group = 2x lipat dari seharusnya
+- Jika adjustment_type = PREMI, total_upah_kotor employee = 2x
+- upstream payroll aggregation (summary, lampiran) ikut salah
+
+---
+
+## 6. Transaction Risk Scenario
+
+**Skenario 1: Insert Berhasil, Preset Upsert Gagal**
+
+```
+T0  saveAdjustment() dipanggil untuk new PREMI PRUNING employee B0077
+T1  SELECT existing = null
+T2  INSERT INTO payroll_manual_adjustments ... → id=100 ✅
+T3  Preset upsert starts...
+T4  DB connection timeout atau error di preset upsert
+T5  catch block: console.warn('[saveAdjustment] Auto-preset upsert failed: ...')
+T6  return id=100 ✅
+RESULT: Adjustment tersimpan dengan ID=100. Tapi preset tidak di-record.
+User tidak bisa lihat preset untuk PREMI PRUNING di dialog "Tambah Kolom".
+⚠️ TIDAK ada rollback karena preset failure di-catch silently.
+```
+
+**Skenario 2: Partial Update pada Multiple Row Scenario**
+
+```
+T0  Employee B0077 punya 2 record: PREMI PRUNING di gang B1H dan gang C2H
+T1  User edit PREMI PRUNING di gang B1H → saveAdjustment() dipanggil
+T2  SELECT: return id=50 (B1H record) karena ORDER BY id DESC
+T3  UPDATE SET amount=75000 WHERE id=50 ✅
+T4  Cache cleared
+RESULT: B1H record ter-update. Tapi user tidak tahu ada juga record C2H.
+⚠️ Tidak ada warning bahwa employee punya multiple adjustment dengan nama sama.
+```
+
+---
+
+## 7. Metadata & Amount Sync Risk
+
+| Check | Status | Detail |
+|-------|--------|--------|
+| `amount` = `metadata_json.total_amount` | ✅ Ada sync | `resolveDetailTotalSync()` dipanggil sebelum save. Tapi fallback ke `fallbackAmount` jika `calculatedTotal = 0` → bisa mismatch. |
+| `metadata_json` valid JSON | ❌ Tidak ada validation | `serializeManualAdjustmentMetadata()` langsung stringify. Invalid JSON akan disimpan apa adanya. |
+| `metadata_json.items` dijumlahkan benar | ✅ Ada | `calculateManualAdjustmentMetadataTotal()` handle semua input_type (blok, exp, kendaraan, blok,exp). |
+| `amount` tidak NaN/null | ✅ Ada | `parseFloat(data.amount.toString()) || 0` → default 0. |
+| `amount` 0 diproses benar | ⚠️ Ambiguous | `shouldDeleteStoredAdjustment()`: jika amount=0 DAN tidak ada metadata_json DAN remarks tidak punya 'INIT_COLUMN'/'sync:' → DELETE. Jika user set 0 dengan alasan legitimate, akan di-DELETE. |
+| `metadata_json` null/undefined | ✅ Ada guard | `hasMetadataJsonInput = Object.prototype.hasOwnProperty.call(data, 'metadata_json')` — UPDATE query preserve existing metadata jika tidak supplied. |
+
+**Critical Issue:** `shouldDeleteStoredAdjustment(amount=0)` tanpa `metadata_json` → DELETE. Ini berarti:
+- User edit cell → set amount = 0 (koreksi hapus) → tanpa popup detail → `shouldDeleteStoredAdjustment` return true → record di-DELETE
+- Ini intended behaviour berdasarkan nama function, tapi tidak ada confirmation dialog untuk "Apakah Anda yakin ingin MENGHAPUS record ini?"
+- User mungkin mengira "set amount = 0" = set ke nol, bukan hapus record
+
+---
+
+## 8. Frontend Double Submit Risk
+
+| Protection | Ada? | Detail |
+|-----------|------|--------|
+| Loading state (`isSavingEdits`) | ✅ Ya | `setIsSavingEdits(true)` di `performSaveAllEdits()` |
+| Button disabled saat saving | ✅ Ya | `disabled={isSavingEdits \|\| !hasPendingEdits}` |
+| Confirmation untuk delete | ✅ Ya | `openPayrollConfirm({ variant: 'danger', ... })` |
+| Debounce/throttle | ❌ Tidak | Tidak ada delay antar-click prevention |
+| Request cancellation | ❌ Tidak | Tidak ada AbortController |
+| Idempotency key | ❌ Tidak | Setiap save generate request baru |
+
+**Race condition window:**
+
+```
+T0  User A klik "Simpan" button
+T1  Button disabled? belum — state update belum propagate
+T2  User A klik lagi sebelum button re-render dengan disabled
+T3  handleSaveAllEdits() dipanggil 2x
+T4  openPayrollConfirm() terbuka 2x
+T5  User konfirmasi 2x dialog
+T6  performSaveAllEdits() × 2 → PARALEL REQUESTS
+RESULT: Double save ke backend — race condition di saveAdjustment()
+```
+
+**Mitigation yang ada:** `savedCount !== editsArray.length` throw error jika partial success. Tapi ini tidak mencegah double INSERT.
+
+---
+
+## 9. Severity Assessment
+
+**HIGH — dengan justifikasi:**
+
+| Faktor | Nilai | Alasan |
+|--------|-------|--------|
+| Data Loss Scope | MEDIUM | Duplicate record bisa di-cleanup, tapi aggregation sudah salah |
+| Data Corruption | HIGH | Payroll totals, lampiran, summary report semua salah karena double amount |
+| Detectability | LOW | User tidak tahu ada duplicate; report terlihat normal sampai audit |
+| Likelihood | HIGH | Race condition window ~100-500ms di jaringan lokal; mudah terjadi |
+| Reversibility | MEDIUM | Duplicate bisa dihapus manual; tapi impact ke history/aggregation tidak bisa di-undo |
+| Scope | HIGH | Affects semua adjustment types (PREMI, POTONGAN_KOTOR, dll) |
+
+**Severity breakdown:**
+- **No transaction wrapper:** HIGH (partial save risk)
+- **Duplicate/race condition:** HIGH (silent data corruption)
+- **Amount=0 tanpa confirmation:** MEDIUM (accidental delete)
+- **No frontend idempotency:** MEDIUM (double-click causes double save)
+
+---
+
+## 10. SQL Validation Query
+
+```sql
+-- =============================================
+-- QUERY 1: Deteksi duplicate manual adjustment
+-- (berdasarkan matching logic di saveAdjustment SELECT)
+-- =============================================
+SELECT
+    period_month,
+    period_year,
+    emp_code,
+    nik,
+    gang_code,
+    division_code,
+    adjustment_type,
+    adjustment_name,
+    COUNT(*) AS duplicate_count,
+    SUM(amount) AS total_amount,
+    MIN(id) AS first_id,
+    MAX(id) AS last_id,
+    STRING_AGG(CAST(id AS VARCHAR), ', ') AS all_ids
+FROM extend_db_ptrj.dbo.payroll_manual_adjustments
+WHERE period_month BETWEEN 1 AND 12
+    AND period_year >= 2020
+    AND adjustment_type IN ('PREMI', 'POTONGAN_KOTOR', 'POTONGAN_BERSIH', 'PENDAPATAN_LAINNYA', 'AUTO_BUFFER')
+GROUP BY
+    period_month, period_year,
+    emp_code, nik,
+    gang_code, division_code,
+    adjustment_type, adjustment_name
+HAVING COUNT(*) > 1
+ORDER BY duplicate_count DESC, period_year DESC, period_month DESC;
+
+-- =============================================
+-- QUERY 2: Detail record duplicate
+-- (pakai nilai dari QUERY 1)
+-- =============================================
+SELECT
+    id,
+    period_month,
+    period_year,
+    emp_code,
+    emp_name,
+    nik,
+    gang_code,
+    division_code,
+    adjustment_type,
+    adjustment_name,
+    amount,
+    metadata_json,
+    created_at,
+    created_by,
+    updated_at,
+    updated_by
+FROM extend_db_ptrj.dbo.payroll_manual_adjustments
+WHERE period_month = 5
+  AND period_year = 2026
+  AND emp_code = 'B0077'
+  AND adjustment_type = 'PREMI'
+  AND UPPER(LTRIM(RTRIM(
+      REPLACE(REPLACE(REPLACE(REPLACE(
+          REPLACE(REPLACE(REPLACE(REPLACE(
+              adjustment_name, CHAR(9), ' '), CHAR(10), ' '), CHAR(13), ' '), CHAR(160), ' ')
+          , '  ', ' '), '  ', ' '), '  ', ' '), '  ', ' ')
+      ))) = 'PREMI PRUNING'
+ORDER BY id;
+
+-- =============================================
+-- QUERY 3: Deteksi amount tidak match metadata total
+-- =============================================
+SELECT
+    id,
+    period_month,
+    period_year,
+    emp_code,
+    gang_code,
+    adjustment_type,
+    adjustment_name,
+    amount AS stored_amount,
+    TRY_CAST(JSON_VALUE(metadata_json, '$.total_amount') AS DECIMAL(18,2)) AS metadata_total,
+    amount - TRY_CAST(JSON_VALUE(metadata_json, '$.total_amount') AS DECIMAL(18,2)) AS diff
+FROM extend_db_ptrj.dbo.payroll_manual_adjustments
+WHERE metadata_json IS NOT NULL
+    AND LEN(metadata_json) > 2
+    AND TRY_CAST(JSON_VALUE(metadata_json, '$.total_amount') AS DECIMAL(18,2)) IS NOT NULL
+    AND ABS(amount - TRY_CAST(JSON_VALUE(metadata_json, '$.total_amount') AS DECIMAL(18,2))) > 0.01;
+
+-- =============================================
+-- QUERY 4: Deteksi amount=0 yang mungkin di-DELETE
+-- =============================================
+SELECT
+    id,
+    period_month,
+    period_year,
+    emp_code,
+    gang_code,
+    adjustment_type,
+    adjustment_name,
+    amount,
+    metadata_json,
+    remarks,
+    created_at
+FROM extend_db_ptrj.dbo.payroll_manual_adjustments
+WHERE amount = 0
+    AND adjustment_type IN ('PREMI', 'POTONGAN_KOTOR', 'POTONGAN_BERSIH')
+    AND (metadata_json IS NULL OR LEN(metadata_json) < 2)
+    AND (remarks IS NULL OR (remarks NOT LIKE '%INIT_COLUMN%' AND remarks NOT LIKE '%sync:%'))
+ORDER BY period_year DESC, period_month DESC;
+
+-- =============================================
+-- QUERY 5: Summary statistik untuk audit
+-- =============================================
+SELECT TOP 20
+    period_year,
+    period_month,
+    adjustment_type,
+    adjustment_name,
+    COUNT(*) AS total_records,
+    COUNT(DISTINCT emp_code) AS unique_employees,
+    COUNT(DISTINCT gang_code) AS unique_gangs,
+    SUM(amount) AS total_amount,
+    MIN(created_at) AS oldest_record,
+    MAX(created_at) AS newest_record
+FROM extend_db_ptrj.dbo.payroll_manual_adjustments
+WHERE period_year >= 2025
+GROUP BY period_year, period_month, adjustment_type, adjustment_name
+ORDER BY period_year DESC, period_month DESC;
+```
+
+---
+
+## 11. Safe Fix Recommendation
+
+### Recommendation 1: Transaction Wrapper (Immediate)
+
+**Untuk prevent partial state:**
+
+```typescript
+// Di saveAdjustment(), wrap dalam transaction
+const queries = [];
+
+if (existing) {
+    if (shouldDeleteStoredAdjustment(...)) {
+        queries.push({ sql: `DELETE FROM ... WHERE id = ?`, params: [existing.id] });
+    } else {
+        queries.push({ sql: `UPDATE ... WHERE id = ?`, params: [...] });
+    }
+} else {
+    if (!shouldDeleteStoredAdjustment(...)) {
+        queries.push({ sql: `INSERT INTO ...`, params: [...] });
+        // INSERT + preset dalam 1 transaction
+        if (presetAdCode) {
+            queries.push({ sql: `UPSERT preset...`, params: [...] });
+        }
+    }
+}
+
+const success = await db.transaction(queries);
+if (!success) throw new Error('Transaction failed, rolled back');
+```
+
+### Recommendation 2: Unique Constraint (Safe, Needs Data Cleanup First)
+
+**Sebelum apply constraint, cleanup existing duplicates:**
+
+```sql
+-- Step 1: Identify duplicates
+-- (use QUERY 1 from section 10)
+
+-- Step 2: Delete duplicates (keep highest id, delete others)
+-- WARNING: Execute per-adjustment-type, per-period, backup first
+-- DELETE FROM extend_db_ptrj.dbo.payroll_manual_adjustments
+-- WHERE id IN (
+--     SELECT id FROM (
+--         SELECT id, ROW_NUMBER() OVER (
+--             PARTITION BY period_month, period_year, emp_code, nik,
+--                          gang_code, division_code, adjustment_type, adjustment_name
+--             ORDER BY id DESC
+--         ) AS rn
+--         FROM extend_db_ptrj.dbo.payroll_manual_adjustments
+--     ) t WHERE rn > 1
+-- );
+
+-- Step 3: Add unique constraint
+ALTER TABLE extend_db_ptrj.dbo.payroll_manual_adjustments
+ADD CONSTRAINT UX_payroll_manual_adj_period_emp_type_name_gang
+UNIQUE (period_month, period_year, emp_code, adjustment_type, adjustment_name, gang_code);
+```
+
+**Catatan:** Jika `gang_code` NULL di beberapa record, perlu handle NULL dalam unique constraint (GIST: SQL Server treats NULL as distinct, so multiple NULL gang_code won't violate unique constraint).
+
+### Recommendation 3: Row-Level Locking untuk Check-then-Act
+
+**Gunakan `SELECT ... WITH (UPDLOCK, HOLDLOCK)` untuk prevent concurrent insert:**
+
+```typescript
+const existing = await db.queryOne<{ id: number }>(`
+    SELECT TOP 1 id FROM dbo.payroll_manual_adjustments WITH (UPDLOCK, HOLDLOCK)
+    WHERE period_month = ? AND period_year = ?
+    AND (emp_code = ? OR nik = ? OR emp_code = ?)
+    AND adjustment_type = ?
+    AND ${normalizedAdjustmentNameSql} = ?
+`, [...]);
+```
+
+`UPDLOCK` → acquire update lock on rows, prevents other transactions from acquiring update lock on same rows.
+`HOLDLOCK` → hold lock until transaction completes (serializable isolation).
+
+### Recommendation 4: Atomic Upsert dengan MERGE
+
+**Tidak perlu check-then-act jika pakai MERGE:**
+
+```typescript
+// SQL Server MERGE: atomic upsert
+await db.query(`
+    MERGE INTO dbo.payroll_manual_adjustments AS target
+    USING (SELECT ? AS period_month, ? AS period_year, ? AS emp_code, ...) AS source
+    ON target.period_month = source.period_month
+       AND target.period_year = source.period_year
+       AND target.emp_code = source.emp_code
+       AND target.adjustment_type = source.adjustment_type
+       AND target.adjustment_name = source.adjustment_name
+    WHEN MATCHED THEN
+        UPDATE SET amount = source.amount, ...
+    WHEN NOT MATCHED THEN
+        INSERT (...) VALUES (...);
+`, [...]);
+```
+
+**Benefit:** Single statement, atomic, no race window.
+
+### Recommendation 5: Idempotency Key di Frontend
+
+```typescript
+// Di CustomPayrollTable.jsx
+const [pendingSaveId, setPendingSaveId] = useState(null);
+
+const performSaveAllEdits = async () => {
+    if (pendingSaveId) return; // Prevent double call
+    const saveId = crypto.randomUUID();
+    setPendingSaveId(saveId);
+    try {
+        // ... save logic ...
+    } finally {
+        setPendingSaveId(null);
+    }
+};
+```
+
+### Recommendation 6: Validation Layer
+
+Tambahkan di `saveAdjustment()` sebelum DB call:
+
+```typescript
+// 1. Period validation
+if (!Number.isInteger(data.period_month) || data.period_month < 1 || data.period_month > 12) {
+    throw new Error('period_month harus 1-12');
+}
+if (!Number.isInteger(data.period_year) || data.period_year < 2000 || data.period_year > 2100) {
+    throw new Error('period_year tidak valid');
+}
+
+// 2. Amount range
+if (!Number.isFinite(parsedAmount)) {
+    throw new Error('amount harus number valid');
+}
+
+// 3. metadata_json JSON validation
+if (metadataJsonStr) {
+    try {
+        JSON.parse(metadataJsonStr); // throws if invalid
+    } catch {
+        throw new Error('metadata_json format tidak valid');
+    }
+}
+
+// 4. Duplicate check before insert
+if (!existing) {
+    const duplicateCheck = await db.queryOne<{ id: number }>(`
+        SELECT id FROM dbo.payroll_manual_adjustments
+        WHERE ... (same conditions as saveAdjustment SELECT)
+    `);
+    if (duplicateCheck) {
+        // Concurrent insert detected — use UPDATE instead
+        existing = duplicateCheck;
+    }
+}
+```
+
+---
+
+## 12. Patch Plan
+
+### Phase 1: Validation Layer (1-2 hours)
+**File:** `backend/src/services/manualAdjustmentService.ts`
+
+- Tambahkan period_month/year validation di awal `saveAdjustment()`
+- Tambahkan amount range check
+- Tambahkan JSON.parse() validation untuk metadata_json string
+- Return descriptive error messages
+
+### Phase 2: Duplicate Detection Query (30 minutes)
+**File:** `backend/src/services/manualAdjustmentService.ts`
+
+- Tambahkan method `checkDuplicateAdjustments()` untuk pre-save validation
+- Return warning jika duplicate terdeteksi
+- Log warning untuk monitoring
+
+### Phase 3: Transaction Wrapper (2-3 hours)
+**File:** `backend/src/services/manualAdjustmentService.ts`
+
+- Wrap SELECT + UPDATE/INSERT + preset dalam `db.transaction()`
+- Handle transaction failure dengan proper error
+- Pastikan rollback on failure
+
+### Phase 4: Row-Level Locking (1 hour)
+**File:** `backend/src/services/manualAdjustmentService.ts`
+
+- Tambahkan `WITH (UPDLOCK, HOLDLOCK)` pada SELECT existing query
+- Ini prevent concurrent SELECT returning null untuk duplicate inserts
+
+### Phase 5: DB Migration — Unique Constraint (1-2 hours)
+**File:** `backend/scripts/` (migration script)
+
+- Buat migration script untuk:
+  1. Identify duplicates
+  2. Backup duplicates to temp table
+  3. Delete duplicate rows (keep highest id)
+  4. Add unique constraint
+- Execute secara bertahap per periode
+
+### Phase 6: Frontend Double-Submit Guard (1 hour)
+**File:** `frontend/src/components/CustomPayrollTable.jsx`
+
+- Tambahkan `saveId` state untuk prevent concurrent save
+- Tambahkan AbortController untuk cancel in-flight requests
+- Consider: debounce rapid clicks di confirmation dialog
+
+### Phase 7: Test Suite untuk Race Condition (3-4 hours)
+**File:** `backend/src/services/manualAdjustmentService.test.ts`
+
+- Test: concurrent saveAdjustment() calls dengan mock DB
+- Test: duplicate prevention dengan unique constraint
+- Test: transaction rollback on failure
+- Test: amount=0 delete scenario
+
+### Phase 8: Monitoring & Alerting (2 hours)
+**File:** `backend/src/services/`
+
+- Log warning saat duplicate detected
+- Consider: metrics untuk saveAdjustment success/failure rate
+- Alert jika duplicate count > 0 dalam production
+
+---
+
+## 13. Files Referenced
+
+| File | Role |
+|------|------|
+| `backend/src/services/manualAdjustmentService.ts` | Source utama — saveAdjustment(), helper functions |
+| `backend/src/services/payroll/manualAdjustments/manualAdjustmentNaming.ts` | shouldDeleteStoredAdjustment, normalizeStoredAdjustmentName |
+| `backend/src/api/payroll.ts` | API routes yang memanggil saveAdjustment (4 routes) |
+| `backend/src/db/client.ts` | Database client dengan transaction() support |
+| `backend/src/services/manualAdjustmentService.test.ts` | Test cases — tidak ada race condition test |
+| `frontend/src/components/CustomPayrollTable.jsx` | Frontend save flow, double-submit guard |
+| `frontend/src/services/manualAdjustmentService.js` | Frontend service wrapper |
+
+---
+
+**Report Generated:** 2026-06-05
+**Phase:** Phase 3B - Hypothesis Testing
+**Investigator:** Claude Code (Investigate Skill)

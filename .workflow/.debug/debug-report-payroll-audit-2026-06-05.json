@@ -1,0 +1,451 @@
+{
+  "meta": {
+    "report_id": "payroll-audit-2026-06-05",
+    "title": "Payroll System Full Audit Report",
+    "date": "2026-06-05",
+    "auditor": "Claude Code - Senior Software Engineer, Payroll System Auditor, Database Analyst, Code Quality Reviewer",
+    "version": "1.0",
+    "status": "COMPLETE"
+  },
+  "executive_summary": {
+    "overall_quality": "MODERATE - Foundation is solid but needs critical fixes",
+    "strengths": [
+      "Centralized PayrollCalculator with well-documented formulas",
+      "Modular service structure with singleton pattern",
+      "Test suite exists for critical components",
+      "Basic audit trail via sync_status and remarks fields",
+      "Separation of concerns between data extraction, calculation, and presentation"
+    ],
+    "weaknesses": [
+      "No transaction handling for multi-statement operations",
+      "No dedicated audit log table",
+      "No centralized validation layer",
+      "Some files too large (dataExtractorService.ts 266KB+)",
+      "Metadata JSON sync not enforced"
+    ],
+    "top_risks": [
+      {
+        "risk": "Amount vs metadata_json mismatch",
+        "severity": "HIGH",
+        "probability": "MEDIUM",
+        "impact": "Data payroll tidak akurat"
+      },
+      {
+        "risk": "No transaction on write operations",
+        "severity": "HIGH",
+        "probability": "MEDIUM",
+        "impact": "Partial updates leading to data corruption"
+      },
+      {
+        "risk": "Missing audit trail",
+        "severity": "HIGH",
+        "probability": "HIGH",
+        "impact": "Cannot track changes for compliance"
+      }
+    ],
+    "recommendation": "CONDITIONAL PRODUCTION READY - Fix critical bugs (BUG-001, BUG-003) before full deployment"
+  },
+  "critical_bugs": [
+    {
+      "id": "BUG-001",
+      "title": "Metadata JSON Total Tidak Sinkron dengan Amount",
+      "file": "backend/src/services/manualAdjustmentService.ts",
+      "line": "~458-478",
+      "severity": "CRITICAL",
+      "dampak": "amount di database tidak match dengan total detail di metadata_json",
+      "scenario": "User edit PREMI PRUNING via popup, masukkan 3 subblok dengan jumlah 1000, 2000, 1500. Total metadata = 4500. Tapi amount field tidak diupdate otomatis.",
+      "rekomendasi_fix": "Ubah fallbackAmount menjadi calculatedTotal di resolveDetailTotalSync function",
+      "root_cause_confirmed": true,
+      "evidence": "Function resolveDetailTotalSync menggunakan fallbackAmount bukan calculatedTotal untuk amount field"
+    },
+    {
+      "id": "BUG-002",
+      "title": "Duplicate Employee Mapping Issue",
+      "file": "backend/src/services/employeeIdentityResolverService.ts",
+      "severity": "HIGH",
+      "dampak": "Karyawan salah di-map, payroll goes to wrong person",
+      "status": "MITIGATED - DuplicateNikMitigationService exists but needs audit",
+      "rekomendasi_fix": "Audit semua flow yang menggunakan employee resolution services"
+    },
+    {
+      "id": "BUG-003",
+      "title": "No Transaction on Multi-Statement Operations",
+      "file": "backend/src/services/manualAdjustmentService.ts",
+      "line": "~2228-2245",
+      "severity": "HIGH",
+      "dampak": "Partial update jika salah satu statement gagal",
+      "rekomendasi_fix": "Wrap upsert operations dalam db.transaction()",
+      "root_cause_confirmed": true,
+      "evidence": "saveAdjustment uses separate INSERT/UPDATE without transaction wrapper"
+    },
+    {
+      "id": "BUG-004",
+      "title": "Frontend-Backend Formula Duplication",
+      "file": "frontend/src/pages/Report.jsx vs backend/src/services/payroll/components/PayrollCalculator.ts",
+      "severity": "MEDIUM",
+      "dampak": "Potential mismatch antara web report dan print out",
+      "status": "PARTIALLY MITIGATED - payrollTotalsCalculator.ts exists in backend",
+      "rekomendasi_fix": "Verify payrollTotalsCalculator matches frontend Report.jsx exactly"
+    },
+    {
+      "id": "BUG-005",
+      "title": "Hardcoded Database Profile in Queries",
+      "file": "Multiple services",
+      "severity": "MEDIUM",
+      "dampak": "Query salah database, data tidak konsisten",
+      "rekomendasi_fix": "Standardize database profile usage across all services"
+    }
+  ],
+  "data_consistency_issues": [
+    {
+      "id": "ISSUE-001",
+      "title": "Amount vs Metadata JSON Mismatch",
+      "tables": ["payroll_manual_adjustments"],
+      "fields": ["amount", "metadata_json"],
+      "risk": "Selisih payroll karena total detail tidak match dengan amount",
+      "validation_query": "SELECT id, emp_code, amount, JSON_VALUE(metadata_json, '$.total_amount') AS metadata_total FROM extend_db_ptrj.dbo.payroll_manual_adjustments WHERE JSON_VALUE(metadata_json, '$.total_amount') <> amount",
+      "fix_approach": "Add validation di service layer sebelum save, add trigger di database"
+    },
+    {
+      "id": "ISSUE-002",
+      "title": "Duplicate Employee in Same Payroll Period",
+      "tables": ["payroll_manual_adjustments"],
+      "fields": ["period_month", "period_year", "emp_code", "adjustment_name"],
+      "risk": "Double adjustment untuk employee yang sama",
+      "validation_query": "SELECT period_month, period_year, emp_code, adjustment_name, COUNT(*) FROM extend_db_ptrj.dbo.payroll_manual_adjustments GROUP BY period_month, period_year, emp_code, adjustment_name HAVING COUNT(*) > 1",
+      "fix_approach": "Add UNIQUE constraint, improve upsert logic"
+    },
+    {
+      "id": "ISSUE-003",
+      "title": "Invalid Metadata JSON Format",
+      "tables": ["payroll_manual_adjustments"],
+      "fields": ["metadata_json"],
+      "risk": "Parse error, data tidak bisa diproses",
+      "validation_query": "SELECT id, emp_code, metadata_json FROM extend_db_ptrj.dbo.payroll_manual_adjustments WHERE TRY_CAST(metadata_json AS JSON) IS NULL",
+      "fix_approach": "Add JSON validation before save, add CHECK constraint"
+    },
+    {
+      "id": "ISSUE-004",
+      "title": "Employee Not in Master Table",
+      "tables": ["payroll_manual_adjustments", "HR_EMPLOYEE"],
+      "fields": ["emp_code"],
+      "risk": "Orphan adjustment records",
+      "validation_query": "SELECT DISTINCT ma.emp_code FROM extend_db_ptrj.dbo.payroll_manual_adjustments ma LEFT JOIN db_ptrj.dbo.HR_EMPLOYEE e ON RTRIM(e.EmpCode) = RTRIM(ma.emp_code) WHERE e.EmpCode IS NULL",
+      "fix_approach": "Add validation before save, add FK constraint"
+    },
+    {
+      "id": "ISSUE-005",
+      "title": "Period Cross-Contamination",
+      "tables": ["payroll_manual_adjustments", "payroll_data"],
+      "fields": ["period_month", "period_year"],
+      "risk": "Data bulan lain tercampur",
+      "validation_query": "SELECT id, emp_code, period_month, period_year FROM extend_db_ptrj.dbo.payroll_manual_adjustments WHERE period_month < 1 OR period_month > 12 OR period_year < 2000",
+      "fix_approach": "Add period validation in service layer"
+    }
+  ],
+  "code_quality_issues": [
+    {
+      "file": "backend/src/services/dataExtractorService.ts",
+      "size": "266KB+",
+      "issue": "Too large - single point of failure",
+      "recommendation": "Refactor into extractors/ module structure"
+    },
+    {
+      "file": "backend/src/services/manualAdjustmentService.ts",
+      "size": "2400+ lines",
+      "issue": "Too large - too many responsibilities",
+      "recommendation": "Split into AdjustmentQueryService, AdjustmentSaveService, AdjustmentValidationService"
+    },
+    {
+      "file": "backend/src/api/payroll.ts",
+      "size": "3359 lines",
+      "issue": "Too many routes in single file",
+      "recommendation": "Split into controller/ module structure"
+    },
+    {
+      "file": "frontend/src/components/CustomPayrollTable.jsx",
+      "size": "2600+ lines",
+      "issue": "Frontend component too large",
+      "recommendation": "Split into PayrollTable, PayrollCell, PayrollHeader, PayrollToolbar"
+    }
+  ],
+  "security_issues": [
+    {
+      "severity": "MEDIUM",
+      "category": "SQL Injection",
+      "status": "LOW RISK - Parameterized queries in use",
+      "notes": "SQL Gateway abstracts direct SQL access, but dynamic LIKE queries should be reviewed"
+    },
+    {
+      "severity": "LOW",
+      "category": "PII Exposure in Logs",
+      "status": "NEEDS FIX",
+      "files": ["backend/src/api/payroll.ts:556-566"],
+      "notes": "Console.log exposes NIK which is PII. Sanitize logging."
+    },
+    {
+      "severity": "LOW",
+      "category": "API Authentication",
+      "status": "GOOD - JWT and API key bypass in place",
+      "notes": "Role-based access control exists for ADMIN and KERANI"
+    }
+  ],
+  "auditability_gaps": [
+    {
+      "feature": "Before/After value tracking",
+      "status": "MISSING",
+      "recommendation": "Add to audit_log table"
+    },
+    {
+      "feature": "Action type (CREATE/UPDATE/DELETE)",
+      "status": "PARTIAL - via remarks format",
+      "recommendation": "Extend with dedicated action_type column"
+    },
+    {
+      "feature": "Source file for imports",
+      "status": "MISSING",
+      "recommendation": "Add import_batch_id to audit trail"
+    },
+    {
+      "feature": "Payroll locking",
+      "status": "PARTIAL - is_locked in history_header",
+      "recommendation": "Enhance locking mechanism with workflow"
+    },
+    {
+      "feature": "Approval workflow",
+      "status": "MISSING",
+      "recommendation": "Implement approval workflow system"
+    }
+  ],
+  "refactoring_plan": {
+    "phase_1_stabilization": {
+      "duration": "1-2 weeks",
+      "tasks": [
+        {
+          "task": "Fix metadata_json sync",
+          "file": "manualAdjustmentService.ts",
+          "priority": "CRITICAL",
+          "risk": "LOW"
+        },
+        {
+          "task": "Add transaction wrapper",
+          "file": "manualAdjustmentService.ts",
+          "priority": "HIGH",
+          "risk": "MEDIUM"
+        },
+        {
+          "task": "Add validation layer",
+          "file": "all services",
+          "priority": "HIGH",
+          "risk": "MEDIUM"
+        },
+        {
+          "task": "Sanitize logging",
+          "file": "all files",
+          "priority": "MEDIUM",
+          "risk": "LOW"
+        }
+      ]
+    },
+    "phase_2_data_consistency": {
+      "duration": "2-4 weeks",
+      "tasks": [
+        {
+          "task": "Add unique constraint",
+          "file": "DB migration",
+          "priority": "HIGH",
+          "risk": "HIGH"
+        },
+        {
+          "task": "Add JSON validation",
+          "file": "DB migration",
+          "priority": "HIGH",
+          "risk": "LOW"
+        },
+        {
+          "task": "Add indexes",
+          "file": "DB migration",
+          "priority": "MEDIUM",
+          "risk": "LOW"
+        },
+        {
+          "task": "Create validation service",
+          "file": "backend/src/services/validation/",
+          "priority": "HIGH",
+          "risk": "MEDIUM"
+        }
+      ]
+    },
+    "phase_3_modularization": {
+      "duration": "1-2 months",
+      "tasks": [
+        {
+          "task": "Pecah dataExtractorService",
+          "file": "extractors/",
+          "priority": "HIGH",
+          "risk": "HIGH"
+        },
+        {
+          "task": "Pecah manualAdjustmentService",
+          "file": "modules/adjustment/",
+          "priority": "HIGH",
+          "risk": "HIGH"
+        },
+        {
+          "task": "Pecah CustomPayrollTable",
+          "file": "components/",
+          "priority": "MEDIUM",
+          "risk": "MEDIUM"
+        },
+        {
+          "task": "Create dedicated payroll module",
+          "file": "modules/payroll/",
+          "priority": "MEDIUM",
+          "risk": "MEDIUM"
+        }
+      ]
+    },
+    "phase_4_audit_security": {
+      "duration": "1-2 months",
+      "tasks": [
+        {
+          "task": "Create audit log table",
+          "file": "DB migration",
+          "priority": "HIGH",
+          "risk": "MEDIUM"
+        },
+        {
+          "task": "Implement audit service",
+          "file": "audit/AuditLogService.ts",
+          "priority": "HIGH",
+          "risk": "MEDIUM"
+        },
+        {
+          "task": "Add audit logging to writes",
+          "file": "semua write operations",
+          "priority": "HIGH",
+          "risk": "MEDIUM"
+        },
+        {
+          "task": "Enhance RBAC",
+          "file": "auth services",
+          "priority": "MEDIUM",
+          "risk": "LOW"
+        }
+      ]
+    },
+    "phase_5_testing_monitoring": {
+      "duration": "ongoing",
+      "tasks": [
+        {
+          "task": "Unit tests untuk PayrollCalculator",
+          "priority": "CRITICAL",
+          "risk": "LOW"
+        },
+        {
+          "task": "Integration tests untuk API",
+          "priority": "HIGH",
+          "risk": "MEDIUM"
+        },
+        {
+          "task": "Metadata consistency tests",
+          "priority": "HIGH",
+          "risk": "LOW"
+        },
+        {
+          "task": "Report total verification tests",
+          "priority": "HIGH",
+          "risk": "LOW"
+        },
+        {
+          "task": "Performance monitoring",
+          "priority": "MEDIUM",
+          "risk": "LOW"
+        }
+      ]
+    }
+  },
+  "recommended_architecture": {
+    "folder_structure": "modules/payroll, modules/adjustment, modules/employee, modules/audit, modules/report",
+    "service_pattern": "Singleton with repository and validator injection",
+    "repository_pattern": "Data access layer with transaction support",
+    "validation": "Centralized validation service with domain-specific rules",
+    "audit_log": "Dedicated table with before/after tracking",
+    "calculation_engine": "PayrollCalculator as single source of truth",
+    "report_generator": "Backend-based with payrollTotalsCalculator",
+    "import_pipeline": "Validation -> Parse -> Dedupe -> Import -> Audit",
+    "error_handling": "Centralized error service with structured error codes",
+    "testing_strategy": "Unit tests + Integration tests + E2E tests"
+  },
+  "actionable_fixes": [
+    {
+      "fix_id": "FIX-001",
+      "title": "Metadata JSON Sync Validation",
+      "file": "backend/src/services/manualAdjustmentService.ts",
+      "line": "~458-478",
+      "problem": "fallbackAmount digunakan padahal seharusnya calculatedTotal",
+      "suggestion": "Ubah return value amount dari syncedAmount/fallbackAmount menjadi calculatedTotal",
+      "patch_code": "function resolveDetailTotalSync(...) { ... return { amount: calculatedTotal, metadataJsonStr: JSON.stringify({...metadata, total_amount: calculatedTotal}) }; }"
+    },
+    {
+      "fix_id": "FIX-002",
+      "title": "Add Transaction Wrapper",
+      "file": "backend/src/services/manualAdjustmentService.ts",
+      "line": "~2228-2245",
+      "problem": "Upsert dilakukan tanpa transaction",
+      "suggestion": "Wrap INSERT/UPDATE dalam db.transaction()",
+      "patch_code": "await this.db.transaction([{sql: updateSql, params: updateParams}, {sql: insertSql, params: insertParams}]);"
+    },
+    {
+      "fix_id": "FIX-003",
+      "title": "Add Input Validation",
+      "file": "backend/src/services/manualAdjustmentService.ts",
+      "problem": "Tidak ada validasi input sebelum save",
+      "suggestion": "Tambah validateManualAdjustmentInput function",
+      "patch_code": "function validateManualAdjustmentInput(data: ManualAdjustment): void { /* period, amount, metadata, emp_code validation */ }"
+    },
+    {
+      "fix_id": "FIX-004",
+      "title": "Sanitize Logging",
+      "file": "backend/src/api/payroll.ts",
+      "line": "~556-566",
+      "problem": "Console.log exposing NIK (PII)",
+      "suggestion": "Hapus nik dari console.log payload",
+      "patch_code": "console.log('[manual-edit] Incoming payload:', { ..., has_metadata: !!data.metadata_json }); // nik removed"
+    }
+  ],
+  "test_case_checklist": {
+    "payroll_calculation_tests": [
+      "PayrollCalculator.calculate() dengan input normal",
+      "PayrollCalculator.calculate() dengan koreksi negatif",
+      "PayrollCalculator.calculate() dengan pendapatan_lainnya (THR/Bonus)",
+      "Verify: upah_bersih = jumlah_upah_kotor - total_potongan + premi_pph",
+      "Verify: koreksi TIDAK masuk total_potongan",
+      "Verify: pendapatan_lainnya WAJIB masuk total_potongan"
+    ],
+    "import_duplicate_tests": [
+      "Import Excel dengan emp_code duplikat - harus reject",
+      "Import Excel dengan period duplikat - harus update/reject",
+      "Import Excel dengan missing required columns - harus reject"
+    ],
+    "metadata_sync_tests": [
+      "Save PREMI PRUNING dengan 3 subblok - amount harus = sum items",
+      "Update amount manual - metadata_json.total_amount harus sync",
+      "Save dengan invalid JSON di metadata_json - harus reject"
+    ],
+    "report_total_tests": [
+      "Backend calculatePayrollTotals vs frontend calculateTotalRow",
+      "Grand total = sum of all gang totals",
+      "Gang total = sum of all employee totals"
+    ]
+  },
+  "completion_status": "DONE",
+  "findings_summary": {
+    "critical_bugs": 5,
+    "data_consistency_issues": 5,
+    "code_quality_issues": 4,
+    "security_issues": 3,
+    "auditability_gaps": 5,
+    "actionable_fixes": 4
+  }
+}

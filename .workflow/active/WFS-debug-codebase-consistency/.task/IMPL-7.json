@@ -1,0 +1,9 @@
+{
+  "id": "IMPL-7",
+  "status": "completed",
+  "title": "Documentation And Guardrail Comments",
+  "description": "Plan the smallest useful comments and docs for sign-convention boundaries, avoiding noisy comments in obvious code.",
+  "depends_on": ["IMPL-2", "IMPL-3", "IMPL-4"],
+  "convergence": ["guardrail locations identified", "comments describe invariant and anti-pattern", "docs do not conflict with code behavior"],
+  "meta": { "type": "documentation-planning", "agent": "maintainability-planner" }
+}

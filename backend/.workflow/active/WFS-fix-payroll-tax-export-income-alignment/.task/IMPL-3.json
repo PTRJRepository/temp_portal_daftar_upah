@@ -1,0 +1,9 @@
+{
+  "id": "IMPL-3",
+  "title": "Align DataExtractor and TaxReport mapping",
+  "description": "Wire canonical income resolution into DataExtractorService and TaxReportService so Exgratia values visible in Daftar Upah also enter Pajak, while fields like pendapatan_bonus, taxable_pendapatan_bonus, bonus_amount, and exgratia_amount derive from a single source amount.",
+  "depends_on": ["IMPL-2"],
+  "convergence": "Monthly tax rows and Daftar Upah rows carry matching other-income totals and aliases.",
+  "meta": { "type": "backend", "agent": "implementation" },
+  "status": "completed"
+}

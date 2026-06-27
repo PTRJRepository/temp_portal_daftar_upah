@@ -1,0 +1,28 @@
+{
+  "id": "IMPL-2",
+  "status": "completed",
+  "title": "Employee Detail Breakdown Sign And Worker-Deduction Safety",
+  "description": "Ensure employee detail breakdown shows negative-source deductions and does not use employer totals as worker deductions.",
+  "depends_on": [],
+  "target_files": ["frontend/src/utils/employeePayrollBreakdown.js", "frontend/src/utils/employeePayrollBreakdown.test.js"],
+  "implementation": [
+    {
+      "step": 1,
+      "tdd_phase": "red",
+      "description": "Add failing tests for negative pot_koreksi/koreksi_* and for ASTEK worker vs majikan vs jumlah precedence.",
+      "expected_failure": "Negative deductions are omitted or total ASTEK is used as worker deduction."
+    },
+    {
+      "step": 2,
+      "tdd_phase": "green",
+      "description": "Normalize deduction magnitudes with Math.abs and prefer worker-only deduction fields before any jumlah total fallback.",
+      "test_fix_cycle": { "max_iterations": 3, "auto_revert": true }
+    },
+    {
+      "step": 3,
+      "tdd_phase": "refactor",
+      "description": "Introduce a small helper for deductionMagnitude and replace repeated amount > 0 checks."
+    }
+  ],
+  "verification": ["cd frontend && npx vitest run src/utils/employeePayrollBreakdown.test.js"]
+}

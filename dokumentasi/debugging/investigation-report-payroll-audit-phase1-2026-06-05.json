@@ -1,0 +1,212 @@
+# Investigation Report - Phase 1: Initial Scan
+**Date:** 2026-06-05
+**Task:** Audit payroll system - Phase 1
+**Status:** PHASE_1_COMPLETE
+
+---
+
+## Task Overview
+- **Source:** User requested audit based on `PAYROLL_AUDIT_TASK.md` (file not found in project)
+- **Alternative Source Found:** `dokumentasi/debugging/PAYROLL_SYSTEM_AUDIT_REPORT_2026-06-05.md` (existing audit report)
+- **Scope:** Phase 1 only — project structure scan, tech stack identification, main payroll modules
+
+---
+
+## 1. PROJECT STRUCTURE
+
+```
+portal-daftar-upah-services/
+├── backend/                          # Bun + Elysia API server
+│   └── src/
+│       ├── api/                      # Route modules (payroll.ts, auth.ts, summary.ts, dll)
+│       ├── services/                 # Business logic services
+│       │   ├── payroll/              # Payroll-specific services
+│       │   │   ├── components/       # PayrollCalculator, services per component
+│       │   │   ├── extractors/      # Data extraction (Attendance, Premium, dll)
+│       │   │   ├── formulas/         # Formula definitions
+│       │   │   ├── manualAdjustments/ # Adjustment logic
+│       │   │   └── otherIncomes/     # THR, bonus processing
+│       │   ├── config/               # DivisionConfigService
+│       │   └── [standalone]          # dataExtractorService, manualAdjustmentService, dll
+│       ├── repositories/             # Data access layer
+│       │   ├── payroll/              # Payroll data repositories
+│       │   ├── history/              # History data repositories
+│       │   └── employee/             # Employee repositories
+│       ├── db/                       # SQL Gateway client
+│       ├── types/                    # TypeScript types
+│       └── utils/                    # Utility functions
+├── frontend/                         # React + Vite SPA
+│   └── src/
+│       ├── components/               # Reusable UI components
+│       ├── pages/                    # Page-level routes
+│       ├── services/                 # API service wrappers
+│       ├── context/                  # React context (auth, header, gang)
+│       ├── hooks/                    # Custom hooks
+│       ├── utils/                    # Utility functions
+│       └── styles/                  # CSS files
+├── dokumentasi/                      # Indonesian documentation
+├── _dev_utils/                      # Debug scripts, planning notes
+└── Additional_services/              # Query gateway docs
+```
+
+---
+
+## 2. TECHNOLOGY STACK IDENTIFICATION
+
+### Backend
+| Component | Technology | Version |
+|-----------|------------|---------|
+| Runtime | Bun | latest |
+| Framework | Elysia | latest |
+| Database | MSSQL via SQL Gateway | - |
+| Auth | jose (JWT) + bcryptjs | ^5.2.0, ^2.4.3 |
+| Excel | exceljs | ^4.4.0 |
+| External APIs | googleapis | ^171.4.0 |
+| Language | TypeScript | ^5.0.0 |
+| Testing | Bun test | built-in |
+
+### Frontend
+| Component | Technology | Version |
+|-----------|------------|---------|
+| Framework | React | ^18.2.0 |
+| Build Tool | Vite | ^5.0.0 |
+| Data Grid | AG Grid Enterprise | ^31.3.2 |
+| HTTP Client | Axios | ^1.7.2 |
+| PDF Generation | html2pdf.js | ^0.14.0 |
+| Charts | Recharts | ^3.7.0 |
+| Icons | Lucide React | ^0.563.0 |
+| Testing | Vitest | ^1.6.0 |
+
+### Infrastructure
+| Component | Description |
+|-----------|-------------|
+| SQL Gateway | Python API gateway for MSSQL access |
+| Database | MSSQL (3 profiles: db_ptrj, extend_db_ptrj, VenusHR14, db_ptrj_mill) |
+| Auth Strategy | JWT for UI, API Key bypass for automation |
+
+---
+
+## 3. MAIN PAYROLL MODULES IDENTIFIED
+
+### Backend Payroll Modules
+
+| Module | File(s) | Purpose | Lines |
+|--------|---------|---------|-------|
+| **Data Extraction** | `dataExtractorService.ts` | Main payroll data extraction, progressive SSE streaming | 266KB+ (CRITICAL) |
+| **Calculation Engine** | `payroll/components/PayrollCalculator.ts` | Centralized payroll formula calculations | ~262 |
+| **Manual Adjustments** | `manualAdjustmentService.ts` | CRUD for manual adjustments, metadata handling | 2400+ |
+| **Auto Buffer** | `payroll/payrollAutoBufferService.ts` | Automatic buffer values for sync/miss frames | - |
+| **Adjustment Applier** | `payroll/manualAdjustments/manualAdjustmentApplier.ts` | Apply adjustments to employee rows | - |
+| **Totals Calculator** | `payrollTotalsCalculator.ts` | Calculate gang/division totals | ~500 |
+| **Premi Service** | `payroll/components/PremiService.ts` | Premium component processing | - |
+| **Potongan Service** | `payroll/components/PotonganService.ts` | Deduction component processing | - |
+| **Lembur Service** | `payroll/components/LemburService.ts` | Overtime calculation | - |
+| **Tunjangan Service** | `payroll/components/TunjanganService.ts` | Allowance processing | - |
+| **Gaji Pokok Service** | `payroll/components/GajiPokokService.ts` | Base salary service | - |
+| **Caruman Service** | `payroll/CarumanService.ts` | BP JST/ASTEK worker contributions | - |
+| **PPH21 Service** | `payroll/components/Pph21TerService.ts` | Income tax calculation | - |
+| **Premium Definitions** | `premiumDefinitionService.ts` | Format baku premium definitions | - |
+| **Premium Import** | `premiumImportService.ts` | Excel import for PRUNING/RAKING | - |
+| **Payroll Normalization** | `payroll/PayrollNormalizationService.ts` | Data normalization | - |
+| **Extractors** | `payroll/extractors/*.ts` | Modular data extraction (Attendance, Premium, Leave, dll) | Various |
+
+### Frontend Payroll Modules
+
+| Module | File(s) | Purpose |
+|--------|---------|---------|
+| **Custom Payroll Table** | `CustomPayrollTable.jsx` | Main Daftar Upah table, edit mode, streaming rendering |
+| **Premium Detail Popup** | `PremiumDetailPopup.jsx` | Blok/exp/kendaraan input for premium details |
+| **Manual Adj Column Modal** | `ManualAdjustmentColumnModal.jsx` | Create new adjustment columns |
+| **Deferred Edit Input** | `PayrollDeferredEditInput.jsx` | Deferred payroll number input |
+| **Report Page** | `pages/Report.jsx` | Main payroll report page |
+| **Executive Payroll** | `pages/ExecutivePayrollPage.jsx` | Executive payroll report + print |
+| **Tax Matrix** | `PayrollTaxMatrix.jsx` | PPH21 matrix display |
+| **Lampiran Premi** | `LampiranPremiAppendix.jsx` | Premium appendix with charts |
+| **Payslip Card** | `PayslipCard.jsx` | Individual payslip display |
+| **Main Page** | `pages/MainPage.jsx` | Main dashboard/landing |
+
+### API Routes (Backend)
+
+| Route File | Purpose |
+|------------|---------|
+| `api/payroll.ts` | Main payroll API (3359 lines — CRITICAL) |
+| `api/summary.ts` | Summary report endpoints |
+| `api/historyRoutes.ts` | Historical payroll data |
+| `api/taxReportRoutes.ts` | Tax report endpoints |
+| `api/aggregationSeederRoutes.ts` | Aggregation seeder |
+| `api/spreadsheetRoutes.ts` | Spreadsheet sync |
+| `api/employee.ts` | Employee data endpoints |
+| `api/auth.ts` | Authentication |
+
+---
+
+## 4. CRITICAL FILES SUMMARY
+
+| File | Size | Priority | Risk |
+|------|------|----------|------|
+| `dataExtractorService.ts` | 266KB+ | CRITICAL | Single point of failure, single file too large |
+| `payroll.ts` (API) | 3359 lines | CRITICAL | Too many routes in one file |
+| `manualAdjustmentService.ts` | 2400+ lines | CRITICAL | Complex, needs modularization |
+| `CustomPayrollTable.jsx` | 2600+ lines | HIGH | Frontend component too large |
+
+---
+
+## 5. EXISTING AUDIT REPORT FINDINGS (from 2026-06-05)
+
+The existing audit report `PAYROLL_SYSTEM_AUDIT_REPORT_2026-06-05.md` already covers:
+
+### Critical Bugs Identified
+1. **BUG-001:** Metadata JSON total tidak sinkron dengan amount field
+2. **BUG-002:** Duplicate employee mapping issue
+3. **BUG-003:** No transaction on multi-statement operations
+4. **BUG-004:** Frontend-backend formula duplication
+5. **BUG-005:** Hardcoded database profile in queries
+
+### High-Priority Issues
+- Data consistency: amount vs metadata_json mismatch
+- Missing unique constraints on payroll_manual_adjustments
+- No dedicated audit log table
+- File size exceeds recommended limits
+
+### Recommended Architecture
+- Modular structure with Controller/Service/Repository layers
+- Audit log table and service
+- Transaction support for write operations
+- Input validation layer
+
+---
+
+## 6. PHASE 1 CONCLUSION
+
+**Finding:** Full audit report already exists at `dokumentasi/debugging/PAYROLL_SYSTEM_AUDIT_REPORT_2026-06-05.md`
+
+**Phase 1 Scope Completed:**
+- [x] Scan project structure
+- [x] Identify technology stack
+- [x] Find main payroll modules
+- [x] Initial findings documented
+
+**Recommendation for Next Steps:**
+Since Phase 1 findings are already documented in the existing audit report, recommend proceeding to:
+- **Phase 2:** Pattern Analysis — search for specific bug patterns
+- **Phase 3:** Hypothesis Testing — validate BUG-001 through BUG-005
+- **Phase 4:** Implementation — apply fixes for confirmed bugs
+
+---
+
+## 7. EVIDENCE CHAIN
+
+| Evidence | Source | Location |
+|----------|--------|----------|
+| Project structure | File scan | All directories |
+| Tech stack | package.json | backend/, frontend/ |
+| Payroll modules | File listing | backend/src/services/payroll/ |
+| API routes | File listing | backend/src/api/ |
+| Critical files | Size analysis | dataExtractorService.ts, payroll.ts, dll |
+| Existing audit | Prior report | dokumentasi/debugging/PAYROLL_SYSTEM_AUDIT_REPORT_2026-06-05.md |
+
+---
+
+**Report Generated:** 2026-06-05
+**Investigator:** Claude Code (Investigate Skill)
+**Next Phase:** Phase 2 - Pattern Analysis (optional, based on existing report)

@@ -1,0 +1,9 @@
+{
+  "id": "IMPL-4",
+  "title": "Align Excel export column discovery",
+  "description": "Update backend and frontend export column/value resolution so Bonus/Exgratia is not exported in conflicting or duplicate columns.",
+  "depends_on": ["IMPL-2", "IMPL-3"],
+  "convergence": "Export Daftar Upah and export Pajak show the same canonical income bucket totals as the UI.",
+  "meta": { "type": "backend-frontend", "agent": "implementation" },
+  "status": "completed"
+}

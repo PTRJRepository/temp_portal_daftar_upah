@@ -1,0 +1,26 @@
+{
+  "resolved_at": "2026-06-05T18:19:00+07:00",
+  "conflicts": [
+    {
+      "area": "dirty worktree",
+      "severity": "high",
+      "description": "Existing uncommitted changes include payroll, report, print, and workflow files.",
+      "strategy": "Do not revert. In execution, edit only files required by each TDD task and verify diffs before continuing.",
+      "impact": "Prevents overwriting unrelated work from earlier sessions."
+    },
+    {
+      "area": "duplicate formula engines",
+      "severity": "high",
+      "description": "Backend and frontend both calculate payroll totals in several places.",
+      "strategy": "Add parity tests first, then either align formulas or mark frontend calculations display-only with backend as source of truth.",
+      "impact": "Reduces silent data drift between web, export, and backend."
+    },
+    {
+      "area": "sign semantics",
+      "severity": "high",
+      "description": "Some code paths treat deduction values as signed display values while others expect positive calculation magnitudes.",
+      "strategy": "Test source positive and negative values for every deduction boundary before implementation.",
+      "impact": "Prevents -(-amount), hidden negative deductions, and double subtraction."
+    }
+  ]
+}

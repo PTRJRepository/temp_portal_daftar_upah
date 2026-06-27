@@ -1,0 +1,13 @@
+{
+  "summary": "Fix upah kotor calculation: ensure gaji_pokok_aktual is used (not ideal), remove duplicate HK koreksi accumulation, add missing upah tunjangan to exports, and sync tax export with daftar upah calculations",
+  "approach": "Fix calculation formulas in PayrollCalculator and ensure consistency between daftar upah export and tax export",
+  "complexity": "medium",
+  "estimated_time": "30-60 minutes",
+  "recommended_execution": "Auto",
+  "task_ids": ["TASK-001", "TASK-002", "TASK-003"],
+  "_metadata": {
+    "exploration_angles": ["dataflow", "error-handling"],
+    "created_at": "2026-06-08T00:00:00.000Z",
+    "session_id": "upah-kotor-fix-2026-06-08"
+  }
+}

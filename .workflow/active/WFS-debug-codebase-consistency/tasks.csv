@@ -1,0 +1,9 @@
+id,title,depends_on,status,result
+IMPL-1,"Baseline Inventory And Ownership Snapshot","",completed,"Captured session/worktree context and constrained execution to payroll/tax/payslip/export files."
+IMPL-2,"Payroll Formula And Sign-Semantics Audit","IMPL-1",completed,"Normalized koreksi as absolute deduction magnitude through payroll calculator/formula/aggregation/report paths."
+IMPL-3,"Excel Export Formula Audit","IMPL-1;IMPL-2",completed,"Daftar Upah, tax report, payroll report, and pro export paths now write signed negative deductions and add them in formulas."
+IMPL-4,"Frontend Display And Payslip Audit","IMPL-1;IMPL-2",completed,"Payslip, tax matrix, tax report, detailed salary analysis, and export helpers use absolute magnitudes for deductions."
+IMPL-5,"Data Source Consistency Audit","IMPL-2;IMPL-4",completed,"Mapped key source adapters and report services; no active dangerous double-negative formula pattern found in audited source search."
+IMPL-6,"Regression Test Matrix","IMPL-2;IMPL-3;IMPL-4;IMPL-5",completed,"Added/ran focused backend and frontend regression tests for koreksi, potongan, other income, and Excel formulas."
+IMPL-7,"Documentation And Guardrail Comments","IMPL-2;IMPL-3;IMPL-4",completed,"Added concise guardrail comments at formula/export/display boundaries warning against raw signed subtraction."
+IMPL-8,"Verification Sweep","IMPL-6;IMPL-7",completed,"Verification commands passed; build warning documented as unrelated existing Vite chunking warning."

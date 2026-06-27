@@ -1,0 +1,28 @@
+{
+  "id": "IMPL-6",
+  "status": "completed",
+  "title": "Tax And PPh Field Precedence Safety",
+  "description": "Make pph21/pot_pph21/potongan_pph21/premi_pph field precedence explicit so zero and mismatch cases are safe.",
+  "depends_on": ["IMPL-4"],
+  "target_files": ["backend/src/services/taxReportExcelService.ts", "backend/src/services/taxReportService.ts", "frontend/src/services/taxReportService.js", "frontend/src/components/PayrollTaxMatrix.jsx", "frontend/src/pages/TaxReportPage.jsx", "frontend/src/utils/exportPayrollToExcel.js"],
+  "implementation": [
+    {
+      "step": 1,
+      "tdd_phase": "red",
+      "description": "Add tests where pph21_ter, pot_pph21, potongan_pph21, and premi_pph intentionally differ, including zero-value precedence.",
+      "expected_failure": "Ambiguous || fallback chooses the wrong non-zero field or ignores a valid zero."
+    },
+    {
+      "step": 2,
+      "tdd_phase": "green",
+      "description": "Introduce explicit precedence helpers and use nullish checks where zero is meaningful.",
+      "test_fix_cycle": { "max_iterations": 3, "auto_revert": true }
+    },
+    {
+      "step": 3,
+      "tdd_phase": "refactor",
+      "description": "Document tax field meanings near helpers and remove duplicated fallback logic."
+    }
+  ],
+  "verification": ["cd backend && bun test src/services/taxReportExcelService.test.ts", "cd frontend && npx vitest run src/services/taxReportService.test.js src/utils/exportPayrollToExcel.test.js"]
+}

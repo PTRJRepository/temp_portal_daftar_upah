@@ -1,0 +1,11 @@
+{"task_id":"IMPL-1","severity":"fixed","summary":"frontend aggregationUtils counted premi_pph as gross premi; fixed because premi_pph belongs to net-pay addition."}
+{"task_id":"IMPL-1","severity":"fixed","summary":"frontend aggregationUtils counted pot_koreksi in net deductions; fixed to avoid double-deducting koreksi after it already reduces jumlah_upah_kotor."}
+{"task_id":"IMPL-1","severity":"fixed","summary":"frontend aggregationUtils summed signed negative deductions directly; fixed by summing deduction magnitudes."}
+{"task_id":"IMPL-2","severity":"fixed","summary":"employeePayrollBreakdown hid negative-source koreksi/potongan due amount > 0 checks; fixed with absolute deduction magnitude handling."}
+{"task_id":"IMPL-2","severity":"fixed","summary":"employeePayrollBreakdown could fall back to ASTEK jumlah as worker deduction; fixed to prefer worker-only fields and avoid majikan/jumlah generic deductions."}
+{"task_id":"IMPL-3","severity":"fixed","summary":"PayrollAggregator active-employee filter used hari_kerja/kehadiran while backend totals use jumlah_hk; fixed to align frontend flattening with backend totals."}
+{"task_id":"IMPL-8","severity":"info","summary":"Focused backend and frontend suites plus frontend build pass; Vite still reports existing summaryReportService mixed import chunking warning."}
+{"task_id":"FOLLOWUP-1","severity":"fixed","summary":"PayslipCard and exportPayslipsToExcel could use ASTEK total/majikan as worker deduction; fixed to prefer pot_astek_pekerja and not fall back to pot_astek_jumlah."}
+{"task_id":"FOLLOWUP-1","severity":"fixed","summary":"PayslipCard and exportPayslipsToExcel cancelled premi_pph by adding it twice in total potongan math; fixed so premi_pph is a net-pay credit once."}
+{"task_id":"FOLLOWUP-1","severity":"fixed","summary":"exportPayslipsToExcel referenced footerRow before declaration in renderPayslipCard, which could fail at runtime; fixed by declaring footerRow before use."}
+{"task_id":"FOLLOWUP-2","severity":"fixed","summary":"EmployeeDetailPage and SalaryHistoryTable hid negative-source koreksi/potongan and included premi_pph in gross premium details; fixed with deduction magnitudes and gross-premi exclusions."}

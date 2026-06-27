@@ -1,0 +1,26 @@
+﻿{
+  "conflicts": [
+    {
+      "area": "Dirty worktree",
+      "severity": "medium",
+      "description": "Many unrelated files are modified or untracked. The Wages redesign must not stage, revert, or overwrite other work.",
+      "strategy": "Scope edits to WagesSummaryRebinmasPage, Wages Rebinmas CSS, and focused tests only.",
+      "impact": "Low if file scope is respected."
+    },
+    {
+      "area": "Print CSS cascade",
+      "severity": "medium",
+      "description": "Three CSS files define print behavior for .wsp-document and Wages Rebinmas tables.",
+      "strategy": "Add narrowly scoped selectors under .wages-rebinmas-print-document and new print page classes, then lock with CSS tests.",
+      "impact": "Prevents regressions to Summary Report, THR, and comparison print modes."
+    },
+    {
+      "area": "Monolithic report component",
+      "severity": "medium",
+      "description": "WagesSummaryRebinmasPage contains state, data shaping, toolbar, tables, print layout, and mode switching in one file.",
+      "strategy": "Extract only low-risk pure helpers/components needed for audit pages and keep mode state in the existing page.",
+      "impact": "Improves maintainability without a broad rewrite."
+    }
+  ],
+  "resolved_at": "2026-06-05T00:00:00+07:00"
+}

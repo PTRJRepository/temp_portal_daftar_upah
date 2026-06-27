@@ -1,0 +1,9 @@
+{
+  "id": "IMPL-5",
+  "status": "completed",
+  "title": "Data Source Consistency Audit",
+  "description": "Compare DB_PTRJ-only, Non DB_PTRJ/manual adjustment, history, tax, wages verification, and summary paths for divergent totals on the same employee-period.",
+  "depends_on": ["IMPL-2", "IMPL-4"],
+  "convergence": ["data source matrix", "known intentional differences documented", "unintended drift candidates identified"],
+  "meta": { "type": "analysis", "agent": "data-flow-auditor" }
+}

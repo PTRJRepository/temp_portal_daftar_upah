@@ -1,0 +1,9 @@
+{
+  "id": "IMPL-6",
+  "title": "Regression tests",
+  "description": "Add focused backend and frontend tests covering Bonus/Exgratia canonicalization, export values, duplicate identity handling, and missing-row prevention.",
+  "depends_on": ["IMPL-2", "IMPL-3", "IMPL-4", "IMPL-5"],
+  "convergence": "Focused tests pass and demonstrate matched row sets/totals for UI-equivalent data and exports.",
+  "meta": { "type": "test", "agent": "implementation" },
+  "status": "completed"
+}

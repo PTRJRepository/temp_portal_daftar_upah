@@ -1,0 +1,9 @@
+task_id,status,evidence
+IMPL-1,completed,"workflow session inspected; dirty worktree preserved"
+IMPL-2,completed,"backend payroll formula tests passed; koreksi positive/negative inputs both reduce gross"
+IMPL-3,completed,"Excel regression tests passed; Daftar Upah other-income detail and signed deduction formulas covered"
+IMPL-4,completed,"PayslipCard and payslip export tests passed"
+IMPL-5,completed,"rg audit found no active -{formatNumber}, -{formatCurrency}, -ABS, -N, or subtract-signed-deduction formulas in audited source"
+IMPL-6,completed,"backend 8 tests passed; frontend 32 tests passed"
+IMPL-7,completed,"guardrail comments added in payroll/excel/payslip/tax boundaries"
+IMPL-8,completed,"npm run build passed with existing summaryReportService dynamic/static import warning"

@@ -1,0 +1,11 @@
+{
+  "id": "IMPL-5",
+  "title": "Verify tests, build, and print output",
+  "description": "Run focused frontend tests, build, and inspect browser print output if feasible.",
+  "target_files": [],
+  "acceptance": [
+    "Focused Vitest tests pass.",
+    "npm run build succeeds.",
+    "Visual print inspection confirms logo/kop are present and not cropped."
+  ]
+}

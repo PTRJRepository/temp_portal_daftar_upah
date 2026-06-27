@@ -1,0 +1,9 @@
+{
+  "id": "IMPL-6",
+  "status": "completed",
+  "title": "Regression Test Matrix",
+  "description": "Define focused backend and frontend regression tests for every confirmed formula, sign, export, tax, and payslip issue.",
+  "depends_on": ["IMPL-2", "IMPL-3", "IMPL-4", "IMPL-5"],
+  "convergence": ["test matrix names exact commands", "positive and negative source inputs covered", "Excel formula string guards included"],
+  "meta": { "type": "test-planning", "agent": "qa-planner" }
+}

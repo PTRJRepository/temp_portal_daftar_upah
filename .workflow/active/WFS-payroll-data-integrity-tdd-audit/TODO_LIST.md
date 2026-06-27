@@ -1,0 +1,8 @@
+- [x] IMPL-1: Frontend Aggregation Gross/Net Formula Integrity (TDD)
+- [x] IMPL-2: Employee Detail Breakdown Sign And Worker-Deduction Safety (TDD)
+- [x] IMPL-3: Attendance Filter Parity Across Backend And Frontend Totals (TDD)
+- [x] IMPL-4: Backend/Frontend Payroll Formula Parity Fixture (TDD)
+- [x] IMPL-5: Other Income Double-Entry And Taxability Consistency (TDD)
+- [x] IMPL-6: Tax And PPh Field Precedence Safety (TDD)
+- [x] IMPL-7: Excel Formula Guard Scanner And Export Snapshot Tests (TDD)
+- [x] IMPL-8: Manual Adjustment/Koreksi End-To-End Normalization (TDD)

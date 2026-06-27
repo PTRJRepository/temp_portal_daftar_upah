@@ -1,0 +1,26 @@
+{
+  "conflicts": [
+    {
+      "area": "shared payroll/tax export files",
+      "severity": "high",
+      "description": "Files are already modified in the worktree, so implementation must inspect current content immediately before patching and avoid overwriting concurrent WIP.",
+      "strategy": "adapt",
+      "impact": "Use minimal patches around income normalization helpers and tests only."
+    },
+    {
+      "area": "BONUS vs EXGRATIA business naming",
+      "severity": "high",
+      "description": "Tax export merges BONUS and EXGRATIA, while Daftar Upah can expose EXGRATIA as a separate dynamic income type. This explains double/split columns and mismatched totals.",
+      "strategy": "centralize-normalization",
+      "impact": "Introduce one canonical income category resolver used by extractor and exports."
+    },
+    {
+      "area": "employee row de-duplication",
+      "severity": "medium",
+      "description": "Tax report de-dupes by emp_code first, which can keep duplicate rows when one person has old/new emp_code for the same NIK.",
+      "strategy": "prefer-stable-identity",
+      "impact": "Use report identity NIK/new_nik before emp_code where available, and test row count."
+    }
+  ],
+  "resolved_at": "2026-06-08T00:00:00+07:00"
+}

@@ -1,0 +1,9 @@
+{
+  "id": "IMPL-5",
+  "title": "Fix employee identity de-duplication and missing rows",
+  "description": "Review and adjust monthly tax report row de-duplication to prefer stable NIK/new_nik identity and avoid old/new emp_code duplicates or accidental row drops.",
+  "depends_on": ["IMPL-1"],
+  "convergence": "For the same source scope, row counts and employee identities match across UI and exports unless an explicit filter explains the difference.",
+  "meta": { "type": "backend", "agent": "implementation" },
+  "status": "completed"
+}

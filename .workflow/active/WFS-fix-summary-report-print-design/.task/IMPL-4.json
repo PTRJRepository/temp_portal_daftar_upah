@@ -1,0 +1,14 @@
+{
+  "id": "IMPL-4",
+  "title": "Add focused print header tests",
+  "description": "Update frontend tests to protect logo/kop visibility and restrained print header decoration.",
+  "target_files": [
+    "frontend/src/pages/SummaryReportPage.printHeader.test.js",
+    "frontend/src/styles/report-print-foundation.test.js"
+  ],
+  "acceptance": [
+    "Tests assert print-friendly logo/header markup exists.",
+    "Tests assert print CSS keeps srn header/logo visible.",
+    "Focused Vitest suite passes."
+  ]
+}

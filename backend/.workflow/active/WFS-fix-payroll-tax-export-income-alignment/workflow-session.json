@@ -1,0 +1,7 @@
+{
+  "session_id": "WFS-fix-payroll-tax-export-income-alignment",
+  "status": "completed",
+  "created_at": "2026-06-08T00:00:00+07:00",
+  "task_description": "Perbaiki selisih tampilan Daftar Upah, export Pajak, dan export Daftar Upah. Investigasi nama double untuk Bonus/Exgratia, beberapa nama tidak muncul, dan pastikan sumber data serta export konsisten.",
+  "completed_at": "2026-06-08T00:00:00+07:00"
+}

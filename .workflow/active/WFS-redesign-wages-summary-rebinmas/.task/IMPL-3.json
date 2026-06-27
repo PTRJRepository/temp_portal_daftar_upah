@@ -1,0 +1,8 @@
+﻿{
+  "id": "IMPL-3",
+  "title": "Build main Professional Grid page",
+  "description": "Update the standard Wages Summary main page with formal header, metadata chips, KPI placement, grouped navy table headers, soft-blue section/subtotal rows, dark navy grand total, visible selisih, and audit status styling.",
+  "depends_on": ["IMPL-1", "IMPL-2"],
+  "convergence": "Page 1 standard summary visually matches the PRD and preserves existing data/edit behavior.",
+  "meta": { "type": "frontend-ui", "agent": "implementation" }
+}

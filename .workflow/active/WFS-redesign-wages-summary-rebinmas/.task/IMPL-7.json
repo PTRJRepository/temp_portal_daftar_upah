@@ -1,0 +1,8 @@
+﻿{
+  "id": "IMPL-7",
+  "title": "Add focused tests and verification",
+  "description": "Add/adjust focused tests for data helpers, CSS print rules, and standard-mode audit page structures. Run focused Vitest tests, frontend build, and browser print-preview verification.",
+  "depends_on": ["IMPL-1", "IMPL-2", "IMPL-3", "IMPL-4", "IMPL-5", "IMPL-6"],
+  "convergence": "Relevant tests and build pass, and visual print inspection confirms the three-page Professional Grid output.",
+  "meta": { "type": "verification", "agent": "implementation" }
+}

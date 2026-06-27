@@ -1,0 +1,403 @@
+# PHASE 3A BUG VALIDATION REPORT - deleteAdjustmentColumn
+
+**Date:** 2026-06-05
+**Task:** Audit payroll system - Phase 3A Hypothesis Testing
+**Status:** COMPLETE
+**Bug ID:** BUG-DB-002
+**Verdict:** CONFIRMED BUG — HIGH severity
+
+---
+
+## 1. Verdict
+
+**CONFIRMED BUG — HIGH severity**
+
+Scope DELETE benar-benar tidak menyertakan `emp_code`, `nik`, `gang_code`, atau `id`. Function ini menghapus **SEMUA** record yang matching dalam periode + divisi + adjustment_name, lintas semua employee dan semua gang dalam divisi tersebut.
+
+---
+
+## 2. Evidence Chain
+
+| # | File | Function | Line | Evidence | Interpretasi |
+|---|------|----------|------|----------|-------------|
+| 1 | `manualAdjustmentService.ts` | `deleteAdjustmentColumn()` | 2295-2335 | Function signature: hanya terima `period_month`, `period_year`, `division_code?`, `adjustment_type`, `adjustment_name` | Tidak ada parameter `emp_code`, `nik`, `gang_code`, atau `id` |
+| 2 | `manualAdjustmentService.ts` | `deleteAdjustmentColumn()` | 2326-2332 | DELETE query tanpa filter `emp_code`, `nik`, `gang_code`, `id` | Semua record matching adjustment_name dihapus |
+| 3 | `manualAdjustmentService.ts` | `deleteAdjustmentColumn()` | 2318-2324 | SELECT existing count sebelum DELETE | Count di-return tapi tidak diverifikasi sebelum delete |
+| 4 | `payroll.ts` | Route DELETE `/manual-adjustment/column` | 697-736 | Body schema: `period_month`, `period_year`, `division_code?`, `adjustment_type`, `adjustment_name` | Endpoint menerima parameter yang sama — tidak ada `id` atau `emp_code` |
+| 5 | `payroll.ts` | Route DELETE `/locked/manual-adjustment/column` | 2017-2060 | Body schema identik + `currentUser` auth check | Route kedua dengan intent sama |
+| 6 | `CustomPayrollTable.jsx` | `handleRemoveManualColumn()` | 1309-1341 | Params diset: `period_month`, `period_year`, `division_code`, `adjustment_type`, `adjustment_name` | Frontend TIDAK mengirim `id` atau `emp_code` |
+| 7 | `CustomPayrollTable.jsx` | `saveDeletedManualColumns()` | 1833-1849 | Loop `pendingDeletedColumns`, panggil API per column | Setiap column trigger 1 DELETE dengan scope FULL |
+| 8 | `manualAdjustmentService.test.ts` | Test: "normalizes division_code" | 1874-1904 | Input: `period_month=4, year=2026, division=PG1A, type=PREMI, name=PREMI PRUNING` → expects `deleted=2` | Test mengasumsikan HAPUS BANYAK record, bukan 1 |
+
+---
+
+## 3. Actual Delete Scope
+
+| Filter Field | Ada di DELETE? | Value Source |
+|-------------|----------------|-------------|
+| `period_month` | ✅ Ya | `input.period_month` |
+| `period_year` | ✅ Ya | `input.period_year` |
+| `adjustment_type` | ✅ Ya | `input.adjustment_type` |
+| `adjustment_name` | ✅ Ya | `normalizeStoredAdjustmentName(input.adjustment_name)` via `buildNormalizedSqlNameExpression()` |
+| `division_code` | ⚠️ Opsional | Hanya jika `input.division_code` supplied |
+| `gang_code` | ❌ Tidak ada | — |
+| `emp_code` | ❌ Tidak ada | — |
+| `nik` | ❌ Tidak ada | — |
+| `id` | ❌ Tidak ada | — |
+
+**Query DELETE final:**
+```sql
+DELETE FROM dbo.payroll_manual_adjustments
+WHERE period_month = ?
+  AND period_year = ?
+  AND adjustment_type = ?
+  AND UPPER(LTRIM(RTRIM(REPLACE(REPLACE(... adjustment_name ...)))) = ?
+  [AND division_code = ?]  -- hanya jika division supplied
+```
+
+**Risiko spesifik:**
+- Jika `division_code` TIDAK supplied → HAPUS **SEMUA** record dengan adjustment_name tersebut di SELURUH divisi dalam periode tersebut.
+- Jika `division_code` supplied → HAPUS **SEMUA** record di divisi tersebut, lintas **SEMUA gang**, lintas **SEMUA employee**.
+
+---
+
+## 4. Frontend/API Intent
+
+**Berdasarkan evidence code:**
+
+| Evidence | Interpretasi Intent |
+|----------|---------------------|
+| `handleRemoveManualColumn()` → `targetColumn.name` → "PREMI PRUNING" | User menghapus satu **kolom** (seperti remove column di spreadsheet) |
+| `deleteManualAdjustmentColumn` (singular) | Namanya singular-column, bukan per-employee |
+| Test expects `deleted=2` untuk 1 delete call | Test mengasumsikan bisa hapus MULTIPLE rows per call |
+| Return value: `deletedCount` (jumlah) | API dirancang untuk return affected row count |
+| Konfirmasi dialog: "Kolom ... akan dihapus dari database" | User paham ini hapus kolom entire |
+
+**Kesimpulan intent:**
+Function ini **DIKUSUSKAN** untuk menghapus **seluruh kolom adjustment** (semua value di kolom tersebut, untuk semua employee dalam scope). Ini bukan bug dalam konteks intent aslinya — desain memang untuk bulk delete.
+
+**Tapi tetap menjadi bug karena:**
+
+1. **Tidak ada preview** sebelum delete → user tidak tahu berapa banyak record akan dihapus
+2. **Tidak ada konfirmasi jumlah** → "Yakin hapus?" tanpa menampilkan "Akan menghapus 15 record dari 3 gang berbeda"
+3. **Tidak ada transaction** → jika gagal di tengah jalan, data tidak konsisten
+4. **Tidak ada audit trail** → tidak ada log siapa menghapus apa
+5. **Tidak ada undo** → hard delete langsung ke database
+
+---
+
+## 5. Risk Scenario
+
+**Skenario nyata:**
+
+```
+Periode: Mei 2026
+Division: P1A
+Adjustment_name: PREMI PRUNING
+
+Data existing di database:
+| id | emp_code | emp_name  | gang_code | division_code | adjustment_name | amount  |
+|----|----------|-----------|-----------|---------------|------------------|---------|
+| 1  | B0001    | KARYAWAN A| B1H       | P1A           | PREMI PRUNING    | 50,000  |
+| 2  | B0002    | KARYAWAN B| B1H       | P1A           | PREMI PRUNING    | 75,000  |
+| 3  | B0003    | KARYAWAN C| B2H       | P1A           | PREMI PRUNING    | 60,000  |
+| 4  | B0004    | KARYAWAN D| B2H       | P1A           | PREMI PRUNING    | 45,000  |
+| 5  | B0005    | KARYAWAN E| B3H       | P1A           | PREMI PRUNING    | 55,000  |
+| 6  | B0006    | KARYAWAN F| B1H       | P1A           | PREMI PRUNING    | 40,000  |  ← SEBAB: User hanya mau hapus ini
+```
+
+**Aksi user:**
+1. User edit payroll Mei 2026, division P1A
+2. User menemukan cell PREMI PRUNING untuk Employee F (B0006) salah — ingin hapus
+3. User klik tombol hapus kolom pada header kolom PREMI PRUNING
+4. Muncul konfirmasi: "Kolom PREMI PRUNING akan dihapus dari database. Lanjutkan?"
+5. User tekan "Ya"
+
+**Hasil:**
+- Employee F (B0006) yang bermasalah → 1 record terhapus ✅ (yang diinginkan)
+- Employee A, B, C, D, E → SEMUA 5 record ikut terhapus ❌❌❌
+- Total: **6 record dihapus**, padahal user hanya bermaksud hapus 1
+
+**Skenario kedua (division_code tidak supplied):**
+
+```
+Periode: Mei 2026
+Division: TIDAK diset (kosong/null)
+Adjustment_name: PREMI PRUNING
+```
+
+Query DELETE tanpa `division_code` filter:
+
+```sql
+DELETE FROM dbo.payroll_manual_adjustments
+WHERE period_month = 5 AND period_year = 2026
+  AND adjustment_type = 'PREMI'
+  AND adjustment_name = 'PREMI PRUNING'
+```
+
+**Hasil:** HAPUS **SEMUA** record PREMI PRUNING di **SEMUA divisi** (P1A, P1B, P2A, P2B, AB1, AB2, ARC) untuk Mei 2026.
+
+---
+
+## 6. Severity Assessment
+
+**HIGH — dengan justifikasi:**
+
+| Faktor | Nilai | Alasan |
+|--------|-------|--------|
+| Data Loss Scope | HIGH | Menghapus data payroll multiple employee dalam satu aksi |
+| Reversibility | LOW | Hard delete, tidak ada undo atau soft delete |
+| Detectability | LOW | Tidak ada audit log; user baru sadar setelah data hilang |
+| Likelihood | MEDIUM | UI membuat mudah untuk trigger delete column (1 klik tombol di header column) |
+| Intent Mismatch | HIGH | User bermaksud hapus 1 cell, sistem hapus seluruh kolom |
+| Recovery Cost | HIGH | Data payroll bulanan, kemungkinan besar sudah di-aggregate ke history |
+
+**Justifikasi utama:**
+Kombinasi tidak ada preview + tidak ada konfirmasi jumlah record + hard delete langsung = **HIGH severity**. Meskipun intent aslinya bulk delete, UX tidak memberikan enough information bagi user untuk membuat keputusan yang tepat.
+
+---
+
+## 7. SQL Preview Query
+
+**Query yang SEHARUSNYA dijalankan sebelum DELETE untuk melihat record terdampak:**
+
+```sql
+-- Preview: Cek berapa record akan terdampak sebelum deleteAdjustmentColumn
+-- Params: period_month=5, period_year=2026, division_code='P1A', adjustment_type='PREMI', adjustment_name='PREMI PRUNING'
+SELECT
+    id,
+    period_month,
+    period_year,
+    emp_code,
+    emp_name,
+    nik,
+    gang_code,
+    division_code,
+    adjustment_type,
+    adjustment_name,
+    amount,
+    metadata_json,
+    created_at,
+    created_by
+FROM extend_db_ptrj.dbo.payroll_manual_adjustments
+WHERE period_month = 5
+  AND period_year = 2026
+  AND adjustment_type = 'PREMI'
+  AND UPPER(LTRIM(RTRIM(
+      REPLACE(REPLACE(REPLACE(REPLACE(
+          REPLACE(REPLACE(REPLACE(REPLACE(
+              adjustment_name, CHAR(9), ' '), CHAR(10), ' '), CHAR(13), ' '), CHAR(160), ' ')
+          , '  ', ' '), '  ', ' '), '  ', ' '), '  ', ' ')
+      ))) = 'PREMI PRUNING'
+  AND (division_code = 'P1A' OR division_code IS NULL OR LTRIM(RTRIM(division_code)) = '')
+ORDER BY division_code, gang_code, emp_code;
+
+-- Summary untuk UI confirmation:
+SELECT
+    COUNT(*) AS total_records_to_delete,
+    COUNT(DISTINCT emp_code) AS unique_employees,
+    COUNT(DISTINCT gang_code) AS unique_gangs,
+    COUNT(DISTINCT division_code) AS unique_divisions,
+    SUM(amount) AS total_amount
+FROM extend_db_ptrj.dbo.payroll_manual_adjustments
+WHERE period_month = 5
+  AND period_year = 2026
+  AND adjustment_type = 'PREMI'
+  AND UPPER(LTRIM(RTRIM(
+      REPLACE(REPLACE(REPLACE(REPLACE(
+          REPLACE(REPLACE(REPLACE(REPLACE(
+              adjustment_name, CHAR(9), ' '), CHAR(10), ' '), CHAR(13), ' '), CHAR(160), ' ')
+          , '  ', ' '), '  ', ' '), '  ', ' '), '  ', ' ')
+      ))) = 'PREMI PRUNING'
+  AND (division_code = 'P1A' OR division_code IS NULL OR LTRIM(RTRIM(division_code)) = '');
+```
+
+---
+
+## 8. Safe Fix Recommendation
+
+### Jika intent: Hapus seluruh kolom adjustment (bulk delete)
+
+Ini adalah desain yang valid, tapi perlu safety guard:
+
+1. **Tambahkan dry-run/preview endpoint** — return affected rows tanpa delete
+2. **Tampilkan preview count di UI** — "Akan menghapus 6 record dari 3 gang"
+3. **Tambahkan konfirmasi dengan detail** — bukan hanya "Ya/Tidak", tapi列出 affected employees
+4. **Tambahkan audit log table** — INSERT ke audit_log sebelum DELETE
+5. **Gunakan transaction** — wrap DELETE dalam transaction
+6. **Return affected row count** — sudah ada, tapi perlu ditampilkan ke user
+
+### Jika intent: Hapus adjustment per employee/cell
+
+Ini mengubah desain function secara fundamental:
+
+1. **Ubah parameter** — tambahkan `emp_code` atau `id` sebagai required filter
+2. **Pisahkan function** — `deleteAdjustmentColumn()` (bulk) vs `deleteEmployeeAdjustment()` (per employee)
+3. **Update API schema** — tambahkan `emp_code` ke body schema
+4. **Update frontend** — saat hapus cell, kirim `emp_code` + `gang_code` + `id`
+5. **Pertimbangkan soft delete** — tambahkan `deleted_at`, `deleted_by` columns
+6. **Pertimbangkan snapshot backup** — insert ke `payroll_history_detail` sebelum delete
+
+### Rekomendasi terbaik: Hybrid approach
+
+1. **Tambahkan `id` sebagai filter opsional** — jika `id` supplied, hapus spesifik itu saja
+2. **Jika `id` tidak supplied** — jalankan sebagai bulk delete dengan semua safety guard
+3. **Selalu tampilkan affected rows count** sebelum delete
+4. **Tambahkan `dryRun` param** di API — `?dryRun=true` hanya preview, tidak delete
+
+---
+
+## 9. Patch Plan
+
+### Phase 1: Backend — Tambahkan dry-run dan affected rows preview
+
+**File:** `backend/src/services/manualAdjustmentService.ts`
+
+```typescript
+// 1. Tambah method baru untuk preview affected rows
+public async previewDeleteAdjustmentColumn(input: {
+    period_month: number;
+    period_year: number;
+    division_code?: string;
+    adjustment_type: string;
+    adjustment_name: string;
+}): Promise<{ totalCount: number; employees: string[]; gangs: string[]; totalAmount: number }> {
+    const db = this.getDatabase();
+    // ... query preview with aggregation
+}
+
+// 2. Modifikasi deleteAdjustmentColumn — tambahkan dryRun param
+public async deleteAdjustmentColumn(input: {
+    period_month: number;
+    period_year: number;
+    division_code?: string;
+    adjustment_type: string;
+    adjustment_name: string;
+    dryRun?: boolean;  // <-- TAMBAHAN
+}): Promise<number> {
+    // ... existing logic
+    // Jika dryRun=true, skip DELETE, return count saja
+}
+```
+
+### Phase 2: Backend — Tambahkan audit log
+
+**File:** `backend/src/services/manualAdjustmentService.ts`
+
+```typescript
+// Sebelum DELETE, insert ke audit log
+await db.query(`
+    INSERT INTO dbo.payroll_audit_log (...)
+    SELECT ... FROM dbo.payroll_manual_adjustments WHERE ...
+`);
+```
+
+**Catatan:** Tabel `payroll_audit_log` belum ada — perlu dibuat migration.
+
+### Phase 3: Backend — Tambahkan transaction wrapper
+
+```typescript
+const queries = [
+    { sql: `INSERT INTO dbo.payroll_audit_log ...`, params: [...] },
+    { sql: `DELETE FROM dbo.payroll_manual_adjustments ...`, params: [...] }
+];
+await this.db.transaction(queries);
+```
+
+### Phase 4: Backend — Opsional: tambahkan `id` filter untuk delete spesifik
+
+```typescript
+public async deleteAdjustmentById(id: number): Promise<void> {
+    // Soft delete atau hard delete dengan audit log
+}
+```
+
+### Phase 5: Backend — Opsional: soft delete dengan `deleted_at` column
+
+**DB Migration:**
+```sql
+ALTER TABLE dbo.payroll_manual_adjustments
+ADD deleted_at DATETIME2 NULL,
+    deleted_by VARCHAR(100) NULL;
+```
+
+### Phase 6: API — Update route dengan dryRun param
+
+**File:** `backend/src/api/payroll.ts`
+
+```typescript
+.delete("/manual-adjustment/column", async ({ query, set }) => {
+    const dryRun = query.dry_run === 'true';
+    const result = await manualAdjustmentService.deleteAdjustmentColumn({
+        ...query,
+        dryRun
+    });
+    if (dryRun) return { preview: true, ...result };
+    return { success: true, deleted_count: result, message: "..." };
+}, {
+    query: t.Object({
+        period_month: t.String(),
+        period_year: t.String(),
+        division_code: t.Optional(t.String()),
+        adjustment_type: t.String(),
+        adjustment_name: t.String(),
+        dry_run: t.Optional(t.String())  // <-- TAMBAHAN
+    })
+})
+```
+
+### Phase 7: Frontend — Update confirmation dialog
+
+**File:** `frontend/src/components/CustomPayrollTable.jsx`
+
+```javascript
+// Sebelum delete, fetch preview
+const preview = await fetch(`/payroll/manual-adjustment/column/preview?${params}`);
+openPayrollConfirm({
+    variant: 'danger',
+    title: 'Konfirmasi Hapus Kolom',
+    message: `Akan menghapus ${preview.totalRecords} record untuk ${preview.employeeCount} employee di ${preview.gangCount} gang. Total: Rp ${formatRupiah(preview.totalAmount)}`,
+    // ...
+});
+```
+
+### Phase 8: Frontend — Update service
+
+**File:** `frontend/src/services/manualAdjustmentService.js`
+
+```javascript
+export async function previewDeleteAdjustmentColumn(token, params) {
+    const response = await axios.get('payroll/manual-adjustment/column/preview', {
+        params,
+        headers: authHeaders(token)
+    });
+    return response.data;
+}
+```
+
+### Phase 9: Testing
+
+```typescript
+it("deleteAdjustmentColumn dengan dryRun=true tidak delete records", async () => { ... });
+it("deleteAdjustmentColumn return correct affected count", async () => { ... });
+it("previewDeleteAdjustmentColumn return aggregation", async () => { ... });
+```
+
+---
+
+## 10. Files Referenced
+
+| File | Role |
+|------|------|
+| `backend/src/services/manualAdjustmentService.ts` | Source of truth untuk deleteAdjustmentColumn() |
+| `backend/src/api/payroll.ts` | API endpoints yang memanggil deleteAdjustmentColumn |
+| `backend/src/services/manualAdjustmentService.test.ts` | Test case yang mengkonfirmasi bulk delete intent |
+| `frontend/src/services/manualAdjustmentService.js` | Frontend service yang memanggil API |
+| `frontend/src/services/lockedDivisionService.js` | Locked division service variant |
+| `frontend/src/components/CustomPayrollTable.jsx` | Frontend UI yang trigger delete column |
+
+---
+
+**Report Generated:** 2026-06-05
+**Phase:** Phase 3A - Hypothesis Testing
+**Investigator:** Claude Code (Investigate Skill)

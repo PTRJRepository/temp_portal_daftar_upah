@@ -1,0 +1,8 @@
+﻿{
+  "id": "IMPL-5",
+  "title": "Add income audit print page and signature/footer system",
+  "description": "Render a third standard-mode print page with income estate summary, validation checklist, income detail audit table, approval signatures, and consistent three-column footers with page numbers.",
+  "depends_on": ["IMPL-1", "IMPL-3", "IMPL-4"],
+  "convergence": "Standard print output has three pages with consistent metadata, footer, and approval area.",
+  "meta": { "type": "frontend-print", "agent": "implementation" }
+}

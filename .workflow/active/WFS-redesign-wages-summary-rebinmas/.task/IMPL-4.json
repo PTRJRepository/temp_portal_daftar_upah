@@ -1,0 +1,8 @@
+﻿{
+  "id": "IMPL-4",
+  "title": "Add deduction audit print page",
+  "description": "Render a second standard-mode print page with deduction estate summary, audit notes, and detail table containing PPH 21, SPSI, total potongan, portal net pay, thumb print, selisih, and status audit.",
+  "depends_on": ["IMPL-1", "IMPL-3"],
+  "convergence": "Page 2 is generated from the same data as page 1 and flags nonzero selisih as Review.",
+  "meta": { "type": "frontend-print", "agent": "implementation" }
+}

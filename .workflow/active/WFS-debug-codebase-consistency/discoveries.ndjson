@@ -1,0 +1,6 @@
+{"task_id":"IMPL-2","severity":"fixed","summary":"Koreksi is now converted with Math.abs before payroll gross/tax/bruto calculations so both 10 and -10 reduce wages by 10."}
+{"task_id":"IMPL-3","severity":"fixed","summary":"Excel deduction cells now store signed negative values and formulas add those signed cells, avoiding double-negative transformations."}
+{"task_id":"IMPL-3","severity":"fixed","summary":"Daftar Upah Excel includes pendapatan lainnya detail columns under Upah Kotor and Potongan Upah Bersih, matching the web behavior more closely."}
+{"task_id":"IMPL-4","severity":"fixed","summary":"Payslip and tax display code formats deductions from absolute magnitudes to avoid duplicate minus signs and sign inversions."}
+{"task_id":"IMPL-5","severity":"residual-risk","summary":"Full cross-source reconciliation needs representative employee-period data; current execution verified code paths and regression tests only."}
+{"task_id":"IMPL-8","severity":"info","summary":"Frontend build passes; Vite still reports an existing summaryReportService dynamic/static import chunking warning."}

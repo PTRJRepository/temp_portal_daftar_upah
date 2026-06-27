@@ -1,0 +1,9 @@
+{
+  "id": "IMPL-4",
+  "status": "completed",
+  "title": "Frontend Display And Payslip Audit",
+  "description": "Audit payroll table, tax pages, payslip components, employee detail, salary history, and report summary UI for inconsistent sign display and duplicated calculations.",
+  "depends_on": ["IMPL-1", "IMPL-2"],
+  "convergence": ["UI display-only fields separated from calculation fields", "formatting helpers reviewed", "payslip discrepancies listed"],
+  "meta": { "type": "analysis", "agent": "frontend-payroll-auditor" }
+}

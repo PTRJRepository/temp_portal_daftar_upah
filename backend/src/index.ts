@@ -28,6 +28,18 @@ import { OtherIncomesService } from "./services/otherIncomesService";
 import { historyDatabaseService } from "./services/historyDatabaseService";
 import { staticPlugin } from "@elysiajs/static";
 import { debug, info, warn, error } from "./utils/logger";
+import { telegramBot } from "./services/telegramBotService";
+
+// Format uptime seconds to human readable
+const formatUptime = (seconds: number): string => {
+    const days = Math.floor(seconds / 86400);
+    const hours = Math.floor((seconds % 86400) / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+    if (days > 0) return `${days}d ${hours}h ${mins}m`;
+    if (hours > 0) return `${hours}h ${mins}m ${secs}s`;
+    return `${mins}m ${secs}s`;
+};
 
 // Initialize Database access
 Database.getInstance();
@@ -123,6 +135,18 @@ setTimeout(() => {
     // Migration: add new_nik column for NIK change tracking (append-only pattern)
     historyDatabaseService.migrateNewNikColumn().catch(err => error("Init", "Failed to migrate new_nik column", err));
 }, 1000);
+    // Initialize Telegram Bot (background)
+    const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+    if (TELEGRAM_TOKEN) {
+        telegramBot.initialize({
+            token: TELEGRAM_TOKEN,
+            chatIds: process.env.TELEGRAM_CHAT_IDS?.split(',').filter(Boolean)
+        });
+        telegramBot.start();
+    } else {
+        console.log("[Telegram] No bot token configured - bot disabled");
+    }
+
 
 const app = new Elysia()
     // CORS Configuration
@@ -283,6 +307,87 @@ const app = new Elysia()
         database: Config.DEFAULT_DATABASE,
         profile: Config.DB_PROFILE
     }))
+
+    // ========================
+    // SERVER MONITORING ENDPOINTS
+    // ========================
+    .get("/api/monitor/system", async () => {
+        const os = require('os');
+        const totalMem = os.totalmem();
+        const freeMem = os.freemem();
+        const usedMem = totalMem - freeMem;
+        const memUsagePercent = (usedMem / totalMem) * 100;
+
+        // Calculate CPU usage by averaging load
+        const cpus = os.cpus();
+        let totalIdle = 0;
+        let totalTick = 0;
+        cpus.forEach(cpu => {
+            for (const type in cpu.times) {
+                totalTick += cpu.times[type];
+            }
+            totalIdle += cpu.times.idle;
+        });
+
+        const cpuUsagePercent = 100 - (totalIdle / totalTick * 100);
+
+        return {
+            uptime: os.uptime(),
+            uptime_formatted: formatUptime(os.uptime()),
+            loadavg: os.loadavg(),
+            memory: {
+                total: totalMem,
+                used: usedMem,
+                free: freeMem,
+                usage_percent: parseFloat(memUsagePercent.toFixed(2))
+            },
+            cpu: {
+                count: os.cpus().length,
+                usage_percent: parseFloat(cpuUsagePercent.toFixed(2)),
+                model: os.cpus()[0]?.model || 'Unknown',
+                speed: os.cpus()[0]?.speed || 0
+            },
+            platform: os.platform(),
+            hostname: os.hostname(),
+            arch: os.arch(),
+            release: os.release(),
+            timestamp: new Date().toISOString()
+        };
+    })
+    .get("/api/monitor/services", async () => {
+        // Monitor local services - check if ports are listening
+        const services = [
+            { name: 'Portal Backend API', port: Config.PORT, type: 'api', status: 'online' },
+            { name: 'n8n Automation', port: 5678, type: 'service', status: 'unknown' },
+            { name: 'SQL Gateway', port: 8001, type: 'service', status: 'unknown' },
+            { name: 'MySQL/MSSQL', port: 1433, type: 'database', status: 'unknown' },
+        ];
+
+        // For now, return static service list with online status for our own service
+        return {
+            services: services.map(svc => ({
+                ...svc,
+                status: svc.name === 'Portal Backend API' ? 'online' : (svc.status || 'unknown'),
+                last_check: new Date().toISOString()
+            })),
+            timestamp: new Date().toISOString()
+        };
+    })
+    .get("/api/monitor/process", () => {
+        // Get Bun/Elysia server process info
+        return {
+            pid: process.pid,
+            memory: {
+                rss: process.memoryUsage().rss,
+                heapTotal: process.memoryUsage().heapTotal,
+                heapUsed: process.memoryUsage().heapUsed,
+                external: process.memoryUsage().external
+            },
+            cpu: process.cpuUsage(),
+            timestamp: new Date().toISOString()
+        };
+    })
+
     // Development config routes (no prefix)
     .use(devConfigRoutes)
     // Auth routes: /auth/login, /auth/me

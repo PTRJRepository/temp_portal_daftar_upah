@@ -1,0 +1,11 @@
+{
+  "id": "IMPL-1",
+  "title": "Stabilize print header and logo",
+  "description": "Replace the CSS-background logo/decorative header with print-friendly logo/kop markup and restrained accent styling.",
+  "target_files": ["frontend/src/components/common/ReportPrintHeader.jsx"],
+  "acceptance": [
+    "Logo markup is visible in print without relying only on CSS background images.",
+    "Header decoration cannot overlap logo or metadata.",
+    "Header still renders company name, report title, period, and metadata."
+  ]
+}

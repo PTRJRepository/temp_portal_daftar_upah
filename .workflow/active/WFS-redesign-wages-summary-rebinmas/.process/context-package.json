@@ -1,0 +1,44 @@
+﻿{
+  "critical_files": [
+    "frontend/src/pages/WagesSummaryRebinmasPage.jsx",
+    "frontend/src/styles/wages-summary-professional.css",
+    "frontend/src/styles/wages-summary-print-simple.css",
+    "frontend/src/styles/report-print-foundation.css",
+    "frontend/src/styles/wages-summary-print-simple.test.js",
+    "frontend/src/styles/wages-summary-professional.test.js",
+    "frontend/src/services/summaryReportService.js",
+    "frontend/src/components/common/ReportPrintMetadata.jsx",
+    "frontend/src/components/common/ReportWatermark.jsx",
+    "frontend/src/components/common/PrintSignature.jsx",
+    "frontend/src/utils/printPageSetup.js"
+  ],
+  "patterns": [
+    "Existing Rebinmas report is a custom React page using .wsp-* CSS classes and explicit HTML tables instead of AG Grid.",
+    "Data grouping is currently computed in groupedData from summaryData and groupSubtotals.",
+    "The standard summary mode already has grouped table headers for manpower, deductions, income, and comparison.",
+    "Print mode relies on .wsp-document, .wages-rebinmas-print-document, print-only/no-print helpers, and @page A4 landscape rules.",
+    "Shared print metadata and watermark components already exist and should be reused."
+  ],
+  "dependencies": ["React 18", "Vite", "Vitest", "lucide-react", "summaryReportService all-divisions endpoint", "Browser print via printReport"],
+  "integration_points": [
+    { "module": "frontend-page", "file": "frontend/src/pages/WagesSummaryRebinmasPage.jsx", "purpose": "Report state, data shaping, toolbar actions, print-page rendering" },
+    { "module": "frontend-style", "file": "frontend/src/styles/wages-summary-professional.css", "purpose": "Screen styling and core report styles" },
+    { "module": "frontend-style", "file": "frontend/src/styles/wages-summary-print-simple.css", "purpose": "Print-specific Wages Rebinmas overrides" },
+    { "module": "frontend-test", "file": "frontend/src/styles/wages-summary-print-simple.test.js", "purpose": "CSS behavior locks for Wages Rebinmas print" },
+    { "module": "frontend-test", "file": "frontend/src/pages/WagesSummaryRebinmasPage.*.test.js", "purpose": "Focused rendering/helper tests to add if practical" }
+  ],
+  "conflict_risk": "medium",
+  "conflict_areas": [
+    "Dirty worktree contains unrelated frontend/backend changes and untracked workflow artifacts.",
+    "Wages print CSS has overlapping print rules across three CSS files.",
+    "The existing component is monolithic, so extracting reusable print-page helpers must be carefully scoped.",
+    "Standard mode shares state and markup with THR/comparison/impact modes; changes must be gated to standard Rebinmas summary."
+  ],
+  "constraints": [
+    "Planning-only workflow; do not execute implementation.",
+    "Do not overwrite unrelated uncommitted changes.",
+    "No backend formula/database changes.",
+    "Preserve existing report modes and exports.",
+    "Print output must be A4 landscape and at least three pages for standard Wages Summary."
+  ]
+}

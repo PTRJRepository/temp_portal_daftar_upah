@@ -1,0 +1,10 @@
+{
+  "task_ids": ["IMPL-1", "IMPL-2", "IMPL-3", "IMPL-4", "IMPL-5", "IMPL-6"],
+  "recommended_execution": "sequential",
+  "complexity": "high",
+  "shared_context": {
+    "session": ".workflow/active/WFS-fix-payroll-tax-export-income-alignment",
+    "primary_goal": "Align Daftar Upah display/export and Pajak export row and income semantics.",
+    "canonical_rule_needed": "BONUS and EXGRATIA must resolve through one explicit category rule before totals/export mapping."
+  }
+}

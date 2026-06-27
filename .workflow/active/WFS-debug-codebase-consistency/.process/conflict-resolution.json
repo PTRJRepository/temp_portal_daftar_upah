@@ -1,0 +1,26 @@
+{
+  "conflicts": [
+    {
+      "area": "dirty worktree",
+      "severity": "high",
+      "description": "Many files are modified or untracked before this planning session. Some are likely unrelated report/print work.",
+      "strategy": "Before executing any task, capture git status and restrict edits to the specific task's files. Do not stage with git add .",
+      "impact": "Prevents overwriting parallel work and keeps audit fixes reviewable."
+    },
+    {
+      "area": "deduction sign semantics",
+      "severity": "high",
+      "description": "Backend calculation uses positive deduction magnitudes, while Excel/display may use signed negative cells. Mixing these creates -(-amount) defects.",
+      "strategy": "Establish an invariant document and add tests for both positive and negative source inputs across payroll, tax, payslip, and exports.",
+      "impact": "Reduces payroll validity risk and avoids future regressions."
+    },
+    {
+      "area": "duplicate formula implementations",
+      "severity": "medium",
+      "description": "Formula logic appears in backend services, frontend aggregators, Excel exporters, tax pages, and payslips.",
+      "strategy": "Audit all formula sites first; only consolidate where an existing shared helper already exists or a small adapter can remove real duplication.",
+      "impact": "Avoids creating a large abstraction while still eliminating dangerous inconsistencies."
+    }
+  ],
+  "resolved_at": "2026-06-05T17:55:00+07:00"
+}

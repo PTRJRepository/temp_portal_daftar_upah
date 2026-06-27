@@ -1,0 +1,28 @@
+{
+  "id": "IMPL-1",
+  "status": "completed",
+  "title": "Frontend Aggregation Gross/Net Formula Integrity",
+  "description": "Prevent client-side aggregation from including premi_pph in gross premi or pot_koreksi in net deductions.",
+  "depends_on": [],
+  "target_files": ["frontend/src/utils/aggregationUtils.js", "frontend/src/utils/aggregationUtils.test.js"],
+  "implementation": [
+    {
+      "step": 1,
+      "tdd_phase": "red",
+      "description": "Add failing tests proving premi_pph is excluded from gross total_premi and pot_koreksi is excluded from total_potongan/net deduction because koreksi already reduces gross.",
+      "expected_failure": "Current aggregation includes at least one disallowed field."
+    },
+    {
+      "step": 2,
+      "tdd_phase": "green",
+      "description": "Implement minimal field classification changes and absolute deduction handling until tests pass.",
+      "test_fix_cycle": { "max_iterations": 3, "auto_revert": true }
+    },
+    {
+      "step": 3,
+      "tdd_phase": "refactor",
+      "description": "Extract local helper predicates for gross-premi and net-deduction fields without changing behavior."
+    }
+  ],
+  "verification": ["cd frontend && npx vitest run src/utils/aggregationUtils.test.js"]
+}

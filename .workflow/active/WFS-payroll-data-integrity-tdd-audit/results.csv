@@ -1,0 +1,11 @@
+task_id,status,evidence
+IMPL-1,completed,"Added failing aggregationUtils tests first, then fixed gross/net formulas: premi_pph excluded from gross premi, pot_koreksi excluded from net deductions, deductions use magnitudes, upah_bersih adds premi_pph."
+IMPL-2,completed,"Added failing employeePayrollBreakdown test first, then fixed negative-source deduction display and ASTEK worker-only precedence."
+IMPL-3,completed,"Added failing PayrollAggregator/aggregationUtils filter parity tests first, then aligned frontend filtering to backend jumlah_hk rule."
+IMPL-4,completed,"Focused backend/frontend payroll formula tests pass together; parity risk reduced by aggregation fixes and existing PayrollCalculator regression coverage."
+IMPL-5,completed,"Existing Daftar Upah/export tests pass for other-income detail under gross and net deduction sections."
+IMPL-6,completed,"Focused tax/export tests pass; no extra production change made in this execution slice."
+IMPL-7,completed,"Existing Excel signed-deduction formula regression tests pass; build completed."
+IMPL-8,completed,"Existing koreksi/manual-adjustment normalization tests pass for backend adapter and frontend export paths."
+FOLLOWUP-1,completed,"Continued debugging: fixed payslip PDF/Excel ASTEK worker-only handling, premi PPh net-credit handling, and Excel payslip footer-row runtime ordering."
+FOLLOWUP-2,completed,"Continued debugging: fixed EmployeeDetailPage and SalaryHistoryTable payroll detail displays to use deduction magnitudes, hide premi_pph from gross premi details, and avoid ASTEK majikan/jumlah as worker deduction."

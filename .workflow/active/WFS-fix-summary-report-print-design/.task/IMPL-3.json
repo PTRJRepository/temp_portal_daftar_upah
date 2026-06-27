@@ -1,0 +1,11 @@
+{
+  "id": "IMPL-3",
+  "title": "Preserve SummaryReportPage print behavior",
+  "description": "Confirm all three print pages use the improved header and retain existing report content/order.",
+  "target_files": ["frontend/src/pages/SummaryReportPage.jsx"],
+  "acceptance": [
+    "Print pages remain ordered Summary, Uraian Premi, Detail Gang.",
+    "Signature area remains on page 1.",
+    "Footer page labels remain Hal. 1 / 3 through Hal. 3 / 3."
+  ]
+}

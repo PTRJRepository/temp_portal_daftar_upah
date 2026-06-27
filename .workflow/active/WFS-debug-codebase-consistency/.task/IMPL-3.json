@@ -1,0 +1,9 @@
+{
+  "id": "IMPL-3",
+  "status": "completed",
+  "title": "Excel Export Formula Audit",
+  "description": "Audit all Excel generators and formula builders for signed-deduction behavior, totals rows, formula strings, and dangerous patterns such as subtracting already-negative cells.",
+  "depends_on": ["IMPL-1", "IMPL-2"],
+  "convergence": ["export files mapped", "dangerous formula patterns searched", "regression assertions proposed"],
+  "meta": { "type": "analysis", "agent": "excel-export-auditor" }
+}

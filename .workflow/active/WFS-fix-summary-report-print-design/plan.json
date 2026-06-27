@@ -1,0 +1,37 @@
+{
+  "session_id": "WFS-fix-summary-report-print-design",
+  "status": "completed",
+  "goal": "Fix Summary Report print design defects, especially cropped logo and missing print letterhead/kop.",
+  "tasks": [
+    {
+      "id": "IMPL-1",
+      "title": "Stabilize print header and logo",
+      "files": ["frontend/src/components/common/ReportPrintHeader.jsx"]
+    },
+    {
+      "id": "IMPL-2",
+      "title": "Fix A4 landscape print CSS",
+      "files": ["frontend/src/styles/summary-report-new.css"]
+    },
+    {
+      "id": "IMPL-3",
+      "title": "Preserve SummaryReportPage print behavior",
+      "files": ["frontend/src/pages/SummaryReportPage.jsx"]
+    },
+    {
+      "id": "IMPL-4",
+      "title": "Add focused print header tests",
+      "files": [
+        "frontend/src/pages/SummaryReportPage.printHeader.test.js",
+        "frontend/src/styles/report-print-foundation.test.js"
+      ]
+    },
+    {
+      "id": "IMPL-5",
+      "title": "Verify tests, build, and print output",
+      "files": []
+    }
+  ],
+  "risk": "medium",
+  "risk_reason": "Relevant files are already modified/untracked in the worktree, so implementation must avoid overwriting existing WIP."
+}

@@ -1,0 +1,8 @@
+﻿{
+  "id": "IMPL-2",
+  "title": "Redesign web toolbar and KPI area",
+  "description": "Update standard-mode toolbar and KPI cards to match the dark-blue corporate Professional Grid direction while preserving division/period filters and actions: print, export CSV, refresh, THR mode, Wages Comparison, Impact Report, and Edit Mode.",
+  "depends_on": ["IMPL-1"],
+  "convergence": "Toolbar remains functionally equivalent and KPI cards are readable on web and print preview.",
+  "meta": { "type": "frontend-ui", "agent": "implementation" }
+}

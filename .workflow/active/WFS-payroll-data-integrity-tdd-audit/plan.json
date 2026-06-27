@@ -1,0 +1,14 @@
+{
+  "task_ids": ["IMPL-1", "IMPL-2", "IMPL-3", "IMPL-4", "IMPL-5", "IMPL-6", "IMPL-7", "IMPL-8"],
+  "recommended_execution": "sequential_tdd_red_green_refactor",
+  "complexity": "high",
+  "tdd_compliance": true,
+  "quality_gate": "conditional",
+  "primary_risks": [
+    "frontend/backend formula drift",
+    "deduction sign inversion",
+    "gross/net double count",
+    "attendance filter mismatch",
+    "tax field precedence ambiguity"
+  ]
+}

@@ -1,0 +1,8 @@
+- [x] IMPL-1: Baseline Inventory And Ownership Snapshot
+- [x] IMPL-2: Payroll Formula And Sign-Semantics Audit
+- [x] IMPL-3: Excel Export Formula Audit
+- [x] IMPL-4: Frontend Display And Payslip Audit
+- [x] IMPL-5: Data Source Consistency Audit
+- [x] IMPL-6: Regression Test Matrix
+- [x] IMPL-7: Documentation And Guardrail Comments
+- [x] IMPL-8: Verification Sweep

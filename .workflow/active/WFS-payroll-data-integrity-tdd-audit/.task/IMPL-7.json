@@ -1,0 +1,28 @@
+{
+  "id": "IMPL-7",
+  "status": "completed",
+  "title": "Excel Formula Guard Scanner And Export Snapshot Tests",
+  "description": "Prevent reintroduction of formulas that subtract signed deduction cells or produce double negatives.",
+  "depends_on": ["IMPL-5", "IMPL-6"],
+  "target_files": ["backend/src/services/daftarUpahExcelService.test.ts", "backend/src/services/taxReportExcelService.test.ts", "frontend/src/utils/exportPayrollToExcel.test.js", "frontend/src/utils/exportReportToExcelPro.js"],
+  "implementation": [
+    {
+      "step": 1,
+      "tdd_phase": "red",
+      "description": "Add source/formula scanner tests for patterns like -ABS, -N, subtracting signed deduction refs, and rendered -(-amount) strings.",
+      "expected_failure": "Any exporter still emits or contains dangerous formula patterns."
+    },
+    {
+      "step": 2,
+      "tdd_phase": "green",
+      "description": "Fix exporter formulas so deduction cells are signed negatives and formulas add signed references.",
+      "test_fix_cycle": { "max_iterations": 3, "auto_revert": true }
+    },
+    {
+      "step": 3,
+      "tdd_phase": "refactor",
+      "description": "Put scanner patterns in a small local test helper with comments explaining the invariant."
+    }
+  ],
+  "verification": ["cd backend && bun test src/services/daftarUpahExcelService.test.ts src/services/taxReportExcelService.test.ts", "cd frontend && npx vitest run src/utils/exportPayrollToExcel.test.js"]
+}

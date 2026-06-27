@@ -1,0 +1,9 @@
+{
+  "id": "IMPL-1",
+  "title": "Audit reproduction and baseline comparison",
+  "description": "Create a focused diagnostic/test fixture comparing Daftar Upah source rows, tax report mapped rows, and export columns for duplicate/missing employees and Bonus/Exgratia bucket differences.",
+  "depends_on": [],
+  "convergence": "A repeatable audit identifies the mismatching identities and income fields before behavior changes.",
+  "meta": { "type": "analysis", "agent": "implementation" },
+  "status": "completed"
+}

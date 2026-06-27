@@ -1,0 +1,30 @@
+{
+  "test_framework": "bun:test and vitest",
+  "test_patterns": {
+    "backend_unit": "backend/src/**/*.test.ts",
+    "frontend_unit": "frontend/src/**/*.test.js and frontend/src/**/*.test.jsx"
+  },
+  "coverage_summary": {
+    "lines": "not measured in this planning step",
+    "branches": "not measured in this planning step",
+    "functions": "not measured in this planning step"
+  },
+  "coverage_gaps": [
+    "No direct test for frontend aggregationUtils gross/net formula edge cases.",
+    "No cross-engine parity fixture comparing backend PayrollCalculator with frontend aggregation/display/export totals.",
+    "Employee payroll breakdown does not appear to cover negative koreksi/potongan source values.",
+    "Attendance filtering rule is not asserted across backend and frontend implementations together.",
+    "No formula-pattern regression test that scans all Excel exporters for subtracting signed deduction cells."
+  ],
+  "test_utilities": [
+    "bun test src/services/...",
+    "npx vitest run src/utils/...",
+    "xlsx/excel workbook inspection in existing export tests",
+    "renderToStaticMarkup based component tests"
+  ],
+  "conventions": {
+    "backend": "bun:test with describe/test/expect or assert helper",
+    "frontend": "Vitest with describe/it/expect",
+    "fixtures": "small explicit payroll rows with hand-calculated totals"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "id": "TASK-002",
+  "title": "Verify daftar upah Excel export includes total_tunjangan in upah_kotor",
+  "description": "Check if daftarUpahExcelService.ts properly includes total_tunjangan in the upah_kotor calculation. The formula should be: upah_kotor = gp_aktual + total_tunjangan + total_premi + pendapatan_lainnya - pot_koreksi. Need to verify the Excel export formula matches the PayrollCalculator.",
+  "scope": "backend/src/services/daftarUpahExcelService.ts",
+  "files": [
+    {
+      "path": "backend/src/services/daftarUpahExcelService.ts",
+      "role": "primary",
+      "change": "Line 544-548: Verify formula `${lGA}${r}+${lTunj}${r}+${lTotalPremi}${r}${otherIncomeFormula}${koreksiFormula}` correctly uses gp_aktual + total_tunjangan. Line 349: Verify UPAH KOTOR header says '(GP+Tunj+Premi)'."
+    }
+  ],
+  "convergence": {
+    "criteria": [
+      "Daftar Upah Excel export formula includes total_tunjangan column in upah_kotor calculation",
+      "Header correctly states 'GP+Tunj+Premi'",
+      "Formula is: gp_aktual + total_tunjangan + total_premi"
+    ]
+  },
+  "dependencies": ["TASK-001"],
+  "_metadata": {
+    "priority": "high",
+    "estimated_time": "10-15 minutes",
+    "created_at": "2026-06-08T00:00:00.000Z"
+  }
+}

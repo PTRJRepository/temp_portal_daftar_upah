@@ -1,0 +1,8 @@
+﻿{
+  "id": "IMPL-1",
+  "title": "Prepare standard Wages data model",
+  "description": "Normalize standard Rebinmas summary data into reusable grouped rows and audit rows for summary, deduction, and income pages. Derive total_potongan, total_income, audit_status, and audit_remark without backend changes.",
+  "depends_on": [],
+  "convergence": "All report pages consume the same derived source values and missing payroll numbers render consistently as 0.",
+  "meta": { "type": "frontend-data", "agent": "implementation" }
+}

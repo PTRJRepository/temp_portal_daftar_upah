@@ -1,0 +1,28 @@
+{
+  "id": "IMPL-8",
+  "status": "completed",
+  "title": "Manual Adjustment Koreksi End To End Normalization",
+  "description": "Verify koreksi/manual adjustment values are normalized from API/service through UI/export regardless of positive or negative input.",
+  "depends_on": ["IMPL-4", "IMPL-7"],
+  "target_files": ["backend/src/services/manualAdjustmentService.test.ts", "backend/src/services/payroll/formulas/adapters/aggregationAdapter.test.ts", "frontend/src/utils/PayrollAggregator.test.js", "frontend/src/utils/exportPayrollToExcel.test.js", "frontend/src/components/CustomPayrollTable.render.test.jsx"],
+  "implementation": [
+    {
+      "step": 1,
+      "tdd_phase": "red",
+      "description": "Add end-to-end tests for manual adjustment values 10 and -10 across adapter, aggregator, table, and Excel export.",
+      "expected_failure": "Any path changes sign, hides the deduction, or deducts twice."
+    },
+    {
+      "step": 2,
+      "tdd_phase": "green",
+      "description": "Normalize sign at input boundaries and keep output sections consistent with calculation/display invariants.",
+      "test_fix_cycle": { "max_iterations": 3, "auto_revert": true }
+    },
+    {
+      "step": 3,
+      "tdd_phase": "refactor",
+      "description": "Add minimal guardrail comments only at sign-boundary code and remove redundant local conversions if tests prove them unnecessary."
+    }
+  ],
+  "verification": ["cd backend && bun test src/services/manualAdjustmentService.test.ts src/services/payroll/formulas/adapters/aggregationAdapter.test.ts", "cd frontend && npx vitest run src/utils/PayrollAggregator.test.js src/utils/exportPayrollToExcel.test.js src/components/CustomPayrollTable.render.test.jsx"]
+}

@@ -1,0 +1,16 @@
+{
+  "relevant_files": [
+    "frontend/src/pages/SummaryReportPage.jsx",
+    "frontend/src/components/common/ReportPrintHeader.jsx",
+    "frontend/src/styles/summary-report-new.css",
+    "frontend/src/pages/SummaryReportPage.printHeader.test.js",
+    "frontend/src/styles/report-print-foundation.test.js"
+  ],
+  "observations": [
+    "Print pages are already split into three srn-paper articles.",
+    "ReportPrintHeader uses a CSS-gradient logo block and a top-right curved SVG decoration.",
+    "Print CSS sets srn-paper to A4 landscape but can clip header elements via fixed height and overflow behavior.",
+    "A CSS/background-only logo is less reliable in print than inline SVG or explicit markup."
+  ],
+  "conflict_risk": "medium"
+}

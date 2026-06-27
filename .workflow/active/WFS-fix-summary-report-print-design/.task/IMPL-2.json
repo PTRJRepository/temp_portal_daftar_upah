@@ -1,0 +1,11 @@
+{
+  "id": "IMPL-2",
+  "title": "Fix A4 landscape print CSS",
+  "description": "Harden print media styles so logo, kop, metadata, footer, and page dimensions survive print/PDF output.",
+  "target_files": ["frontend/src/styles/summary-report-new.css"],
+  "acceptance": [
+    "srn-paper-header and logo are explicitly visible under @media print.",
+    "Print paper does not crop the header/logo.",
+    "Header border/accent is formal and not visually distracting."
+  ]
+}

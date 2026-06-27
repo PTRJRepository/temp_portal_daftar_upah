@@ -1,0 +1,648 @@
+# Investigation Report - Phase 2: Database Audit
+**Date:** 2026-06-05
+**Task:** Audit payroll system - Phase 2
+**Status:** PHASE_2_COMPLETE
+
+---
+
+## 2. DATABASE ARCHITECTURE OVERVIEW
+
+###2.1 Database Profiles
+
+| Database | Purpose | Profile | Access Pattern |
+|----------|---------|---------|----------------|
+| `db_ptrj` | Main payroll production data | SERVER_PROFILE_2 | `Database.getInstance()` |
+| `extend_db_ptrj` | Aggregation history, manual adjustments | SERVER_PROFILE_1 | `Database.getExtendedInstance()` |
+| `VenusHR14` | Employee master, VenusHR data | SERVER_PROFILE_3 | `Database.getVenusInstance()` |
+| `db_ptrj_mill` | Mill/FFB data | SERVER_PROFILE_3 | `Database.getMillInstance()` |
+
+### 2.2 SQL Gateway Architecture
+
+- **Backend → Python SQL Gateway → MSSQL** (no direct MSSQL connection)
+- All queries go through `POST {DB_API_URL}/v1/query`
+- Parameterized queries with `?` placeholders → converted to `@p0`, `@p1` named params
+- Batch transactions supported via `POST /v1/query/batch`
+- Query timeout: configurable (default 30s)
+- Retry logic: up to 3 retries with exponential backoff
+
+### 2.3 Database Client (`backend/src/db/client.ts`)
+
+```typescript
+// Singleton pattern with multi-database support
+Database.getInstance(database?, profile?) → single instance per key
+Database.getExtendedInstance()           → extend_db_ptrj
+Database.getVenusInstance()               → VenusHR14
+Database.getMillInstance()               → db_ptrj_mill
+
+// Query methods
+db.query<T>(sql, params)        → returns T[]
+db.queryOne<T>(sql, params)     → returns T | null
+db.count(sql, params)           → returns number
+db.transaction(queries[]) → returns boolean (all-or-nothing)
+```
+
+**Key Observation:** `transaction()` exists but is **rarely used** in write operations.
+
+---
+
+## 3. DATABASE SCHEMAS& MODELS
+
+### 3.1 payroll_manual_adjustments (extend_db_ptrj)
+
+**Primary table for manual adjustments and audit trail.**
+
+| Column | Type | Nullable | Purpose | Risk |
+|--------|------|----------|---------|------|
+| `id` | INT IDENTITY | NO | Primary key | - |
+| `period_month` | INT | NO | Month filter | ✅ Parameterized |
+| `period_year` | INT | NO | Year filter | ✅ Parameterized |
+| `emp_code` | VARCHAR(50) | YES | Employee code (B0065, etc.) | ⚠️ String interpolation in IN clauses |
+| `nik` | VARCHAR(50) | YES | NIK (KTP) - primary stable ID | ⚠️ Added via migration, no index initially |
+| `emp_name` | VARCHAR(150) | YES | Employee name | ⚠️ Can store bad data |
+| `gang_code` | VARCHAR(50) | YES | Gang code | ✅ Parameterized |
+| `division_code` | VARCHAR(50) | YES | Division/estate code | ⚠️ Multiple variants (1A, P1A, PG1A) |
+| `adjustment_type` | VARCHAR(50) | NO | PREMI, POTONGAN_KOTOR, POTONGAN_BERSIH, PENDAPATAN_LAINNYA, AUTO_BUFFER | ✅ IN clause with whitelist |
+| `adjustment_name` | VARCHAR(200) | NO | Named adjustment (e.g. "PREMI PRUNING") | ⚠️ Normalized via `buildNormalizedSqlNameExpression()` |
+| `amount` | DECIMAL(18,2) | NO | Amount value | ⚠️ CRITICAL: Can mismatch with metadata_json.total_amount |
+| `remarks` | NVARCHAR(MAX) | YES | Pipe-delimited audit info | ⚠️ Contains sync:STATUS, match:STATUS |
+| `metadata_json` | NVARCHAR(MAX) | YES | JSON detail items (blok/exp/kendaraan) | ⚠️ CRITICAL: No JSON validation, no CHECK constraint |
+| `ad_code` | VARCHAR(50) | YES | AD code (e.g. AL3PM0601P1A) | - |
+| `task_code` | VARCHAR(50) | YES | Task code | - |
+| `base_task_code` | VARCHAR(50) | YES | Base task code | - |
+| `task_desc` | VARCHAR(500) | YES | Task description | - |
+| `created_by` | VARCHAR(100) | YES | Creator username | - |
+| `created_at` | DATETIME2 | YES | Creation timestamp | - |
+| `updated_by` | VARCHAR(100) | YES | Last updater | - |
+| `updated_at` | DATETIME2 | YES | Last update timestamp | - |
+
+**Indexes (as of migration 2026-04-29):**
+- `IX_payroll_manual_adjustments_nik` on `(nik, period_year, period_month)` — created by `ensureManualAdjustmentIdentitySchema()`
+- **MISSING:** Composite index on `(period_month, period_year, emp_code)`
+- **MISSING:** Composite index on `(period_month, period_year, gang_code)`
+- **MISSING:** Unique constraint on `(period_month, period_year, emp_code, adjustment_name, gang_code)`
+
+### 3.2 employee_other_incomes (extend_db_ptrj)
+
+**Stores PENDAPATAN_LAINNYA (KONTAN, THR, Bonus, Custom income).**
+
+| Column | Type | Nullable | Purpose |
+|--------|------|----------|---------|
+| `id` | INT IDENTITY | NO | Primary key |
+| `nik` | VARCHAR(50) | YES | Real NIK (KTP) - primary lookup key |
+| `emp_code` | VARCHAR(50) | YES | Employee code - secondary lookup key |
+| `emp_name` | VARCHAR(150) | YES | Employee name (null, enriched by data extractor) |
+| `division_code` | VARCHAR(50) | YES | Division code |
+| `gang_code` | VARCHAR(50) | YES | Gang code |
+| `period_year` | INT | NO | Year |
+| `period_month` | INT | NO | Month |
+| `income_type` | VARCHAR(100) | NO | Income type (e.g. "KONTAN") |
+| `income_name` | VARCHAR(100) | NO | Normalized income name |
+| `amount` | DECIMAL(18,2) | NO | Amount |
+| `is_paid_in_thp` | BIT | NO | Paid in THP (false for KONTAN) |
+| `is_taxable` | BIT | NO | Taxable income (false for KONTAN) |
+| `created_at` | DATETIME2 | YES | Creation timestamp |
+| `updated_at` | DATETIME2 | YES | Last update timestamp |
+
+**Upsert Logic:** Check by `nik` first, then by `emp_code` fallback. Stores BOTH fields on update.
+
+### 3.3 payroll_history_header (extend_db_ptrj)
+
+**Master record for payroll history snapshots.**
+
+| Column | Type | Key | Purpose |
+|--------|------|-----|---------|
+| `id` | INT IDENTITY | PK | Primary key |
+| `history_id` | VARCHAR(100) | YES | External history ID |
+| `snapshot_batch_id` | VARCHAR(100) | YES | Batch ID |
+| `snapshot_version` | INT | YES | Version index |
+| `period_month` | INT | NO | Month |
+| `period_year` | INT | NO | Year |
+| `division_code` | VARCHAR(50) | YES | Division code |
+| `gang_code` | VARCHAR(50) | YES | Gang code |
+| `gang_description` | VARCHAR(500) | YES | Gang description |
+| `total_*` (many) | DECIMAL(18,2) | YES | Aggregated totals |
+| `is_locked` | BIT | YES | Lock flag |
+| `created_by` | VARCHAR(100) | YES | Creator |
+| `created_at` | DATETIME2 | YES | Creation timestamp |
+| `updated_at` | DATETIME2 | YES | Last update |
+
+**Indexes:** Composite on `(period_month, period_year, division_code, gang_code, snapshot_version)` — unique upsert key.
+
+### 3.4 payroll_history_detail (extend_db_ptrj)
+
+**Detail record per employee per payroll history snapshot.**
+
+| Column | Type | Key | Purpose |
+|--------|------|-----|---------|
+| `id` | INT IDENTITY | PK | Primary key |
+| `history_id` | VARCHAR(100) | YES | FK to header |
+| `master_id` | INT | YES | FK to header |
+| `emp_code` | VARCHAR(50) | YES | Employee code |
+| `nik` | VARCHAR(50) | YES | NIK |
+| `new_nik` | VARCHAR(50) | YES | New NIK (if updated) |
+| `emp_name` | VARCHAR(150) | YES | Employee name |
+| `gang_code` | VARCHAR(50) | YES | Gang code |
+| `division_code` | VARCHAR(50) | YES | Division code |
+| `loc_code` | VARCHAR(50) | YES | Location code |
+| `total_*` (many) | DECIMAL(18,2) | YES | All payroll components |
+| `premi_detail` | NVARCHAR(MAX) | YES | Premium detail JSON |
+| `potongan_detail` | NVARCHAR(MAX) | YES | Deduction detail JSON |
+| `lembur_records` | NVARCHAR(MAX) | YES | Overtime records JSON |
+| `shortage_details` | NVARCHAR(MAX) | YES | Shortage detail JSON |
+| `created_at` | DATETIME2 | YES | Creation timestamp |
+
+**Indexes:** Unique on `(master_id, emp_code)` — upsert by master_id + emp_code.
+
+### 3.5 Source Tables (db_ptrj - READ ONLY for payroll extraction)
+
+| Table | Purpose | Key Fields |
+|-------|---------|------------|
+| `PR_TASKREGLN` | Live task registration lines | EmpCode, TrxDate, Hours, Amount, TaskCode, OT |
+| `PR_TASKREGLN_ARC` | Archived task registration lines | Same as LIVE |
+| `PR_TASKREG` | Live task registration header | ID, DocDate |
+| `PR_TASKREG_ARC` | Archived task registration header | Same as LIVE |
+| `PR_ADTRANS` | Live adjustment transactions | EmpCode, DocDate, DocDesc, PhyMonth, PhyYear, LocCode |
+| `PR_ADTRANS_ARC` | Archived adjustment transactions | Same as LIVE |
+| `PR_ADTRANSLN` | Live adjustment transaction lines | MasterID, TaskCode, Amount |
+| `PR_ADTRANSLN_ARC` | Archived adjustment lines | Same as LIVE |
+| `PR_TASKCODE` | Task code master | TaskCode, TaskDesc, TaskType, TaskUom |
+| `HR_EMPLOYEE` | Employee master | EmpCode, EmpName, NewICNo (NIK), JoinDate |
+| `HR_GANGLN` | Gang membership | GangCode, GangMember (emp_code) |
+
+---
+
+## 4. SQL QUERY RISK ANALYSIS
+
+### 4.1 Query Patterns by Risk Level
+
+#### 🔴 HIGH RISK: String Interpolation in SQL
+
+**File:** `PayrollAttendanceRepository.ts:57`
+```typescript
+const empList = empCodes.map(e => `'${e}'`).join(",");
+// ⚠️ SQL IN clause built via string interpolation
+WHERE RTRIM(trl.EmpCode) IN (${empList})
+```
+**Risk:** SQL Injection if empCodes contain malicious values. However, empCodes come from internal lookup (employee codes like "B0065"), so risk is LOW-MEDIUM.
+**Recommendation:** Use parameterized query with table-valued parameter or separate query per empCode.
+
+**Same pattern in:**
+- `PayrollPremiPotonganRepository.ts:40` — `IN (${empList})`
+- `PayrollTaskRepository.ts:34` — `IN (${empList})`
+- `PayrollHistoryRepository.ts:100` — `IN (${empList})`
+
+#### 🔴 HIGH RISK: deleteAdjustmentColumn — Bulk Delete Without Transaction
+
+**File:** `manualAdjustmentService.ts:2326-2332`
+```typescript
+await db.query(`
+    DELETE FROM dbo.payroll_manual_adjustments
+    WHERE period_month = ? AND period_year = ?
+      AND adjustment_type = ?
+      AND ${normalizedAdjustmentNameSql} = ?
+      ${divisionFilter}
+`, params);
+```
+**Risk:** Deletes ALL matching records in one execution. If multiple employees have the same adjustment_name in the same period, ALL are deleted. No transaction wrapper.
+**Recommendation:** Add `emp_code` filter or use `id IN (...)` with specific IDs. Wrap in transaction.
+
+#### 🟡 MEDIUM RISK: saveAdjustment — No Transaction on Upsert
+
+**File:** `manualAdjustmentService.ts:2191-2236`
+```typescript
+// Check existing
+const existing = await db.queryOne<{ id: number }>(`...`);
+
+// If exists: UPDATE (separate query)
+await db.query(`UPDATE dbo.payroll_manual_adjustments SET ... WHERE id = ?`);
+
+// If not exists: INSERT (separate query)
+await db.query(`INSERT INTO dbo.payroll_manual_adjustments ...`);
+```
+**Risk:** If UPDATE fails after the check, data is inconsistent. If INSERT fails, no rollback.
+**Recommendation:** Wrap in `db.transaction([...])`.
+
+#### 🟡 MEDIUM RISK: PayrollHistoryRepository — Two Separate Writes
+
+**File:** `PayrollHistoryRepository.ts:28-79`
+```typescript
+// saveMaster: UPDATE or INSERT (separate queries)
+const existing = await this.db.queryOne<{ id: number }>(`SELECT id FROM ...`);
+if (existing) {
+    await this.db.query(`UPDATE ...`); // Query 1
+} else {
+    await this.db.query(`INSERT ...`);  // Query 2
+}
+// Caller must separately call saveDetail()
+```
+**Risk:** If saveMaster succeeds but saveDetail fails, header exists without details.
+**Recommendation:** Require transaction wrapper or use OUTPUT clause for dependent inserts.
+
+#### 🟡 MEDIUM RISK: saveOtherIncome — Two Separate Queries for Upsert
+
+**File:** `manualAdjustmentService.ts:2091-2119`
+```typescript
+// Check by nik
+let existing = await db.queryOne<...>(`SELECT ... WHERE nik = ? ...`);
+// Fallback: check by emp_code
+if (!existing) {
+    existing = await db.queryOne<...>(`SELECT ... WHERE emp_code = ? ...`);
+}
+// Then UPDATE or INSERT
+```
+**Risk:** Race condition between check and write. Two employees with same nik in different periods could collide.
+**Recommendation:** Use unique constraint and catch duplicate key error.
+
+#### 🟢 LOW RISK: Parameterized Queries (Good Pattern)
+
+All SELECT queries use parameterized queries:
+```typescript
+// ✅ GOOD: All filters use ? placeholders
+WHERE period_month = ? AND period_year = ?
+  AND gang_code = ?
+  AND UPPER(adjustment_name) LIKE ?
+```
+
+### 4.2 Filter Patterns Analysis
+
+#### Period Filter
+| Service | Field | Pattern | Safe |
+|---------|-------|---------|------|
+| All payroll queries | `period_month`, `period_year` | `WHERE period_month = ? AND period_year = ?` | ✅ Yes |
+| PR_ADTRANS queries | `PhyMonth`, `PhyYear` | `WHERE t.PhyMonth = ? AND t.PhyYear = ?` | ✅ Yes |
+| PR_TASKREGLN queries | `TrxDate` | `WHERE trl.TrxDate >= ? AND trl.TrxDate < ?` | ✅ Yes |
+
+**Validation:** `updateManualAdjustmentSyncStatus()` validates:
+```typescript
+if (!Number.isInteger(periodMonth) || periodMonth < 1 || periodMonth > 12) {
+    throw new Error("periodMonth harus 1-12");
+}
+if (!Number.isInteger(periodYear) || periodYear < 2000) {
+    throw new Error("periodYear tidak valid");
+}
+```
+**Status:** ✅ Period validation exists in some places but NOT in `saveAdjustment()`.
+
+#### emp_code Filter
+| Service | Pattern | Safe |
+|---------|---------|------|
+| `getAdjustments()` | `emp_code = ? OR nik = ? OR emp_code = ?` | ✅ Parameterized |
+| `saveAdjustment()` | `(emp_code = ? OR nik = ? OR emp_code = ?)` | ✅ Parameterized |
+| `PayrollAttendanceRepository` | `IN (${empList})` via string interpolation | ⚠️ Medium risk |
+| `PayrollPremiPotonganRepository` | `IN (${empList})` via string interpolation | ⚠️ Medium risk |
+
+#### gang_code Filter
+| Service | Pattern | Safe |
+|---------|---------|------|
+| `getAdjustments()` | `gang_code = ?` | ✅ Parameterized |
+| `saveAdjustment()` | Preserved via `COALESCE(NULLIF(LTRIM(RTRIM(?)), ''), gang_code)` | ✅ Safe |
+| `deleteAdjustmentColumn()` | Not filtered (⚠️ deletes all gangs) | 🔴 HIGH RISK |
+
+#### division_code Filter
+| Service | Pattern | Safe |
+|---------|---------|------|
+| `getAdjustments()` | Multiple variants via `getManualAdjustmentDivisionCodeVariants()` | ✅ Parameterized |
+| `saveAdjustment()` | `COALESCE(?, division_code)` | ✅ Safe |
+| `checkAdtransDirectly()` | `UPPER(RTRIM(t.LocCode)) = ?` | ✅ Parameterized |
+
+#### metadata_json Filter
+| Service | Pattern | Safe |
+|---------|---------|------|
+| `getAdjustments(metadataOnly)` | `metadata_json IS NOT NULL AND LTRIM(RTRIM(metadata_json)) <> ''` | ✅ Safe |
+| `listAdjustmentNameOptions()` | Same pattern | ✅ Safe |
+| **Validation** | No server-side JSON validation before save | 🔴 HIGH RISK |
+| **DB Constraint** | No CHECK constraint for valid JSON | 🔴 HIGH RISK |
+
+#### amount Filter
+| Service | Pattern | Safe |
+|---------|---------|------|
+| `saveAdjustment()` | `parseFloat(data.amount.toString()) || 0` | ⚠️ Can store 0 |
+| `shouldDeleteStoredAdjustment()` | Deletes if amount is 0 and no metadata | ⚠️ Complex logic |
+| **Validation** | No range check (negative allowed?) | 🔴 Need verification |
+
+---
+
+## 5. CRITICAL BUGS RELEVANT TO DATABASE
+
+### BUG-DB-001: Amount vs Metadata JSON Total Mismatch
+
+**Location:** `manualAdjustmentService.ts:458-478` (`resolveDetailTotalSync()`)
+
+**Root Cause:** `fallbackAmount` used instead of `calculatedTotal` when calculatedTotal is 0:
+```typescript
+const calculatedTotal = calculateManualAdjustmentMetadataTotal(metadata);
+let syncedAmount = fallbackAmount;
+if (Number.isFinite(calculatedTotal) && Math.abs(calculatedTotal) > 0.01) {
+    syncedAmount = calculatedTotal;
+} else {
+    const declaredTotal = Number((metadata as any).total_amount);
+    syncedAmount = Number.isFinite(declaredTotal) ? declaredTotal : fallbackAmount;
+}
+// ⚠️ If calculatedTotal = 0 but declaredTotal =0 and fallbackAmount = 0,
+// syncedAmount = 0, but the actual detail items sum might be non-zero
+```
+
+**DB Impact:** Records in `payroll_manual_adjustments` where `amount` ≠ `metadata_json.total_amount`.
+
+**SQL to Detect:**
+```sql
+SELECT id, emp_code, adjustment_name, amount,
+ JSON_VALUE(metadata_json, '$.total_amount') AS metadata_total,
+    amount - TRY_CAST(JSON_VALUE(metadata_json, '$.total_amount') AS DECIMAL(18,2)) AS diff
+FROM extend_db_ptrj.dbo.payroll_manual_adjustments
+WHERE metadata_json IS NOT NULL
+    AND TRY_CAST(JSON_VALUE(metadata_json, '$.total_amount') AS DECIMAL(18,2)) IS NOT NULL
+    AND ABS(amount - TRY_CAST(JSON_VALUE(metadata_json, '$.total_amount') AS DECIMAL(18,2))) > 0.01;
+```
+
+### BUG-DB-002: No Transaction on saveAdjustment Upsert
+
+**Location:** `manualAdjustmentService.ts:2191-2284`
+
+**Root Cause:** Check + Update/Insert are separate queries without transaction wrapper.
+
+**DB Impact:** Potential partial updates if network fails between check and write.
+
+### BUG-DB-003: deleteAdjustmentColumn Deletes All Matching Records
+
+**Location:** `manualAdjustmentService.ts:2326-2332`
+
+**Root Cause:** DELETE query does not include `emp_code` filter:
+```typescript
+DELETE FROM dbo.payroll_manual_adjustments
+WHERE period_month = ? AND period_year = ?
+  AND adjustment_type = ?
+  AND ${normalizedAdjustmentNameSql} = ?
+  ${divisionFilter}  // Only division_code, NOT emp_code
+```
+
+**DB Impact:** If two employees have "PREMI PRUNING" in the same period/division, BOTH are deleted.
+
+### BUG-DB-004: metadata_json Has No JSON Validation
+
+**Location:** Table definition + `parseManualAdjustmentMetadataValue()` (line 1072-1080)
+
+**Root Cause:** No CHECK constraint on `metadata_json` column. Invalid JSON stored as-is with `metadata_parse_error` flag.
+
+**DB Impact:** Records with invalid JSON cannot be processed by the application.
+
+**SQL to Detect:**
+```sql
+SELECT id, emp_code, metadata_json
+FROM extend_db_ptrj.dbo.payroll_manual_adjustments
+WHERE metadata_json IS NOT NULL
+    AND LEN(metadata_json) > 0
+    AND TRY_CAST(metadata_json AS JSON) IS NULL;
+```
+
+### BUG-DB-005: Duplicate Employee Adjustments Possible
+
+**Location:** `saveAdjustment()` upsert logic (line 2191-2210)
+
+**Root Cause:** No UNIQUE constraint on `(period_month, period_year, emp_code, adjustment_name, gang_code)`.
+
+**DB Impact:** Same employee can have multiple rows for the same adjustment in the same period.
+
+**SQL to Detect:**
+```sql
+SELECT period_month, period_year, emp_code, gang_code, adjustment_name,
+    COUNT(*) AS cnt, SUM(amount) AS total
+FROM extend_db_ptrj.dbo.payroll_manual_adjustments
+GROUP BY period_month, period_year, emp_code, gang_code, adjustment_name
+HAVING COUNT(*) > 1;
+```
+
+---
+
+## 6. MIGRATION ANALYSIS
+
+### 6.1 Migration Pattern: ensureManualAdjustmentIdentitySchema
+
+**File:** `manualAdjustmentService.ts:1583-1613`
+
+```typescript
+private async ensureManualAdjustmentIdentitySchema(db: Database): Promise<void> {
+    if (ManualAdjustmentService.identitySchemaEnsured) return;
+
+    await db.query(`
+        IF COL_LENGTH('dbo.payroll_manual_adjustments', 'nik') IS NULL
+        BEGIN
+            ALTER TABLE dbo.payroll_manual_adjustments ADD nik VARCHAR(50) NULL;
+        END;
+        -- Similar for emp_name, metadata_json
+        -- Then create index IX_payroll_manual_adjustments_nik
+    `);
+}
+```
+
+**Risk:** First-call race condition. `identitySchemaEnsured` is a static flag — if two requests call `ensureManualAdjustmentIdentitySchema()` simultaneously before the flag is set, both will attempt the ALTER TABLE.
+
+**Recommendation:** Use `IF NOT EXISTS` pattern in SQL, not TypeScript flag.
+
+### 6.2 Dynamic SQL in Schema Checks
+
+**File:** `check_extend_db_schema.ts:25`
+```typescript
+WHERE TABLE_NAME = '${table.TABLE_NAME}'
+```
+**Risk:** Table names from DB metadata are used directly. Low risk since they come from `INFORMATION_SCHEMA.TABLES`, but still bad practice.
+
+---
+
+## 7. REPOSITORY PATTERN ANALYSIS
+
+### 7.1 PayrollPremiPotonganRepository
+
+**Pattern:** Singleton with `Database.getInstance()` (db_ptrj)
+
+**getPremi():**
+- INNER JOIN `HR_GANGLN` ensures only valid gang members
+- UNION ALL between LIVE and ARC tables
+- Period filter: `DocDate >= ? AND DocDate < ?`
+- Group by emp_code, doc_desc, task_code, task_desc
+- ⚠️ Metadata JSON not stored in this repository
+
+**getPotongan():**
+- Same pattern as getPremi()
+- Filters: POTONGAN, KOREKSI, SPSI, PPH
+- Uses `Math.abs()` for amounts
+
+### 7.2 PayrollAttendanceRepository
+
+**Pattern:** Singleton with `Database.getInstance()` (db_ptrj)
+
+**getAttendance():**
+- UNION ALL between LIVE and ARC tables
+- Period filter: `TrxDate >= ? AND TrxDate < ?`
+- Shortage detection: Hours < 7 (or < 5 on Friday/Jumat)
+- ⚠️ No transaction, single query
+
+### 7.3 PayrollTaskRepository
+
+**Pattern:** Singleton with `Database.getInstance()` (db_ptrj)
+
+**getPrimaryTaskCodes():**
+- ROW_NUMBER() OVER(PARTITION BY EmpCode ORDER BY COUNT(*) DESC)
+- Picks task code with highest HK count
+- ⚠️ No transaction
+
+**getPositionHistory():**
+- Uses `Database.getInstance()` for extend_db_ptrj queries
+- COALESCE between `history_gang_member.jabatan` and `employee_estate.jabatan`
+- ⚠️ Cross-database join (db_ptrj → extend_db_ptrj)
+
+### 7.4 PayrollHistoryRepository
+
+**Pattern:** Singleton with `Database.getExtendedInstance()` (extend_db_ptrj)
+
+**saveMaster():**
+- Upsert by (period_month, period_year, division_code, gang_code, snapshot_version)
+- Uses OUTPUT INSERTED.id for new records
+- ⚠️ No transaction
+
+**saveDetail():**
+- Upsert by (master_id, emp_code)
+- Uses OUTPUT INSERTED.id
+- ⚠️ No transaction with saveMaster()
+
+---
+
+## 8. MISSING DATABASE CONSTRAINTS
+
+### 8.1 Required Constraints (Not Yet Applied)
+
+```sql
+-- 1. Unique constraint to prevent duplicate adjustments
+ALTER TABLE dbo.payroll_manual_adjustments
+ADD CONSTRAINT UX_payroll_manual_adjustments_period_emp_adj
+UNIQUE (period_month, period_year, emp_code, adjustment_name, gang_code);
+
+-- 2. JSON validation for metadata_json
+ALTER TABLE dbo.payroll_manual_adjustments
+ADD CONSTRAINT CHK_payroll_manual_adjustments_metadata_json
+CHECK (metadata_json IS NULL OR TRY_CAST(metadata_json AS JSON) IS NOT NULL);
+
+-- 3. Check constraint for amount
+ALTER TABLE dbo.payroll_manual_adjustments
+ADD CONSTRAINT CHK_payroll_manual_adjustments_amount
+CHECK (amount >= 0);
+
+-- 4. Check constraint for period
+ALTER TABLE dbo.payroll_manual_adjustments
+ADD CONSTRAINT CHK_payroll_manual_adjustments_period
+CHECK (period_month >= 1 AND period_month <= 12
+ AND period_year >= 2000 AND period_year <= 2100);
+
+-- 5. Composite indexes for performance
+CREATE INDEX IX_payroll_manual_adjustments_period_emp
+ON dbo.payroll_manual_adjustments (period_month, period_year, emp_code);
+
+CREATE INDEX IX_payroll_manual_adjustments_period_gang
+ON dbo.payroll_manual_adjustments (period_month, period_year, gang_code);
+
+CREATE INDEX IX_payroll_manual_adjustments_period_div
+ON dbo.payroll_manual_adjustments (period_month, period_year, division_code);
+```
+
+### 8.2 employee_other_incomes Constraints
+
+```sql
+-- Unique constraint for upsert
+ALTER TABLE dbo.employee_other_incomes
+ADD CONSTRAINT UX_employee_other_incomes_period_emp_income
+UNIQUE (period_month, period_year, nik, income_name);
+
+-- Alternative: by emp_code
+ALTER TABLE dbo.employee_other_incomes
+ADD CONSTRAINT UX_employee_other_incomes_period_empcode_income
+UNIQUE (period_month, period_year, emp_code, income_name);
+```
+
+---
+
+## 9. SUMMARY: PHASE 2 FINDINGS
+
+### 🔴 Critical Issues (Fix Immediately)
+
+| ID | Issue | Location | Impact |
+|----|-------|----------|--------|
+| DB-001 | No UNIQUE constraint on payroll_manual_adjustments | Schema | Duplicate records possible |
+| DB-002 | deleteAdjustmentColumn deletes ALL matching records | manualAdjustmentService.ts:2326 | Wrong employees deleted |
+| DB-003 | saveAdjustment has no transaction wrapper | manualAdjustmentService.ts:2191 | Partial updates possible |
+| DB-004 | metadata_json has no JSON validation | Schema | Invalid JSON breaks processing |
+| DB-005 | Amount not always synced with metadata_json.total_amount | manualAdjustmentService.ts:458 | Data inconsistency |
+
+### 🟡 Medium Issues (Fix Within 1 Week)
+
+| ID | Issue | Location | Impact |
+|----|-------|----------|--------|
+| DB-006 | String interpolation in SQL IN clauses | *Repository.ts | Potential SQL injection |
+| DB-007 | No amount range validation (negative allowed?) | saveAdjustment() | Invalid negative amounts |
+| DB-008 | No period validation in saveAdjustment() | saveAdjustment() | Invalid periods accepted |
+| DB-009 | Race condition in ensureManualAdjustmentIdentitySchema | manualAdjustmentService.ts:1583 | Duplicate schema changes |
+| DB-010 | Cross-database join in getPositionHistory | PayrollTaskRepository.ts:99 | Performance issue |
+
+### 🟢 Low Priority (Track for Later)
+
+| ID | Issue | Location | Impact |
+|----|-------|----------|--------|
+| DB-011 | PayrollHistoryRepository: saveMaster/saveDetail not atomic | PayrollHistoryRepository.ts | Orphan header records |
+| DB-012 | emp_name can store bad data (NIK-looking values) | saveAdjustment() | Data quality issue |
+| DB-013 | No soft delete mechanism | All delete operations | No audit trail for deletes |
+| DB-014 | No index on adjustment_name for LIKE queries | Schema | Slow LIKE queries |
+
+---
+
+## 10. RECOMMENDED SQL VALIDATION QUERIES
+
+###10.1 Data Quality Checks
+
+```sql
+-- 1. Amount vs metadata_json mismatch
+SELECT id, emp_code, adjustment_name, amount,
+    TRY_CAST(JSON_VALUE(metadata_json, '$.total_amount') AS DECIMAL(18,2)) AS metadata_total,
+    amount - TRY_CAST(JSON_VALUE(metadata_json, '$.total_amount') AS DECIMAL(18,2)) AS diff
+FROM extend_db_ptrj.dbo.payroll_manual_adjustments
+WHERE metadata_json IS NOT NULL
+    AND TRY_CAST(JSON_VALUE(metadata_json, '$.total_amount') AS DECIMAL(18,2)) IS NOT NULL
+    AND ABS(amount - TRY_CAST(JSON_VALUE(metadata_json, '$.total_amount') AS DECIMAL(18,2))) > 0.01;
+
+-- 2. Invalid metadata_json
+SELECT id, emp_code, metadata_json
+FROM extend_db_ptrj.dbo.payroll_manual_adjustments
+WHERE metadata_json IS NOT NULL
+    AND LEN(metadata_json) > 0
+    AND TRY_CAST(metadata_json AS JSON) IS NULL;
+
+-- 3. Duplicate adjustments
+SELECT period_month, period_year, emp_code, gang_code, adjustment_name,
+    COUNT(*) AS cnt, SUM(amount) AS total
+FROM extend_db_ptrj.dbo.payroll_manual_adjustments
+WHERE period_month BETWEEN 1 AND 12
+    AND period_year >= 2020
+GROUP BY period_month, period_year, emp_code, gang_code, adjustment_name
+HAVING COUNT(*) > 1;
+
+-- 4. Invalid period values
+SELECT id, emp_code, period_month, period_year, adjustment_name
+FROM extend_db_ptrj.dbo.payroll_manual_adjustments
+WHERE period_month < 1 OR period_month > 12
+    OR period_year < 2000 OR period_year > 2100;
+
+-- 5. Negative amounts
+SELECT id, emp_code, period_month, period_year, adjustment_name, amount
+FROM extend_db_ptrj.dbo.payroll_manual_adjustments
+WHERE amount < 0;
+
+-- 6. Orphan emp_code (not in HR_EMPLOYEE)
+SELECT DISTINCT ma.emp_code, ma.period_month, ma.period_year
+FROM extend_db_ptrj.dbo.payroll_manual_adjustments ma
+LEFT JOIN db_ptrj.dbo.HR_EMPLOYEE e ON RTRIM(e.EmpCode) = RTRIM(ma.emp_code)
+WHERE e.EmpCode IS NULL AND ma.emp_code IS NOT NULL AND ma.emp_code <> '';
+```
+
+---
+
+**Report Generated:** 2026-06-05
+**Phase:** Phase 2 - Database Audit
+**Next Phase:** Phase 3 - Hypothesis Testing (validate findings with concrete evidence)

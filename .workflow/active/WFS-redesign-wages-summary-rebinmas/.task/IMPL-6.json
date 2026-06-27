@@ -1,0 +1,8 @@
+﻿{
+  "id": "IMPL-6",
+  "title": "Consolidate print CSS for A4 landscape",
+  "description": "Add scoped screen and print CSS for the redesigned Wages Rebinmas pages, including A4 landscape sizing, page breaks, hidden web controls, professional borders, navy headers, soft-blue subtotals, and no horizontal table clipping.",
+  "depends_on": ["IMPL-3", "IMPL-4", "IMPL-5"],
+  "convergence": "Chrome/Edge print preview shows only report pages, correctly sized in A4 landscape with visible table borders.",
+  "meta": { "type": "frontend-style", "agent": "implementation" }
+}

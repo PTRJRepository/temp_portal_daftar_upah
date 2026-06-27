@@ -1,0 +1,56 @@
+{
+  "critical_files": [
+    "backend/src/services/payroll/components/PayrollCalculator.ts",
+    "backend/src/services/payroll/formulas/PayrollFormulas.ts",
+    "backend/src/services/payroll/formulas/adapters/aggregationAdapter.ts",
+    "backend/src/services/dataExtractorService.ts",
+    "backend/src/services/reportService.ts",
+    "backend/src/services/taxReportService.ts",
+    "backend/src/services/taxReportExcelService.ts",
+    "backend/src/services/daftarUpahExcelService.ts",
+    "frontend/src/components/CustomPayrollTable.jsx",
+    "frontend/src/components/PayslipCard.jsx",
+    "frontend/src/pages/TaxReportPage.jsx",
+    "frontend/src/components/PayrollTaxMatrix.jsx",
+    "frontend/src/utils/exportPayrollToExcel.js",
+    "frontend/src/utils/exportReportToExcelPro.js",
+    "frontend/src/utils/exportPayslipsToExcel.js",
+    "frontend/src/utils/PayrollAggregator.js",
+    "frontend/src/utils/aggregationUtils.js",
+    "frontend/src/utils/FormulaRegistry.js"
+  ],
+  "patterns": [
+    "PayrollCalculator is intended as the backend source of truth for derived payroll values.",
+    "Some exports render deductions as signed negative values while backend formulas generally use positive magnitude deductions.",
+    "Manual adjustments can enter as positive or negative; koreksi and potongan must normalize to absolute magnitude before calculation.",
+    "Excel formulas are riskier than rendered UI because a signed deduction can be accidentally subtracted twice or sign-flipped.",
+    "Payslip display often recalculates a reduced model and can drift from payroll table/export rules."
+  ],
+  "dependencies": [
+    "bun:test backend tests",
+    "Vitest frontend tests",
+    "ExcelJS workbook generation",
+    "Vite build",
+    "Manual adjustment metadata and premium definitions"
+  ],
+  "integration_points": [
+    { "module": "backend-payroll-core", "files": ["PayrollCalculator.ts", "PayrollFormulas.ts", "dataExtractorService.ts"] },
+    { "module": "backend-reports", "files": ["reportService.ts", "daftarUpahExcelService.ts", "taxReportService.ts", "taxReportExcelService.ts"] },
+    { "module": "frontend-payroll-table", "files": ["CustomPayrollTable.jsx", "PayrollAggregator.js", "aggregationUtils.js"] },
+    { "module": "frontend-exports", "files": ["exportPayrollToExcel.js", "exportReportToExcelPro.js", "exportPayslipsToExcel.js"] },
+    { "module": "frontend-tax-payslip", "files": ["PayslipCard.jsx", "TaxReportPage.jsx", "PayrollTaxMatrix.jsx"] }
+  ],
+  "conflict_risk": "high",
+  "conflict_areas": [
+    "Large dirty worktree with many frontend/backend files already changed",
+    "Multiple implementations of payroll formulas and formatting conventions",
+    "Potential mismatch between UI display, backend numeric model, Excel signed model, and tax/payslip models",
+    "Generated logs/screenshots and local artifacts mixed with source changes"
+  ],
+  "constraints": [
+    "Do not revert unrelated modifications",
+    "Do not run broad refactors before audit findings are isolated",
+    "Document sign-convention invariants before changing formulas",
+    "Every behavioral fix needs a focused regression test"
+  ]
+}

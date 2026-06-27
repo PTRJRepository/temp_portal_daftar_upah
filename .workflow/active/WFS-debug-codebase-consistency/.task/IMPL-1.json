@@ -1,0 +1,9 @@
+{
+  "id": "IMPL-1",
+  "status": "completed",
+  "title": "Baseline Inventory And Ownership Snapshot",
+  "description": "Capture git status, active workflow sessions, changed source areas, generated artifacts, test entry points, and ownership boundaries before any debugging edit.",
+  "depends_on": [],
+  "convergence": ["workflow-session.json updated if scope changes", "audit notes list unrelated dirty files to avoid touching"],
+  "meta": { "type": "audit", "agent": "codebase-auditor" }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "IMPL-2",
+  "status": "completed",
+  "title": "Payroll Formula And Sign-Semantics Audit",
+  "description": "Trace payroll formula fields from extraction through PayrollCalculator, PayrollFormulas, reportService, dataExtractorService, and totals calculators. Flag mismatches in koreksi, potongan, upah kotor, upah bersih, and bruto.",
+  "depends_on": ["IMPL-1"],
+  "convergence": ["file-by-file findings", "recommended fixes include test names", "no implementation without explicit execution step"],
+  "meta": { "type": "analysis", "agent": "backend-payroll-auditor" }
+}

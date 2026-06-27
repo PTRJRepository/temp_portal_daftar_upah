@@ -1,0 +1,9 @@
+{
+  "id": "IMPL-8",
+  "status": "completed",
+  "title": "Verification Sweep",
+  "description": "Plan final verification commands and an audit report template covering fixed issues, open risks, and deferred cleanup.",
+  "depends_on": ["IMPL-6", "IMPL-7"],
+  "convergence": ["focused tests pass", "build pass or known warning documented", "final audit report produced"],
+  "meta": { "type": "verification-planning", "agent": "release-verifier" }
+}

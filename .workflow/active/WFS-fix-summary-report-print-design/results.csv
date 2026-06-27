@@ -1,0 +1,6 @@
+id,status,files_modified,tests_passed,acceptance_met,findings
+IMPL-1,completed,frontend/src/components/common/ReportPrintHeader.jsx,true,true,"Inline SVG print logo added; distracting curved header decoration removed."
+IMPL-2,completed,frontend/src/styles/summary-report-new.css,true,true,"Print CSS now forces visible header/logo/meta, exact color adjustment, and non-clipping paper/header layout."
+IMPL-3,completed,frontend/src/pages/SummaryReportPage.jsx,true,true,"All three print pages already render ReportPrintHeader and retain footer page numbering."
+IMPL-4,completed,"frontend/src/pages/SummaryReportPage.printHeader.test.js;frontend/src/styles/report-print-foundation.test.js",true,true,"Focused tests updated for redesigned print header and current print foundation behavior."
+IMPL-5,completed,,true,true,"Vitest focused suite and frontend production build passed; Vite dev server started at http://localhost:5173."

@@ -1,0 +1,28 @@
+{
+  "id": "IMPL-4",
+  "status": "completed",
+  "title": "Backend Frontend Payroll Formula Parity Fixture",
+  "description": "Create a deterministic parity fixture so backend and frontend engines cannot drift silently.",
+  "depends_on": ["IMPL-1", "IMPL-2", "IMPL-3"],
+  "target_files": ["backend/src/services/payroll/components/PayrollCalculator.test.ts", "frontend/src/utils/PayrollAggregator.test.js", "frontend/src/utils/aggregationUtils.test.js"],
+  "implementation": [
+    {
+      "step": 1,
+      "tdd_phase": "red",
+      "description": "Add matching backend/frontend fixtures containing gross components, other income, positive/negative koreksi, worker/employer deductions, pph, spsi, and premi_pph.",
+      "expected_failure": "At least one frontend total differs from backend source-of-truth."
+    },
+    {
+      "step": 2,
+      "tdd_phase": "green",
+      "description": "Align frontend derived fields to backend authoritative semantics or stop recalculating backend-owned values.",
+      "test_fix_cycle": { "max_iterations": 3, "auto_revert": true }
+    },
+    {
+      "step": 3,
+      "tdd_phase": "refactor",
+      "description": "Keep fixture values readable and document the hand-calculated expected totals."
+    }
+  ],
+  "verification": ["cd backend && bun test src/services/payroll/components/PayrollCalculator.test.ts", "cd frontend && npx vitest run src/utils/PayrollAggregator.test.js src/utils/aggregationUtils.test.js"]
+}

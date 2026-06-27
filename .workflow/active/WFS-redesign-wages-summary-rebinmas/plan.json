@@ -1,0 +1,18 @@
+﻿{
+  "task_ids": ["IMPL-1", "IMPL-2", "IMPL-3", "IMPL-4", "IMPL-5", "IMPL-6", "IMPL-7"],
+  "recommended_execution": "sequential",
+  "complexity": "medium-high",
+  "shared_context": {
+    "goal": "Redesign Wages Summary Rebinmas to Alternative 5 Professional Grid Dark Blue with three A4 landscape print pages.",
+    "primary_page": "frontend/src/pages/WagesSummaryRebinmasPage.jsx",
+    "primary_styles": [
+      "frontend/src/styles/wages-summary-professional.css",
+      "frontend/src/styles/wages-summary-print-simple.css"
+    ],
+    "verification": [
+      "npx vitest run src/styles/wages-summary-print-simple.test.js src/styles/wages-summary-professional.test.js",
+      "npm run build",
+      "Browser print preview inspection"
+    ]
+  }
+}

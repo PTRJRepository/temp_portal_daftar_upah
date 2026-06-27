@@ -80,6 +80,7 @@ import UpahBersihDetailPage from './pages/UpahBersihDetailPage'
 import DataVerificationPage from './pages/DataVerificationPage'
 import HighEarnerReportPage from './pages/HighEarnerReportPage'
 import SalaryRangeDetailPage from './pages/SalaryRangeDetailPage'
+import ServerMonitor from './components/monitor/ServerMonitor'
 import { parseSalaryRangeRouteParams } from './utils/reportRouteParams'
 
 // Development/Test Pages
@@ -1155,6 +1156,7 @@ function AppInner() {
             <Route path="tonase-analysis" element={<SummaryReportWrapper component={TonaseAnalysisReportPage} />} />
             <Route path="detail-upah-bersih" element={<SummaryReportWrapper component={UpahBersihDetailPage} />} />
             <Route path="data-verification" element={<SummaryReportWrapper component={DataVerificationPage} />} />
+            <Route path="server-monitor" element={<ServerMonitor />} />
             <Route path="report/high-earners" element={<HighEarnerReportPage />} />
             <Route path="report/salary-range-detail" element={<SalaryRangeReportWrapper />} />
 

@@ -1,0 +1,10 @@
+{
+  "task_ids": ["IMPL-1", "IMPL-2", "IMPL-3", "IMPL-4", "IMPL-5", "IMPL-6", "IMPL-7", "IMPL-8"],
+  "recommended_execution": "sequential_with_limited_parallel_review",
+  "complexity": "high",
+  "shared_context": {
+    "primary_invariant": "Calculation deductions use positive magnitudes; signed Excel/display deductions are negative cells that formulas add, never subtract.",
+    "conflict_risk": "high",
+    "requires_user_review_before_execution": true
+  }
+}

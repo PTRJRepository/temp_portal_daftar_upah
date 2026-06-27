@@ -1,0 +1,31 @@
+{
+  "id": "TASK-003",
+  "title": "Sync tax report Excel export with daftar upah calculations",
+  "description": "Ensure taxReportExcelService.ts uses the same calculation logic as daftarUpahExcelService.ts for upah_kotor. Check that: 1) COL_UPAH_KOTOR uses emp.upah_kotor directly from DataExtractor, 2) COL_BRUTO uses emp.penghasilan_bruto from DataExtractor, 3) All tunjangan components are properly mapped. The tax export should trust the DataExtractor values rather than reconstructing them.",
+  "scope": "backend/src/services/taxReportExcelService.ts",
+  "files": [
+    {
+      "path": "backend/src/services/taxReportExcelService.ts",
+      "role": "primary",
+      "change": "Lines 577-592: Verify COL_UPAH_KOTOR uses emp.upah_kotor, COL_BRUTO uses emp.penghasilan_bruto. Check that all tunjangan fields (beras, jabatan, masa_kerja, lembur) are properly mapped from emp.* fields."
+    },
+    {
+      "path": "backend/src/services/taxReportService.ts",
+      "role": "reference",
+      "change": "Verify MonthlyTaxRow mapping (lines 858-918) correctly sets upah_kotor and penghasilan_bruto from DataExtractor values."
+    }
+  ],
+  "convergence": {
+    "criteria": [
+      "Tax Excel export uses emp.upah_kotor directly (not recalculated)",
+      "Tax Excel export uses emp.penghasilan_bruto directly (not recalculated)",
+      "Tax export matches daftar upah display values"
+    ]
+  },
+  "dependencies": ["TASK-001", "TASK-002"],
+  "_metadata": {
+    "priority": "high",
+    "estimated_time": "15-25 minutes",
+    "created_at": "2026-06-08T00:00:00.000Z"
+  }
+}

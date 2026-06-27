@@ -1,0 +1,31 @@
+{
+  "id": "TASK-001",
+  "title": "Verify and fix upah kotor formula - use gaji_pokok_aktual, remove duplicate HK koreksi",
+  "description": "Ensure PayrollCalculator uses gaji_pokok_aktual for upah_kotor calculation. The current formula: upah_kotor = gaji_pokok_aktual + total_tunjangan + total_premi. User reports that koreksi_hk is being accumulated separately even though it's already factored into gaji_pokok_aktual. Need to verify that pot_koreksi is only used for display purposes in komponen_kotor, not added to the base calculation.",
+  "scope": "backend/src/services/payroll/components/PayrollCalculator.ts, backend/src/services/payroll/formulas/PayrollFormulas.ts",
+  "files": [
+    {
+      "path": "backend/src/services/payroll/components/PayrollCalculator.ts",
+      "role": "primary",
+      "change": "Verify komponen_kotor.subtotal uses gaji_pokok_aktual (not ideal). Verify koreksi is display-only in komponen_kotor and not double-counted."
+    },
+    {
+      "path": "backend/src/services/payroll/formulas/PayrollFormulas.ts",
+      "role": "reference",
+      "change": "Review calculateUpahKotor() - already uses gaji_pokok_aktual per line 49-55."
+    }
+  ],
+  "convergence": {
+    "criteria": [
+      "PayrollCalculator calculates komponen_kotor.subtotal using gaji_pokok_aktual",
+      "pot_koreksi is NOT added to komponen_kotor.subtotal (only shown in komponen_kotor.koreksi for display)",
+      "jumlah_upah_kotor = komponen_kotor.subtotal - pot_koreksi + pendapatan_lainnya"
+    ]
+  },
+  "dependencies": [],
+  "_metadata": {
+    "priority": "high",
+    "estimated_time": "15-20 minutes",
+    "created_at": "2026-06-08T00:00:00.000Z"
+  }
+}

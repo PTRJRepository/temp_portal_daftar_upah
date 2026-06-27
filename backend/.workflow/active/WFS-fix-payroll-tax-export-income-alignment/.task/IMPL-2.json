@@ -1,0 +1,9 @@
+{
+  "id": "IMPL-2",
+  "title": "Centralize other income canonicalization",
+  "description": "Add a shared helper for normalizing other income types and resolving canonical income categories, including the rule that Exgratia must be included in the Bonus taxable/reporting bucket unless displayed as a separate non-overlapping column.",
+  "depends_on": ["IMPL-1"],
+  "convergence": "All callers can ask one helper whether a row belongs to THR, BONUS, KONTAN, CUSTOM, or a dynamic category, and Exgratia is never dropped from Pajak.",
+  "meta": { "type": "backend", "agent": "implementation" },
+  "status": "completed"
+}

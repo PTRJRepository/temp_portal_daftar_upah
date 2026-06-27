@@ -1,0 +1,9 @@
+task_id,context_key,context_value
+IMPL-1,scope,"Whole-codebase consistency audit focused on payroll, tax, payslip, web display, and Excel export sign semantics."
+IMPL-1,dirty_worktree,"Pre-existing uncommitted changes are present; execution avoided reverting or staging unrelated files."
+IMPL-2,invariant,"Calculation layers keep potongan/koreksi as positive magnitudes; koreksi always reduces gross whether source input is positive or negative."
+IMPL-3,invariant,"Excel exports write deduction/koreksi cells as signed negative values and formulas add those cells; no formula should create -(-amount)."
+IMPL-4,invariant,"UI display helpers render a single minus sign from absolute deduction magnitudes."
+IMPL-5,limits,"Data-source audit covered code paths and tests; full employee-period DB reconciliation still needs a representative production-like dataset."
+IMPL-6,test_scope,"Backend Bun tests and frontend Vitest tests cover positive and negative koreksi inputs, other-income detail columns, signed Excel deductions, and payslip totals."
+IMPL-8,verification,"Focused backend tests, focused frontend tests, and frontend production build pass; Vite reports an existing dynamic/static import chunking warning."

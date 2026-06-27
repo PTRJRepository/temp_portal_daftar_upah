@@ -1,0 +1,45 @@
+{
+  "critical_files": [
+    "backend/src/services/payroll/components/PayrollCalculator.ts",
+    "backend/src/services/payroll/formulas/PayrollFormulas.ts",
+    "backend/src/services/payrollTotalsCalculator.ts",
+    "backend/src/services/reportService.ts",
+    "backend/src/services/daftarUpahExcelService.ts",
+    "backend/src/services/taxReportExcelService.ts",
+    "frontend/src/utils/aggregationUtils.js",
+    "frontend/src/utils/PayrollAggregator.js",
+    "frontend/src/utils/employeePayrollBreakdown.js",
+    "frontend/src/utils/exportPayrollToExcel.js",
+    "frontend/src/utils/exportReportToExcelPro.js",
+    "frontend/src/utils/exportPayslipsToExcel.js",
+    "frontend/src/components/PayslipCard.jsx",
+    "frontend/src/components/PayrollTaxMatrix.jsx",
+    "frontend/src/pages/TaxReportPage.jsx"
+  ],
+  "patterns": [
+    "Calculation layers should use positive deduction magnitudes.",
+    "Excel/display layers may render deductions as signed negatives, but formulas must add signed cells rather than subtract signed cells.",
+    "Koreksi must always reduce gross whether source is positive or negative.",
+    "Premi PPH is a net-pay addition and must not be counted in gross total premi.",
+    "Worker deductions and employer contributions must not be mixed in net wage deductions."
+  ],
+  "dependencies": ["bun:test", "vitest", "xlsx/exceljs style export helpers", "React UI components"],
+  "integration_points": [
+    "backend payroll calculator -> report rows -> frontend table",
+    "frontend aggregation -> displayed totals and export payloads",
+    "tax report rows -> tax matrix -> tax Excel",
+    "manual adjustments -> potongan/koreksi -> payslip/export"
+  ],
+  "conflict_risk": "high",
+  "conflict_areas": [
+    "Many payroll/report/export files have uncommitted changes.",
+    "Previous workflow changed sign semantics for koreksi and other income.",
+    "There are duplicate formula engines across backend and frontend."
+  ],
+  "constraints": [
+    "Planning only; do not edit production code in this step.",
+    "Use TDD: failing test first for every fix.",
+    "Avoid reverting unrelated dirty worktree changes.",
+    "Payroll correctness has higher priority than UI convenience."
+  ]
+}

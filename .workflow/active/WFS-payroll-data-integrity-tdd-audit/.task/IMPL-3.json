@@ -1,0 +1,28 @@
+{
+  "id": "IMPL-3",
+  "status": "completed",
+  "title": "Attendance Filter Parity Across Backend And Frontend Totals",
+  "description": "Align active-employee filtering between backend totals and frontend flatten/aggregation paths.",
+  "depends_on": ["IMPL-1"],
+  "target_files": ["backend/src/services/payrollTotalsCalculator.ts", "backend/src/services/payrollTotalsCalculator.test.ts", "frontend/src/utils/PayrollAggregator.js", "frontend/src/utils/PayrollAggregator.test.js", "frontend/src/utils/aggregationUtils.js", "frontend/src/utils/aggregationUtils.test.js"],
+  "implementation": [
+    {
+      "step": 1,
+      "tdd_phase": "red",
+      "description": "Add backend and frontend tests with conflicting jumlah_hk/hari_kerja values to expose filter mismatch.",
+      "expected_failure": "Backend and frontend include different employees in totals."
+    },
+    {
+      "step": 2,
+      "tdd_phase": "green",
+      "description": "Apply one documented attendance rule consistently across backend totals and frontend aggregation.",
+      "test_fix_cycle": { "max_iterations": 3, "auto_revert": true }
+    },
+    {
+      "step": 3,
+      "tdd_phase": "refactor",
+      "description": "Name the rule clearly in tests/comments and remove contradictory comments."
+    }
+  ],
+  "verification": ["cd backend && bun test src/services/payrollTotalsCalculator.test.ts", "cd frontend && npx vitest run src/utils/PayrollAggregator.test.js src/utils/aggregationUtils.test.js"]
+}

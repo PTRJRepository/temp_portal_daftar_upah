@@ -1,0 +1,8 @@
+{
+  "session_id": "WFS-debug-codebase-consistency",
+  "status": "completed",
+  "created_at": "2026-06-05T17:55:00+07:00",
+  "task_description": "lakukan debugging dan periksa kesalahan, ketidaksesuaian, serta ketidakkonsistenan codebase secara keseluruhan",
+  "mode": "execute",
+  "scope": "whole-codebase audit focused on payroll/tax/payslip/export consistency; workflow-execute completed with local sequential fallback because spawn_agents_on_csv was unavailable"
+}

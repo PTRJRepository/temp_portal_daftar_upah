@@ -20,7 +20,8 @@
         "exceljs": "^4.4.0",
         "googleapis": "^171.4.0",
         "jose": "^5.2.0",
-        "mssql": "^12.2.1"
+        "mssql": "^12.2.1",
+        "grammy": "^1.21.0"
     },
     "devDependencies": {
         "@types/mssql": "^9.1.11",

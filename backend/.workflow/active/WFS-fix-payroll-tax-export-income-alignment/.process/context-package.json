@@ -1,0 +1,46 @@
+{
+  "critical_files": [
+    "src/services/dataExtractorService.ts",
+    "src/services/taxReportService.ts",
+    "src/services/taxReportExcelService.ts",
+    "src/services/daftarUpahExcelService.ts",
+    "src/utils/taxDomExportRows.ts",
+    "src/services/daftarUpahExcelService.test.ts",
+    "src/services/taxReportExcelService.test.ts",
+    "src/utils/taxDomExportRows.test.ts",
+    "../frontend/src/utils/exportPayrollToExcel.js",
+    "../frontend/src/utils/exportPayrollToExcel.test.js",
+    "../frontend/src/services/taxReportService.js",
+    "../frontend/src/services/taxReportService.test.js"
+  ],
+  "patterns": [
+    "DataExtractorService is intended as single source of truth for payroll rows.",
+    "Other income detail columns are discovered from top-level pendapatan_* fields and other_incomes arrays.",
+    "Export formulas use signed negative deductions and add those cells instead of subtracting them.",
+    "Tax report maps DataExtractor rows into a smaller MonthlyTaxRow shape before Excel generation."
+  ],
+  "dependencies": [
+    "PayrollCalculator.calculate",
+    "OtherIncomesService.getIncomesForYear",
+    "resolveReportIdentity / collectNikLookupKeys",
+    "sortAndRenumberByEmpCode"
+  ],
+  "integration_points": [
+    { "module": "backend-extractor", "file": "src/services/dataExtractorService.ts" },
+    { "module": "backend-tax", "file": "src/services/taxReportService.ts" },
+    { "module": "backend-excel", "file": "src/services/taxReportExcelService.ts" },
+    { "module": "backend-excel", "file": "src/services/daftarUpahExcelService.ts" },
+    { "module": "frontend-export", "file": "../frontend/src/utils/exportPayrollToExcel.js" }
+  ],
+  "conflict_risk": "high",
+  "conflict_areas": [
+    "Pre-existing uncommitted changes in payroll/tax/export files",
+    "Bonus/Exgratia semantics affect taxable totals and take-home calculations",
+    "Employee dedupe can change report row counts"
+  ],
+  "constraints": [
+    "Do not revert unrelated WIP.",
+    "Keep Daftar Upah display, Daftar Upah export, and Pajak export aligned to the same canonical row data.",
+    "Add focused tests for Bonus/Exgratia normalization and missing/double employee scenarios."
+  ]
+}
