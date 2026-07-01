@@ -128,6 +128,7 @@ describe('buildPayrollExportColumns', () => {
       'pendapatan_thr',
       'pendapatan_kontan',
       'total_pendapatan_lainnya',
+      'pot_astek',
       'pot_pph21',
       'pendapatan_thr_pengurang',
       'pendapatan_kontan_pengurang',
