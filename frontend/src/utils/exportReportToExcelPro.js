@@ -404,6 +404,7 @@ export async function exportReportToExcelPro(rows, colDefsOriginal, meta) {
                         const tl = colMap['lembur_jumlah'];
                         const tp = colMap['total_premi'];
                         const kor = colMap['pot_koreksi'];
+                        const pendLain = colMap['pendapatan_lainnya'] || colMap['total_pendapatan_lainnya'];
 
                         const tunjanganCols = [tb, tj, tm, tl].filter(Boolean).map(c => `${c}${excelRow.number}`).join(',');
 
@@ -412,13 +413,25 @@ export async function exportReportToExcelPro(rows, colDefsOriginal, meta) {
                                 ? `SUM(${gp}${excelRow.number},${tunjanganCols},${tp}${excelRow.number})`
                                 : `SUM(${gp}${excelRow.number},${tp}${excelRow.number})`;
                             // Koreksi is already negative in Excel, so add it to reduce gross.
-                            cell.value = { formula: `${sumFormula}+${kor}${excelRow.number}` };
+                            // pendapatan_lainnya is additive in gross to match PayrollCalculator
+                            // (jumlah_upah_kotor = upah_kotor - koreksi + pendapatan_lainnya).
+                            const pendAdd = pendLain ? `+${pendLain}${excelRow.number}` : '';
+                            cell.value = { formula: `${sumFormula}+${kor}${excelRow.number}${pendAdd}` };
                             return;
                         }
                     } else if (col.field === 'total_potongan') {
                         const dedCols = flatCols.filter(c => (c.field.startsWith('pot_') || c.field.startsWith('POTONGAN_')) && c.field !== 'pot_koreksi').map(c => colMap[c.field]);
-                        if (dedCols.length > 0) {
-                            cell.value = { formula: `SUM(${dedCols.map(c => `${c}${excelRow.number}`).join(',')})` };
+                        // pendapatan_lainnya is a net deduction (pengurang) per PayrollCalculator
+                        // (total_potongan = astek + bpjs + spsi + pph21 + other + pendapatan_lainnya).
+                        // Its cell is positive, so negate it here to keep the SUM-of-negatives invariant;
+                        // this also makes it cancel with the additive gross term in upah_bersih.
+                        const pendLain = colMap['pendapatan_lainnya'] || colMap['total_pendapatan_lainnya'];
+                        const pendTerm = pendLain ? `-${pendLain}${excelRow.number}` : '';
+                        if (dedCols.length > 0 || pendTerm) {
+                            const sumPart = dedCols.length > 0
+                                ? `SUM(${dedCols.map(c => `${c}${excelRow.number}`).join(',')})`
+                                : '0';
+                            cell.value = { formula: `${sumPart}${pendTerm}` };
                             return;
                         }
                     } else if (col.field === 'upah_bersih') {
