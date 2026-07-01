@@ -1660,6 +1660,27 @@ export class OtherIncomesService {
         if (!incomes.length) return { success: true, count: 0 };
         const db = Database.getExtendedInstance(); let count = 0;
         try {
+            // [NIK RESOLVE] Resolve NIK from HR_EMPLOYEE.NewICNo by emp_code for any
+            // income record with empty nik. Prevents legacy "nik kosong" records that
+            // break NIK-based lookup and cause cross-employee contamination.
+            const empCodesToResolve = [...new Set(
+                incomes.filter(inc => !(inc.nik || '').trim() && (inc.emp_code || '').trim())
+                       .map(inc => (inc.emp_code || '').trim().toUpperCase())
+            )];
+            const resolvedNikByEmpCode = new Map<string, string>();
+            if (empCodesToResolve.length) {
+                const mainDb = Database.getInstance();
+                const placeholders = empCodesToResolve.map(() => '?').join(',');
+                const rows = await mainDb.query<{ EmpCode: string; NewICNo: string }>(`
+                    SELECT RTRIM(EmpCode) as EmpCode, RTRIM(ISNULL(NewICNo, '')) as NewICNo
+                    FROM HR_EMPLOYEE
+                    WHERE RTRIM(EmpCode) IN (${placeholders})
+                `, empCodesToResolve);
+                for (const r of rows) {
+                    const nik = (r.NewICNo || '').trim();
+                    if (nik) resolvedNikByEmpCode.set((r.EmpCode || '').trim().toUpperCase(), nik);
+                }
+            }
             // Process in smaller batches to avoid connection timeouts for large datasets
             const batchSize = 50;
             for (let i = 0; i < incomes.length; i += batchSize) {
@@ -1706,14 +1727,16 @@ export class OtherIncomesService {
                     // IMPORTANT: nik column is NEVER updated (append-only). Only new_nik changes.
                     // new_nik defaults to nik if not provided (backward compat for legacy records).
                     // CRITICAL: Trim ALL fields before storage to prevent lookup failures.
-                    const cleanNik = (inc.nik || '').trim();
+                    const cleanEmpCode = (inc.emp_code || '').trim();
+                    // [NIK RESOLVE] Fill empty nik from HR_EMPLOYEE.NewICNo via emp_code.
+                    const cleanNik = (inc.nik || '').trim()
+                        || (cleanEmpCode ? (resolvedNikByEmpCode.get(cleanEmpCode.toUpperCase()) || '') : '');
                     const cleanEmpName = (inc.emp_name || '').trim();
                     const cleanDivCode = (inc.division_code || '').trim();
                     const cleanGangCode = (inc.gang_code || '').trim();
                     const cleanIncomeType = (inc.income_type || '').trim();
                     const cleanIncomeName = (inc.income_name || '').trim();
-                    const cleanEmpCode = (inc.emp_code || '').trim();
-                    const resolvedNewNik = ((inc as any).new_nik || inc.nik || '').trim() || null;
+                    const resolvedNewNik = ((inc as any).new_nik || cleanNik || '').trim() || null;
                     const cleanReligion = ((inc as any).religion || '').trim() || null;
                     const cleanBankAccNo = ((inc as any).bank_acc_no || '').trim() || null;
                     const cleanBankCode = ((inc as any).bank_code || '').trim() || null;
