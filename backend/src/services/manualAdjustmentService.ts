@@ -2297,12 +2297,29 @@ export class ManualAdjustmentService {
         // [GUARD] Karyawan panen (gang_code berakhiran 'H', mis. J1H/J2H) seharusnya
         // mendapat PREMI INSENTIF PANEN, BUKAN PREMI KINERJA. Tolak input PREMI KINERJA
         // untuk gang-H agar kesalahan input tidak terulang.
+        // EXCEPTION: mandor dan kerani boleh tetap dapat PREMI KINERJA (role non-panen).
         const gangCodeForGuard = String(data.gang_code || '').trim().toUpperCase();
         if (normalizedAdjustmentName === 'PREMI KINERJA' && gangCodeForGuard.endsWith('H')) {
-            throw new Error(
-                `PREMI KINERJA tidak boleh diinput untuk karyawan panen (gang berakhiran 'H', gang=${gangCodeForGuard}). ` +
-                `Gunakan PREMI INSENTIF PANEN untuk karyawan panen.`
-            );
+            const rawJabatan = normalizeText(data.jabatan_estate || data.jabatan || '');
+            let jabatanForGuard = rawJabatan;
+            if (!jabatanForGuard && data.emp_code) {
+                try {
+                    const extDb = Database.getExtendedInstance();
+                    const estateRow = await extDb.query<{ jabatan: string }>(
+                        "SELECT TOP 1 jabatan FROM employee_estate WHERE RTRIM(empcode) = ?",
+                        [String(data.emp_code).trim()]
+                    );
+                    jabatanForGuard = normalizeText(estateRow[0]?.jabatan || '');
+                } catch { /* fall through to reject if lookup fails */ }
+            }
+            const isMandorOrKerani = /MANDOR|KERANI|KRANI/i.test(jabatanForGuard);
+            if (!isMandorOrKerani) {
+                throw new Error(
+                    `PREMI KINERJA tidak boleh diinput untuk karyawan panen (gang berakhiran 'H', gang=${gangCodeForGuard}). ` +
+                    `Gunakan PREMI INSENTIF PANEN untuk karyawan panen. ` +
+                    `Khusus mandor/kerani boleh PREMI KINERJA (jabatan terdeteksi: "${jabatanForGuard || 'tidak diketahui'}").`
+                );
+            }
         }
         const normalizedDivisionCode = normalizeManualAdjustmentDivisionCode(data.division_code);
         const hasMetadataJsonInput = Object.prototype.hasOwnProperty.call(data, 'metadata_json');
