@@ -395,4 +395,33 @@ describe('buildPayrollExportColumns', () => {
   it('uses one workbook with Detail as the first sheet, then Ringkas and Print', () => {
     expect(resolvePayrollWorkbookSheetVariants()).toEqual(['detail', 'summary', 'print']);
   });
+
+  it('includes astek and BPJS worker columns in print and summary so total_potongan matches detail', () => {
+    const rows = [{
+      type: 'employee',
+      pot_astek: 80000,
+      pot_bpjs_kesehatan_pekerja: 40000,
+      pot_bpjs_pensiun_pekerja: 40000,
+      pot_spsi: 4000,
+      pot_pph21: 0,
+      total_pendapatan_lainnya: 0,
+    }];
+    const columnDefs = [
+      { field: 'emp_code', headers: ['IDENTITAS', null, null, 'EMP CODE'], w: 90 },
+      { field: 'jumlah_upah_kotor', headers: ['UPAH KOTOR', null, null, 'JUMLAH'], w: 90 },
+      { field: 'pot_astek', headers: ['POTONGAN UPAH BERSIH', 'CARUMAN', 'ASTEK', 'PEK.'], w: 75 },
+      { field: 'pot_bpjs_kesehatan_pekerja', headers: ['POTONGAN UPAH BERSIH', 'CARUMAN', 'BPJS KES', 'PEK.'], w: 75 },
+      { field: 'pot_bpjs_pensiun_pekerja', headers: ['POTONGAN UPAH BERSIH', 'CARUMAN', 'BPJS PEN', 'PEK.'], w: 75 },
+      { field: 'pot_spsi', headers: ['POTONGAN UPAH BERSIH', null, null, 'SPSI'], w: 86 },
+      { field: 'pot_pph21', headers: ['POTONGAN UPAH BERSIH', null, null, 'PPH21'], w: 86 },
+      { field: 'total_potongan', headers: ['POTONGAN UPAH BERSIH', null, null, 'TOTAL'], w: 100 },
+    ];
+
+    for (const variant of ['detail', 'summary', 'print']) {
+      const fields = buildPayrollExportColumns(rows, columnDefs, { variant }).map((col) => col.field);
+      expect(fields).toContain('pot_astek');
+      expect(fields).toContain('pot_bpjs_kesehatan_pekerja');
+      expect(fields).toContain('pot_bpjs_pensiun_pekerja');
+    }
+  });
 });
