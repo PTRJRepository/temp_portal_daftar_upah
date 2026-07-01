@@ -482,6 +482,106 @@ function resolveDetailTotalSync(data: ManualAdjustment, normalizedAdjustmentName
     };
 }
 
+/**
+ * Build placeholder metadata for seed action (source amount → target structured type).
+ * Single-item with jumlah = oldTotal, structure per target input_type.
+ */
+function seedPlaceholderMetadata(
+    targetInputType: string,
+    total: number,
+    row: Pick<ManualAdjustment, "gang_code">
+): Record<string, unknown> | null {
+    const gangCode = normalizeText(row.gang_code);
+    switch (targetInputType) {
+        case "blok":
+            return { input_type: "blok", items: [{ subblok: "", gang_code: gangCode, jumlah: total }], total_amount: total };
+        case "kendaraan":
+            return { input_type: "kendaraan", items: [{ nomor_kendaraan: "", expense_code: "DRIVER", jumlah: total }], total_amount: total };
+        case "exp":
+            return { input_type: "exp", expense_code: "", jumlah: total, total_amount: total };
+        case "blok,exp":
+            return { input_type: "blok,exp", blok_items: [{ subblok: "", gang_code: gangCode, jumlah: total }], expense: { expense_code: "", jumlah: 0 }, total_amount: total };
+        default:
+            return null;
+    }
+}
+
+/**
+ * Remap metadata between compatible (non-blocked) input_types.
+ * BLOCKED pairs (blok↔kendaraan, blok,exp→kendaraan) never reach here — validation gate rejects them.
+ * Best-effort structural re-map; semantic fields (subblok vs nomor_kendaraan) only mapped within allowed paths.
+ */
+function remapMetadata(
+    oldMetadata: any,
+    fromInputType: string,
+    toInputType: string,
+    row: Pick<ManualAdjustment, "gang_code">,
+    fallbackTotal: number
+): Record<string, unknown> | null {
+    if (!oldMetadata) {
+        return seedPlaceholderMetadata(toInputType, fallbackTotal, row);
+    }
+
+    const gangCode = normalizeText(row.gang_code);
+    const oldItems: any[] = Array.isArray(oldMetadata.items) ? oldMetadata.items : [];
+    const oldBlokItems: any[] = Array.isArray(oldMetadata.blok_items) ? oldMetadata.blok_items : [];
+    const oldExpense = oldMetadata.expense && typeof oldMetadata.expense === "object" ? oldMetadata.expense : null;
+    const oldExpenseCode = normalizeText(oldExpense?.expense_code || oldMetadata.expense_code);
+
+    switch (toInputType) {
+        case "blok": {
+            // Allowed from: blok, blok,exp, exp, amount. NOT from kendaraan (blocked).
+            let items: any[];
+            if (fromInputType === "blok") {
+                items = oldItems;
+            } else if (fromInputType === "blok,exp") {
+                items = oldBlokItems;
+            } else if (fromInputType === "exp") {
+                items = [{ subblok: "", gang_code: gangCode, jumlah: toNumericAmount(oldExpense?.jumlah) || fallbackTotal }];
+            } else {
+                items = [{ subblok: "", gang_code: gangCode, jumlah: fallbackTotal }];
+            }
+            return { input_type: "blok", items, total_amount: items.reduce((s, i) => s + toNumericAmount(i.jumlah), 0) };
+        }
+        case "exp": {
+            // Allowed from any. Use expense_code if present, else from items first.
+            const jumlah = oldExpense
+                ? toNumericAmount(oldExpense.jumlah)
+                : oldItems.reduce((s, i) => s + toNumericAmount(i?.jumlah), 0) || fallbackTotal;
+            return { input_type: "exp", expense_code: oldExpenseCode, jumlah, total_amount: jumlah };
+        }
+        case "kendaraan": {
+            // Allowed from: kendaraan, exp, amount. NOT from blok/blok,exp (blocked).
+            let items: any[];
+            if (fromInputType === "kendaraan") {
+                items = oldItems;
+            } else if (fromInputType === "exp") {
+                items = [{ nomor_kendaraan: "", expense_code: oldExpenseCode || "DRIVER", jumlah: toNumericAmount(oldExpense?.jumlah) || fallbackTotal }];
+            } else {
+                items = [{ nomor_kendaraan: "", expense_code: "DRIVER", jumlah: fallbackTotal }];
+            }
+            return { input_type: "kendaraan", items, total_amount: items.reduce((s, i) => s + toNumericAmount(i.jumlah), 0) };
+        }
+        case "blok,exp": {
+            // Allowed from: blok, blok,exp, exp, amount. NOT from kendaraan (blocked).
+            let blokItems: any[];
+            if (fromInputType === "blok") {
+                blokItems = oldItems;
+            } else if (fromInputType === "blok,exp") {
+                blokItems = oldBlokItems;
+            } else if (fromInputType === "exp") {
+                blokItems = [{ subblok: "", gang_code: gangCode, jumlah: toNumericAmount(oldExpense?.jumlah) || fallbackTotal }];
+            } else {
+                blokItems = [{ subblok: "", gang_code: gangCode, jumlah: fallbackTotal }];
+            }
+            const expense = { expense_code: oldExpenseCode, jumlah: 0 };
+            return { input_type: "blok,exp", blok_items: blokItems, expense, total_amount: blokItems.reduce((s, i) => s + toNumericAmount(i.jumlah), 0) };
+        }
+        default:
+            return null;
+    }
+}
+
 function expectedTaskDescPrefix(adjustmentType: string): "(AL)" | "(DE)" | null {
     const type = normalizeText(adjustmentType).toUpperCase();
     if (type === "PREMI") return "(AL)";
@@ -2193,6 +2293,17 @@ export class ManualAdjustmentService {
         const parsedAmount = parseFloat(data.amount.toString()) || 0;
         const normalizedAdjustmentName = normalizeStoredAdjustmentName(data.adjustment_name);
         const normalizedAdjustmentNameSql = buildNormalizedSqlNameExpression('adjustment_name');
+
+        // [GUARD] Karyawan panen (gang_code berakhiran 'H', mis. J1H/J2H) seharusnya
+        // mendapat PREMI INSENTIF PANEN, BUKAN PREMI KINERJA. Tolak input PREMI KINERJA
+        // untuk gang-H agar kesalahan input tidak terulang.
+        const gangCodeForGuard = String(data.gang_code || '').trim().toUpperCase();
+        if (normalizedAdjustmentName === 'PREMI KINERJA' && gangCodeForGuard.endsWith('H')) {
+            throw new Error(
+                `PREMI KINERJA tidak boleh diinput untuk karyawan panen (gang berakhiran 'H', gang=${gangCodeForGuard}). ` +
+                `Gunakan PREMI INSENTIF PANEN untuk karyawan panen.`
+            );
+        }
         const normalizedDivisionCode = normalizeManualAdjustmentDivisionCode(data.division_code);
         const hasMetadataJsonInput = Object.prototype.hasOwnProperty.call(data, 'metadata_json');
         let metadataJsonStr = serializeManualAdjustmentMetadata(data.metadata_json);
@@ -2360,6 +2471,196 @@ export class ManualAdjustmentService {
         `, params);
 
         return existing.length;
+    }
+
+    /**
+     * Convert a premium column from one adjustment_name to another (per-column bulk).
+     * Validation gate (validatePremiumConversion) MUST pass before DB writes —
+     * blocks subblok↔kendaraan semantic mismatch.
+     *
+     * metadata_action from validation:
+     * - keep: same input_type, preserve metadata_json
+     * - drop: target amount, null metadata_json, amount = old total
+     * - seed: source amount → target structured, placeholder single-item metadata
+     * - remap: compatible different type, restructure metadata
+     *
+     * Collision (to_name already exists for same emp+period+type) → skip row, amount lama tetap.
+     */
+    public async convertAdjustmentType(input: {
+        period_month: number;
+        period_year: number;
+        division_code?: string;
+        adjustment_type: string;
+        from_adjustment_name: string;
+        to_adjustment_name: string;
+        updated_by?: string;
+    }): Promise<{
+        converted_count: number;
+        skipped_collision_count: number;
+        metadata_remapped_count: number;
+        metadata_seeded_count: number;
+        rows: Array<{ id: number; emp_code: string; status: 'CONVERTED' | 'SKIPPED_COLLISION'; metadata_action: string }>;
+    }> {
+        const periodMonth = Number(input.period_month);
+        const periodYear = Number(input.period_year);
+        if (!Number.isInteger(periodMonth) || periodMonth < 1 || periodMonth > 12) {
+            throw new Error("period_month harus 1-12");
+        }
+        if (!Number.isInteger(periodYear) || periodYear < 2000) {
+            throw new Error("period_year tidak valid");
+        }
+
+        const fromName = normalizeStoredAdjustmentName(input.from_adjustment_name);
+        const toName = normalizeStoredAdjustmentName(input.to_adjustment_name);
+        if (!fromName || !toName) {
+            throw new Error("from_adjustment_name dan to_adjustment_name wajib diisi.");
+        }
+        if (fromName === toName) {
+            throw new Error("from_adjustment_name dan to_adjustment_name tidak boleh sama.");
+        }
+
+        const adjustmentType = normalizeText(input.adjustment_type).toUpperCase();
+        if (adjustmentType !== "PREMI") {
+            throw new Error("Konversi saat ini hanya didukung untuk adjustment_type PREMI.");
+        }
+
+        // Validation gate — blocks incompatible input_type conversions
+        const validation = premiumDefinitionService.validatePremiumConversion(fromName, toName);
+        if (!validation.allowed) {
+            throw new Error(`Konversi diblokir: ${validation.reason}`);
+        }
+
+        const targetDef = premiumDefinitionService.getDefinitionByName(toName);
+        if (!targetDef) {
+            throw new Error(`Definisi target "${toName}" tidak ditemukan.`);
+        }
+
+        const db = this.getDatabase();
+        await this.ensureManualAdjustmentIdentitySchema(db);
+        const normalizedFromNameSql = buildNormalizedSqlNameExpression('adjustment_name');
+        const normalizedToNameSql = buildNormalizedSqlNameExpression('adjustment_name');
+
+        const params: any[] = [periodMonth, periodYear, adjustmentType, fromName];
+        let divisionFilter = '';
+        if (input.division_code) {
+            const divisionCodes = getManualAdjustmentDivisionCodeVariants(input.division_code);
+            if (divisionCodes.length === 1) {
+                divisionFilter = ' AND (division_code = ? OR division_code IS NULL OR LTRIM(RTRIM(division_code)) = \'\')';
+                params.push(divisionCodes[0]);
+            } else if (divisionCodes.length > 1) {
+                divisionFilter = ` AND (division_code IN (${divisionCodes.map(() => '?').join(', ')}) OR division_code IS NULL OR LTRIM(RTRIM(division_code)) = '')`;
+                params.push(...divisionCodes);
+            }
+        }
+
+        const sourceRows = await db.query<ManualAdjustment>(`
+            SELECT id, period_month, period_year, emp_code, nik, emp_name, gang_code, division_code,
+                   adjustment_type, adjustment_name, amount, remarks, metadata_json
+            FROM dbo.payroll_manual_adjustments
+            WHERE period_month = ? AND period_year = ?
+              AND adjustment_type = ?
+              AND ${normalizedFromNameSql} = ?
+              ${divisionFilter}
+            ORDER BY id ASC
+        `, params);
+
+        const rows: Array<{ id: number; emp_code: string; status: 'CONVERTED' | 'SKIPPED_COLLISION'; metadata_action: string }> = [];
+        let convertedCount = 0;
+        let skippedCollisionCount = 0;
+        let metadataRemappedCount = 0;
+        let metadataSeededCount = 0;
+        const user = input.updated_by || 'system';
+
+        for (const row of sourceRows) {
+            const rowId = Number(row.id);
+            const empCode = normalizeIdentityValue(row.emp_code);
+            const nik = normalizeIdentityValue(row.nik);
+
+            // Collision check: row with to_name already exists for same (period+emp+type)
+            const collision = await db.queryOne<{ id: number }>(`
+                SELECT TOP 1 id FROM dbo.payroll_manual_adjustments
+                WHERE period_month = ? AND period_year = ?
+                  AND adjustment_type = ?
+                  AND ${normalizedToNameSql} = ?
+                  AND (emp_code = ? OR nik = ? OR emp_code = ?)
+            `, [periodMonth, periodYear, adjustmentType, toName, empCode, nik, empCode]);
+
+            if (collision) {
+                skippedCollisionCount++;
+                rows.push({ id: rowId, emp_code: empCode, status: 'SKIPPED_COLLISION', metadata_action: 'skip' });
+                continue;
+            }
+
+            // Build new payload
+            const oldAmount = toNumericAmount(row.amount);
+            const oldMetadata = premiumDefinitionService.parseMetadata(row.metadata_json);
+            const oldTotal = oldMetadata
+                ? toNumericAmount(premiumDefinitionService.calculateMetadataTotal(oldMetadata))
+                : oldAmount;
+            const effectiveOldTotal = Number.isFinite(oldTotal) && Math.abs(oldTotal) > 0 ? oldTotal : oldAmount;
+
+            const payload: ManualAdjustment = {
+                ...row,
+                period_month: periodMonth,
+                period_year: periodYear,
+                adjustment_type: adjustmentType,
+                adjustment_name: toName,
+                ad_code: targetDef.ad_code,
+                task_code: targetDef.ad_code,
+                base_task_code: targetDef.ad_code,
+                task_desc: targetDef.task_desc,
+                amount: effectiveOldTotal,
+                metadata_json: row.metadata_json,
+                remarks: undefined as any
+            };
+
+            let newMetadataJsonStr: string | null = row.metadata_json ?? null;
+
+            if (validation.metadata_action === 'keep') {
+                // preserve metadata, resolveDetailTotalSync rebuilds total_amount
+            } else if (validation.metadata_action === 'drop') {
+                newMetadataJsonStr = null;
+                payload.metadata_json = null;
+            } else if (validation.metadata_action === 'seed') {
+                const seeded = seedPlaceholderMetadata(targetDef.input_type, effectiveOldTotal, row);
+                newMetadataJsonStr = seeded ? JSON.stringify(seeded) : null;
+                payload.metadata_json = (seeded as any) ?? null;
+                metadataSeededCount++;
+            } else if (validation.metadata_action === 'remap') {
+                const remapped = remapMetadata(oldMetadata, validation.from_input_type, validation.to_input_type, row, effectiveOldTotal);
+                newMetadataJsonStr = remapped ? JSON.stringify(remapped) : null;
+                payload.metadata_json = (remapped as any) ?? null;
+                metadataRemappedCount++;
+            }
+
+            // Rebuild remarks with target ad_code/task_desc, then sync amount/metadata total
+            payload.remarks = buildManualAdjustmentRemarks(payload);
+            const detailSync = resolveDetailTotalSync(payload, toName, newMetadataJsonStr, effectiveOldTotal);
+            const finalAmount = detailSync.amount;
+            const finalMetadataJson = detailSync.metadataJsonStr;
+
+            await db.query(`
+                UPDATE dbo.payroll_manual_adjustments
+                SET adjustment_name = ?,
+                    remarks = ?,
+                    metadata_json = ?,
+                    amount = ?,
+                    updated_at = GETDATE(),
+                    updated_by = ?
+                WHERE id = ?
+            `, [toName, payload.remarks, finalMetadataJson, finalAmount, user, rowId]);
+
+            convertedCount++;
+            rows.push({ id: rowId, emp_code: empCode, status: 'CONVERTED', metadata_action: validation.metadata_action });
+        }
+
+        return {
+            converted_count: convertedCount,
+            skipped_collision_count: skippedCollisionCount,
+            metadata_remapped_count: metadataRemappedCount,
+            metadata_seeded_count: metadataSeededCount,
+            rows
+        };
     }
 
     /**
