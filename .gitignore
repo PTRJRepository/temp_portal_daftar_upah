@@ -23,5 +23,6 @@ _dev_utils/scripts/*
 !_dev_utils/scripts/pruning_seed_payloads.ts
 !_dev_utils/scripts/pruning_seed_payloads.test.ts
 !_dev_utils/scripts/seed_raking_data.ts
+!_dev_utils/scripts/scan_pendapatan_lainnya_leak.ts
 backend/_dev_utils/
 Browser Automation/manual-adjustment-grouped-tester.html
