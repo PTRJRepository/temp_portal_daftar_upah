@@ -58,7 +58,16 @@ export const calculateTotalPremi = (row) => {
  */
 export const calculatePotonganUpahKotorTotal = (row) => {
     // pot_koreksi adalah koreksi dari POTONGAN (jika ada), BUKAN dari HK difference
-    let total = Math.abs(safeNumber(row.pot_koreksi));
+    const potKoreksi = Math.abs(safeNumber(row.pot_koreksi));
+    const automaticHk = Math.abs(safeNumber(row.koreksi_hk));
+
+    // [SIGN-SAFETY / DOUBLE-DEDUCTION GUARD]
+    // Jika |pot_koreksi| == |koreksi_hk|, pot_koreksi adalah mirror HK difference
+    // (sudah termasuk di gaji_pokok_aktual dari PR_TASKREGLN), BUKAN dari POTONGAN table.
+    // Exclude agar tidak double-deduct. Mirror resolveGrossDeductionWithoutAutomaticHk di CustomPayrollTable.
+    let total = (potKoreksi > 0 && automaticHk > 0 && Math.abs(potKoreksi - automaticHk) <= 1)
+        ? 0
+        : potKoreksi;
 
     // [FIX] JANGAN tambahkan koreksi_hk karena sudah termasuk dalam gaji_pokok_aktual
     // koreksi_hk = gaji_pokok_aktual - gaji_pokok_ideal (sudah termasuk di gp_aktual)

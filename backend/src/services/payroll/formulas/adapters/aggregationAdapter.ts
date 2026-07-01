@@ -89,22 +89,23 @@ export function rowToPayrollCalculatorInput(row: any): PayrollFormulaInput {
         total_tunjangan: totalTunjangan,
         total_premi: totalPremi,
         pot_koreksi: Math.abs(getNumeric(row, 'pot_koreksi') || getNumeric(row, 'koreksi') || 0),
-        pendapatan_lainnya: getNumeric(row, 'pendapatan_lainnya')
+        // [SIGN-SAFETY] pendapatan_lainnya = earning magnitude, wajib positif.
+        pendapatan_lainnya: Math.abs(getNumeric(row, 'pendapatan_lainnya')
             || getNumeric(row, 'pot_pendapatan_lainnya')
             || getNumeric(row, 'pendapatan_thr')
-            || 0,
+            || 0),
 
-        // Deductions (worker portions)
-        pot_astek_pekerja: getNumeric(row, 'pot_astek_pekerja') || getNumeric(row, 'astek_pekerja') || 0,
-        pot_bpjs_kesehatan_pekerja: getNumeric(row, 'pot_bpjs_kesehatan_pekerja') || getNumeric(row, 'bpjs_kes_pekerja') || 0,
-        pot_bpjs_pensiun_pekerja: getNumeric(row, 'pot_bpjs_pensiun_pekerja') || getNumeric(row, 'bpjs_pensiun_pekerja') || 0,
-        pot_spsi: getNumeric(row, 'pot_spsi') || getNumeric(row, 'spsi') || 0,
-        pot_pph21: getNumeric(row, 'pot_pph21') || getNumeric(row, 'pph21') || 0,
-        other_potongan: getNumeric(row, 'other_potongan') || 0,
-        pot_premi_pph: getNumeric(row, 'pot_premi_pph') || getNumeric(row, 'premi_pph') || 0,
+        // Deductions (worker portions) — [SIGN-SAFETY] wajib magnitude positif.
+        pot_astek_pekerja: Math.abs(getNumeric(row, 'pot_astek_pekerja') || getNumeric(row, 'astek_pekerja') || 0),
+        pot_bpjs_kesehatan_pekerja: Math.abs(getNumeric(row, 'pot_bpjs_kesehatan_pekerja') || getNumeric(row, 'bpjs_kes_pekerja') || 0),
+        pot_bpjs_pensiun_pekerja: Math.abs(getNumeric(row, 'pot_bpjs_pensiun_pekerja') || getNumeric(row, 'bpjs_pensiun_pekerja') || 0),
+        pot_spsi: Math.abs(getNumeric(row, 'pot_spsi') || getNumeric(row, 'spsi') || 0),
+        pot_pph21: Math.abs(getNumeric(row, 'pot_pph21') || getNumeric(row, 'pph21') || 0),
+        other_potongan: Math.abs(getNumeric(row, 'other_potongan') || 0),
+        pot_premi_pph: Math.abs(getNumeric(row, 'pot_premi_pph') || getNumeric(row, 'premi_pph') || 0),
 
-        // Tax calculation (employer portions)
-        astek_majikan: getNumeric(row, 'astek_majikan') || 0,
-        bpjs_majikan: getNumeric(row, 'bpjs_majikan') || 0,
+        // Tax calculation (employer portions) — [SIGN-SAFETY] magnitude positif.
+        astek_majikan: Math.abs(getNumeric(row, 'astek_majikan') || 0),
+        bpjs_majikan: Math.abs(getNumeric(row, 'bpjs_majikan') || 0),
     };
 }

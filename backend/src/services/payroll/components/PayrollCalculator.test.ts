@@ -195,6 +195,69 @@ test('Edge: Zero all deductions', () => {
         assert('balance', z.upah_bersih, z.upah_kotor);
 });
 
+// ─── SIGN-SAFETY GUARD ───────────────────────────────────────────────
+// Potongan & koreksi WAJIB magnitude positif. Input negatif (mis. -80000)
+// tidak boleh flip potongan jadi tambahan / upah_bersih naik.
+// Naming rule: "potongan"/"koreksi" pada akhirnya selalu mengurangi.
+// ─────────────────────────────────────────────────────────────────────
+test('SIGN-SAFETY: negative pot_pph21 must NOT reduce total_potongan', () => {
+    const neg = PayrollCalculator.calculate({ ...base, pot_pph21: -80_000 }, 'K/1', 2025);
+    // total_potongan harus tetap mengandung +80_000 (abs), bukan -80_000
+    const expectedPot = BASE_TOTAL_POT; // base already includes +80_000 pph21
+    return assert('total_potongan abs', neg.total_potongan, expectedPot) &&
+        assert('upah_bersih unchanged', neg.upah_bersih, BASE_BERSIH);
+});
+
+test('SIGN-SAFETY: negative other_potongan must NOT reduce total_potongan', () => {
+    const neg = PayrollCalculator.calculate({ ...base, other_potongan: -10_000 }, 'K/1', 2025);
+    const expectedPot = BASE_TOTAL_POT; // base includes +10_000 other
+    return assert('total_potongan abs', neg.total_potongan, expectedPot) &&
+        assert('upah_bersih unchanged', neg.upah_bersih, BASE_BERSIH);
+});
+
+test('SIGN-SAFETY: negative pot_spsi must NOT reduce total_potongan', () => {
+    const neg = PayrollCalculator.calculate({ ...base, pot_spsi: -4_000 }, 'K/1', 2025);
+    return assert('total_potongan abs', neg.total_potongan, BASE_TOTAL_POT) &&
+        assert('upah_bersih unchanged', neg.upah_bersih, BASE_BERSIH);
+});
+
+test('SIGN-SAFETY: negative pot_astek/bpjs must NOT reduce total_potongan', () => {
+    const neg = PayrollCalculator.calculate({
+        ...base,
+        pot_astek_pekerja: -40_000,
+        pot_bpjs_kesehatan_pekerja: -120_000,
+        pot_bpjs_pensiun_pekerja: -50_000,
+    }, 'K/1', 2025);
+    return assert('total_potongan abs', neg.total_potongan, BASE_TOTAL_POT) &&
+        assert('upah_bersih unchanged', neg.upah_bersih, BASE_BERSIH);
+});
+
+test('SIGN-SAFETY: negative pendapatan_lainnya must NOT corrupt gross or potongan', () => {
+    // lainnya = earning (ADD to gross) + cancel-out subtract in total_potongan.
+    // Negative input must be abs'd: gross stays +300_000, total_potongan stays +300_000.
+    const neg = PayrollCalculator.calculate({ ...base, pendapatan_lainnya: -300_000 }, 'K/1', 2025);
+    return assert('jumlah_upah_kotor unchanged', neg.jumlah_upah_kotor, BASE_JUMLAH) &&
+        assert('total_potongan unchanged', neg.total_potongan, BASE_TOTAL_POT) &&
+        assert('upah_bersih unchanged', neg.upah_bersih, BASE_BERSIH) &&
+        assert('taxable_pendapatan_lainnya abs', neg.taxable_pendapatan_lainnya, 300_000);
+});
+
+test('SIGN-SAFETY: negative pot_koreksi still reduces gross (existing behavior preserved)', () => {
+    const neg = PayrollCalculator.calculate({ ...base, pot_koreksi: -150_000 }, 'K/1', 2025);
+    const expectedJumlah = BASE_UPAH_KOTOR - 150_000 + base.pendapatan_lainnya;
+    return assert('jumlah_upah_kotor', neg.jumlah_upah_kotor, expectedJumlah) &&
+        assert('potongan_upah_kotor abs', neg.potongan_upah_kotor, 150_000) &&
+        // koreksi NOT in total_potongan (already in jumlah_upah_kotor)
+        assert('total_potongan excludes koreksi', neg.total_potongan, BASE_TOTAL_POT);
+});
+
+test('SIGN-SAFETY: negative pot_premi_pph must NOT flip net-pay addition into deduction', () => {
+    // premi_pph = ADDITION to upah_bersih. Negative must stay addition (abs).
+    const neg = PayrollCalculator.calculate({ ...base, pot_premi_pph: -50_000 }, 'K/1', 2025);
+    return assert('upah_bersih unchanged', neg.upah_bersih, BASE_BERSIH) &&
+        assert('total_potongan_bersih unchanged', neg.total_potongan_bersih, BASE_TOTAL_POT - 50_000);
+});
+
 // Summary
 console.log(`\n══════════════════════════════════════════════════════════`);
 console.log(`         RESULTS: ${passCount}/${testCount} PASSED`);

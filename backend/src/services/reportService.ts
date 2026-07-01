@@ -553,7 +553,8 @@ export class ReportService {
             const emp = employeeMap.get(r.EmpCode.trim());
             if (emp && r.DocDesc) {
                 const desc = r.DocDesc.toUpperCase();
-                const amt = r.TotalAmount || 0;
+                // [SIGN-SAFETY] premi magnitude wajib positif.
+                const amt = Math.abs(Number(r.TotalAmount) || 0);
                 if (desc.includes('KOREKSI')) {
                     emp.premi.koreksi = (emp.premi.koreksi || 0) + amt;
                 } else if (desc.includes('BRONDOL')) {
@@ -572,7 +573,8 @@ export class ReportService {
             const emp = employeeMap.get(r.EmpCode.trim());
             if (emp && r.DocDesc) {
                 const desc = r.DocDesc.toUpperCase();
-                const amt = r.TotalAmount || 0;
+                // [SIGN-SAFETY] potongan magnitude wajib positif. Input negatif tidak boleh flip jadi tambahan.
+                const amt = Math.abs(Number(r.TotalAmount) || 0);
 
                 if (desc.includes('KOREKSI')) {
                     const koreksiAmount = Math.abs(Number(amt) || 0);

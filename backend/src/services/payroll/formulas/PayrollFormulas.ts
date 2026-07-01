@@ -68,8 +68,10 @@ export function calculateKomponenKotor(input: {
     pot_koreksi: number;
     pendapatan_lainnya: number;
 }): KomponenKotor {
-    const { gaji_pokok_aktual, total_tunjangan, lembur_jumlah, total_premi, pot_koreksi, pendapatan_lainnya } = input;
+    const { gaji_pokok_aktual, total_tunjangan, lembur_jumlah, total_premi, pot_koreksi } = input;
     const koreksiAmount = Math.abs(Number(pot_koreksi) || 0);
+    // [SIGN-SAFETY] pendapatan_lainnya = earning magnitude, wajib positif.
+    const lainnyaAmount = Math.abs(Number(input.pendapatan_lainnya) || 0);
 
     // tunjangan display excludes lembur (lembur shown separately)
     const tunjangan = total_tunjangan - lembur_jumlah;
@@ -77,7 +79,7 @@ export function calculateKomponenKotor(input: {
     const subtotal = gaji_pokok_aktual + tunjangan + lembur_jumlah + total_premi;
 
     // koreksi di-SUBTRACT, lainnya di-ADD untuk Grand Subtotal (jumlah_upah_kotor)
-    const grand_subtotal = subtotal - koreksiAmount + pendapatan_lainnya;
+    const grand_subtotal = subtotal - koreksiAmount + lainnyaAmount;
 
     return {
         gaji_pokok: gaji_pokok_aktual,
@@ -86,7 +88,7 @@ export function calculateKomponenKotor(input: {
         premi: total_premi,
         subtotal,
         koreksi: koreksiAmount,
-        lainnya: pendapatan_lainnya,
+        lainnya: lainnyaAmount,
         grand_subtotal,
     };
 }
@@ -103,7 +105,8 @@ export function calculateKomponenKotor(input: {
  * @returns jumlah_upah_kotor
  */
  export function calculateJumlahUpahKotor(upahKotor: number, potKoreksi: number, pendapatanLainnya: number): number {
-    return upahKotor - Math.abs(Number(potKoreksi) || 0) + pendapatanLainnya;
+    // [SIGN-SAFETY] koreksi & lainnya wajib magnitude positif.
+    return upahKotor - Math.abs(Number(potKoreksi) || 0) + Math.abs(Number(pendapatanLainnya) || 0);
  }
 
 /**
@@ -124,20 +127,27 @@ export function calculateKomponenPotongan(input: {
     other_potongan: number;
     pendapatan_lainnya: number;
 }): KomponenPotongan {
-    const { pot_astek_pekerja, pot_bpjs_kesehatan_pekerja, pot_bpjs_pensiun_pekerja,
-            pot_spsi, pot_pph21, other_potongan, pendapatan_lainnya } = input;
+    // [SIGN-SAFETY] SEMUA komponen potongan wajib magnitude positif.
+    // Input negatif (mis. -80000) tidak boleh flip potongan jadi tambahan.
+    const astek_pekerja = Math.abs(Number(input.pot_astek_pekerja) || 0);
+    const bpjs_kes_pekerja = Math.abs(Number(input.pot_bpjs_kesehatan_pekerja) || 0);
+    const bpjs_pensiun_pekerja = Math.abs(Number(input.pot_bpjs_pensiun_pekerja) || 0);
+    const spsi = Math.abs(Number(input.pot_spsi) || 0);
+    const pph21 = Math.abs(Number(input.pot_pph21) || 0);
+    const other = Math.abs(Number(input.other_potongan) || 0);
+    const lainnya = Math.abs(Number(input.pendapatan_lainnya) || 0);
 
-    const subtotal = pot_astek_pekerja + pot_bpjs_kesehatan_pekerja + pot_bpjs_pensiun_pekerja
-                   + pot_spsi + pot_pph21 + other_potongan + pendapatan_lainnya;
+    const subtotal = astek_pekerja + bpjs_kes_pekerja + bpjs_pensiun_pekerja
+                   + spsi + pph21 + other + lainnya;
 
     return {
-        astek_pekerja: pot_astek_pekerja,
-        bpjs_kes_pekerja: pot_bpjs_kesehatan_pekerja,
-        bpjs_pensiun_pekerja: pot_bpjs_pensiun_pekerja,
-        spsi: pot_spsi,
-        pph21: pot_pph21,
-        other: other_potongan,
-        lainnya: pendapatan_lainnya,
+        astek_pekerja,
+        bpjs_kes_pekerja,
+        bpjs_pensiun_pekerja,
+        spsi,
+        pph21,
+        other,
+        lainnya,
         subtotal,
     };
 }
@@ -183,7 +193,11 @@ export function calculateUpahKotorPajak(
     pendapatanLainnya: number,
     bpjsPekerja: number
 ): number {
-    return upahKotor - Math.abs(Number(potKoreksi) || 0) + pendapatanLainnya + bpjsPekerja;
+    // [SIGN-SAFETY] koreksi, lainnya, bpjs_pekerja wajib magnitude positif.
+    return upahKotor
+        - Math.abs(Number(potKoreksi) || 0)
+        + Math.abs(Number(pendapatanLainnya) || 0)
+        + Math.abs(Number(bpjsPekerja) || 0);
 }
 
 /**
@@ -205,7 +219,12 @@ export function calculatePenghasilanBruto(
     astekMajikan: number,
     bpjsMajikan: number
 ): number {
-    return upahKotor - Math.abs(Number(potKoreksi) || 0) + pendapatanLainnya + astekMajikan + bpjsMajikan;
+    // [SIGN-SAFETY] koreksi, lainnya, astek_m, bpjs_m wajib magnitude positif.
+    return upahKotor
+        - Math.abs(Number(potKoreksi) || 0)
+        + Math.abs(Number(pendapatanLainnya) || 0)
+        + Math.abs(Number(astekMajikan) || 0)
+        + Math.abs(Number(bpjsMajikan) || 0);
 }
 
 /**
@@ -218,7 +237,8 @@ export function calculatePenghasilanBruto(
  * @returns total_potongan_bersih
  */
 export function calculateTotalPotonganBersih(totalPotongan: number, potPremiPph: number): number {
-    return totalPotongan - potPremiPph;
+    // [SIGN-SAFETY] premi_pph = ADDITION ke net pay, wajib magnitude positif.
+    return totalPotongan - Math.abs(Number(potPremiPph) || 0);
 }
 
 /**
@@ -235,5 +255,6 @@ export function calculateTotalPotonganBersih(totalPotongan: number, potPremiPph:
  * @returns upah_bersih
  */
 export function calculateUpahBersih(jumlahUpahKotor: number, totalPotongan: number, potPremiPph: number): number {
-    return jumlahUpahKotor - totalPotongan + potPremiPph;
+    // [SIGN-SAFETY] premi_pph = ADDITION ke net pay, wajib magnitude positif.
+    return jumlahUpahKotor - totalPotongan + Math.abs(Number(potPremiPph) || 0);
 }

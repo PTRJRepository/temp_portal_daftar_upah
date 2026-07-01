@@ -109,7 +109,8 @@ export class AggregationService {
             const k = key.toLowerCase();
             if (k.includes('majikan') || k.includes('total') || k.includes('jumlah') || k.endsWith('_maj') || k.includes('_maj_') || k.includes('upah_kotor') || k === 'pot_bpjs_kes' || k === 'pot_premi_pph') continue;
             if (k.startsWith('pot_') || k.startsWith('bpjs_') || ['pph21', 'spsi', 'pendapatan_lainnya'].includes(k)) {
-                total += this.getNumericValue(row, key);
+                // [SIGN-SAFETY] potongan wajib magnitude positif. Input negatif tidak boleh flip jadi tambahan.
+                total += Math.abs(this.getNumericValue(row, key));
             }
         }
         return total;
@@ -131,14 +132,16 @@ export class AggregationService {
                 const premiPph = this.getNumericValue(row, 'pot_premi_pph');
                 
                 if (upahKotor > 0) {
-                    row['upah_bersih'] = upahKotor - potongan + premiPph;
+                    row['upah_bersih'] = upahKotor - potongan + Math.abs(premiPph);
                 } else {
-                    const base = this.getNumericValue(row, 'gaji_pokok') + 
+                    // [SIGN-SAFETY] pendapatan_lainnya (earning) & koreksi (deduction) wajib magnitude.
+                    // premi_pph = ADDITION ke net pay, wajib positif.
+                    const base = this.getNumericValue(row, 'gaji_pokok') +
                                  ['beras_jumlah', 'jabatan_jumlah', 'masa_kerja_jumlah', 'lembur_jumlah'].reduce((s, c) => s + this.getNumericValue(row, c), 0) +
                                  ['premi_brondol', 'premi_pruning', 'premi_dynamic_1', 'premi_dynamic_2', 'premi_dynamic_3', 'premi_dynamic_4', 'premi_dynamic_5', 'premi_dynamic_6', 'premi_dynamic_7'].reduce((s, c) => s + this.getNumericValue(row, c), 0) +
-                                 (this.getNumericValue(row, 'pot_pendapatan_lainnya') || this.getNumericValue(row, 'pendapatan_lainnya') || this.getNumericValue(row, 'pendapatan_thr')) -
-                                 this.getNumericValue(row, 'koreksi');
-                    row['upah_bersih'] = base - potongan + premiPph;
+                                 Math.abs(this.getNumericValue(row, 'pot_pendapatan_lainnya') || this.getNumericValue(row, 'pendapatan_lainnya') || this.getNumericValue(row, 'pendapatan_thr')) -
+                                 Math.abs(this.getNumericValue(row, 'koreksi'));
+                    row['upah_bersih'] = base - potongan + Math.abs(premiPph);
                 }
                 calculatedCount++;
             }

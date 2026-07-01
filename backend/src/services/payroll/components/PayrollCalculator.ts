@@ -127,7 +127,7 @@ export class PayrollCalculator {
             premi: input.total_premi,          // excludes koreksi (koreksi shown separately)
             subtotal: 0, // computed below
             koreksi: potKoreksi,
-            lainnya: input.pendapatan_lainnya,
+            lainnya: Math.abs(Number(input.pendapatan_lainnya) || 0), // [SIGN-SAFETY] earning magnitude, wajib positif
             grand_subtotal: 0, // computed below
         };
         komponen_kotor.subtotal =
@@ -152,12 +152,14 @@ export class PayrollCalculator {
         // ─────────────────────────────────────────────────────────
         // 3. UPAH KOTOR PAJAK (Taxable Gross for header/pajak display)
         //    = UPAH KOTOR - pot_koreksi + pendapatan_lainnya + bpjs_pekerja
+        //    [SIGN-SAFETY] pendapatan_lainnya & bpjs_pekerja di-abs: earning/magnitude
+        //    wajib positif. Input negatif tidak boleh flip gross.
         // ─────────────────────────────────────────────────────────
         const upah_kotor_pajak =
             komponen_kotor.subtotal
             - potKoreksi
-            + input.pendapatan_lainnya
-            + input.pot_bpjs_kesehatan_pekerja;
+            + Math.abs(Number(input.pendapatan_lainnya) || 0)
+            + Math.abs(Number(input.pot_bpjs_kesehatan_pekerja) || 0);
 
         // ─────────────────────────────────────────────────────────
         // 4. TOTAL POTONGAN (Total Pengurangan dari Take-Home Pay)
@@ -169,13 +171,13 @@ export class PayrollCalculator {
         //    karena di jumlah_upah_kotor di-add sebagai tambahan (+) Gross.
         // ─────────────────────────────────────────────────────────
         const komponen_potongan = {
-            astek_pekerja: input.pot_astek_pekerja,
-            bpjs_kes_pekerja: input.pot_bpjs_kesehatan_pekerja,
-            bpjs_pensiun_pekerja: input.pot_bpjs_pensiun_pekerja,
-            spsi: input.pot_spsi,
-            pph21: input.pot_pph21,
-            other: input.other_potongan,
-            lainnya: input.pendapatan_lainnya,
+            astek_pekerja: Math.abs(Number(input.pot_astek_pekerja) || 0),
+            bpjs_kes_pekerja: Math.abs(Number(input.pot_bpjs_kesehatan_pekerja) || 0),
+            bpjs_pensiun_pekerja: Math.abs(Number(input.pot_bpjs_pensiun_pekerja) || 0),
+            spsi: Math.abs(Number(input.pot_spsi) || 0),
+            pph21: Math.abs(Number(input.pot_pph21) || 0),
+            other: Math.abs(Number(input.other_potongan) || 0),
+            lainnya: Math.abs(Number(input.pendapatan_lainnya) || 0),
             subtotal: 0, // computed below
         };
         komponen_potongan.subtotal =
@@ -192,8 +194,9 @@ export class PayrollCalculator {
         // ─────────────────────────────────────────────────────────
         // 5. TOTAL POTONGAN BERSIH (Net Deductions after PREMI_PPH adjustment)
         //    = total_potongan - premi_pph
+        //    [SIGN-SAFETY] premi_pph di-abs: ADDITION ke net pay, wajib positif magnitude.
         // ─────────────────────────────────────────────────────────
-        const total_potongan_bersih = total_potongan - input.pot_premi_pph;
+        const total_potongan_bersih = total_potongan - Math.abs(Number(input.pot_premi_pph) || 0);
 
         // ─────────────────────────────────────────────────────────
         // 6. PENGHASILAN BRUTO (Gross Income for PPh21 TER)
@@ -203,8 +206,8 @@ export class PayrollCalculator {
         // ─────────────────────────────────────────────────────────
         const penghasilan_bruto =
             jumlah_upah_kotor
-            + input.astek_majikan
-            + input.bpjs_majikan;
+            + Math.abs(Number(input.astek_majikan) || 0)
+            + Math.abs(Number(input.bpjs_majikan) || 0);
 
         // ─────────────────────────────────────────────────────────
         // 7. PPh21 TER Calculation
@@ -227,7 +230,7 @@ export class PayrollCalculator {
         //    = (upah_kotor - pot_koreksi + pendapatan_lainnya) - total_potongan + premi_pph
         //    dimana: total_potongan = astek + bpjs + spsi + pph21 + other + pendapatan_lainnya
         // ─────────────────────────────────────────────────────────
-        const upah_bersih = jumlah_upah_kotor - total_potongan + input.pot_premi_pph;
+        const upah_bersih = jumlah_upah_kotor - total_potongan + Math.abs(Number(input.pot_premi_pph) || 0);
 
         return {
             // Core gross
@@ -239,7 +242,7 @@ export class PayrollCalculator {
             penghasilan_bruto,
             tarif_pajak_ter: rate,
             pph21_ter: tax,
-            taxable_pendapatan_lainnya: input.pendapatan_lainnya,
+            taxable_pendapatan_lainnya: Math.abs(Number(input.pendapatan_lainnya) || 0),
             // Deductions
             total_potongan,
             total_potongan_bersih,
