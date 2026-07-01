@@ -363,7 +363,7 @@ function isPrintExportField(col) {
 }
 
 function hasPositiveFieldValue(rows, field) {
-    return rows.some((row) => row?.type === 'employee' && Number(row?.[field] || 0) !== 0);
+    return rows.some((row) => (!row?.type || row?.type === 'employee') && Number(row?.[field] || 0) !== 0);
 }
 
 function formatOtherIncomeExportLabel(field) {
@@ -412,7 +412,10 @@ function resolveOtherIncomeAmountFromRow(row, field) {
 function collectOtherIncomeDetailFields(rows) {
     const fields = new Set();
     rows.forEach((row) => {
-        if (row?.type !== 'employee') return;
+        // Treat rows with no explicit type (undefined/null) as employee rows too —
+        // backend stream omits `type` on employee rows, and skipping them here would
+        // drop pendapatan_*_pengurang columns, making total_potongan omit pendapatan_lainnya.
+        if (row?.type && row?.type !== 'employee') return;
         Object.keys(row).forEach((field) => {
             if (isOtherIncomeDetailField(field) && hasPositiveFieldValue(rows, field)) {
                 fields.add(field);
