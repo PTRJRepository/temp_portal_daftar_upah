@@ -217,7 +217,8 @@ export async function generateDaftarUpahExcel(
         ? COL_OTHER_INCOME_DED_END + 1
         : (HAS_GROSS_KOREKSI ? COL_POT_KOREKSI + 1 : COL_TOTAL_PREMI + 1);
     const COL_POT_BPJS = COL_POT_ASTEK + 1;
-    const COL_POT_SPSI = COL_POT_BPJS + 1;
+    const COL_POT_BPJS_PEN = COL_POT_BPJS + 1;
+    const COL_POT_SPSI = COL_POT_BPJS_PEN + 1;
     const COL_POT_PPH21 = COL_POT_SPSI + 1;
     const COL_TOTAL_POT = COL_POT_PPH21 + 1;
 
@@ -343,6 +344,7 @@ export async function generateDaftarUpahExcel(
         ...allOtherIncomeKeys.map((k, i): [number, string, string] => [COL_OTHER_INCOME_DED_START + i, `${formatOtherIncomeLabel(k)}\n(-)`, 'B91C1C']),
         [COL_POT_ASTEK, `ASTEK\n(${(CARUMAN_RATES.ASTEK_PEKERJA_JHT * 100).toFixed(0)}%×Base)`, 'B91C1C'],
         [COL_POT_BPJS, `BPJS KES\n(${(CARUMAN_RATES.BPJS_KES_PEKERJA * 100).toFixed(0)}%×Base)`, 'B91C1C'],
+        [COL_POT_BPJS_PEN, `BPJS PEN\n(${(CARUMAN_RATES.BPJS_PENSIUN_PEKERJA * 100).toFixed(0)}%×Base)`, 'B91C1C'],
         [COL_POT_SPSI, 'SPSI', 'B91C1C'],
         [COL_POT_PPH21, 'PPH21', 'B91C1C'],
         [COL_TOTAL_POT, 'TOTAL\nPOTONGAN', 'B91C1C'],
@@ -513,10 +515,11 @@ export async function generateDaftarUpahExcel(
         const carumanBase = gpStandar + masaKerja;
         const astekPek = Math.round(carumanBase * CARUMAN_RATES.ASTEK_PEKERJA_JHT);
         const bpjsKesPek = Math.round(carumanBase * CARUMAN_RATES.BPJS_KES_PEKERJA);
+        const bpjsPenPek = Math.round(carumanBase * CARUMAN_RATES.BPJS_PENSIUN_PEKERJA);
         const potSpsi = Math.abs(Number(emp.pot_spsi || 0));
         const potPph21 = Math.abs(Number(emp.pot_pph21 || 0));
         const totalOtherIncome = allOtherIncomeKeys.reduce((sum, key) => sum + getOtherIncomeValue(emp, key), 0);
-        const totalPot = -Math.abs(Number(emp.total_potongan_bersih || (totalOtherIncome + astekPek + bpjsKesPek + potSpsi + potPph21)));
+        const totalPot = -Math.abs(Number(emp.total_potongan_bersih || (totalOtherIncome + astekPek + bpjsKesPek + bpjsPenPek + potSpsi + potPph21)));
 
         row.getCell(COL_POT_ASTEK).value = {
             // Formula returns a negative deduction value, so Total Potongan can be a plain SUM.
@@ -527,6 +530,10 @@ export async function generateDaftarUpahExcel(
             // Formula returns a negative deduction value, so Upah Bersih can add Total Potongan.
             formula: `-ROUND((${lGS}${r}+${lMK}${r})*${CARUMAN_RATES.BPJS_KES_PEKERJA},0)`,
             result: -Math.abs(bpjsKesPek)
+        };
+        row.getCell(COL_POT_BPJS_PEN).value = {
+            formula: `-ROUND((${lGS}${r}+${lMK}${r})*${CARUMAN_RATES.BPJS_PENSIUN_PEKERJA},0)`,
+            result: -Math.abs(bpjsPenPek)
         };
         row.getCell(COL_POT_SPSI).value = -potSpsi;
         row.getCell(COL_POT_PPH21).value = -potPph21;
@@ -606,7 +613,7 @@ export async function generateDaftarUpahExcel(
         ...Array.from({ length: allOtherIncomeKeys.length }, (_, i) => COL_OTHER_INCOME_START + i),
         ...(HAS_GROSS_KOREKSI ? [COL_POT_KOREKSI] : []),
         ...Array.from({ length: allOtherIncomeKeys.length }, (_, i) => COL_OTHER_INCOME_DED_START + i),
-        COL_POT_ASTEK, COL_POT_BPJS, COL_POT_SPSI, COL_POT_PPH21, COL_TOTAL_POT,
+        COL_POT_ASTEK, COL_POT_BPJS, COL_POT_BPJS_PEN, COL_POT_SPSI, COL_POT_PPH21, COL_TOTAL_POT,
         COL_UPAH_KOTOR, COL_UPAH_BERSIH,
     ];
 

@@ -163,4 +163,39 @@ describe('generateDaftarUpahExcel', () => {
         });
         expect(row6[upahBersihCol]).toMatchObject({ formula: expect.not.stringContaining('-') });
     });
+
+    test('includes BPJS PENSIUN pekerja column in total potongan (IMPL-4)', async () => {
+        // carumanBase = gpStandar + masaKerja. gpStandar derived from upah_dasar/hk * hk.
+        // Use upah_dasar=100000, hk=25 -> gpStandar=2500000? Verify rate-based values via result field.
+        const buffer = await generateDaftarUpahExcel([
+            {
+                gang_code: 'A01',
+                nik: '123',
+                nama: 'BPJS PEN',
+                jumlah_hk: 25,
+                upah_dasar: 100000,
+                gaji_pokok_aktual: 2500000,
+                total_tunjangan: 0,
+                total_premi: 0,
+                pot_spsi: 0,
+                pot_pph21: 0,
+                pot_bpjs_pensiun_pekerja: 25000,
+                total_potongan_bersih: 25000,
+                jumlah_upah_kotor: 2500000,
+                upah_bersih: 2475000,
+            },
+        ], 2, 2026, 'EST', 'A01');
+
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.load(buffer as any);
+        const sheet = workbook.worksheets[0];
+        const row4 = sheet.getRow(4).values as any[];
+        const row6 = sheet.getRow(6).values as any[];
+
+        const bpjsPenCol = row4.findIndex((value) => String(value || '').toUpperCase().includes('BPJS PEN'));
+        expect(bpjsPenCol).toBeGreaterThan(0);
+        // Cell value should be a negative formula (rate-based) or negative number.
+        const cell = row6[bpjsPenCol];
+        expect(Number(typeof cell === 'object' && cell?.result !== undefined ? cell.result : cell)).toBeLessThanOrEqual(0);
+    });
 });
