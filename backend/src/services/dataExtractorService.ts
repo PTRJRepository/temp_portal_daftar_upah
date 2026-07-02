@@ -1543,7 +1543,6 @@ export class DataExtractorService {
                 jabatanText: empJobTitle,
                 roleText: emp.jabatan || "",
                 hariKerja: hari_kerja,
-                kehadiran: hk,
                 masaKerjaTahun: masaKerjaLama,
                 isSpsiMember,
                 divisionCode,
@@ -4137,14 +4136,75 @@ export class DataExtractorService {
                     debug(CATEGORY, `📋 is_spsi_member from history_hr_employee (MAX id): ${historySpsiRows.length} source rows`);
                 }
 
+                // Forward-persistence: emp yang pernah SPSI member di periode < periode ini.
+                // Sekali member -> member sampai override false. Cegah flapping null/false.
+                const periodStart = year * 12 + (month - 1);
+                const priorSpsiRows = await withTimeout('SPSI prior member lookup (history_hr_employee)',
+                    extendDb.query<{ emp_code: string }>(`
+                        SELECT DISTINCT RTRIM(emp_code) as emp_code
+                        FROM dbo.history_hr_employee
+                        WHERE RTRIM(emp_code) IN (${empCodeList})
+                          AND is_spsi_member = 1
+                          AND (period_year * 12 + (period_month - 1)) < ?
+                    `, [periodStart]),
+                    5000
+                );
+                const priorSpsiMember = new Set<string>();
+                if (priorSpsiRows) {
+                    for (const row of priorSpsiRows) {
+                        const ec = String(row.emp_code || '').trim().toUpperCase();
+                        if (ec) priorSpsiMember.add(ec);
+                    }
+                    debug(CATEGORY, `📋 SPSI forward-persist candidates (prior member): ${priorSpsiMember.size}`);
+                }
+
+                // Auto-buffer SPSI evidence: emp dengan auto-buffer SPSI amount>0 di periode
+                // manapun = bukti member. Masuk forward-persist set.
+                const autoBufferSpsiRows = await withTimeout('SPSI auto-buffer member lookup',
+                    extendDb.query<{ emp_code: string }>(`
+                        SELECT DISTINCT RTRIM(emp_code) as emp_code
+                        FROM dbo.payroll_manual_adjustments
+                        WHERE adjustment_type = 'AUTO_BUFFER'
+                          AND adjustment_name = 'SPSI'
+                          AND ABS(amount) > 0
+                          AND RTRIM(emp_code) IN (${empCodeList})
+                    `),
+                    5000
+                );
+                if (autoBufferSpsiRows) {
+                    let added = 0;
+                    for (const row of autoBufferSpsiRows) {
+                        const ec = String(row.emp_code || '').trim().toUpperCase();
+                        if (ec && !priorSpsiMember.has(ec)) { priorSpsiMember.add(ec); added++; }
+                    }
+                    debug(CATEGORY, `📋 SPSI forward-persist candidates (auto-buffer evidence): +${added}`);
+                }
+
+                // SSOT SPSI: extend_db_ptrj (override > history).
+                // Forward-persistence guard: kalo pernah member di periode sebelumnya (history),
+                // tetap member kecuali override false. Live db_ptrj (pot_spsi) hanya comparison,
+                // fallback kalau extend tidak punya data sama sekali.
                 for (const emp of employees) {
                     const empCodeKey = String(emp.emp_code || '').trim().toUpperCase();
+                    let resolved: boolean | null = null;
                     if (spsiMap.has(empCodeKey)) {
-                        emp.is_spsi_member = !!spsiMap.get(empCodeKey);
+                        resolved = !!spsiMap.get(empCodeKey);
+                    }
+                    // Forward-persistence: kalau extend belum ada nilai, cek history prior member
+                    if (resolved === null && priorSpsiMember.has(empCodeKey)) {
+                        resolved = true;
+                    }
+                    // Fallback: live db_ptrj pot_spsi > 0 (comparison source)
+                    if (resolved === null) {
+                        const liveSpsi = Number(emp.pot_spsi || 0) > 0;
+                        if (liveSpsi) resolved = true;
+                    }
+                    if (resolved !== null) {
+                        emp.is_spsi_member = resolved;
                         spsiFound++;
                     }
                 }
-                debug(CATEGORY, `📋 is_spsi_member enriched: ${spsiFound}/${employees.length}`);
+                debug(CATEGORY, `📋 is_spsi_member enriched: ${spsiFound}/${employees.length} (override/history + forward-persist + live fallback)`);
             } catch (e) {
                 debug(CATEGORY, `⚠️ is_spsi_member enrichment skipped: ${e.message}`);
             }
@@ -4787,7 +4847,6 @@ export class DataExtractorService {
                 jabatanText: emp.jabatan_estate || emp.jabatan || "",
                 roleText: emp.jabatan || emp.role || "",
                 hariKerja: hari_kerja,
-                kehadiran: hk,
                 masaKerjaTahun,
                 isSpsiMember,
                 divisionCode,

@@ -23,6 +23,8 @@ import { payrollProfileSeedService } from "./payrollProfileSeedService";
 import { calculatePayrollTotals } from "./payrollTotalsCalculator";
 import { debug, error as logError } from "../utils/logger";
 import { processInBatches } from "../utils/batchProcessor";
+import type { EmployeeProfileOverrideRow } from "../types/payroll/payrollOverlay";
+import { normalizeEffectiveStartDate } from "../utils/payrollProfileRules";
 
 const CATEGORY = "HistorySeeder";
 
@@ -686,6 +688,7 @@ export class HistorySeederService {
             }
 
             const spsiOverrides = await this.getProfileOverrides(empCodes);
+            const priorSpsiMember = await this.getPriorSpsiMember(empCodes, options.periodMonth, options.periodYear);
 
             if (!result.records_inserted['hr_employee']) result.records_inserted['hr_employee'] = 0;
             HistorySeederService.updateProgress({ current_step: `Menyimpan data HR Karyawan... (0/${emps.length})`, employees_processed: 0 });
@@ -701,12 +704,31 @@ export class HistorySeederService {
                         const nik = r.nik?.trim().toUpperCase() || "";
                         const empCode = (latestEmpCodeMap.get(nik) || r.emp_code)?.trim().toUpperCase() || "";
                         const jabatan = (jabatanMap.get(empCode) || r.jabatan || "").trim();
+                        const resolvedSpsi = this.resolveSpsiWithGuard(
+                            empCode,
+                            payrollProfileSeedService.resolveSpsiMember(empCode, spsiMemberMap, spsiOverrides),
+                            spsiOverrides,
+                            priorSpsiMember
+                        );
+                        const resolvedJoinDate = this.resolveJoinDate(empCode, spsiOverrides, r.join_date);
+
+                        // Idempotensi: skip INSERT kalau row latest (emp_code, period) sudah punya
+                        // is_spsi_member + join_date sama. Cegah duplicate re-seed nilai unchanged.
+                        const skip = await this.shouldSkipHrEmployeeInsert(
+                            empCode, options.periodMonth, options.periodYear, resolvedSpsi, resolvedJoinDate
+                        );
+                        if (skip) {
+                            if (shouldTrackHrAsTotalEmployees) result.total_employees++;
+                            processed++;
+                            continue;
+                        }
+
                         await historyDatabaseService.saveHrEmployeeHistory({
                             history_id: historyId, period_month: options.periodMonth, period_year: options.periodYear, nik: r.nik?.trim(), emp_code: empCode,
                             emp_name: r.emp_name?.trim(), company_code: r.company_code?.trim(), division_code: r.division_code?.trim(), loc_code: r.loc_code?.trim(),
-                            gang_code: r.gang_code?.trim(), position: jabatan || null, jabatan, is_spsi_member: payrollProfileSeedService.resolveSpsiMember(empCode, spsiMemberMap, spsiOverrides),
+                            gang_code: r.gang_code?.trim(), position: jabatan || null, jabatan, is_spsi_member: resolvedSpsi,
                             pajak_npwp: r.pajak_npwp?.trim(), res_address: r.res_address?.trim(),
-                            join_date: r.join_date, terminate_date: r.terminate_date, status: r.status?.trim(), employee_type: r.employee_type?.trim(),
+                            join_date: resolvedJoinDate, terminate_date: r.terminate_date, status: r.status?.trim(), employee_type: r.employee_type?.trim(),
                             gender: r.gender?.trim(), religion: r.religion?.trim(), birth_place: r.birth_place?.trim(), birth_date: r.birth_date, marital_status: r.marital_status?.trim(),
                             ptkp_beras: r.ptkp_beras?.trim(), upah_dasar: r.upah_dasar ?? 0, total_hk: r.total_hk || 0, source_table: 'HR_EMPLOYEE_JOIN'
                         });
@@ -741,6 +763,115 @@ export class HistorySeederService {
         }
 
         return payrollProfileSeedService.pickLatestProfileOverrides(rows);
+    }
+
+    /**
+     * Guard forward-persistence (user rule): kalo karyawan pernah jadi SPSI member
+     * di periode sebelumnya, periode sekarang harus tetap member — kecuali ada
+     * override eksplisit is_spsi_member=false (user set keluar SPSI).
+     * Sekali member -> member sampai override false atau terminate.
+     */
+    private resolveSpsiWithGuard(
+        empCode: string,
+        computed: boolean,
+        overrides: Map<string, EmployeeProfileOverrideRow>,
+        priorSpsiMember: Set<string>
+    ): boolean {
+        const override = overrides.get(empCode);
+        if (override?.is_spsi_member === false || override?.is_spsi_member === 0) return false;
+        if (override?.is_spsi_member === true || override?.is_spsi_member === 1) return true;
+        if (computed) return true;
+        return priorSpsiMember.has(empCode);
+    }
+
+    /**
+     * Cari emp_code yang punya SPSI=true di history periode sebelum periode seeding.
+     * Dipakai guard forward-persistence.
+     */
+    private async getPriorSpsiMember(empCodes: string[], periodMonth: number, periodYear: number): Promise<Set<string>> {
+        if (!empCodes.length) return new Set();
+        const periodStart = periodYear * 12 + (periodMonth - 1);
+        const priorSet = new Set<string>();
+        const CHUNK = 500;
+        for (let i = 0; i < empCodes.length; i += CHUNK) {
+            const chunk = empCodes.slice(i, i + CHUNK);
+            const placeholders = chunk.map(() => "?").join(",");
+            const rows = await Database.getExtendedInstance().query<{ emp_code: string }>(`
+                SELECT RTRIM(emp_code) as emp_code
+                FROM dbo.history_hr_employee
+                WHERE RTRIM(emp_code) IN (${placeholders})
+                  AND is_spsi_member = 1
+                  AND (period_year * 12 + (period_month - 1)) < ?
+            `, [...chunk, periodStart]);
+            for (const row of rows) {
+                const ec = row.emp_code?.trim().toUpperCase();
+                if (ec) priorSet.add(ec);
+            }
+            // Auto-buffer SPSI amount>0 di periode manapun = bukti member.
+            const abRows = await Database.getExtendedInstance().query<{ emp_code: string }>(`
+                SELECT DISTINCT RTRIM(emp_code) as emp_code
+                FROM dbo.payroll_manual_adjustments
+                WHERE adjustment_type = 'AUTO_BUFFER'
+                  AND adjustment_name = 'SPSI'
+                  AND ABS(amount) > 0
+                  AND RTRIM(emp_code) IN (${placeholders})
+            `, chunk);
+            for (const row of abRows) {
+                const ec = row.emp_code?.trim().toUpperCase();
+                if (ec) priorSet.add(ec);
+            }
+        }
+        return priorSet;
+    }
+
+    /**
+     * SSOT join_date = employee_profile_override_history.effective_start_date (latest).
+     * Konsisten dgn runtime dataExtractorService priority 1. Fallback AppJoinGrpDate.
+     */
+    private resolveJoinDate(
+        empCode: string,
+        overrides: Map<string, EmployeeProfileOverrideRow>,
+        fallback: any
+    ): any {
+        const override = overrides.get(empCode);
+        const esd = override?.effective_start_date;
+        if (esd) {
+            const normalized = normalizeEffectiveStartDate(esd);
+            if (normalized) return normalized;
+        }
+        return fallback;
+    }
+
+    /**
+     * Idempotensi re-seed: kalau row latest (emp_code, period) sudah punya
+     * is_spsi_member + join_date sama dgn nilai resolve, skip INSERT (no duplicate).
+     * saveHrEmployeeHistory append-only by design; guard di seeder level.
+     */
+    private async shouldSkipHrEmployeeInsert(
+        empCode: string,
+        periodMonth: number,
+        periodYear: number,
+        spsiMember: boolean,
+        joinDate: any
+    ): Promise<boolean> {
+        if (!empCode) return false;
+        try {
+            const row = await Database.getExtendedInstance().queryOne<{ is_spsi_member: any; join_date: any }>(`
+                SELECT TOP 1 is_spsi_member, join_date
+                FROM dbo.history_hr_employee
+                WHERE emp_code = ? AND period_month = ? AND period_year = ?
+                ORDER BY id DESC
+            `, [empCode, periodMonth, periodYear]);
+            if (!row) return false;
+            const haveSpsi = row.is_spsi_member === true || row.is_spsi_member === 1;
+            const wantSpsi = !!spsiMember;
+            if (haveSpsi !== wantSpsi) return false;
+            const norm = (v: any) => v ? normalizeEffectiveStartDate(String(v).slice(0, 10)) : null;
+            if (norm(row.join_date) !== norm(joinDate)) return false;
+            return true;
+        } catch {
+            return false;
+        }
     }
 
     private async seedGangHrHistory(historyId: string, options: SeederOptions, result: SeederResult): Promise<void> {
