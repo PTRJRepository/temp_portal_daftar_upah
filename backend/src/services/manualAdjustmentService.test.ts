@@ -2472,7 +2472,9 @@ describe("manualAdjustmentService duplicate PR_ADTRANS report", () => {
         });
     });
 
-    it("splits duplicate premi by employee, DocDesc, and amount content", () => {
+    it("groups duplicate premi by employee + DocDesc (amount ignored, keep newest)", () => {
+        // ponytail: duplicate key = emp + category + DocDesc (TANPA amount).
+        //  PREMI TBS 3 records (2 amount 1046398 + 1 amount 999999) -> 1 group, keep highest id, delete 2 lain.
         const report = buildAdtransDuplicateReport([
             { id: 101, doc_id: "DOC-A1", doc_date: "2026-04-30", doc_desc: "PREMI INSENTIF PANEN", emp_code: "L0073", emp_name: "BAHARUDIN", amount: 150000 },
             { id: 102, doc_id: "DOC-B1", doc_date: "2026-04-30", doc_desc: "PREMI TBS", emp_code: "L0073", emp_name: "BAHARUDIN", amount: 1046398 },
@@ -2486,7 +2488,6 @@ describe("manualAdjustmentService duplicate PR_ADTRANS report", () => {
             emp_code: duplicate.emp_code,
             category: duplicate.category,
             doc_desc: duplicate.doc_desc,
-            amount: duplicate.amount,
             keep_doc_id: duplicate.keep_doc_id,
             delete_doc_ids: duplicate.delete_doc_ids
         }))).toEqual([
@@ -2494,7 +2495,6 @@ describe("manualAdjustmentService duplicate PR_ADTRANS report", () => {
                 emp_code: "L0073",
                 category: "premi",
                 doc_desc: "PREMI INSENTIF PANEN",
-                amount: 150000,
                 keep_doc_id: "DOC-A2",
                 delete_doc_ids: ["DOC-A1"]
             },
@@ -2502,9 +2502,8 @@ describe("manualAdjustmentService duplicate PR_ADTRANS report", () => {
                 emp_code: "L0073",
                 category: "premi",
                 doc_desc: "PREMI TBS",
-                amount: 1046398,
-                keep_doc_id: "DOC-B2",
-                delete_doc_ids: ["DOC-B1"]
+                keep_doc_id: "DOC-C1",
+                delete_doc_ids: ["DOC-B1", "DOC-B2"]
             }
         ]);
     });

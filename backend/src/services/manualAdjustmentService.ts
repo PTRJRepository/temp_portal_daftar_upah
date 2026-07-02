@@ -662,11 +662,14 @@ export function buildAdtransDuplicateReport(
             if (!matchesSpecificAdtransDocDesc(row.doc_desc || '', normalizedOptions)) continue;
 
             const category = normalizeAdtransFilter(filter);
+            // ponytail: duplicate key = emp_code + category + DocDesc (TANPA amount).
+            //  Sebelumnya amount ikut key -> 2 record same emp+DocDesc beda amount -> gak kedeteksi duplikat.
+            //  User mau: same DocDesc + same emp = duplikat regardless amount. Keep newest (highest id), delete rest.
+            //  Upgrade: kalau perlu toleransi amount (e.g. rounding 1Rp), tambah banding amount di action decision.
             const key = [
                 normalizeIdentityValue(row.emp_code),
                 category,
-                normalizeAdtransDuplicateDocDesc(row.doc_desc),
-                normalizeAdtransDuplicateAmount(row.amount)
+                normalizeAdtransDuplicateDocDesc(row.doc_desc)
             ].join('|');
             const groupRows = groups.get(key) || [];
             groupRows.push(row);
