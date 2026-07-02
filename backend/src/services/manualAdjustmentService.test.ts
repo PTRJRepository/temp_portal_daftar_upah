@@ -8,6 +8,7 @@ import {
     buildManualAdjustmentApiResponseRows,
     buildGroupedManualAdjustmentResponse,
     buildManualAdjustmentRemarks,
+    computeManualAdjustmentSyncStatuses,
     manualAdjustmentRequiresAdCode,
     manualAdjustmentService
 } from "./manualAdjustmentService";
@@ -953,7 +954,10 @@ describe("manual adjustment ADCode rules", () => {
             });
 
             expect(id).toBe(99);
-            expect(calls.length).toBe(3);
+            // ponytail: saveAdjustment now does real-time sync/match write-back (+SELECT row +UPDATE remarks).
+            //  Warm test env (schema cache hit): 2 identity + INSERT + writeback-SELECT + writeback-UPDATE = 5.
+            //  Cold env adds 1 schema-check call = 6.
+            expect(calls.length).toBeGreaterThanOrEqual(5);
         } finally {
             (Database as any).getInstance = originalGetInstance;
         }
@@ -3098,6 +3102,143 @@ describe("manualAdjustmentService duplicate PR_ADTRANS report", () => {
 // BUG-DB-001: metadata_json sync + validation tests
 // Tests for calculateManualAdjustmentMetadataTotal and resolveDetailTotalSync
 // ─────────────────────────────────────────────────────────────────────────────
+
+describe("computeManualAdjustmentSyncStatuses (pure recompute)", () => {
+    // helper bangun row standar
+    function makeRow(over: Partial<any> = {}): any {
+        return {
+            id: 1,
+            period_month: 5,
+            period_year: 2026,
+            emp_code: "E0409",
+            nik: "1902042611030001",
+            emp_name: "RADIUS",
+            gang_code: "E1H",
+            division_code: "E 1",
+            adjustment_type: "PREMI",
+            adjustment_name: "PREMI TBS",
+            amount: 134101,
+            remarks: "PREMI TBS | (AL) TUNJANGAN PREMI ((PM) HARVESTING LABOUR - HARVESTING) | 134101 | sync:SYNC | match:MATCH",
+            metadata_json: null,
+            ...over
+        };
+    }
+
+    it("SYNC/MATCH bila ADTRANS total == target amount", () => {
+        const rows = [makeRow()];
+        const adtrans = [
+            { emp_code: "E0409", doc_desc: "(AL) TUNJANGAN PREMI ((PM) HARVESTING LABOUR - HARVESTING)", doc_id: "D1", amount: 134101 }
+        ];
+        const m = computeManualAdjustmentSyncStatuses(rows, adtrans);
+        const r = m.get(1)!;
+        expect(r.sync_status).toBe("SYNC");
+        expect(r.match_status).toBe("MATCH");
+        expect(r.adtrans_amount).toBe(134101);
+        expect(r.diff).toBe(0);
+        expect(r.has_adtrans).toBe(true);
+        expect(r.is_stale).toBe(false);
+    });
+
+    it("DIFF/MISMATCH bila ADTRANS ada tapi beda nominal (stale)", () => {
+        const rows = [makeRow({ remarks: "PREMI TBS | x | 134101 | sync:SYNC | match:MATCH" })];
+        const adtrans = [
+            { emp_code: "E0409", doc_desc: "(AL) TUNJANGAN PREMI ((PM) HARVESTING LABOUR - HARVESTING)", doc_id: "D1", amount: 100000 }
+        ];
+        const m = computeManualAdjustmentSyncStatuses(rows, adtrans);
+        const r = m.get(1)!;
+        expect(r.sync_status).toBe("DIFF");
+        expect(r.match_status).toBe("MISMATCH");
+        expect(r.diff).toBe(100000 - 134101);
+        expect(r.is_stale).toBe(true); // baked SYNC != computed DIFF
+        expect(r.baked_sync).toBe("SYNC");
+    });
+
+    it("MISS/MISMATCH bila tidak ada ADTRANS match (stale)", () => {
+        const rows = [makeRow({ remarks: "PREMI TBS | x | 134101 | sync:SYNC | match:MATCH" })];
+        const m = computeManualAdjustmentSyncStatuses(rows, []);
+        const r = m.get(1)!;
+        expect(r.sync_status).toBe("MISS");
+        expect(r.match_status).toBe("MISMATCH");
+        expect(r.has_adtrans).toBe(false);
+        expect(r.adtrans_amount).toBe(0);
+        expect(r.is_stale).toBe(true);
+    });
+
+    it("memakai metadata_json total_amount bila ada, fallback amount", () => {
+        const rows = [makeRow({
+            amount: 0,
+            metadata_json: JSON.stringify({ input_type: "blok", items: [{ subblok: "PM0711", gang_code: "E1H", jumlah: 134101 }], total_amount: 134101 })
+        })];
+        const adtrans = [
+            { emp_code: "E0409", doc_desc: "(AL) TUNJANGAN PREMI ((PM) HARVESTING LABOUR - HARVESTING)", doc_id: "D1", amount: 134101 }
+        ];
+        const m = computeManualAdjustmentSyncStatuses(rows, adtrans);
+        const r = m.get(1)!;
+        expect(r.target_amount).toBe(134101);
+        expect(r.sync_status).toBe("SYNC");
+    });
+
+    it("multiple ADTRANS rows summed before compare", () => {
+        const rows = [makeRow({ amount: 350000 })];
+        const adtrans = [
+            { emp_code: "E0409", doc_desc: "(AL) TUNJANGAN PREMI ((PM) HARVESTING LABOUR - HARVESTING)", doc_id: "D1", amount: 200000 },
+            { emp_code: "E0409", doc_desc: "(AL) TUNJANGAN PREMI ((PM) HARVESTING LABOUR - HARVESTING)", doc_id: "D2", amount: 150000 }
+        ];
+        const m = computeManualAdjustmentSyncStatuses(rows, adtrans);
+        const r = m.get(1)!;
+        expect(r.adtrans_amount).toBe(350000);
+        expect(r.sync_status).toBe("SYNC");
+    });
+
+    it("AUTO_BUFFER masa kerja mapped via adjustment_name", () => {
+        const rows = [makeRow({
+            adjustment_type: "AUTO_BUFFER",
+            adjustment_name: "MASA KERJA",
+            amount: 50000,
+            remarks: "MASA KERJA | x | 50000 | sync:SYNC | match:MATCH"
+        })];
+        // adtransDetailMatchesManualAdjustment pakai buildManualAdjustmentExpectedAdtransTexts (task_desc dll).
+        // Untuk AUTO_BUFFER, ad_code_fields resolve via autoBufferAdcodeMap -> text "masa kerja".
+        const adtrans = [
+            { emp_code: "E0409", doc_desc: "TUNJANGAN MASA KERJA", doc_id: "D1", amount: 50000 }
+        ];
+        const m = computeManualAdjustmentSyncStatuses(rows, adtrans);
+        const r = m.get(1)!;
+        // note: match tergantung normalisasi teks; minimal adtrans_amount ter-sum
+        expect(r.adtrans_amount).toBe(50000);
+    });
+
+    it("potongan compare by absolute value (negative input tidak flip)", () => {
+        const rows = [makeRow({
+            adjustment_type: "POTONGAN_KOTOR",
+            adjustment_name: "KOREKSI UPAH",
+            amount: -80000,
+            remarks: "KOREKSI UPAH | x | -80000 | sync:SYNC | match:MATCH"
+        })];
+        const adtrans = [
+            { emp_code: "E0409", doc_desc: "KOREKSI UPAH", doc_id: "D1", amount: 80000 }
+        ];
+        const m = computeManualAdjustmentSyncStatuses(rows, adtrans);
+        const r = m.get(1)!;
+        // target_amount = raw stored amount (signed); compare pakai abs internal
+        expect(r.target_amount).toBe(-80000);
+        expect(r.adtrans_amount).toBe(80000); // adtrans selalu abs
+        expect(r.sync_status).toBe("SYNC"); // |-80000| == 80000
+    });
+
+    it("remarks_fresh fallback ke row.remarks bila remarks bukan pipe; baked_sync null", () => {
+        const rows = [makeRow({ remarks: "AD CODE: AL0018" })]; // legacy non-pipe
+        const adtrans = [
+            { emp_code: "E0409", doc_desc: "(AL) TUNJANGAN PREMI ((PM) HARVESTING LABOUR - HARVESTING)", doc_id: "D1", amount: 134101 }
+        ];
+        const m = computeManualAdjustmentSyncStatuses(rows, adtrans);
+        const r = m.get(1)!;
+        // updatePipeDelimitedSyncAndMatchStatus return null bila no pipe -> fallback row.remarks
+        expect(r.remarks_fresh).toBe("AD CODE: AL0018");
+        expect(r.baked_sync).toBeNull(); // no sync: segment parseable
+        expect(r.baked_match).toBeNull();
+    });
+});
 
 describe("calculateManualAdjustmentMetadataTotal", () => {
     it("sums blok items jumlah correctly", () => {

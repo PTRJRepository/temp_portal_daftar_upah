@@ -617,10 +617,26 @@ export const payrollRoutes = new Elysia({ prefix: "/payroll" })
             }
 
             const {
-                manualAdjustmentService,
-                buildManualAdjustmentApiResponseRows
+                manualAdjustmentService
             } = await import("../services/manualAdjustmentService");
             const metadataOnly = ["1", "true", "yes", "metadata"].includes(String(query.metadata_only || query.has_metadata || "").trim().toLowerCase());
+            // ponytail: recompute_sync default true (real-time vs ADTRANS). Set =0/false untuk legacy baked-remarks path.
+            const recomputeSync = !["0", "false", "no", "off"].includes(String(query.recompute_sync || "").trim().toLowerCase());
+
+            if (recomputeSync) {
+                const apiRows = await manualAdjustmentService.getAdjustmentsWithSyncRecompute(
+                    periodMonth,
+                    periodYear,
+                    query.gang_code || undefined,
+                    query.emp_code || undefined,
+                    query.division_code || undefined,
+                    query.adjustment_type || undefined,
+                    query.adjustment_name || undefined,
+                    metadataOnly
+                );
+                return { success: true, count: apiRows.length, data: apiRows };
+            }
+
             const rows = await manualAdjustmentService.getAdjustments(
                 periodMonth,
                 periodYear,
@@ -631,8 +647,9 @@ export const payrollRoutes = new Elysia({ prefix: "/payroll" })
                 query.adjustment_name || undefined,
                 metadataOnly
             );
+            const { buildManualAdjustmentApiResponseRows } = await import("../services/manualAdjustmentService");
 
-            return { success: true, count: rows.length, data: rows };
+            return { success: true, count: rows.length, data: buildManualAdjustmentApiResponseRows(rows) };
         } catch (e: any) {
             console.error("[PayrollRoutes] manual-adjustment GET error:", e);
             set.status = 500;
@@ -648,7 +665,8 @@ export const payrollRoutes = new Elysia({ prefix: "/payroll" })
             adjustment_type: t.Optional(t.String()),
             adjustment_name: t.Optional(t.String()),
             metadata_only: t.Optional(t.String()),
-            has_metadata: t.Optional(t.String())
+            has_metadata: t.Optional(t.String()),
+            recompute_sync: t.Optional(t.String())
         })
     })
     .post("/manual-adjustment", async ({ body, currentUser, set }) => {
@@ -692,6 +710,56 @@ export const payrollRoutes = new Elysia({ prefix: "/payroll" })
             task_code: t.Optional(t.String()),
             base_task_code: t.Optional(t.String()),
             task_desc: t.Optional(t.String())
+        })
+    })
+    // --- Validate premium conversion (lightweight, no DB) ---
+    .get("/manual-adjustment/validate-conversion", async ({ query, set }) => {
+        try {
+            const { premiumDefinitionService } = await import("../services/premiumDefinitionService");
+            const validation = premiumDefinitionService.validatePremiumConversion(query.from, query.to);
+            return { success: true, validation };
+        } catch (e: any) {
+            console.error("[PayrollRoutes] validate-conversion error:", e);
+            set.status = 500;
+            return { success: false, error: e.message };
+        }
+    }, {
+        query: t.Object({
+            from: t.String(),
+            to: t.String()
+        })
+    })
+    // --- Convert premium type (per-column bulk) ---
+    .post("/manual-adjustment/convert-type", async ({ body, currentUser, set }) => {
+        try {
+            const { manualAdjustmentService } = await import("../services/manualAdjustmentService");
+            const { premiumDefinitionService } = await import("../services/premiumDefinitionService");
+            // Pre-check validation gate — return 422 with reason if blocked
+            const validation = premiumDefinitionService.validatePremiumConversion(body.from_adjustment_name, body.to_adjustment_name);
+            if (!validation.allowed) {
+                set.status = 422;
+                return { success: false, error: validation.reason, validation };
+            }
+            const { cacheService } = await import("../services/cacheService");
+            const result = await manualAdjustmentService.convertAdjustmentType({
+                ...body,
+                updated_by: currentUser?.username || "system"
+            });
+            cacheService.clearByPattern(`:${body.period_month}:${body.period_year}`);
+            return { success: true, ...result };
+        } catch (e: any) {
+            console.error("[PayrollRoutes] convert-type error:", e);
+            set.status = 500;
+            return { success: false, error: e.message };
+        }
+    }, {
+        body: t.Object({
+            period_month: t.Number(),
+            period_year: t.Number(),
+            division_code: t.Optional(t.String()),
+            adjustment_type: t.String(),
+            from_adjustment_name: t.String(),
+            to_adjustment_name: t.String()
         })
     })
     .delete("/manual-adjustment/column", async ({ query, set }) => {
@@ -786,29 +854,46 @@ export const payrollRoutes = new Elysia({ prefix: "/payroll" })
             }
 
             const {
-                manualAdjustmentService,
-                buildManualAdjustmentApiResponseRows
+                manualAdjustmentService
             } = await import("../services/manualAdjustmentService");
             const metadataOnly = ["1", "true", "yes", "metadata"].includes(String(query.metadata_only || query.has_metadata || "").trim().toLowerCase());
-            const rows = await manualAdjustmentService.getAdjustments(
-                periodMonth,
-                periodYear,
-                query.gang_code || undefined,
-                query.emp_code || undefined,
-                query.division_code || undefined,
-                query.adjustment_type || undefined,
-                query.adjustment_name || undefined,
-                metadataOnly
-            );
+            const recomputeSync = !["0", "false", "no", "off"].includes(String(query.recompute_sync || "").trim().toLowerCase());
+
+            // ponytail: recompute_sync default true (real-time vs ADTRANS). =0/false -> legacy baked-remarks path.
+            let dataRows: any[];
+            if (recomputeSync) {
+                dataRows = await manualAdjustmentService.getAdjustmentsWithSyncRecompute(
+                    periodMonth,
+                    periodYear,
+                    query.gang_code || undefined,
+                    query.emp_code || undefined,
+                    query.division_code || undefined,
+                    query.adjustment_type || undefined,
+                    query.adjustment_name || undefined,
+                    metadataOnly
+                );
+            } else {
+                const r = await manualAdjustmentService.getAdjustments(
+                    periodMonth, periodYear,
+                    query.gang_code || undefined,
+                    query.emp_code || undefined,
+                    query.division_code || undefined,
+                    query.adjustment_type || undefined,
+                    query.adjustment_name || undefined,
+                    metadataOnly
+                );
+                const { buildManualAdjustmentApiResponseRows } = await import("../services/manualAdjustmentService");
+                dataRows = buildManualAdjustmentApiResponseRows(r);
+            }
 
             if (String(query.view || "").trim().toLowerCase() === "grouped") {
                 const { buildGroupedManualAdjustmentResponse } = await import("../services/manualAdjustmentService");
-                const grouped = buildGroupedManualAdjustmentResponse(rows);
+                const grouped = buildGroupedManualAdjustmentResponse(dataRows);
                 return {
                     success: true,
                     view: "grouped",
                     metadata_only: metadataOnly,
-                    count: rows.length,
+                    count: dataRows.length,
                     summary: grouped.summary,
                     data: grouped.divisions
                 };
@@ -818,8 +903,8 @@ export const payrollRoutes = new Elysia({ prefix: "/payroll" })
                 success: true,
                 view: "flat",
                 metadata_only: metadataOnly,
-                count: rows.length,
-                data: buildManualAdjustmentApiResponseRows(rows)
+                count: dataRows.length,
+                data: dataRows
             };
         } catch (e: any) {
             console.error("[PayrollRoutes] manual-adjustment/by-api-key GET error:", e);
@@ -837,7 +922,8 @@ export const payrollRoutes = new Elysia({ prefix: "/payroll" })
             adjustment_name: t.Optional(t.String()),
             view: t.Optional(t.String()),
             metadata_only: t.Optional(t.String()),
-            has_metadata: t.Optional(t.String())
+            has_metadata: t.Optional(t.String()),
+            recompute_sync: t.Optional(t.String())
         })
     })
     .post("/manual-adjustment/by-api-key", async ({ body, headers, set }) => {
@@ -2012,6 +2098,63 @@ export const payrollRoutes = new Elysia({ prefix: "/payroll" })
             task_code: t.Optional(t.String()),
             base_task_code: t.Optional(t.String()),
             task_desc: t.Optional(t.String())
+        })
+    })
+    // --- Locked: validate premium conversion ---
+    .get("/locked/manual-adjustment/validate-conversion", async ({ query, set, currentUser }) => {
+        try {
+            if (!currentUser) {
+                set.status = 401;
+                return { success: false, error: "Unauthorized" };
+            }
+            const { premiumDefinitionService } = await import("../services/premiumDefinitionService");
+            const validation = premiumDefinitionService.validatePremiumConversion(query.from, query.to);
+            return { success: true, validation };
+        } catch (e: any) {
+            console.error("[PayrollRoutes] locked/validate-conversion error:", e);
+            set.status = 500;
+            return { success: false, error: e.message };
+        }
+    }, {
+        query: t.Object({
+            from: t.String(),
+            to: t.String()
+        })
+    })
+    // --- Locked: convert premium type (per-column bulk) ---
+    .post("/locked/manual-adjustment/convert-type", async ({ body, set, currentUser }) => {
+        try {
+            if (!currentUser) {
+                set.status = 401;
+                return { success: false, error: "Unauthorized" };
+            }
+            const { manualAdjustmentService } = await import("../services/manualAdjustmentService");
+            const { premiumDefinitionService } = await import("../services/premiumDefinitionService");
+            const validation = premiumDefinitionService.validatePremiumConversion(body.from_adjustment_name, body.to_adjustment_name);
+            if (!validation.allowed) {
+                set.status = 422;
+                return { success: false, error: validation.reason, validation };
+            }
+            const { cacheService } = await import("../services/cacheService");
+            const result = await manualAdjustmentService.convertAdjustmentType({
+                ...body,
+                updated_by: currentUser?.username || "system"
+            });
+            cacheService.clearByPattern(`:${body.period_month}:${body.period_year}`);
+            return { success: true, ...result };
+        } catch (e: any) {
+            console.error("[PayrollRoutes] locked/convert-type error:", e);
+            set.status = 500;
+            return { success: false, error: e.message };
+        }
+    }, {
+        body: t.Object({
+            period_month: t.Number(),
+            period_year: t.Number(),
+            division_code: t.Optional(t.String()),
+            adjustment_type: t.String(),
+            from_adjustment_name: t.String(),
+            to_adjustment_name: t.String()
         })
     })
     .delete("/locked/manual-adjustment/column", async ({ query, set, currentUser }) => {

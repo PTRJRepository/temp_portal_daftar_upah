@@ -13,6 +13,7 @@ import {
 import { normalizeAutoBufferAdjustmentName } from "./payroll/manualAdjustments/autoBufferAdcodeMap";
 import {
     inferManualAdjustmentAdCodeFromRemarks,
+    parsePipeDelimitedRemarks,
     updatePipeDelimitedSyncAndMatchStatus,
     updatePipeDelimitedSyncStatus
 } from "../utils/manualAdjustmentRemarkParser";
@@ -850,6 +851,16 @@ export type ManualAdjustmentApiResponseRow = Omit<ManualAdjustment, "nik" | "emp
     ad_code_desc: string;
     ad_desc: string;
     task_desc: string;
+    // recompute real-time vs ADTRANS (optional, saat GET recompute_sync=true)
+    sync_status?: string | null;
+    match_status?: string | null;
+    target_amount?: number | null;
+    adtrans_amount?: number | null;
+    diff?: number | null;
+    is_stale?: boolean | null;
+    has_adtrans?: boolean | null;
+    baked_sync?: string | null;
+    baked_match?: string | null;
 };
 
 export type ManualAdjustmentNameOption = {
@@ -1484,6 +1495,87 @@ function resolveManualAdjustmentSyncTargetAmount(row: ManualAdjustment): { targe
     };
 }
 
+// ponytail: pure recompute sync/match status dari row + ADTRANS details.
+//  Tidak tulis DB. Dipakai oleh GET recompute + write-back save + seeder (updateManualAdjustmentSyncStatus).
+//  Upgrade: pindah ke module terpisah kalau logic grow (e.g. per-category custom tolerance).
+export type ComputedManualAdjustmentSyncStatus = {
+    id: number;
+    sync_status: string;
+    match_status: string;
+    target_amount: number;
+    metadata_detail_total: number | null;
+    adtrans_amount: number;
+    diff: number;
+    adtrans_details: AdtransDocDescDetail[];
+    has_adtrans: boolean;
+    baked_sync: string | null;
+    baked_match: string | null;
+    is_stale: boolean; // computed sync/match ≠ baked remarks
+    remarks_fresh: string | null; // remarks dengan sync/match updated (untuk write-back)
+};
+
+export function computeManualAdjustmentSyncStatuses(
+    rows: ManualAdjustment[],
+    adtransDetails: ManualAdjustmentSyncAdtransDetail[]
+): Map<number, ComputedManualAdjustmentSyncStatus> {
+    const detailsByEmpCode = new Map<string, ManualAdjustmentSyncAdtransDetail[]>();
+    for (const detail of adtransDetails) {
+        const empCode = normalizeIdentityValue(detail.emp_code);
+        if (!detailsByEmpCode.has(empCode)) detailsByEmpCode.set(empCode, []);
+        detailsByEmpCode.get(empCode)!.push(detail);
+    }
+
+    const result = new Map<number, ComputedManualAdjustmentSyncStatus>();
+
+    for (const row of rows) {
+        const id = Number(row.id);
+        if (!id) continue;
+
+        const empCode = normalizeIdentityValue(row.emp_code);
+        const amountInfo = resolveManualAdjustmentSyncTargetAmount(row);
+        const empDetails = detailsByEmpCode.get(empCode) || [];
+        const matchingDetails = empDetails.filter((detail) => adtransDetailMatchesManualAdjustment(row, detail));
+        const adtransAmountAbs = matchingDetails.reduce((sum, detail) => sum + Math.abs(toNumericAmount(detail.amount)), 0);
+        const targetAmountAbs = Math.abs(toNumericAmount(amountInfo.targetAmount));
+        const adtransDocDetails = matchingDetails.map((detail) => ({
+            doc_desc: detail.doc_desc,
+            doc_id: detail.doc_id,
+            amount: detail.amount
+        }));
+        const hasAdtrans = matchingDetails.length > 0;
+        const amountsMatch = Math.abs(adtransAmountAbs - targetAmountAbs) <= 0.01;
+        const isZeroWithoutAdtransMatch = !hasAdtrans && targetAmountAbs <= 0.01 && adtransAmountAbs <= 0.01;
+        const isMatch = (hasAdtrans && amountsMatch) || isZeroWithoutAdtransMatch;
+        const nextSyncStatus = isMatch ? "SYNC" : hasAdtrans ? "DIFF" : "MISS";
+        const nextMatchStatus = isMatch ? "MATCH" : "MISMATCH";
+
+        // parse baked sync/match dari remarks existing
+        const baked = parsePipeDelimitedRemarks(row.remarks);
+        const reconciliation = updatePipeDelimitedSyncAndMatchStatus(row.remarks, nextSyncStatus, nextMatchStatus);
+
+        const isStale = (baked.syncStatus !== null && baked.syncStatus !== nextSyncStatus)
+            || (baked.matchStatus !== null && baked.matchStatus !== nextMatchStatus);
+
+        result.set(id, {
+            id,
+            sync_status: nextSyncStatus,
+            match_status: nextMatchStatus,
+            target_amount: amountInfo.targetAmount,
+            metadata_detail_total: amountInfo.metadataDetailTotal,
+            adtrans_amount: adtransAmountAbs,
+            diff: adtransAmountAbs - targetAmountAbs,
+            adtrans_details: adtransDocDetails,
+            has_adtrans: hasAdtrans,
+            baked_sync: baked.syncStatus,
+            baked_match: baked.matchStatus,
+            is_stale: isStale,
+            remarks_fresh: (reconciliation?.remarks ?? row.remarks) ?? null
+        });
+    }
+
+    return result;
+}
+
 function sortByText<T>(items: T[], selector: (item: T) => unknown): T[] {
     return [...items].sort((a, b) => String(selector(a) || "").localeCompare(String(selector(b) || "")));
 }
@@ -1790,6 +1882,100 @@ export class ManualAdjustmentService {
         return await enrichManualAdjustmentRowsWithJabatan(rows);
     }
 
+    /**
+     * GET manual adjustments dengan real-time sync/match recompute vs ADTRANS.
+     * Mengembalikan ManualAdjustmentApiResponseRow (sudah enriched metadata + ad_code)
+     * + computed sync_status/match_status/adtrans_amount/diff/is_stale.
+     * remarks baked tetap dipertahankan untuk audit; computed field = source of truth real-time.
+     */
+    public async getAdjustmentsWithSyncRecompute(
+        month: number,
+        year: number,
+        gangCode?: string,
+        empCode?: string,
+        divisionCode?: string,
+        adjustmentType?: string,
+        adjustmentName?: string,
+        metadataOnly: boolean = false
+    ): Promise<ManualAdjustmentApiResponseRow[]> {
+        const rows = await this.getAdjustments(month, year, gangCode, empCode, divisionCode, adjustmentType, adjustmentName, metadataOnly);
+        const apiRows = buildManualAdjustmentApiResponseRows(rows);
+
+        if (rows.length === 0) return apiRows;
+
+        // ponytail: batch 1 ADTRANS query untuk semua rows. onlyIfAdtransExists semantics:
+        //  rows tanpa ADTRANS match -> MISS/MISMATCH (muncul sbg mismatch, sesuai req user).
+        const adtransDetails = await this.fetchManualAdjustmentSyncAdtransDetails(month, year, divisionCode, rows);
+        const computedMap = computeManualAdjustmentSyncStatuses(rows, adtransDetails);
+
+        return apiRows.map((row) => {
+            const id = Number(row.id);
+            const computed = computedMap.get(id);
+            if (!computed) return row;
+            return {
+                ...row,
+                sync_status: computed.sync_status,
+                match_status: computed.match_status,
+                target_amount: computed.target_amount,
+                adtrans_amount: computed.adtrans_amount,
+                diff: computed.diff,
+                is_stale: computed.is_stale,
+                has_adtrans: computed.has_adtrans,
+                baked_sync: computed.baked_sync,
+                baked_match: computed.baked_match
+            };
+        });
+    }
+
+    /**
+     * Write-back real-time sync/match remarks untuk 1 row (dipanggil saveAdjustment).
+     * Best-effort: gagal silent, jangan fail save. Bangun pipe-delimited remarks bila
+     * remarks existing bukan format pipe (legacy "AD CODE:" tanpa sync:/match: segment).
+     */
+    private async writeBackSyncStatusForId(id: number, user?: string): Promise<void> {
+        try {
+            if (!id) return;
+            const db = this.getDatabase();
+            await this.ensureManualAdjustmentIdentitySchema(db);
+            const rows = await db.query<ManualAdjustment>(`
+                SELECT TOP 1 id, period_month, period_year, emp_code, nik, emp_name, gang_code,
+                       division_code, adjustment_type, adjustment_name, amount, remarks, metadata_json
+                FROM dbo.payroll_manual_adjustments
+                WHERE id = ?
+            `, [id]);
+            const row = rows[0];
+            if (!row) return;
+
+            const adtransDetails = await this.fetchManualAdjustmentSyncAdtransDetails(
+                Number(row.period_month), Number(row.period_year), row.division_code || undefined, [row]
+            );
+            const computedMap = computeManualAdjustmentSyncStatuses([row], adtransDetails);
+            const computed = computedMap.get(Number(row.id));
+            if (!computed) return;
+
+            // remarks_fresh null bila remarks bukan pipe-delimited -> build pipe format fresh.
+            // ponytail: format baku = "name | ad_code | amount | sync:STATUS | match:STATUS".
+            let freshRemarks = computed.remarks_fresh;
+            if (!freshRemarks) {
+                const adCodeFields = resolveManualAdjustmentResponseAdCodeFields(row);
+                const adCodePart = adCodeFields.ad_code || adCodeFields.task_desc || '';
+                freshRemarks = `${normalizeStoredAdjustmentName(row.adjustment_name)} | ${adCodePart} | ${computed.target_amount} | sync:${computed.sync_status} | match:${computed.match_status}`;
+            }
+
+            // cek apakah remarks berubah
+            const currentRemarks = String(row.remarks || '').trim();
+            if (currentRemarks === String(freshRemarks).trim()) return;
+
+            await db.query(`
+                UPDATE dbo.payroll_manual_adjustments
+                SET remarks = ?, updated_at = GETDATE(), updated_by = ?
+                WHERE id = ?
+            `, [freshRemarks, user || 'sync_writeback', id]);
+        } catch (e) {
+            console.warn('[writeBackSyncStatusForId] best-effort write-back failed:', e);
+        }
+    }
+
     public async listAdjustmentNameOptions(input: {
         periodMonth?: number;
         periodYear?: number;
@@ -2014,12 +2200,10 @@ export class ManualAdjustmentService {
         const adtransDetails = input.onlyIfAdtransExists
             ? await this.fetchManualAdjustmentSyncAdtransDetails(periodMonth, periodYear, input.divisionCode, rows)
             : [];
-        const detailsByEmpCode = new Map<string, ManualAdjustmentSyncAdtransDetail[]>();
-        for (const detail of adtransDetails) {
-            const empCode = normalizeIdentityValue(detail.emp_code);
-            if (!detailsByEmpCode.has(empCode)) detailsByEmpCode.set(empCode, []);
-            detailsByEmpCode.get(empCode)!.push(detail);
-        }
+        // ponytail: recompute real-time via pure fn; branch onlyIfAdtransExists=false tetap force targetSyncStatus.
+        const computedMap = input.onlyIfAdtransExists
+            ? computeManualAdjustmentSyncStatuses(rows, adtransDetails)
+            : null;
 
         let eligibleCount = 0;
         let adtransMatchedCount = 0;
@@ -2079,30 +2263,18 @@ export class ManualAdjustmentService {
             let update = initialUpdate;
 
             if (input.onlyIfAdtransExists) {
-                const empDetails = detailsByEmpCode.get(empCode) || [];
-                const matchingDetails = empDetails.filter((detail) => adtransDetailMatchesManualAdjustment(row, detail));
-                const adtransAmountAbs = matchingDetails.reduce((sum, detail) => sum + Math.abs(toNumericAmount(detail.amount)), 0);
-                const targetAmountAbs = Math.abs(toNumericAmount(amountInfo.targetAmount));
-                const adtransDocDetails = matchingDetails.map((detail) => ({
-                    doc_desc: detail.doc_desc,
-                    doc_id: detail.doc_id,
-                    amount: detail.amount
-                }));
-                const hasAdtrans = matchingDetails.length > 0;
-                const amountsMatch = Math.abs(adtransAmountAbs - targetAmountAbs) <= 0.01;
-                const isZeroWithoutAdtransMatch = !hasAdtrans && targetAmountAbs <= 0.01 && adtransAmountAbs <= 0.01;
-                const isMatch = (hasAdtrans && amountsMatch) || isZeroWithoutAdtransMatch;
-                const nextSyncStatus = isMatch ? "SYNC" : hasAdtrans ? "DIFF" : "MISS";
-                const nextMatchStatus = isMatch ? "MATCH" : "MISMATCH";
-
-                const reconciliationUpdate = updatePipeDelimitedSyncAndMatchStatus(row.remarks, nextSyncStatus, nextMatchStatus);
+                const computed = computedMap?.get(id);
+                // re-call parser untuk dapat old/new + changed + null-detection (remarks tanpa sync: segment)
+                const reconciliationUpdate = computed
+                    ? updatePipeDelimitedSyncAndMatchStatus(row.remarks, computed.sync_status, computed.match_status)
+                    : null;
                 update = reconciliationUpdate;
                 baseResult.old_sync_status = reconciliationUpdate?.oldSyncStatus || null;
                 baseResult.new_sync_status = reconciliationUpdate?.newSyncStatus || null;
                 baseResult.match_status = reconciliationUpdate?.newMatchStatus || null;
-                baseResult.adtrans_amount = adtransAmountAbs;
-                baseResult.diff = adtransAmountAbs - targetAmountAbs;
-                baseResult.adtrans_details = adtransDocDetails;
+                baseResult.adtrans_amount = computed?.adtrans_amount ?? null;
+                baseResult.diff = computed?.diff ?? null;
+                baseResult.adtrans_details = computed?.adtrans_details ?? [];
 
                 if (!update) {
                     skippedCount++;
@@ -2113,7 +2285,7 @@ export class ManualAdjustmentService {
                     continue;
                 }
 
-                if (hasAdtrans) {
+                if (computed?.has_adtrans) {
                     adtransMatchedCount++;
                 }
             }
@@ -2389,6 +2561,8 @@ export class ManualAdjustmentService {
                 `, hasMetadataJsonInput
                     ? [identity.empCode, identity.nik, data.gang_code, normalizedDivisionCode, effectiveAmount, remarks, metadataJsonStr, empName, user || 'system', existing.id]
                     : [identity.empCode, identity.nik, data.gang_code, normalizedDivisionCode, effectiveAmount, remarks, empName, user || 'system', existing.id]);
+                // real-time sync/match write-back (await supaya deterministic; +2 queries, save non-hot-path)
+                await this.writeBackSyncStatusForId(existing.id, user);
                 return existing.id;
             }
         } else {
@@ -2436,7 +2610,12 @@ export class ManualAdjustmentService {
                 console.warn('[saveAdjustment] Auto-preset upsert failed:', e);
             }
 
-            return result[0]?.id;
+            const insertedId = result[0]?.id;
+            if (insertedId) {
+                // real-time sync/match write-back (await supaya deterministic)
+                await this.writeBackSyncStatusForId(insertedId, user);
+            }
+            return insertedId;
         }
     }
 
