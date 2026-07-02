@@ -14,6 +14,11 @@ import { isHistoricalPeriod as checkIsHistorical } from '../services/historyServ
 export function useCurrentPeriod() {
   const { token } = useAuth()
 
+  // ponytail: fallback bulan 6 (Juni) + tahun berjalan saat API current period gagal/null.
+  //  upgrade: hapus fallback saat backend current-period stabil, atau jadikan konstanta config.
+  const FALLBACK_MONTH = 6
+  const FALLBACK_YEAR = new Date().getFullYear()
+
   const [monthState, setMonthState] = useState(null)
   const [yearState, setYearState] = useState(null)
 
@@ -32,8 +37,8 @@ export function useCurrentPeriod() {
 
   const loadCurrentPeriod = useCallback(async () => {
     if (!token) {
-      setMonthState(null)
-      setYearState(null)
+      setMonthState(FALLBACK_MONTH)
+      setYearState(FALLBACK_YEAR)
       setLoading(false)
       return
     }
@@ -47,14 +52,20 @@ export function useCurrentPeriod() {
         setData(currentPeriod)
         setMonth(currentPeriod.month)
         setYear(currentPeriod.year)
+      } else {
+        // API success tapi null → fallback bulan 6
+        setMonth(FALLBACK_MONTH)
+        setYear(FALLBACK_YEAR)
       }
     } catch (e) {
       console.error('[useCurrentPeriod] Failed to load current period from API:', e)
       setError(e)
+      setMonth(FALLBACK_MONTH)
+      setYear(FALLBACK_YEAR)
     } finally {
       setLoading(false)
     }
-  }, [token, setMonth, setYear])
+  }, [token, setMonth, setYear, FALLBACK_MONTH, FALLBACK_YEAR])
 
   useEffect(() => {
     loadCurrentPeriod()

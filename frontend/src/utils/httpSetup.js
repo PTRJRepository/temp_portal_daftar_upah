@@ -4,6 +4,22 @@ const TEST_MODE = (import.meta.env?.VITE_DEV_MODE === 'true') || (import.meta.en
 
 // Get backend URL based on access mode
 const getBackendURL = () => {
+  // 0. Runtime toggle via localStorage: 'direct' = http://localhost:8002, 'proxy' = relative
+  //     ponytail: toggle UI di TopBar (ApiBaseToggle). Upgrade: pindah ke settings page + persist per-user di backend.
+  const mode = (() => {
+    try { return window.localStorage?.getItem('api_base_mode') } catch { return null }
+  })()
+  if (mode === 'direct') {
+    const directUrl = import.meta.env?.VITE_BACKEND_URL
+      || `${window.location.protocol}//${window.location.hostname}:8002`
+    console.log('🔗 API base mode: DIRECT ->', directUrl)
+    return directUrl
+  }
+  if (mode === 'proxy') {
+    console.log('🔗 API base mode: PROXY (relative)')
+    return ''
+  }
+
   // 1. Explicit VITE_BACKEND_URL from environment
   if (import.meta.env?.VITE_BACKEND_URL) {
     return import.meta.env.VITE_BACKEND_URL

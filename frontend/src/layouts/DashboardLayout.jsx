@@ -36,6 +36,42 @@ const C = {
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
+// ponytail: runtime API base toggle (direct 8002 vs proxy relative).
+//  Upgrade: pindah ke settings page + persist per-user di backend kalau perlu multi-user preset.
+function ApiBaseToggle() {
+    const [mode, setMode] = useState(() => {
+        try { return window.localStorage?.getItem('api_base_mode') || 'proxy' } catch { return 'proxy' }
+    })
+    const toggle = () => {
+        const next = mode === 'direct' ? 'proxy' : 'direct'
+        try { window.localStorage?.setItem('api_base_mode', next) } catch { /* ignore */ }
+        setMode(next)
+        // reload supaya httpSetup.js re-eval axios.defaults.baseURL
+        window.location.reload()
+    }
+    return (
+        <button
+            onClick={toggle}
+            title={mode === 'direct' ? 'API base: DIRECT (localhost:8002). Klik → PROXY' : 'API base: PROXY (relative). Klik → DIRECT'}
+            style={{
+                display: 'flex', alignItems: 'center', gap: '0.35rem',
+                backgroundColor: mode === 'direct' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(34, 197, 94, 0.15)',
+                border: `1px solid ${mode === 'direct' ? 'rgba(239,68,68,0.4)' : 'rgba(34,197,94,0.4)'}`,
+                borderRadius: '6px',
+                padding: '0.3rem 0.6rem',
+                fontSize: '0.7rem',
+                color: mode === 'direct' ? '#fca5a5' : '#86efac',
+                fontWeight: '600',
+                cursor: 'pointer',
+                flexShrink: 0,
+            }}
+        >
+            <Database size={12} />
+            <span>{mode === 'direct' ? 'DIRECT' : 'PROXY'}</span>
+        </button>
+    )
+}
+
 function TopBar({ user, collapsed, onToggle, periodDisplay }) {
     return (
         <div className="no-print" style={{
@@ -99,6 +135,9 @@ function TopBar({ user, collapsed, onToggle, periodDisplay }) {
 
             {/* Header Actions Portal Target */}
             <div id="header-actions-portal" style={{ display: 'flex', alignItems: 'center' }}></div>
+
+            {/* API Base Toggle (DIRECT 8002 ↔ PROXY) */}
+            <ApiBaseToggle />
 
             {/* Period Badge */}
             {periodDisplay && (
