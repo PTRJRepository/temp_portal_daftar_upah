@@ -781,6 +781,15 @@ export type GroupedManualAdjustmentPremiumTransaction = ManualAdjustmentDetailIt
     ad_code_desc: string;
     ad_desc: string;
     task_desc: string;
+    // ponytail: computed real-time sync/match dari GET recompute_sync=true, propagated ke grouped premium_transactions
+    //  supaya agent filter mismatch via computed field (bukan remarks baked stale).
+    sync_status?: string | null;
+    match_status?: string | null;
+    is_stale?: boolean | null;
+    adtrans_amount?: number | null;
+    diff?: number | null;
+    target_amount?: number | null;
+    has_adtrans?: boolean | null;
 };
 
 export type GroupedManualAdjustmentEmployee = {
@@ -1696,6 +1705,14 @@ export function buildGroupedManualAdjustmentResponse(rows: ManualAdjustment[]): 
                     ad_code_desc: groupedItem.ad_code_desc,
                     ad_desc: groupedItem.ad_desc,
                     task_desc: groupedItem.task_desc,
+                    // ponytail: propagate computed sync/match supaya agent filter mismatch via computed field.
+                    sync_status: groupedItem.sync_status ?? null,
+                    match_status: groupedItem.match_status ?? null,
+                    is_stale: groupedItem.is_stale ?? null,
+                    adtrans_amount: groupedItem.adtrans_amount ?? null,
+                    diff: groupedItem.diff ?? null,
+                    target_amount: groupedItem.target_amount ?? null,
+                    has_adtrans: groupedItem.has_adtrans ?? null,
                     ...detailItem
                 });
             }
@@ -2074,7 +2091,7 @@ export class ManualAdjustmentService {
         const empSql = empCodes.length === 1
             ? "RTRIM(t.EmpCode) = ?"
             : `RTRIM(t.EmpCode) IN (${empCodes.map(() => "?").join(", ")})`;
-        const selectSql = (headerTable: string, lineTable: string) => `
+        const selectSql = (headerTable: string, lineTable: string, statusFilter: string) => `
             SELECT
                 RTRIM(t.EmpCode) as emp_code,
                 RTRIM(t.DocID) as doc_id,
@@ -2086,6 +2103,7 @@ export class ManualAdjustmentService {
               AND t.PhyMonth = ?
               AND t.PhyYear = ?
               AND ${empSql}
+              AND t.Status = ${statusFilter}
             GROUP BY t.EmpCode, t.DocID, t.DocDesc
         `;
 
@@ -2101,9 +2119,9 @@ export class ManualAdjustmentService {
         ];
 
         const rowsFromAdtrans = await dbPtrj.query<ManualAdjustmentSyncAdtransDetail>(`
-            ${selectSql("PR_ADTRANS", "PR_ADTRANSLN")}
+            ${selectSql("PR_ADTRANS", "PR_ADTRANSLN", "1")}
             UNION ALL
-            ${selectSql("PR_ADTRANS_ARC", "PR_ADTRANSLN_ARC")}
+            ${selectSql("PR_ADTRANS_ARC", "PR_ADTRANSLN_ARC", "3")}
         `, params);
 
         return rowsFromAdtrans.map((row) => ({
@@ -2921,22 +2939,24 @@ export class ManualAdjustmentService {
                     ln.Amount
                 FROM PR_ADTRANS t
                 JOIN PR_ADTRANSLN ln ON t.ID = ln.MasterID
-                WHERE ${scopeSql} 
-                  AND t.PhyMonth = ? 
+                WHERE ${scopeSql}
+                  AND t.PhyMonth = ?
                   AND t.PhyYear = ?
+                  AND t.Status = 1
                   ${specificDocDescWhereSql}
 
                 UNION ALL
 
-                SELECT 
+                SELECT
                     RTRIM(t.EmpCode) as emp_code,
                     t.DocDesc,
                     ln.Amount
                 FROM PR_ADTRANS_ARC t
                 JOIN PR_ADTRANSLN_ARC ln ON t.ID = ln.MasterID
-                WHERE ${scopeSql} 
-                  AND t.PhyMonth = ? 
+                WHERE ${scopeSql}
+                  AND t.PhyMonth = ?
                   AND t.PhyYear = ?
+                  AND t.Status = 3
                   ${specificDocDescWhereSql}
             ) src
             GROUP BY emp_code
@@ -2962,6 +2982,7 @@ export class ManualAdjustmentService {
             WHERE ${scopeSql}
               AND t.PhyMonth = ?
               AND t.PhyYear = ?
+              AND t.Status = 1
               AND (${duplicateDocDescConditions})
               ${specificDocDescWhereSql}
             GROUP BY t.ID, t.DocID, t.DocDate, t.DocDesc, t.EmpCode, t.EmpName
@@ -2982,6 +3003,7 @@ export class ManualAdjustmentService {
             WHERE ${scopeSql}
               AND t.PhyMonth = ?
               AND t.PhyYear = ?
+              AND t.Status = 3
               AND (${duplicateDocDescConditions})
               ${specificDocDescWhereSql}
             GROUP BY t.ID, t.DocID, t.DocDate, t.DocDesc, t.EmpCode, t.EmpName
@@ -3131,6 +3153,7 @@ export class ManualAdjustmentService {
                 WHERE UPPER(RTRIM(t.LocCode)) = ?
                   AND t.PhyMonth = ?
                   AND t.PhyYear = ?
+                  AND t.Status = 1
                   ${gangWhere}
 
                 UNION ALL
@@ -3147,6 +3170,7 @@ export class ManualAdjustmentService {
                 WHERE UPPER(RTRIM(t.LocCode)) = ?
                   AND t.PhyMonth = ?
                   AND t.PhyYear = ?
+                  AND t.Status = 3
                   ${gangWhere}
             ) src
             GROUP BY emp_code
@@ -3169,6 +3193,7 @@ export class ManualAdjustmentService {
             WHERE UPPER(RTRIM(t.LocCode)) = ?
               AND t.PhyMonth = ?
               AND t.PhyYear = ?
+              AND t.Status = 1
               ${gangWhere}
 
             UNION ALL
@@ -3184,6 +3209,7 @@ export class ManualAdjustmentService {
             WHERE UPPER(RTRIM(t.LocCode)) = ?
               AND t.PhyMonth = ?
               AND t.PhyYear = ?
+              AND t.Status = 3
               ${gangWhere}
         `, [
             normalizedDivisionCode, periodMonth, periodYear, ...uniqueVirtualGangCodes,

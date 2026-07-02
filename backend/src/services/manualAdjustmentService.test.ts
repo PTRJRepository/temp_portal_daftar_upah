@@ -2195,6 +2195,13 @@ describe("manual adjustment grouped response", () => {
                 ad_code_desc: "(AL) TUNJANGAN PREMI ((PM) PRUNING)",
                 ad_desc: "(AL) TUNJANGAN PREMI ((PM) PRUNING)",
                 task_desc: "(AL) TUNJANGAN PREMI ((PM) PRUNING)",
+                sync_status: null,
+                match_status: null,
+                is_stale: null,
+                adtrans_amount: null,
+                diff: null,
+                target_amount: null,
+                has_adtrans: null,
                 detail_type: "blok",
                 subblok: "P0921",
                 jumlah: 3000,
@@ -2216,6 +2223,13 @@ describe("manual adjustment grouped response", () => {
                 ad_code_desc: "(AL) TUNJANGAN PREMI ((PM) DRIVER - ANGKUT MATERIAL)",
                 ad_desc: "(AL) TUNJANGAN PREMI ((PM) DRIVER - ANGKUT MATERIAL)",
                 task_desc: "(AL) TUNJANGAN PREMI ((PM) DRIVER - ANGKUT MATERIAL)",
+                sync_status: null,
+                match_status: null,
+                is_stale: null,
+                adtrans_amount: null,
+                diff: null,
+                target_amount: null,
+                has_adtrans: null,
                 detail_type: "kendaraan",
                 nomor_kendaraan: "B1234AB",
                 expense_code: "DRIVER",
@@ -3224,6 +3238,39 @@ describe("computeManualAdjustmentSyncStatuses (pure recompute)", () => {
         expect(r.target_amount).toBe(-80000);
         expect(r.adtrans_amount).toBe(80000); // adtrans selalu abs
         expect(r.sync_status).toBe("SYNC"); // |-80000| == 80000
+    });
+
+    it("POTONGAN_BERSIH mismatch terdeteksi (stale baked SYNC -> computed DIFF)", () => {
+        const rows = [makeRow({
+            adjustment_type: "POTONGAN_BERSIH",
+            adjustment_name: "POTONGAN LAINNYA KOPERASI",
+            amount: 50000,
+            remarks: "POTONGAN LAINNYA KOPERASI | x | 50000 | sync:SYNC | match:MATCH"
+        })];
+        const adtrans = [
+            { emp_code: "E0409", doc_desc: "POTONGAN LAINNYA KOPERASI", doc_id: "D1", amount: 30000 }
+        ];
+        const m = computeManualAdjustmentSyncStatuses(rows, adtrans);
+        const r = m.get(1)!;
+        expect(r.sync_status).toBe("DIFF");
+        expect(r.match_status).toBe("MISMATCH");
+        expect(r.diff).toBe(30000 - 50000);
+        expect(r.is_stale).toBe(true);
+    });
+
+    it("PREMI MISS bila ADTRANS tidak ada match (stale baked SYNC)", () => {
+        const rows = [makeRow({
+            adjustment_type: "PREMI",
+            adjustment_name: "PREMI TBS",
+            amount: 134101,
+            remarks: "PREMI TBS | x | 134101 | sync:SYNC | match:MATCH"
+        })];
+        const m = computeManualAdjustmentSyncStatuses(rows, []);
+        const r = m.get(1)!;
+        expect(r.sync_status).toBe("MISS");
+        expect(r.match_status).toBe("MISMATCH");
+        expect(r.has_adtrans).toBe(false);
+        expect(r.is_stale).toBe(true);
     });
 
     it("remarks_fresh fallback ke row.remarks bila remarks bukan pipe; baked_sync null", () => {
