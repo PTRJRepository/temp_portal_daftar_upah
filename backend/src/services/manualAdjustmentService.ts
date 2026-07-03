@@ -10,6 +10,10 @@ import {
     normalizeStoredAdjustmentName,
     shouldDeleteStoredAdjustment
 } from "./payroll/manualAdjustments/manualAdjustmentNaming";
+import {
+    containsPphDeductionText,
+    resolvePotonganBersihHutangTaskCode
+} from "./payroll/manualAdjustments/potonganBersihTaskCode";
 import { normalizeAutoBufferAdjustmentName } from "./payroll/manualAdjustments/autoBufferAdcodeMap";
 import {
     inferManualAdjustmentAdCodeFromRemarks,
@@ -72,6 +76,7 @@ export interface AdtransDocIdLookupInput extends AdtransCheckOptions {
     empCodes?: string[];
     filters?: string[];
     divisionCode?: string;
+    gangCode?: string;
 }
 
 type NormalizedAdtransCheckOptions = {
@@ -344,21 +349,67 @@ function removeLeadingWordPrefix(value: unknown, prefix: string): string {
     return normalizeText(value).replace(new RegExp(`^${prefix}\\s*`, "i"), "").trim();
 }
 
+function shouldUseHutangTaskCodeForPotonganBersih(data: ManualAdjustment, adjustmentName?: string): boolean {
+    const type = normalizeText(data.adjustment_type).toUpperCase();
+    if (type !== "POTONGAN_BERSIH") return false;
+
+    return !containsPphDeductionText([
+        adjustmentName || data.adjustment_name,
+        data.ad_code,
+        data.task_code,
+        data.base_task_code,
+        data.task_desc,
+        data.remarks
+    ].join(" "));
+}
+
+function buildPotonganBersihHutangAdCodePart(mapping: ReturnType<typeof resolvePotonganBersihHutangTaskCode>): string {
+    return `${mapping.ad_code} - ${mapping.task_desc}`;
+}
+
+function normalizePotonganBersihHutangRemarks(
+    remarks: ManualAdjustment["remarks"],
+    mapping: ReturnType<typeof resolvePotonganBersihHutangTaskCode>
+): ManualAdjustment["remarks"] {
+    const text = normalizeText(remarks);
+    if (!text || !text.includes("|")) return remarks;
+
+    const segments = text.split("|").map((segment) => segment.trim());
+    if (segments.length < 2) return remarks;
+
+    segments[1] = buildPotonganBersihHutangAdCodePart(mapping);
+    return segments.join(" | ");
+}
+
 function normalizeManualAdjustmentForSave(data: ManualAdjustment): ManualAdjustment {
     const type = normalizeText(data.adjustment_type).toUpperCase();
-    if (type !== "POTONGAN_KOTOR") return data;
+    if (type === "POTONGAN_KOTOR") {
+        const suffix = removeLeadingWordPrefix(data.adjustment_name, KOREKSI_PREFIX);
+        const adjustmentName = `${KOREKSI_PREFIX}${suffix ? ` ${suffix}` : ""}`.trim();
 
-    const suffix = removeLeadingWordPrefix(data.adjustment_name, KOREKSI_PREFIX);
-    const adjustmentName = `${KOREKSI_PREFIX}${suffix ? ` ${suffix}` : ""}`.trim();
+        return {
+            ...data,
+            adjustment_name: adjustmentName,
+            ad_code: KOREKSI_DEFAULT_AD_CODE,
+            task_code: KOREKSI_DEFAULT_AD_CODE,
+            base_task_code: KOREKSI_DEFAULT_AD_CODE,
+            task_desc: KOREKSI_DEFAULT_TASK_DESC
+        };
+    }
 
-    return {
-        ...data,
-        adjustment_name: adjustmentName,
-        ad_code: KOREKSI_DEFAULT_AD_CODE,
-        task_code: KOREKSI_DEFAULT_AD_CODE,
-        base_task_code: KOREKSI_DEFAULT_AD_CODE,
-        task_desc: KOREKSI_DEFAULT_TASK_DESC
-    };
+    if (shouldUseHutangTaskCodeForPotonganBersih(data)) {
+        const mapping = resolvePotonganBersihHutangTaskCode(data.division_code);
+        return {
+            ...data,
+            ad_code: mapping.ad_code,
+            task_code: mapping.task_code,
+            base_task_code: mapping.base_task_code,
+            task_desc: mapping.task_desc,
+            remarks: normalizePotonganBersihHutangRemarks(data.remarks, mapping)
+        };
+    }
+
+    return data;
 }
 
 function resolveManualAdjustmentAdCode(data: Pick<ManualAdjustment, 'ad_code' | 'base_task_code' | 'task_code'>): string {
@@ -604,13 +655,18 @@ function scoreTaskCodeOption(option: TaskCodeOption, searchWords: string[]): num
 }
 
 export async function resolveManualAdjustmentPresetMapping(data: ManualAdjustment, adjustmentName: string): Promise<Partial<ManualAdjustment>> {
-    if (normalizeText(data.adjustment_type).toUpperCase() === "POTONGAN_KOTOR") {
+    const adjustmentType = normalizeText(data.adjustment_type).toUpperCase();
+    if (adjustmentType === "POTONGAN_KOTOR") {
         return {
             ad_code: KOREKSI_DEFAULT_AD_CODE,
             task_code: KOREKSI_DEFAULT_AD_CODE,
             base_task_code: KOREKSI_DEFAULT_AD_CODE,
             task_desc: KOREKSI_DEFAULT_TASK_DESC
         };
+    }
+
+    if (shouldUseHutangTaskCodeForPotonganBersih(data, adjustmentName)) {
+        return resolvePotonganBersihHutangTaskCode(data.division_code);
     }
 
     if (resolveManualAdjustmentPresetCode(data)) return {};
@@ -733,6 +789,7 @@ export interface ManualAdjustment {
     task_code?: string;
     base_task_code?: string;
     task_desc?: string;
+    force_insert?: boolean;
     created_at?: Date;
     created_by?: string;
     updated_at?: Date;
@@ -771,6 +828,10 @@ export type GroupedManualAdjustmentItem = Omit<ManualAdjustment, "nik" | "emp_na
 export type GroupedManualAdjustmentPremiumTransaction = ManualAdjustmentDetailItem & {
     transaction_index: number;
     adjustment_id: number | null;
+    record_group_key: string;
+    record_action: "NEW" | "ADD";
+    record_detail_index: number;
+    record_detail_count: number;
     adjustment_type: string;
     adjustment_name: string;
     emp_code: string;
@@ -794,6 +855,21 @@ export type GroupedManualAdjustmentPremiumTransaction = ManualAdjustmentDetailIt
     target_amount?: number | null;
     has_adtrans?: boolean | null;
 };
+
+function buildPremiumTransactionRecordGroupKey(
+    adjustmentId: number | null,
+    employeeKey: string,
+    groupedItem: GroupedManualAdjustmentItem,
+    rowOrdinal: number
+): string {
+    if (adjustmentId !== null) {
+        return `adjustment:${adjustmentId}`;
+    }
+
+    const type = normalizeIdentityValue(groupedItem.adjustment_type) || "UNKNOWN_TYPE";
+    const name = normalizeIdentityValue(groupedItem.adjustment_name) || "UNKNOWN_NAME";
+    return `fallback:${employeeKey}|${type}|${name}|row:${rowOrdinal}`;
+}
 
 export type GroupedManualAdjustmentEmployee = {
     emp_code: string;
@@ -1686,15 +1762,19 @@ export function buildGroupedManualAdjustmentResponse(rows: ManualAdjustment[]): 
         employee.adjustments.push(groupedItem);
         employee.adjustment_count += 1;
         employee.total_amount += amount;
+        const employeeAdjustmentOrdinal = employee.adjustment_count;
 
         if (String(row.adjustment_type || "").toUpperCase() === "PREMI") {
             employee.premiums.push(groupedItem);
             employee.premium_count += 1;
             employee.premium_total += amount;
-            for (const detailItem of groupedItem.detail_items) {
+            const adjustmentId = typeof groupedItem.id === "number" ? groupedItem.id : null;
+            const recordGroupKey = buildPremiumTransactionRecordGroupKey(adjustmentId, employeeKey, groupedItem, employeeAdjustmentOrdinal);
+            const recordDetailCount = groupedItem.detail_items.length;
+            groupedItem.detail_items.forEach((detailItem, detailIndex) => {
                 employee.premium_transactions.push({
                     transaction_index: employee.premium_transactions.length + 1,
-                    adjustment_id: typeof groupedItem.id === "number" ? groupedItem.id : null,
+                    adjustment_id: adjustmentId,
                     adjustment_type: groupedItem.adjustment_type,
                     adjustment_name: groupedItem.adjustment_name,
                     emp_code: employee.emp_code,
@@ -1716,9 +1796,13 @@ export function buildGroupedManualAdjustmentResponse(rows: ManualAdjustment[]): 
                     diff: groupedItem.diff ?? null,
                     target_amount: groupedItem.target_amount ?? null,
                     has_adtrans: groupedItem.has_adtrans ?? null,
-                    ...detailItem
+                    ...detailItem,
+                    record_group_key: recordGroupKey,
+                    record_action: detailIndex === 0 ? "NEW" : "ADD",
+                    record_detail_index: detailIndex + 1,
+                    record_detail_count: recordDetailCount
                 });
-            }
+            });
         }
     }
 
@@ -2558,7 +2642,7 @@ export class ManualAdjustmentService {
             identity.empCode, identity.nik, identity.originalIdentifier
         ]);
 
-        if (existing) {
+        if (existing && !data.force_insert) {
             if (shouldDeleteStoredAdjustment(effectiveAmount, data.remarks, !!metadataJsonStr)) {
                 // If amount is 0, delete it from the table
                 await db.query(`DELETE FROM dbo.payroll_manual_adjustments WHERE id = ?`, [existing.id]);
@@ -3045,11 +3129,43 @@ export class ManualAdjustmentService {
         };
     }
 
+    // ponytail: resolve emp_codes anggota gang dari HR_GANGLN. Dipakai listAdtransDocIds utk scope gang.
+    //  Upgrade: join langsung di checkAdtransDirectly kalau perlu (sekarang resolve + IN clause).
+    private async resolveEmpCodesByGang(gangCode: string): Promise<string[]> {
+        const normalizedGang = normalizeIdentityValue(gangCode);
+        if (!normalizedGang) return [];
+        try {
+            const db = Database.getInstance();
+            const rows = await db.query<{ emp_code: string }>(`
+                SELECT RTRIM(gl.GangMember) as emp_code
+                FROM HR_GANGLN gl
+                JOIN HR_EMPLOYEE e ON RTRIM(e.EmpCode) = RTRIM(gl.GangMember)
+                WHERE UPPER(RTRIM(gl.GangCode)) = ?
+                  AND e.Status = 1
+            `, [normalizedGang]);
+            return Array.from(new Set(rows.map((r) => normalizeIdentityValue(r.emp_code)).filter(Boolean)));
+        } catch (e) {
+            console.warn("[resolveEmpCodesByGang] failed:", e);
+            return [];
+        }
+    }
+
     public async listAdtransDocIds(input: AdtransDocIdLookupInput): Promise<string[]> {
+        // ponytail: kalau gangCode set, resolve emp_codes dari HR_GANGLN gang itu,
+        //  merge ke empCodes supaya checkAdtransDirectly (all DocID match filter) scope ke gang.
+        //  checkAdtransDirectly sendiri gak support gang filter (PR_ADTRANS gak punya gang_code).
+        let empCodes = input.empCodes || [];
+        if (input.gangCode) {
+            const gangEmps = await this.resolveEmpCodesByGang(input.gangCode);
+            if (gangEmps.length > 0) {
+                const merged = new Set<string>([...empCodes.map((e) => e.trim().toUpperCase()), ...gangEmps]);
+                empCodes = Array.from(merged);
+            }
+        }
         const result = await this.checkAdtransDirectly(
             input.periodMonth,
             input.periodYear,
-            input.empCodes || [],
+            empCodes,
             input.filters || [],
             input.divisionCode,
             {

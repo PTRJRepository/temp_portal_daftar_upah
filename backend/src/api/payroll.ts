@@ -111,7 +111,8 @@ const ADTRANS_DOC_IDS_BODY_SCHEMA = t.Object({
     adjustment_names: t.Optional(t.Array(t.String())),
     doc_desc: t.Optional(t.Union([t.String(), t.Array(t.String())])),
     doc_descs: t.Optional(t.Array(t.String())),
-    division_code: t.Optional(t.String())
+    division_code: t.Optional(t.String()),
+    gang_code: t.Optional(t.String())
 });
 
 async function handleAdtransDocIdsByApiKey({ body, headers, set }: {
@@ -127,7 +128,7 @@ async function handleAdtransDocIdsByApiKey({ body, headers, set }: {
         }
 
         const data = body as any;
-        const { period_month, period_year, emp_codes = [], division_code } = data;
+        const { period_month, period_year, emp_codes = [], division_code, gang_code } = data;
         const filters = parseStringArrayInput(data.filters);
         const adjustmentTypes = [
             ...parseStringArrayInput(data.adjustment_type),
@@ -147,9 +148,9 @@ async function handleAdtransDocIdsByApiKey({ body, headers, set }: {
             return { success: false, message: "period_month and period_year are required" };
         }
 
-        if ((!Array.isArray(emp_codes) || emp_codes.length === 0) && !division_code) {
+        if ((!Array.isArray(emp_codes) || emp_codes.length === 0) && !division_code && !gang_code) {
             set.status = 400;
-            return { success: false, message: "emp_codes array or division_code is required" };
+            return { success: false, message: "emp_codes array, division_code, or gang_code is required" };
         }
 
         if (filters.length === 0 && adjustmentTypes.length === 0 && adjustmentNames.length === 0 && docDescs.length === 0) {
@@ -164,6 +165,7 @@ async function handleAdtransDocIdsByApiKey({ body, headers, set }: {
             empCodes: emp_codes,
             filters,
             divisionCode: division_code,
+            gangCode: gang_code,
             adjustmentTypes,
             adjustmentNames,
             docDescs
