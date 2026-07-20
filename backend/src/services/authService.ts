@@ -206,6 +206,52 @@ export class AuthService {
                 return null;
             }
 
+            if ((payload as any).userId && !payload.sub) {
+                let roleStr = (payload as any).role || "user";
+                if (typeof roleStr === "string") roleStr = roleStr.toLowerCase();
+
+                let role = UserRole.USER;
+                if (roleStr === "admin") role = UserRole.ADMIN;
+                else if (roleStr === "kerani") role = UserRole.KERANI;
+                else if (roleStr === "visitor") role = UserRole.VISITOR;
+
+                const rawDivs = (payload as any).divisions || (payload as any).division || (payload as any).divisi || [];
+                let divisions = Array.isArray(rawDivs)
+                    ? rawDivs.map(d => String(d).trim()).filter(Boolean)
+                    : String(rawDivs || '').split(',').map(d => d.trim()).filter(Boolean);
+
+                if (divisions.length === 0 && role === UserRole.KERANI && String(username).toLowerCase().startsWith('kerani_')) {
+                    divisions.push(String(username).substring(7).toUpperCase());
+                }
+
+                divisions = divisions.map(d => {
+                    const strD = String(d).toUpperCase().trim();
+                    if (strD === 'AREC') return 'ARC';
+                    if (strD === 'WORKSHOP AR' || strD === 'WORKSHOP_AR' || strD === 'WKS AR' || strD === 'HMC') return 'WKS_AR';
+                    if (strD === 'WORKSHOP PG' || strD === 'WORKSHOP_PG' || strD === 'WKS PG' || strD === 'WORKSHOP P.G' || strD === 'WORKSHOP P.G.' || strD === 'AMC') return 'WKS_PG';
+                    if (strD === 'NURSERY') return 'NRS';
+                    if (strD === 'INFRA') return 'INF';
+                    return strD;
+                });
+
+                if (role === UserRole.ADMIN || role === UserRole.VISITOR || divisions.some(d => d.toUpperCase() === 'ALL')) {
+                    divisions = AuthService.ALL_DIVISIONS;
+                    if (role !== UserRole.VISITOR) role = UserRole.ADMIN;
+                }
+
+                return {
+                    id: Number((payload as any).userId) || 0,
+                    username: String(username),
+                    email: (payload as any).email || "external@remote",
+                    full_name: (payload as any).name || (payload as any).full_name || String(username),
+                    role,
+                    divisions: [...new Set(divisions)],
+                    is_active: true,
+                    created_at: new Date(),
+                    updated_at: new Date()
+                };
+            }
+
             // Normalize Role
             let roleStr = (payload as any).role || "user";
             if (typeof roleStr === "string") roleStr = roleStr.toLowerCase();
