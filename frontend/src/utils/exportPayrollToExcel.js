@@ -4,7 +4,7 @@
  */
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
-import { isPayrollNumericField, isPayrollTotalDisplayOnlyField, resolveGrandTotalNumericValue } from './payrollGrandTotalValue';
+import { isPayrollNumericField, isPayrollTotalDisplayOnlyField, isSignedPayrollDeductionField, resolveGrandTotalNumericValue } from './payrollGrandTotalValue';
 
 // Color palette matching ag-grid-professional.css and CustomPayrollTable.css
 const COLORS = {
@@ -59,31 +59,6 @@ const formatDecimal = (value) => {
     return n;
 };
 
-const NEGATIVE_TOTAL_EXPORT_FIELDS = new Set([
-    'potongan_upah_kotor_total',
-    'total_potongan',
-    'total_potongan_bersih'
-]);
-
-function isGrossKoreksiExportField(field) {
-    if (!field || field === 'koreksi_hk') return false;
-    return field === 'pot_koreksi'
-        || field.startsWith('koreksi_')
-        || field.startsWith('potongan_upah_kotor');
-}
-
-function isSignedDeductionExportField(field) {
-    if (!field) return false;
-    if (NEGATIVE_TOTAL_EXPORT_FIELDS.has(field) || isGrossKoreksiExportField(field)) return true;
-    if (field === 'total_pendapatan_lainnya_pengurang') return true;
-    if (isOtherIncomeDeductionField(field)) return true;
-    if (field === 'premi_pph' || field === 'pot_premi_pph') return false;
-    if (field.includes('_maj') || field.includes('majikan')) return false;
-    if (field.endsWith('_total') || field === 'pot_bpjs_pekerja_total') return false;
-    if (field.startsWith('potongan_')) return true;
-    return field.startsWith('pot_') && !field.startsWith('pot_koreksi');
-}
-
 // IMPORTANT DATA VALIDITY RULE:
 // Deductions in Excel must be stored as signed negative numbers, while formulas add them.
 // Do not build formulas like `gross minus deduction` or `negative ABS(deduction)` here. If deduction
@@ -91,7 +66,7 @@ function isSignedDeductionExportField(field) {
 function formatPayrollExportNumber(field, value) {
     const formatted = formatNumber(value);
     if (formatted === '-') return formatted;
-    return isSignedDeductionExportField(field)
+    return isSignedPayrollDeductionField(field)
         ? -Math.abs(formatted)
         : formatted;
 }
@@ -228,7 +203,6 @@ const TAX_DETAIL_EXPORT_FIELDS = new Set([
     'penghasilan_bruto',
     'tarif_pajak_ter',
     'pph21_ter',
-    'premi_pph',
     'upah_kotor_pajak'
 ]);
 
@@ -283,6 +257,7 @@ const SUMMARY_EXPORT_FIELDS = new Set([
     'pot_bpjs_pensiun_pekerja',
     'pot_spsi',
     'pot_pph21',
+    'premi_pph',
     'total_potongan',
     'total_potongan_bersih',
     'upah_bersih'
@@ -321,6 +296,7 @@ const PRINT_EXPORT_FIELDS = new Set([
     'pot_bpjs_pensiun_pekerja',
     'pot_spsi',
     'pot_pph21',
+    'premi_pph',
     'total_potongan',
     'total_potongan_bersih',
     'upah_bersih'
@@ -359,6 +335,8 @@ function isPrintExportField(col) {
     if (PRINT_EXPORT_FIELDS.has(field)) return true;
     if (isOtherIncomeDetailField(field)) return true;
     if (isOtherIncomeDeductionField(field)) return true;
+    // Dynamic net deductions (pot_xxx) must appear so total_potongan_bersih formula sums them.
+    if (isSelectedNetDeductionFormulaField(col, [col])) return true;
     return field.startsWith('premi_') && field !== 'premi_pph';
 }
 
@@ -534,7 +512,13 @@ function isSelectedNetDeductionFormulaField(col, columns) {
     if (field.includes('_maj') || field.includes('majikan')) return false;
     if (field.endsWith('_total') || field === 'pot_bpjs_pekerja_total') return false;
 
-    if (field.startsWith('potongan_')) return true;
+    if (field.startsWith('potongan_')) {
+        // ponytail: defensive — BPJS/SPSI/PPH dynamic potongan_lainnya_* nilai sudah masuk static pot_bpjs_*/pot_spsi/pot_pph21.
+        // Skip dari SUM agar tidak double-count. Backend (dataExtractorService) juga sudah filter dari dynamicPotonganSet.
+        const fLower = field.toLowerCase();
+        if (fLower.includes('bpjs') || fLower.includes('spsi') || fLower.includes('pph')) return false;
+        return true;
+    }
     return field.startsWith('pot_') && !field.startsWith('pot_koreksi');
 }
 
@@ -609,10 +593,15 @@ export function buildPayrollExportColumns(rows = [], columnDefs = [], options = 
     const baseColumns = columnDefs.filter((col) => {
         const field = col?.field;
         if (!field || UI_ONLY_EXPORT_FIELDS.has(field)) return false;
+        if (variant === 'detail') return true;
         if (field === 'total_pendapatan_lainnya_pengurang') return false;
         if (field === 'pot_pph21') return true;
-        if (variant === 'summary' && !SUMMARY_EXPORT_FIELDS.has(field)) return false;
-        if (variant === 'print' && !isPrintExportField(col)) return false;
+        if (variant === 'summary') {
+            if (SUMMARY_EXPORT_FIELDS.has(field)) return true;
+            // Dynamic net deductions (pot_xxx) must appear so total_potongan_bersih formula sums them.
+            return isSelectedNetDeductionFormulaField(col, [col]);
+        }
+        if (variant === 'print') return isPrintExportField(col);
         return !isTaxDetailExportField(field);
     });
 
@@ -621,8 +610,8 @@ export function buildPayrollExportColumns(rows = [], columnDefs = [], options = 
     // [FIX] Always include total_pendapatan_lainnya if it has positive values in rows
     // This ensures the field is exported even when not in columnDefs (e.g., normal view mode)
     const alwaysIncludeFields = new Set();
-    const totalPendapatanLainnya = Number(rows.find(r => r?.type === 'employee')?.total_pendapatan_lainnya || 0);
-    if (!existingFields.has('total_pendapatan_lainnya') && totalPendapatanLainnya !== 0) {
+    const hasTotalPendapatanLainnya = hasPositiveFieldValue(rows, 'total_pendapatan_lainnya');
+    if (!existingFields.has('total_pendapatan_lainnya') && hasTotalPendapatanLainnya) {
         alwaysIncludeFields.add('total_pendapatan_lainnya');
     }
 
@@ -692,6 +681,188 @@ export function buildPayrollExportColumns(rows = [], columnDefs = [], options = 
 
 
     return resultColumns;
+}
+
+const PAYROLL_EXPORT_UI_PARITY_FIELDS = new Set([
+    'total_pendapatan_lainnya',
+    'jumlah_upah_kotor',
+    'total_potongan',
+    'total_potongan_bersih',
+    'upah_bersih'
+]);
+
+function isPayrollExportEmployeeRow(row) {
+    if (!row || typeof row !== 'object') return false;
+    if (row.type === 'employee') return true;
+    if (row.type === 'gang_header' || row.type === 'gang_total' || row.type === 'grand_total') return false;
+    if (row.isHeader || row.isTotal) return false;
+    return true;
+}
+
+function isPayrollExportParityRow(row) {
+    if (isPayrollExportEmployeeRow(row)) return true;
+    return row?.type === 'gang_total' || row?.isTotal === true;
+}
+
+function resolvePayrollExportEmployeeKey(row, sourceIndex) {
+    const key = row?.emp_code || row?.nik || row?.nama || row?.emp_name;
+    return String(key || `row-${sourceIndex + 1}`).trim();
+}
+
+function resolvePayrollExportParityKey(row, sourceIndex) {
+    if (isPayrollExportEmployeeRow(row)) {
+        return resolvePayrollExportEmployeeKey(row, sourceIndex);
+    }
+    return String(row?.gang_code || row?.nama || `subtotal-${sourceIndex + 1}`).trim();
+}
+
+function buildPayrollExportValuesByField(row, columns, exportVariant) {
+    const valuesByField = {};
+    const cells = columns.map((col) => {
+        const value = formatPayrollExportCellValue(row, col, exportVariant);
+        valuesByField[col.field] = value;
+        return { field: col.field, value };
+    });
+    return { valuesByField, cells };
+}
+
+function buildPayrollExportRowModel(row, sourceIndex, columns, exportVariant) {
+    const { valuesByField, cells } = buildPayrollExportValuesByField(row, columns, exportVariant);
+    return {
+        type: row?.type || 'employee',
+        sourceIndex,
+        sourceRow: row,
+        employeeKey: isPayrollExportParityRow(row) ? resolvePayrollExportParityKey(row, sourceIndex) : null,
+        valuesByField,
+        cells
+    };
+}
+
+function buildPayrollExportGrandTotalModel(grandTotal, rows, columns, options = {}) {
+    if (!grandTotal) return null;
+
+    const employeeCount = rows.filter(isPayrollExportEmployeeRow).length;
+    const valuesByField = {};
+    const cells = columns.map((col) => {
+        let value;
+        if (col.field === 'nama') value = 'GRAND TOTAL';
+        else if (col.field === 'no') value = '';
+        else if (col.field === 'emp_code') value = `${employeeCount} KARYAWAN`;
+        else if (isPayrollTotalDisplayOnlyField(col.field)) value = '-';
+        else if (isPayrollNumericField(col.field)) {
+            value = formatPayrollExportNumber(col.field, resolveGrandTotalNumericValue({
+                grandTotal,
+                rows,
+                field: col.field,
+                preferRows: Boolean(options.preferRows),
+                preferSubtotalRows: Boolean(options.preferSubtotalRows)
+            }));
+        } else {
+            const val = grandTotal[col.field];
+            value = val !== undefined && val !== null && val !== '' ? val : '-';
+        }
+
+        valuesByField[col.field] = value;
+        return { field: col.field, value };
+    });
+
+    return {
+        type: 'grand_total',
+        sourceRow: grandTotal,
+        valuesByField,
+        cells
+    };
+}
+
+export function buildPayrollExportSheetModel(rows = [], columnDefs = [], grandTotal = null, meta = {}, variant = 'detail') {
+    const exportVariant = normalizeExportVariant(variant);
+    const columns = buildPayrollExportColumns(rows, columnDefs, { variant: exportVariant });
+    const variantLabel = EXPORT_VARIANT_LABELS[exportVariant] || EXPORT_VARIANT_LABELS.detail;
+    const sheetName = EXPORT_VARIANT_SHEET_NAMES[exportVariant] || variantLabel;
+
+    return {
+        variant: exportVariant,
+        variantLabel,
+        sheetName,
+        meta,
+        columns,
+        rows: rows.map((row, sourceIndex) => buildPayrollExportRowModel(row, sourceIndex, columns, exportVariant)),
+        grandTotalRow: buildPayrollExportGrandTotalModel(grandTotal, rows, columns, {
+            preferRows: Boolean(meta?.preferRowGrandTotals || meta?.hasPendingEdits),
+            preferSubtotalRows: Boolean(meta?.preferSubtotalGrandTotals)
+        })
+    };
+}
+
+export function buildPayrollWorkbookSheetModels(rows = [], columnDefs = [], grandTotal = null, meta = {}) {
+    return resolvePayrollWorkbookSheetVariants().map((exportVariant) =>
+        buildPayrollExportSheetModel(rows, columnDefs, grandTotal, meta, exportVariant)
+    );
+}
+
+function shouldGuardPayrollExportField(field, variant, explicitFields = null) {
+    if (!field) return false;
+    if (explicitFields) return explicitFields.has(field);
+    if (PAYROLL_EXPORT_UI_PARITY_FIELDS.has(field)) return true;
+    if (variant === 'detail') return true;
+    return isPayrollNumericField(field);
+}
+
+function comparableExportValue(value) {
+    if (value && typeof value === 'object' && 'result' in value) return value.result;
+    return value;
+}
+
+function exportValuesAreEqual(expected, actual) {
+    const a = comparableExportValue(expected);
+    const b = comparableExportValue(actual);
+    const aNumber = typeof a === 'number' ? a : Number(a);
+    const bNumber = typeof b === 'number' ? b : Number(b);
+    if (Number.isFinite(aNumber) && Number.isFinite(bNumber)) {
+        return Math.abs(aNumber - bNumber) <= 0.01;
+    }
+    return String(a ?? '') === String(b ?? '');
+}
+
+function describeExportValue(value) {
+    const comparable = comparableExportValue(value);
+    if (comparable && typeof comparable === 'object') return JSON.stringify(comparable);
+    return String(comparable);
+}
+
+export function assertPayrollExportUiParity(sheetModel, _sourceRows = [], options = {}) {
+    const explicitFields = Array.isArray(options.fields) ? new Set(options.fields) : null;
+    const mismatches = [];
+
+    sheetModel.rows
+        .filter((rowModel) => isPayrollExportParityRow(rowModel.sourceRow))
+        .forEach((rowModel) => {
+            sheetModel.columns.forEach((col) => {
+                if (!shouldGuardPayrollExportField(col.field, sheetModel.variant, explicitFields)) return;
+
+                const expected = formatPayrollExportCellValue(rowModel.sourceRow, col, sheetModel.variant);
+                const actual = rowModel.valuesByField[col.field];
+                if (exportValuesAreEqual(expected, actual)) return;
+
+                mismatches.push({
+                    sheet: sheetModel.sheetName,
+                    variant: sheetModel.variant,
+                    employee: rowModel.employeeKey,
+                    field: col.field,
+                    expected,
+                    actual
+                });
+            });
+        });
+
+    if (mismatches.length > 0) {
+        const details = mismatches.slice(0, 5).map((item) =>
+            `${item.sheet}/${item.employee}/${item.field}: expected ${describeExportValue(item.expected)}, actual ${describeExportValue(item.actual)}`
+        ).join('; ');
+        throw new Error(`Daftar Upah Excel parity guard failed (${mismatches.length} mismatch${mismatches.length === 1 ? '' : 'es'}): ${details}`);
+    }
+
+    return true;
 }
 
 /**
@@ -1070,11 +1241,10 @@ async function exportPayrollSingleSheetToExcel(rows, columnDefs, grandTotal, met
     return fileName;
 }
 
-function addPayrollWorkbookWorksheet(workbook, rows, columnDefs, grandTotal, meta, context, exportVariant) {
-    const enhancedColumnDefs = buildPayrollExportColumns(rows, columnDefs, { variant: exportVariant });
-    const columnIndexMap = buildColumnIndexMap(enhancedColumnDefs);
-    const variantLabel = EXPORT_VARIANT_LABELS[exportVariant] || EXPORT_VARIANT_LABELS.detail;
-    const sheetName = EXPORT_VARIANT_SHEET_NAMES[exportVariant] || variantLabel;
+function addPayrollWorkbookWorksheet(workbook, sheetModel, meta, context) {
+    const enhancedColumnDefs = sheetModel.columns;
+    const variantLabel = sheetModel.variantLabel;
+    const sheetName = sheetModel.sheetName;
 
     const worksheet = workbook.addWorksheet(sheetName.substring(0, 31), {
         pageSetup: {
@@ -1156,12 +1326,9 @@ function addPayrollWorkbookWorksheet(workbook, rows, columnDefs, grandTotal, met
         horizontalCentered: true
     };
 
-    const employeeExcelRows = [];
-    let currentGroupEmployeeRows = [];
-
-    rows.forEach((row) => {
+    sheetModel.rows.forEach((rowModel) => {
+        const row = rowModel.sourceRow || {};
         if (row.type === 'gang_header') {
-            currentGroupEmployeeRows = [];
             const excelRow = worksheet.addRow(Array(enhancedColumnDefs.length).fill(''));
             excelRow.height = 24;
             worksheet.mergeCells(excelRow.number, 1, excelRow.number, enhancedColumnDefs.length);
@@ -1182,24 +1349,9 @@ function addPayrollWorkbookWorksheet(workbook, rows, columnDefs, grandTotal, met
             return;
         }
 
-        const rowData = enhancedColumnDefs.map((col) => formatPayrollExportCellValue(row, col, exportVariant));
+        const rowData = enhancedColumnDefs.map((col) => rowModel.valuesByField[col.field] ?? '-');
         const excelRow = worksheet.addRow(rowData);
         excelRow.height = 22;
-
-        if (row.type === 'employee') {
-            applyEmployeeRowFormulas(excelRow, enhancedColumnDefs, columnIndexMap);
-            employeeExcelRows.push(excelRow.number);
-            currentGroupEmployeeRows.push(excelRow.number);
-        } else if (row.type === 'gang_total') {
-            enhancedColumnDefs.forEach((col, idx) => {
-                const formula = buildTotalFormulaForColumn(col.field, enhancedColumnDefs, columnIndexMap, currentGroupEmployeeRows);
-                if (formula) {
-                    excelRow.getCell(idx + 1).value = formula;
-                    excelRow.getCell(idx + 1).numFmt = '#,##0';
-                }
-            });
-            currentGroupEmployeeRows = [];
-        }
 
         enhancedColumnDefs.forEach((col, idx) => {
             const cell = excelRow.getCell(idx + 1);
@@ -1249,30 +1401,13 @@ function addPayrollWorkbookWorksheet(workbook, rows, columnDefs, grandTotal, met
         });
     });
 
-    if (grandTotal) {
-        const employeeCount = rows.filter((row) => row?.type === 'employee').length;
-        const gtRowData = enhancedColumnDefs.map((col) => {
-            if (col.field === 'nama') return 'GRAND TOTAL';
-            if (col.field === 'no') return '';
-            if (col.field === 'emp_code') return `${employeeCount} KARYAWAN`;
-            if (isPayrollTotalDisplayOnlyField(col.field)) return '-';
-
-            if (isPayrollNumericField(col.field)) return 0;
-
-            const val = grandTotal[col.field];
-            if (val !== undefined && val !== null && val !== '') return val;
-            return '-';
-        });
+    if (sheetModel.grandTotalRow) {
+        const gtRowData = enhancedColumnDefs.map((col) => sheetModel.grandTotalRow.valuesByField[col.field] ?? '-');
         const gtRow = worksheet.addRow(gtRowData);
         gtRow.height = 28;
 
         enhancedColumnDefs.forEach((col, idx) => {
             const cell = gtRow.getCell(idx + 1);
-            const formula = buildTotalFormulaForColumn(col.field, enhancedColumnDefs, columnIndexMap, employeeExcelRows);
-            if (formula) {
-                cell.value = formula;
-                cell.numFmt = '#,##0';
-            }
             cell.fill = {
                 type: 'pattern',
                 pattern: 'solid',
@@ -1342,9 +1477,11 @@ export async function exportPayrollToExcel(rows, columnDefs, grandTotal, meta) {
     const periodStr = `${monthNames[meta.month - 1]} ${meta.year}`;
     const sourceModeLabel = resolveValuePriorityModeLabel(meta?.valuePriorityMode);
     const context = { periodStr, sourceModeLabel };
+    const sheetModels = buildPayrollWorkbookSheetModels(rows, columnDefs, grandTotal, meta);
 
-    resolvePayrollWorkbookSheetVariants().forEach((exportVariant) => {
-        addPayrollWorkbookWorksheet(workbook, rows, columnDefs, grandTotal, meta, context, exportVariant);
+    sheetModels.forEach((sheetModel) => {
+        assertPayrollExportUiParity(sheetModel, rows);
+        addPayrollWorkbookWorksheet(workbook, sheetModel, meta, context);
     });
 
     const sourceModeToken = String(meta?.valuePriorityMode || 'non_db_ptrj').trim().toLowerCase() || 'non_db_ptrj';

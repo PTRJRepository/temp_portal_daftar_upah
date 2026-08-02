@@ -19,6 +19,13 @@ const isNetPayAdditionPremi = (key) => key === 'premi_pph' || key === 'pot_premi
 
 const isGrossKoreksiDeduction = (key) => key === 'pot_koreksi' || key === 'koreksi' || key.startsWith('koreksi_');
 
+const getOtherIncomeTotal = (row) => {
+    if (row.total_pendapatan_lainnya !== undefined && row.total_pendapatan_lainnya !== null) {
+        return safeNumber(row.total_pendapatan_lainnya);
+    }
+    return safeNumber(row.pendapatan_lainnya);
+};
+
 /**
  * Calculate total tunjangan (allowances) for a row
  * Formula: beras_jumlah + jabatan_jumlah + masa_kerja_jumlah + lembur_jumlah
@@ -94,9 +101,16 @@ export const calculatePotonganUpahKotorTotal = (row) => {
  */
 export const calculateTotalPotongan = (row) => {
     let total = 0;
+    let hasExplicitOtherIncomeDeduction = false;
 
     Object.keys(row).forEach(key => {
         const k = key.toLowerCase();
+
+        if (k === 'total_pendapatan_lainnya_pengurang') {
+            hasExplicitOtherIncomeDeduction = true;
+            total += deductionMagnitude(row[key]);
+            return;
+        }
 
         // 1. Inclusion: Must be a deduction column
         // Starts with 'pot_' or 'bpjs_' or is a known deduction key
@@ -124,11 +138,19 @@ export const calculateTotalPotongan = (row) => {
         // 4. Safety: Exclude aggregate fields if they happen to match patterns (unlikely but safe)
         if (k === 'potongan_upah_kotor_total') return;
 
+        if (k === 'pot_pendapatan_lainnya') {
+            hasExplicitOtherIncomeDeduction = true;
+        }
+
         // 4. For Caruman ASTEK specifically, only include pekerja portion (bpjs_pek)
         // The exclusion logic above already handles this by excluding 'majikan' and 'jumlah'
 
         total += deductionMagnitude(row[key]);
     });
+
+    if (!hasExplicitOtherIncomeDeduction) {
+        total += deductionMagnitude(getOtherIncomeTotal(row));
+    }
 
     return total;
 };
@@ -142,8 +164,9 @@ export const calculateUpahKotor = (row) => {
     const totalTunjangan = calculateTotalTunjangan(row);
     const totalPremi = calculateTotalPremi(row);
     const potonganUpahKotor = calculatePotonganUpahKotorTotal(row);
+    const pendapatanLainnya = getOtherIncomeTotal(row);
 
-    return gajiPokok + totalTunjangan + totalPremi - potonganUpahKotor;
+    return gajiPokok + totalTunjangan + totalPremi - potonganUpahKotor + pendapatanLainnya;
 };
 
 /**

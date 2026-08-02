@@ -7,7 +7,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { fetchAllDivisionsTotals, fetchAvailablePeriods, fetchComparisonSummary, fetchVirtualDivisions } from '../services/summaryReportService';
+import { fetchAllDivisionsTotals, fetchAvailablePeriods, fetchComparisonSummary, fetchVirtualDivisions, updateSPSI, updateDivisionCell } from '../services/summaryReportService';
 import { generatePDF } from '../utils/pdfGenerator';
 import ImpactReportPage from './ImpactReportPage';
 import PrintSignature from '../components/common/PrintSignature';
@@ -47,6 +47,11 @@ export default function WagesSummaryIJLPage({ onBack, initialMonth, initialYear 
     const [comparisonMode, setComparisonMode] = useState(searchParams.get('mode') === 'comparison');
     const [comparisonData, setComparisonData] = useState(null);
     const [comparisonGrandTotal, setComparisonGrandTotal] = useState(null);
+
+    // Edit Mode State
+    const [editMode, setEditMode] = useState(false);
+    const [editingSPSI, setEditingSPSI] = useState({});
+    const [editingUpahBersih, setEditingUpahBersih] = useState({});
 
     // Sync comparisonMode if URL search params change
     useEffect(() => {
@@ -182,6 +187,55 @@ export default function WagesSummaryIJLPage({ onBack, initialMonth, initialYear 
     const ijlSummaryData = useMemo(() => {
         return summaryData.filter(d => !d.is_grand_total);
     }, [summaryData]);
+
+    // Handle SPSI Change
+    const handleSPSIChange = (divisionCode, value) => {
+        setEditingSPSI(prev => ({
+            ...prev,
+            [divisionCode]: value
+        }));
+    };
+
+    // Handle Save SPSI
+    const handleSaveSPSI = async (divisionCode, value) => {
+        try {
+            await updateSPSI(token, {
+                month,
+                year,
+                division: divisionCode,
+                value: parseFloat(value) || 0
+            });
+            await fetchData();
+        } catch (err) {
+            console.error('Failed to save SPSI:', err);
+            alert('Failed to save SPSI value');
+        }
+    };
+
+    // Handle Upah Bersih Change
+    const handleUpahBersihChange = (divisionCode, value) => {
+        setEditingUpahBersih(prev => ({
+            ...prev,
+            [divisionCode]: value
+        }));
+    };
+
+    // Handle Save Upah Bersih
+    const handleSaveUpahBersih = async (divisionCode, value) => {
+        try {
+            await updateDivisionCell(token, {
+                month,
+                year,
+                division_code: divisionCode,
+                field: 'total_upah_bersih',
+                value: parseFloat(value) || 0
+            });
+            await fetchData();
+        } catch (err) {
+            console.error('Failed to save upah bersih:', err);
+            alert('Failed to save upah bersih value');
+        }
+    };
 
     const ijlGrandTotal = grandTotal;
     const ijlComparisonData = comparisonData;
@@ -434,7 +488,29 @@ export default function WagesSummaryIJLPage({ onBack, initialMonth, initialYear 
                         <td className={`text-right border-right-section ${Number(div.total_spsi) === 0 ? 'val-zero' : ''}`}>{formatNumber(div.total_spsi)}</td>
                         <td className={`text-right ${Number(div.total_premi) === 0 ? 'val-zero' : ''}`}>{formatNumber(div.total_premi)}</td>
                         <td className={`text-right ${Number(div.total_lembur) === 0 ? 'val-zero' : ''}`}>{formatNumber(div.total_lembur)}</td>
-                        <td className={`text-right border-right-section ${Number(div.total_manual) === 0 ? 'val-zero' : 'val-positive'}`}>{formatNumber(div.total_manual)}</td>
+                        <td className={`text-right border-right-section ${Number(div.total_manual) === 0 ? 'val-zero' : 'val-positive'}`}>
+                            {editMode ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                    <input
+                                        type="number"
+                                        className="wsp-input-edit"
+                                        value={editingUpahBersih[div.division_code] !== undefined ? editingUpahBersih[div.division_code] : (div.total_manual ?? div.total_upah_bersih)}
+                                        onChange={(e) => handleUpahBersihChange(div.division_code, e.target.value)}
+                                        style={{ width: '100%', textAlign: 'right', padding: '2px 4px', border: '1px solid #3b82f6', borderRadius: '4px', backgroundColor: '#ffffff', color: '#0f172a' }}
+                                    />
+                                    <button
+                                        onClick={() => handleSaveUpahBersih(div.division_code, editingUpahBersih[div.division_code])}
+                                        className="wsp-btn-sm"
+                                        style={{ fontSize: '0.65rem', padding: '2px 6px', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                                        disabled={editingUpahBersih[div.division_code] === undefined}
+                                    >
+                                        Save
+                                    </button>
+                                </div>
+                            ) : (
+                                formatNumber(div.total_manual)
+                            )}
+                        </td>
                         <td className={`text-right ${Number(div.thumb_print ?? 0) === 0 ? 'val-zero' : ''}`}>{formatNumber(div.thumb_print ?? 0)}</td>
                         <td className={`text-right font-semibold ${(div.selisih ?? 0) > 0 ? 'text-diff-neg' : (div.selisih ?? 0) < 0 ? 'text-diff-pos' : 'text-neutral'}`}>{formatNumber(div.selisih ?? 0)}</td>
                     </tr>
@@ -499,6 +575,9 @@ export default function WagesSummaryIJLPage({ onBack, initialMonth, initialYear 
                     </button>
                     <button onClick={() => setImpactReportMode(!impactReportMode)} className={`wsp-btn ${impactReportMode ? 'wsp-btn-primary' : ''}`} style={{ marginLeft: '0.5rem' }}>
                         {impactReportMode ? 'Back to Summary' : 'Impact Report'}
+                    </button>
+                    <button onClick={() => setEditMode(!editMode)} className={`wsp-btn ${editMode ? 'wsp-btn-primary' : ''}`} style={{ marginLeft: '0.5rem' }}>
+                        {editMode ? 'Selesai Edit' : 'Edit Nilai'}
                     </button>
                 </div>
             </div>

@@ -47,6 +47,23 @@ export async function deleteManualAdjustmentColumn(token, params = {}) {
     return response.data;
 }
 
+// --- Premium Type Conversion ---
+
+export async function validatePremiumConversion(token, { from, to }) {
+    const response = await axios.get('payroll/manual-adjustment/validate-conversion', {
+        params: { from, to },
+        headers: authHeaders(token)
+    });
+    return response.data;
+}
+
+export async function convertPremiumType(token, payload) {
+    const response = await axios.post('payroll/manual-adjustment/convert-type', payload, {
+        headers: authHeaders(token)
+    });
+    return response.data;
+}
+
 // --- Premium Definitions ---
 
 export async function fetchPremiumDefinitions(token) {

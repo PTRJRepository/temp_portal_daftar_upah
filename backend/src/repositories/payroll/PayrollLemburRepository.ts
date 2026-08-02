@@ -90,10 +90,10 @@ export class PayrollLemburRepository {
                 SELECT RTRIM(t.EmpCode) as emp_code, SUM(ln.Amount) as amount
                 FROM (
                     SELECT EmpCode, ID, DocDate FROM PR_ADTRANS
-                    WHERE RTRIM(EmpCode) IN (${empList}) AND DocDate >= ? AND DocDate < ? AND UPPER(DocDesc) LIKE '%LEMBUR%'
+                    WHERE RTRIM(EmpCode) IN (${empList}) AND DocDate >= ? AND DocDate < ? AND UPPER(DocDesc) LIKE '%LEMBUR%' AND Status IN (1, 3)
                     UNION ALL
                     SELECT EmpCode, ID, DocDate FROM PR_ADTRANS_ARC
-                    WHERE RTRIM(EmpCode) IN (${empList}) AND DocDate >= ? AND DocDate < ? AND UPPER(DocDesc) LIKE '%LEMBUR%'
+                    WHERE RTRIM(EmpCode) IN (${empList}) AND DocDate >= ? AND DocDate < ? AND UPPER(DocDesc) LIKE '%LEMBUR%' AND Status = 3
                 ) t
                 JOIN (
                     SELECT MasterID, Amount FROM PR_ADTRANSLN

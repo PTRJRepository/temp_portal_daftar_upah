@@ -21,7 +21,6 @@ export interface PayrollAutoBufferInput {
     jabatanText?: string | null;
     roleText?: string | null;
     hariKerja?: number | null;
-    kehadiran?: number | null;
     masaKerjaTahun?: number | null;
     isSpsiMember?: boolean | null;
     divisionCode?: string | null;
@@ -252,9 +251,10 @@ class PayrollAutoBufferService {
     public calculateAutomaticValues(input: PayrollAutoBufferInput): PayrollAutoBufferResult {
         this.ensureLoaded();
 
+        // [FIX] tunjangan jabatan/masa_kerja pakai hari_kerja (effective, sudah dipotong cuti).
+        // Jangan fallback ke `kehadiran` (raw total HK scan incl. Minggu/libur) — kehadiran ≠ cuti.
         const hariKerja = Math.max(0, toNumber(input.hariKerja));
-        const kehadiran = Math.max(0, toNumber(input.kehadiran));
-        const attendanceDays = hariKerja > 0 ? hariKerja : kehadiran;
+        const attendanceDays = hariKerja;
 
         const dbJabatanJumlah = toNumber(input.dbJabatanJumlah);
         const dbMasaKerjaJumlah = toNumber(input.dbMasaKerjaJumlah);

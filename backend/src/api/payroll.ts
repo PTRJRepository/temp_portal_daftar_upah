@@ -1195,7 +1195,8 @@ export const payrollRoutes = new Elysia({ prefix: "/payroll" })
             console.log(`[PayrollRoutes] /report/division-raw-tree RESULT | data_rows=${dataRows.length} gangs=${uniqueGangs.size} | gangPrefix=${gangPrefix}`);
 
             // [NEW] Use centralized payrollTotalsCalculator for consistent totals
-            const { calculatePayrollTotals, calculateTaxMatrixTotals } = await import("../services/payrollTotalsCalculator");
+            const { calculatePayrollTotals, calculateTaxMatrixTotals, reconcileGangTotalsToGrandTotal } = await import("../services/payrollTotalsCalculator");
+            const grandTotal = calculatePayrollTotals(dataRows, 'GRAND TOTAL');
 
             // Group by gang and calculate totals
             const gangsMap: Record<string, any[]> = {};
@@ -1209,11 +1210,6 @@ export const payrollRoutes = new Elysia({ prefix: "/payroll" })
             console.log(`[PayrollRoutes] division-raw-tree: data_rows count=${dataRows.length}, gangs count=${Object.keys(gangsMap).length}`);
             console.log(`[PayrollRoutes] division-raw-tree: dynamic_premi=${result.dynamic_premi_headers?.length || 0}, dynamic_pot=${result.dynamic_potongan_headers?.length || 0}`);
 
-            // [PERFORMANCE] Calculate totals FIRST (needs full data with arrays),
-            // then strip heavy array fields from employee rows before serializing to JSON.
-            // This prevents "Aw, Snap!" browser crash caused by oversized JSON.
-            const grandTotal = calculatePayrollTotals(dataRows, 'GRAND TOTAL');
-
             // Build gangs list with pre-calculated totals
             const gangsList = Object.entries(gangsMap)
                 .map(([gang_code, employees]) => ({
@@ -1224,7 +1220,13 @@ export const payrollRoutes = new Elysia({ prefix: "/payroll" })
                 }))
                 .sort((a, b) => a.gang_code.localeCompare(b.gang_code));
 
-            // grand total already calculated above (before slimming)
+            const reconciledGangTotals = reconcileGangTotalsToGrandTotal(
+                gangsList.map((gang) => gang.gang_totals),
+                grandTotal
+            );
+            gangsList.forEach((gang, index) => {
+                gang.gang_totals = reconciledGangTotals[index];
+            });
 
             const response = {
                 division: divisionCode,
@@ -1994,7 +1996,8 @@ export const payrollRoutes = new Elysia({ prefix: "/payroll" })
             console.log(`[PayrollRoutes] /locked/report/raw-tree RESULT | gangs=${gangCount} employees=${empCount} | gangCode=${gangCode} | gangPrefix=${gangPrefix}`);
 
             // [NEW] Use centralized payrollTotalsCalculator for consistent totals
-            const { calculatePayrollTotals, calculateTaxMatrixTotals } = await import("../services/payrollTotalsCalculator");
+            const { calculatePayrollTotals, calculateTaxMatrixTotals, reconcileGangTotalsToGrandTotal } = await import("../services/payrollTotalsCalculator");
+            const grandTotal = calculatePayrollTotals(dataRows, 'GRAND TOTAL');
 
             // Group by gang and calculate totals
             const gangsMap: Record<string, any[]> = {};
@@ -2003,11 +2006,6 @@ export const payrollRoutes = new Elysia({ prefix: "/payroll" })
                 if (!gangsMap[gang]) gangsMap[gang] = [];
                 gangsMap[gang].push(row);
             }
-
-            // [PERFORMANCE] Calculate totals FIRST (needs full data with arrays),
-            // then strip heavy array fields from employee rows before serializing to JSON.
-            // This prevents "Aw, Snap!" browser crash caused by oversized JSON.
-            const grandTotal = calculatePayrollTotals(dataRows, 'GRAND TOTAL');
 
             // Build gangs list with pre-calculated totals
             const gangsList = Object.entries(gangsMap)
@@ -2019,7 +2017,13 @@ export const payrollRoutes = new Elysia({ prefix: "/payroll" })
                 }))
                 .sort((a, b) => a.gang_code.localeCompare(b.gang_code));
 
-            // grand total already calculated above (before slimming)
+            const reconciledGangTotals = reconcileGangTotalsToGrandTotal(
+                gangsList.map((gang) => gang.gang_totals),
+                grandTotal
+            );
+            gangsList.forEach((gang, index) => {
+                gang.gang_totals = reconciledGangTotals[index];
+            });
 
 
 
@@ -2447,7 +2451,7 @@ export const payrollRoutes = new Elysia({ prefix: "/payroll" })
     // --- Report: Gang Grid ---
     .get("/report", async ({ query, set }): Promise<any> => {
         try {
-            const { calculatePayrollTotals, calculateGangTotalsMap, calculateGrandTotal } = await import("../services/payrollTotalsCalculator");
+            const { calculatePayrollTotals, reconcileGangTotalsToGrandTotal } = await import("../services/payrollTotalsCalculator");
 
             const gangCode = query.gang_code || "ALL";
             const month = parseInt(query.month || String(new Date().getMonth() + 1));
@@ -2479,8 +2483,14 @@ export const payrollRoutes = new Elysia({ prefix: "/payroll" })
                 gang_totals: calculatePayrollTotals(employees, `TOTAL ${gang_code}`)
             }));
 
-            // Calculate grand total
             const grandTotal = calculatePayrollTotals(dataRows, 'GRAND TOTAL');
+            const reconciledGangTotals = reconcileGangTotalsToGrandTotal(
+                gangsList.map((gang) => gang.gang_totals),
+                grandTotal
+            );
+            gangsList.forEach((gang, index) => {
+                gang.gang_totals = reconciledGangTotals[index];
+            });
 
             return {
                 gang_code: gangCode,
@@ -2848,7 +2858,7 @@ export const payrollRoutes = new Elysia({ prefix: "/payroll" })
                 try {
                     // Import services
                     const { Config } = await import("../config");
-                    const { calculatePayrollTotals } = await import("../services/payrollTotalsCalculator");
+                    const { calculatePayrollTotals, reconcileGangTotalsToGrandTotal } = await import("../services/payrollTotalsCalculator");
 
                     // Send initial progress
                     controller.enqueue(encoder.encode(`event: progress\ndata: ${JSON.stringify({
@@ -2981,18 +2991,32 @@ export const payrollRoutes = new Elysia({ prefix: "/payroll" })
                         if (phase === 'complete') {
                             console.log(`[Stream] ✅ Complete: ${meta.message}`);
 
-                            // Calculate grand total from all employees across all gangs
-                            const allEmployees: any[] = [];
-                            for (const [, employees] of gangs) {
-                                allEmployees.push(...employees);
-                            }
-                            const grandTotal = calculatePayrollTotals(allEmployees, "GRAND TOTAL");
+                            const completedGangPayloads = Array.from(gangs.entries()).map(([gangCodeKey, employees]) => ({
+                                gangCodeKey,
+                                employees,
+                                gangTotals: null as any
+                            }));
+
+                            completedGangPayloads.forEach((gang) => {
+                                gang.gangTotals = calculatePayrollTotals(gang.employees, `TOTAL ${gang.gangCodeKey}`);
+                            });
+
+                            const grandTotal = calculatePayrollTotals(
+                                completedGangPayloads.flatMap((gang) => gang.employees),
+                                "GRAND TOTAL"
+                            );
+                            const reconciledGangTotals = reconcileGangTotalsToGrandTotal(
+                                completedGangPayloads.map((gang) => gang.gangTotals),
+                                grandTotal
+                            );
+                            completedGangPayloads.forEach((gang, index) => {
+                                gang.gangTotals = reconciledGangTotals[index];
+                            });
 
                             // Send final filtered & sorted gangs with gang_totals
-                            for (const [gangCodeKey, employees] of gangs) {
+                            for (const { gangCodeKey, employees, gangTotals } of completedGangPayloads) {
                                 const idx = gangOrder.indexOf(gangCodeKey);
                                 const slimEmployees = sortedSlimStreamEmployees(employees);
-                                const gangTotals = calculatePayrollTotals(employees, `TOTAL ${gangCodeKey}`);
 
                                 controller.enqueue(encoder.encode(`event: gang\ndata: ${JSON.stringify({
                                     gang_code: gangCodeKey,

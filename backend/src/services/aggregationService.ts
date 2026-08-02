@@ -100,7 +100,12 @@ export class AggregationService {
     }
 
     private calculateTotalPotongan(dataRows: any[]): number {
-        return dataRows.reduce((sum, row) => sum + this.calculateRowTotalPotonganBersih(row), 0);
+        return dataRows.reduce((sum, row) => {
+            if (Object.prototype.hasOwnProperty.call(row, 'total_potongan')) {
+                return sum + this.getNumericValue(row, 'total_potongan');
+            }
+            return sum + this.calculateRowTotalPotonganBersih(row);
+        }, 0);
     }
 
     private calculateRowTotalPotonganBersih(row: any): number {

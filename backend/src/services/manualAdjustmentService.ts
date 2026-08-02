@@ -64,6 +64,13 @@ type AdtransDocDescDetailWithCategory = ManualAdjustmentSyncAdtransDetail & {
     category: string;
 };
 
+type StoredAdjustmentComparison = {
+    amount: number;
+    remarks: string;
+    gang_code: string;
+    adjustment_name: string;
+};
+
 export interface AdtransCheckOptions {
     adjustmentTypes?: string[];
     adjustmentNames?: string[];
@@ -1556,13 +1563,59 @@ function adtransDetailMatchesManualAdjustment(row: ManualAdjustment, detail: Man
 
         const adjustmentType = normalizeText(row.adjustment_type).toUpperCase();
         const category = resolveManualAdjustmentAdtransCategory(row);
-        return adjustmentType === "AUTO_BUFFER" && category
+        if (!category) return false;
+
+        return adjustmentType === "AUTO_BUFFER"
+            || adjustmentType === "POTONGAN_KOTOR"
+            || adjustmentType === "POTONGAN_BERSIH"
             ? matchesAdtransFilter(detail.doc_desc, category)
             : false;
     }
 
     const category = resolveManualAdjustmentAdtransCategory(row);
     return category ? matchesAdtransFilter(detail.doc_desc, category) : false;
+}
+
+function isDeductionCompareCategory(category: string): boolean {
+    return ["spsi", "pph", "koreksi", "potongan"].includes(normalizeAdtransFilter(category));
+}
+
+function toComparableCompareAmount(category: string, amount: number): number {
+    return isDeductionCompareCategory(category) ? Math.abs(amount) : amount;
+}
+
+function sumAdtransDetails(details: AdtransDocDescDetail[]): number {
+    return details.reduce((sum, detail) => sum + toNumericAmount(detail.amount), 0);
+}
+
+function mergeStoredAdjustmentComparison(
+    existing: StoredAdjustmentComparison | undefined,
+    row: {
+        amount: unknown;
+        remarks?: unknown;
+        gang_code?: unknown;
+        adjustment_name?: unknown;
+    },
+    adjustmentName: string
+): StoredAdjustmentComparison {
+    const rowRemarks = normalizeText(row.remarks);
+    const rowGangCode = normalizeText(row.gang_code);
+    const rowAdjustmentName = adjustmentName || normalizeText(row.adjustment_name);
+    if (!existing) {
+        return {
+            amount: Number(row.amount || 0),
+            remarks: rowRemarks,
+            gang_code: rowGangCode,
+            adjustment_name: rowAdjustmentName
+        };
+    }
+
+    return {
+        amount: existing.amount + Number(row.amount || 0),
+        remarks: [existing.remarks, rowRemarks].filter(Boolean).join(" || "),
+        gang_code: existing.gang_code || rowGangCode,
+        adjustment_name: Array.from(new Set([existing.adjustment_name, rowAdjustmentName].filter(Boolean))).join(", ")
+    };
 }
 
 function resolveManualAdjustmentSyncTargetAmount(row: ManualAdjustment): { targetAmount: number; metadataDetailTotal: number | null } {
@@ -2190,7 +2243,7 @@ export class ManualAdjustmentService {
               AND t.PhyMonth = ?
               AND t.PhyYear = ?
               AND ${empSql}
-              AND t.Status = ${statusFilter}
+              AND t.Status IN (${statusFilter})
             GROUP BY t.EmpCode, t.DocID, t.DocDesc
         `;
 
@@ -2206,7 +2259,7 @@ export class ManualAdjustmentService {
         ];
 
         const rowsFromAdtrans = await dbPtrj.query<ManualAdjustmentSyncAdtransDetail>(`
-            ${selectSql("PR_ADTRANS", "PR_ADTRANSLN", "1")}
+            ${selectSql("PR_ADTRANS", "PR_ADTRANSLN", "1, 3")}
             UNION ALL
             ${selectSql("PR_ADTRANS_ARC", "PR_ADTRANSLN_ARC", "3")}
         `, params);
@@ -3029,7 +3082,7 @@ export class ManualAdjustmentService {
                 WHERE ${scopeSql}
                   AND t.PhyMonth = ?
                   AND t.PhyYear = ?
-                  AND t.Status = 1
+                  AND t.Status IN (1, 3)
                   ${specificDocDescWhereSql}
 
                 UNION ALL
@@ -3069,7 +3122,7 @@ export class ManualAdjustmentService {
             WHERE ${scopeSql}
               AND t.PhyMonth = ?
               AND t.PhyYear = ?
-              AND t.Status = 1
+              AND t.Status IN (1, 3)
               AND (${duplicateDocDescConditions})
               ${specificDocDescWhereSql}
             GROUP BY t.ID, t.DocID, t.DocDate, t.DocDesc, t.EmpCode, t.EmpName
@@ -3272,7 +3325,7 @@ export class ManualAdjustmentService {
                 WHERE UPPER(RTRIM(t.LocCode)) = ?
                   AND t.PhyMonth = ?
                   AND t.PhyYear = ?
-                  AND t.Status = 1
+                  AND t.Status IN (1, 3)
                   ${gangWhere}
 
                 UNION ALL
@@ -3312,7 +3365,7 @@ export class ManualAdjustmentService {
             WHERE UPPER(RTRIM(t.LocCode)) = ?
               AND t.PhyMonth = ?
               AND t.PhyYear = ?
-              AND t.Status = 1
+              AND t.Status IN (1, 3)
               ${gangWhere}
 
             UNION ALL
@@ -3378,7 +3431,7 @@ export class ManualAdjustmentService {
         const autoBufferComparableNames = new Set(Object.values(categoryToAdjustmentName));
 
         // 3. Build map of stored adjustments: emp_code -> category -> amount
-        const storedMap = new Map<string, Map<string, { amount: number; remarks: string; gang_code: string; adjustment_name: string }>>();
+        const storedMap = new Map<string, Map<string, StoredAdjustmentComparison>>();
         for (const row of adjustmentRows) {
             const storedIdentityKeys = Array.from(new Set([
                 String(row.emp_code || '').trim().toUpperCase(),
@@ -3393,16 +3446,14 @@ export class ManualAdjustmentService {
             let category = normalizedFilters.find((filterKey) => categoryToAdjustmentName[filterKey] === comparableAdjustmentName);
             if (!category && adjustmentType === 'PREMI') category = 'premi';
             if (!category && adjustmentType === 'POTONGAN_KOTOR') category = adjustmentName.includes('KOREKSI') ? 'koreksi' : 'potongan';
+            if (!category && adjustmentType === 'POTONGAN_BERSIH') category = 'potongan';
             if (!category || !normalizedFilters.includes(category)) continue;
 
             for (const identityKey of storedIdentityKeys) {
                 if (!storedMap.has(identityKey)) storedMap.set(identityKey, new Map());
-                storedMap.get(identityKey)!.set(category, {
-                    amount: Number(row.amount || 0),
-                    remarks: String(row.remarks || ''),
-                    gang_code: String(row.gang_code || ''),
-                    adjustment_name: autoBufferComparableNames.has(comparableAdjustmentName) ? comparableAdjustmentName : adjustmentName
-                });
+                const identityMap = storedMap.get(identityKey)!;
+                const storedAdjustmentName = autoBufferComparableNames.has(comparableAdjustmentName) ? comparableAdjustmentName : adjustmentName;
+                identityMap.set(category, mergeStoredAdjustmentComparison(identityMap.get(category), row, storedAdjustmentName));
             }
         }
 
@@ -3428,7 +3479,9 @@ export class ManualAdjustmentService {
 
                 const storedAmount = stored ? Number(stored.amount || 0) : null;
 
-                const isMatch = storedAmount !== null && Math.abs(sourceAmount - storedAmount) <= 0.01;
+                const comparableSourceAmount = toComparableCompareAmount(filterKey, sourceAmount);
+                const comparableStoredAmount = storedAmount === null ? null : toComparableCompareAmount(filterKey, storedAmount);
+                const isMatch = comparableStoredAmount !== null && Math.abs(comparableSourceAmount - comparableStoredAmount) <= 0.01;
                 const isMissing = storedAmount === null;
                 const status: 'MATCH' | 'MISMATCH' | 'MISSING' = isMissing ? 'MISSING' : (isMatch ? 'MATCH' : 'MISMATCH');
 
@@ -3449,7 +3502,7 @@ export class ManualAdjustmentService {
                     stored_amount: storedAmount,
                     db_ptrj_amount: sourceAmount,
                     extend_db_ptrj_amount: storedAmount,
-                    diff: storedAmount !== null ? sourceAmount - storedAmount : null,
+                    diff: comparableStoredAmount !== null ? comparableSourceAmount - comparableStoredAmount : null,
                     status,
                     db_ptrj_doc_desc_details: docDetailsByEmpAndCategory.get(`${empCode}|${filterKey}`) || [],
                     extend_db_ptrj_remarks: stored?.remarks || null,
@@ -3527,7 +3580,7 @@ export class ManualAdjustmentService {
               AND UPPER(RTRIM(division_code)) IN (${adjustmentDivisionCodes.map(() => '?').join(',')})
               AND (
                   (adjustment_type = 'AUTO_BUFFER' AND UPPER(RTRIM(adjustment_name)) IN (${autoBufferAdjustmentNames.length ? autoBufferAdjustmentNames.map(() => '?').join(',') : "''"}))
-                  ${includesManualCategories ? "OR adjustment_type IN ('PREMI', 'POTONGAN_KOTOR')" : ""}
+                  ${includesManualCategories ? "OR adjustment_type IN ('PREMI', 'POTONGAN_KOTOR', 'POTONGAN_BERSIH')" : ""}
               )
             ORDER BY emp_code, adjustment_name
         `, [periodMonth, periodYear, ...adjustmentDivisionCodes, ...autoBufferAdjustmentNames]);
@@ -3607,15 +3660,28 @@ export class ManualAdjustmentService {
             if (!category && adjustmentType === 'POTONGAN_KOTOR') {
                 category = adjustmentName.includes('KOREKSI') ? 'koreksi' : 'potongan';
             }
+            if (!category && adjustmentType === 'POTONGAN_BERSIH') category = 'potongan';
             if (!category || !normalizedFilters.includes(category)) continue;
 
             const storedAmount = Number(row.amount || 0);
-            const sourceAmount = Number(sourceMap.get(ptrjEmpCode)?.[category] || 0);
-            const diff = sourceAmount - storedAmount;
+            const categoryDetails = docDetailsByEmpAndCategory.get(`${ptrjEmpCode}|${category}`) || [];
+            const matchingDetails = categoryDetails.filter((detail) => adtransDetailMatchesManualAdjustment(row, {
+                emp_code: ptrjEmpCode,
+                doc_desc: detail.doc_desc,
+                doc_id: detail.doc_id,
+                amount: detail.amount
+            }));
+            const sourceDetails = matchingDetails.length > 0 ? matchingDetails : categoryDetails;
+            const sourceAmount = matchingDetails.length > 0
+                ? sumAdtransDetails(matchingDetails)
+                : Number(sourceMap.get(ptrjEmpCode)?.[category] || 0);
+            const comparableSourceAmount = toComparableCompareAmount(category, sourceAmount);
+            const comparableStoredAmount = toComparableCompareAmount(category, storedAmount);
+            const diff = comparableSourceAmount - comparableStoredAmount;
             const isMatch = Math.abs(diff) <= 0.01;
             const status: 'MATCH' | 'MISMATCH' | 'EXTRA_IN_ADJUSTMENTS' = isMatch
                 ? 'MATCH'
-                : sourceAmount === 0 && storedAmount !== 0
+                : comparableSourceAmount === 0 && comparableStoredAmount !== 0
                     ? 'EXTRA_IN_ADJUSTMENTS'
                     : 'MISMATCH';
 
@@ -3634,7 +3700,7 @@ export class ManualAdjustmentService {
                 extend_db_ptrj_amount: storedAmount,
                 diff,
                 status,
-                db_ptrj_doc_desc_details: docDetailsByEmpAndCategory.get(`${ptrjEmpCode}|${category}`) || [],
+                db_ptrj_doc_desc_details: sourceDetails,
                 extend_db_ptrj_remarks: row.remarks ? String(row.remarks) : null,
                 gang_code: row.gang_code ? String(row.gang_code).trim() : null,
                 division_code: row.division_code ? String(row.division_code).trim() : null,

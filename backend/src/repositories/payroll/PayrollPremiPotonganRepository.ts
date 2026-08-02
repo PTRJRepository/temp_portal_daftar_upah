@@ -63,6 +63,7 @@ export class PayrollPremiPotonganRepository {
                     INNER JOIN HR_GANGLN gl ON RTRIM(gl.GangMember) = RTRIM(t.EmpCode)
                     WHERE RTRIM(t.EmpCode) IN (${empList})
                       AND t.DocDate >= ? AND t.DocDate < ?
+                      AND t.Status IN (1, 3)
 
                     UNION ALL
 
@@ -71,6 +72,7 @@ export class PayrollPremiPotonganRepository {
                     INNER JOIN HR_GANGLN gl ON RTRIM(gl.GangMember) = RTRIM(t.EmpCode)
                     WHERE RTRIM(t.EmpCode) IN (${empList})
                       AND t.DocDate >= ? AND t.DocDate < ?
+                      AND t.Status = 3
                 ) t
                 JOIN (
                     SELECT MasterID, TaskCode, Amount FROM PR_ADTRANSLN
@@ -189,6 +191,7 @@ export class PayrollPremiPotonganRepository {
                     INNER JOIN HR_GANGLN gl ON RTRIM(gl.GangMember) = RTRIM(t.EmpCode)
                     WHERE RTRIM(t.EmpCode) IN (${empList})
                       AND t.DocDate >= ? AND t.DocDate < ?
+                      AND t.Status IN (1, 3)
 
                     UNION ALL
 
@@ -197,6 +200,7 @@ export class PayrollPremiPotonganRepository {
                     INNER JOIN HR_GANGLN gl ON RTRIM(gl.GangMember) = RTRIM(t.EmpCode)
                     WHERE RTRIM(t.EmpCode) IN (${empList})
                       AND t.DocDate >= ? AND t.DocDate < ?
+                      AND t.Status = 3
                 ) t
                 JOIN (
                     SELECT MasterID, TaskCode, Amount FROM PR_ADTRANSLN

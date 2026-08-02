@@ -17,6 +17,11 @@
 
 import { readFileSync, writeFileSync, existsSync, statSync } from "fs";
 import { join } from "path";
+import {
+    containsPphDeductionText,
+    POTONGAN_BERSIH_HUTANG_AD_CODE,
+    POTONGAN_BERSIH_HUTANG_TASK_DESC
+} from "./payroll/manualAdjustments/potonganBersihTaskCode";
 
 export type PremiumInputType = 'amount' | 'blok' | 'exp' | 'kendaraan' | 'blok,exp';
 const PREMIUM_INPUT_TYPES = new Set<string>(['amount', 'blok', 'exp', 'kendaraan', 'blok,exp']);
@@ -29,6 +34,34 @@ export interface PremiumDefinition {
     task_desc: string;          // e.g. "(AL) TUNJANGAN PREMI ((PM) PRUNING)"
     input_type: PremiumInputType;
     is_active: boolean;
+}
+
+function normalizePotonganBersihDefinition(definition: PremiumDefinition): PremiumDefinition {
+    const adjustmentType = normalizeAdjustmentTypeField(definition.adjustment_type);
+    const text = `${definition.adjustment_name} ${definition.ad_code} ${definition.task_desc}`;
+    if (adjustmentType !== 'POTONGAN_BERSIH' || containsPphDeductionText(text)) {
+        return definition;
+    }
+
+    return {
+        ...definition,
+        ad_code: POTONGAN_BERSIH_HUTANG_AD_CODE,
+        task_desc: POTONGAN_BERSIH_HUTANG_TASK_DESC
+    };
+}
+
+export type ConversionMetadataAction = 'keep' | 'remap' | 'drop' | 'seed';
+
+export interface ConversionValidation {
+    allowed: boolean;
+    reason: string;
+    metadata_action: ConversionMetadataAction;
+    from_input_type: string;
+    to_input_type: string;
+}
+
+function normalizeAdjustmentTypeField(value: string | undefined): string {
+    return String(value || 'PREMI').trim().toUpperCase();
 }
 
 // --- Metadata JSON structures per input_type ---
@@ -125,7 +158,7 @@ export class PremiumDefinitionService {
 
         try {
             const raw = readFileSync(this.definitionsFile, "utf-8");
-            this.definitions = JSON.parse(raw) as PremiumDefinition[];
+            this.definitions = (JSON.parse(raw) as PremiumDefinition[]).map(normalizePotonganBersihDefinition);
             this.definitionsFingerprint = fingerprint;
             console.log(`[PremiumDefinitionService] Loaded ${this.definitions.length} premium definitions`);
             return this.definitions;
@@ -187,14 +220,14 @@ export class PremiumDefinitionService {
             d => d.adjustment_name.trim().toUpperCase() === normalizedName
         );
 
-        const entry: PremiumDefinition = {
+        const entry: PremiumDefinition = normalizePotonganBersihDefinition({
             adjustment_type: this.normalizeAdjustmentType(data.adjustment_type),
             adjustment_name: data.adjustment_name.trim().toUpperCase(),
             ad_code: data.ad_code.trim(),
             task_desc: data.task_desc.trim(),
             input_type: this.normalizeInputType(data.input_type),
             is_active: data.is_active ?? true
-        };
+        });
 
         if (idx >= 0) {
             defs[idx] = entry;
@@ -249,6 +282,60 @@ export class PremiumDefinitionService {
             throw new Error(`Definisi premi "${name}" sudah tidak aktif.`);
         }
         return def;
+    }
+
+    /**
+     * Validation gate for premium type conversion.
+     * Blocks conversions that require mapping subblok ↔ nomor_kendaraan (semantically different).
+     *
+     * Matrix (blocked pairs are symmetric where applicable):
+     *   blok      → kendaraan     BLOCKED
+     *   kendaraan → blok, blok,exp BLOCKED
+     *   blok,exp  → kendaraan     BLOCKED
+     * Same input_type        → keep metadata
+     * → amount               → drop metadata
+     * amount → structured    → seed placeholder
+     * other compatible       → remap
+     */
+    private static readonly BLOCKED_CONVERSIONS: Record<string, Set<string>> = {
+        blok: new Set(['kendaraan']),
+        kendaraan: new Set(['blok', 'blok,exp']),
+        'blok,exp': new Set(['kendaraan']),
+    };
+
+    public validatePremiumConversion(fromName: string, toName: string): ConversionValidation {
+        const fromDef = this.getDefinitionByName(fromName);
+        const toDef = this.getDefinitionByName(toName);
+        const fromInputType = fromDef?.input_type || '';
+        const toInputType = toDef?.input_type || '';
+
+        if (!fromDef || !fromDef.is_active) {
+            return { allowed: false, reason: `Source "${fromName}" tidak ditemukan atau tidak aktif.`, metadata_action: 'keep', from_input_type: fromInputType, to_input_type: toInputType };
+        }
+        if (!toDef || !toDef.is_active) {
+            return { allowed: false, reason: `Target "${toName}" tidak ditemukan atau tidak aktif.`, metadata_action: 'keep', from_input_type: fromInputType, to_input_type: toInputType };
+        }
+
+        const fromType = normalizeAdjustmentTypeField(fromDef.adjustment_type);
+        const toType = normalizeAdjustmentTypeField(toDef.adjustment_type);
+        if (fromType !== toType) {
+            return { allowed: false, reason: `adjustment_type beda (${fromType} vs ${toType}). Konversi antar kategori tidak didukung.`, metadata_action: 'keep', from_input_type: fromInputType, to_input_type: toInputType };
+        }
+
+        if (fromInputType === toInputType) {
+            return { allowed: true, reason: 'input_type sama, metadata dipertahankan.', metadata_action: 'keep', from_input_type: fromInputType, to_input_type: toInputType };
+        }
+
+        if (PremiumDefinitionService.BLOCKED_CONVERSIONS[fromInputType]?.has(toInputType)) {
+            return { allowed: false, reason: `Konversi ${fromInputType} → ${toInputType} diblokir: subblok ≠ nomor kendaraan (semantik beda).`, metadata_action: 'keep', from_input_type: fromInputType, to_input_type: toInputType };
+        }
+
+        const action: ConversionMetadataAction = toInputType === 'amount'
+            ? 'drop'
+            : fromInputType === 'amount'
+                ? 'seed'
+                : 'remap';
+        return { allowed: true, reason: `Re-map ${fromInputType} → ${toInputType}.`, metadata_action: action, from_input_type: fromInputType, to_input_type: toInputType };
     }
 
     /**

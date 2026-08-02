@@ -423,10 +423,10 @@ function buildManualAdjustmentSourceSyncMetas(adjustments: ManualAdjustmentCompa
 }
 
 export function resolveManualAdjustmentDbPtrjCompareAmount(
-    syncMeta: Pick<ManualAdjustmentFieldSyncMeta, 'fieldName' | 'adjustmentType' | 'previousAmount'>,
+    syncMeta: Pick<ManualAdjustmentFieldSyncMeta, 'fieldName' | 'adjustmentType' | 'previousAmount'> & Partial<Pick<ManualAdjustmentFieldSyncMeta, 'hadDbValue'>>,
     dbPremiSource: Record<string, number> = {},
     dbPotonganSource: Record<string, number> = {}
-): number {
+): number | null {
     const source = syncMeta.adjustmentType === 'PREMI' ? dbPremiSource : dbPotonganSource;
     let matchedAmount = 0;
     let matched = false;
@@ -438,18 +438,28 @@ export function resolveManualAdjustmentDbPtrjCompareAmount(
     }
 
     if (matched) return matchedAmount;
-    return toManualCompareAmount(syncMeta.previousAmount, syncMeta.adjustmentType);
+    if (syncMeta.hadDbValue !== false) {
+        return toManualCompareAmount(syncMeta.previousAmount, syncMeta.adjustmentType);
+    }
+
+    return null;
 }
 
 export function attachManualAdjustmentValueSourceComparison(
     valueSyncFrame: Record<string, "red" | "green">,
     valueSourceCompare: PayrollValueSourceCompareMap,
     syncMeta: ManualAdjustmentFieldSyncMeta,
-    dbPtrjAmount: number = toManualCompareAmount(syncMeta.previousAmount, syncMeta.adjustmentType)
+    dbPtrjAmount?: number | null
 ): void {
-    const syncColor = resolveSyncFrameColor(syncMeta.finalAmount, dbPtrjAmount);
+    const resolvedDbPtrjAmount = dbPtrjAmount === undefined
+        ? syncMeta.hadDbValue === false
+            ? 0
+            : toManualCompareAmount(syncMeta.previousAmount, syncMeta.adjustmentType)
+        : dbPtrjAmount;
+
+    const syncColor = resolveSyncFrameColor(syncMeta.finalAmount, resolvedDbPtrjAmount);
     const compare = {
-        db_ptrj: dbPtrjAmount,
+        db_ptrj: resolvedDbPtrjAmount,
         active: syncMeta.finalAmount
     };
 
@@ -516,6 +526,10 @@ export function registerManualAdjustmentMetadataDynamicHeaders(
             continue;
         }
 
+        // ponytail: skip BPJS/SPSI/PPH/KOREKSI dynamic — nilainya sudah masuk static pot_bpjs_*/pot_spsi/pot_pph21/pot_koreksi.
+        // Kalau di-add sbg dynamic column, export SUM double-count (static + dynamic).
+        const fnu = fieldName.toUpperCase();
+        if (fnu.includes("BPJS") || fnu === "SPSI" || fnu === "PPH21" || fnu.startsWith("KOREKSI")) continue;
         dynamicPotonganSet.add(fieldName);
         if (adjustmentName && !potonganTitleMap[fieldName]) {
             potonganTitleMap[fieldName] = adjustmentName;
@@ -1635,6 +1649,10 @@ export class DataExtractorService {
             }
 
             for (const key of Object.keys(manualApplied.empPotongan)) {
+                // ponytail: skip BPJS/SPSI/PPH dynamic — nilainya sudah masuk static pot_bpjs_*/pot_spsi/pot_pph21.
+                // Kalau di-add sbg dynamic column, export SUM double-count (static + dynamic).
+                const ku = key.toUpperCase();
+                if (ku.includes("BPJS") || ku === "SPSI" || ku === "PPH21" || ku.startsWith("KOREKSI")) continue;
                 if (!potonganKeysBefore.has(key)) {
                     dynamicPotonganSet.add(key);
                 }
@@ -1713,6 +1731,17 @@ export class DataExtractorService {
 
                 other_potongan += Math.abs(val as number);
                 dynamicPotonganSet.add(key);
+                // ponytail: frame sync untuk dynamic potongan upah bersih (DB-only).
+                // Compare active (post-manual-apply) vs db_ptrj raw. Manual POTONGAN_BERSIH
+                // field (potongan_lainnya_*) sudah di-handle via fieldSyncMeta path di atas.
+                if (!key.startsWith("potongan_lainnya_")) {
+                    const dbVal = Math.abs(Number(dbEmpPotonganSource[key] || 0));
+                    const activeVal = Math.abs(Number(val) || 0);
+                    if (dbVal > 0 || activeVal > 0) {
+                        valueSyncFrame[key] = resolveSyncFrameColor(activeVal, dbVal);
+                        valueSourceCompare[key] = { db_ptrj: dbVal, active: activeVal };
+                    }
+                }
             }
 
             // Manual POTONGAN_BERSIH entries were already merged into empPotongan above,
@@ -2199,7 +2228,8 @@ export class DataExtractorService {
                         key !== "SPSI" &&
                         key !== "PPH21" &&
                         !String(key).toUpperCase().startsWith("KOREKSI") &&
-                        key !== "PREMI_PPH"
+                        key !== "PREMI_PPH" &&
+                        !String(key).toUpperCase().includes("BPJS")
                     )
                 ),
                 ...empPremi,
@@ -2280,6 +2310,7 @@ export class DataExtractorService {
                     LEFT JOIN HR_PAYROLL p ON RTRIM(p.EmpCode) = RTRIM(e.EmpCode)
                     LEFT JOIN HR_EMPLOYMENT em ON RTRIM(em.EmpCode) = RTRIM(e.EmpCode)
                     WHERE ${gangCondition}
+                      AND e.Status = 1
                 ) t
                 WHERE rn = 1
                 ORDER BY emp_code
@@ -2438,6 +2469,7 @@ export class DataExtractorService {
                     LEFT JOIN HR_PAYROLL p ON RTRIM(p.EmpCode) = RTRIM(e.EmpCode)
                     LEFT JOIN HR_EMPLOYMENT em ON RTRIM(em.EmpCode) = RTRIM(e.EmpCode)
                     WHERE ${gangCondition}
+                      AND e.Status = 1
                     ORDER BY emp_code
                 `);
 
@@ -2905,6 +2937,7 @@ export class DataExtractorService {
                 INNER JOIN HR_GANGLN gl ON RTRIM(gl.GangMember) = RTRIM(t.EmpCode)
                 WHERE RTRIM(t.EmpCode) IN (${empList})
                   AND t.DocDate >= ? AND t.DocDate < ?
+                  AND t.Status IN (1, 3)
 
                 UNION ALL
 
@@ -2913,6 +2946,7 @@ export class DataExtractorService {
                 INNER JOIN HR_GANGLN gl ON RTRIM(gl.GangMember) = RTRIM(t.EmpCode)
                 WHERE RTRIM(t.EmpCode) IN (${empList})
                   AND t.DocDate >= ? AND t.DocDate < ?
+                  AND t.Status = 3
             ) t
             JOIN (
                 SELECT MasterID, TaskCode, Amount FROM PR_ADTRANSLN
@@ -3011,6 +3045,7 @@ export class DataExtractorService {
                 INNER JOIN HR_GANGLN gl ON RTRIM(gl.GangMember) = RTRIM(t.EmpCode)
                 WHERE RTRIM(t.EmpCode) IN (${empList})
                   AND t.DocDate >= ? AND t.DocDate < ?
+                  AND t.Status IN (1, 3)
 
                 UNION ALL
 
@@ -3019,6 +3054,7 @@ export class DataExtractorService {
                 INNER JOIN HR_GANGLN gl ON RTRIM(gl.GangMember) = RTRIM(t.EmpCode)
                 WHERE RTRIM(t.EmpCode) IN (${empList})
                   AND t.DocDate >= ? AND t.DocDate < ?
+                  AND t.Status = 3
             ) t
             JOIN (
                 SELECT MasterID, TaskCode, Amount FROM PR_ADTRANSLN
@@ -3190,7 +3226,8 @@ export class DataExtractorService {
                   AND t.DocDate >= ? AND t.DocDate < ?
                   AND UPPER(t.DocDesc) LIKE '%${tunjanganType}%'
                   AND ln.Amount > 0
-                
+                  AND t.Status IN (1, 3)
+
                 UNION ALL
 
                 SELECT t.EmpCode, ln.Amount
@@ -3200,6 +3237,7 @@ export class DataExtractorService {
                   AND t.DocDate >= ? AND t.DocDate < ?
                   AND UPPER(t.DocDesc) LIKE '%${tunjanganType}%'
                   AND ln.Amount > 0
+                  AND t.Status = 3
             ) combined
             GROUP BY RTRIM(EmpCode)
         `, [startDate, endDate, startDate, endDate]);
@@ -3232,6 +3270,7 @@ export class DataExtractorService {
                   AND t.DocDate >= ? AND t.DocDate < ?
                   AND UPPER(t.DocDesc) LIKE '%LEMBUR%'
                   AND ln.Amount > 0
+                  AND t.Status = 3
                 GROUP BY t.EmpCode, t.DocDesc
             `, [startDate, endDate]),
             db.query<{ emp_code: string; total: number; doc_desc: string }>(`
@@ -3242,6 +3281,7 @@ export class DataExtractorService {
                   AND t.DocDate >= ? AND t.DocDate < ?
                   AND UPPER(t.DocDesc) LIKE '%LEMBUR%'
                   AND ln.Amount > 0
+                  AND t.Status IN (1, 3)
                 GROUP BY t.EmpCode, t.DocDesc
             `, [startDate, endDate])
         ]);
@@ -3276,6 +3316,7 @@ export class DataExtractorService {
                   AND t.DocDate >= ? AND t.DocDate < ?
                   AND UPPER(t.DocDesc) LIKE '%BERAS%'
                   AND ln.Amount > 0
+                  AND t.Status = 3
                 GROUP BY t.EmpCode, t.DocDesc
             `, [startDate, endDate]),
             db.query<{ emp_code: string; total: number; doc_desc: string }>(`
@@ -3286,6 +3327,7 @@ export class DataExtractorService {
                   AND t.DocDate >= ? AND t.DocDate < ?
                   AND UPPER(t.DocDesc) LIKE '%BERAS%'
                   AND ln.Amount > 0
+                  AND t.Status IN (1, 3)
                 GROUP BY t.EmpCode, t.DocDesc
             `, [startDate, endDate])
         ]);

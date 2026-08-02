@@ -124,6 +124,7 @@ export class DeductionExtractor {
                   AND t.DocDate >= ?
                   AND t.DocDate < ?
                   AND ln.Amount < 0
+                  AND t.Status IN (1, 3)
 
                 UNION ALL
 
@@ -133,6 +134,7 @@ export class DeductionExtractor {
                   AND t.DocDate >= ?
                   AND t.DocDate < ?
                   AND ln.Amount < 0
+                  AND t.Status = 3
             ) t
             JOIN PR_ADTRANSLN ln ON t.ID = ln.MasterID
             WHERE ln.Amount < 0
@@ -213,6 +215,7 @@ export class DeductionExtractor {
               AND t.DocDate >= ?
               AND t.DocDate < ?
               AND UPPER(t.DocDesc) = 'SPSI'
+              AND t.Status = 1
             GROUP BY RTRIM(t.EmpCode)
 
             UNION ALL
@@ -226,6 +229,7 @@ export class DeductionExtractor {
               AND t.DocDate >= ?
               AND t.DocDate < ?
               AND UPPER(t.DocDesc) = 'SPSI'
+              AND t.Status = 3
             GROUP BY RTRIM(t.EmpCode)
         `, [startDate, endDate, startDate, endDate]);
 
@@ -275,6 +279,7 @@ export class DeductionExtractor {
               AND t.DocDate >= ?
               AND t.DocDate < ?
               AND UPPER(t.DocDesc) LIKE 'POT%'
+              AND t.Status = 1
             GROUP BY RTRIM(t.EmpCode)
 
             UNION ALL
@@ -288,6 +293,7 @@ export class DeductionExtractor {
               AND t.DocDate >= ?
               AND t.DocDate < ?
               AND UPPER(t.DocDesc) LIKE 'POT%'
+              AND t.Status = 3
             GROUP BY RTRIM(t.EmpCode)
         `, [startDate, endDate, startDate, endDate]);
 

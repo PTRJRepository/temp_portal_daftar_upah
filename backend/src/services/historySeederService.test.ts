@@ -89,17 +89,20 @@ describe("HistorySeederService HR seeding", () => {
         expect((capturedArgs as any[])[2]).toBe("A01");
         expect((capturedArgs as any[])[3]).toBe("TSA");
         expect((capturedArgs as any[])[6]).toBe(false);
-        expect(grouped).toEqual([
-            {
+        expect(grouped).toHaveLength(1);
+        expect(grouped[0]).toMatchObject({
+            gang_code: "A01",
+            employees: [{
+                emp_code: "EMP001",
+                nama: "BUDI",
                 gang_code: "A01",
-                employees: [{
-                    emp_code: "EMP001",
-                    nama: "BUDI",
-                    gang_code: "A01",
-                    jumlah_hk: 20
-                }]
+                jumlah_hk: 20
+            }],
+            payroll_totals: {
+                employee_count: 1,
+                jumlah_hk: 20
             }
-        ]);
+        });
     });
 
     it("builds HR employee query with pre-aggregated HK data instead of per-employee subquery", async () => {
@@ -350,5 +353,53 @@ describe("HistorySeederService HR seeding", () => {
         expect(totals.total_potongan).toBe(61);
         expect(totals.total_upah_kotor).toBe(5000);
         expect(totals.total_upah_bersih).toBe(4800);
+    });
+
+    it("reconciles grouped payroll snapshot totals to the division grand total", async () => {
+        (dataExtractorService as any).extractPayrollDataProgressive = () => (async function* () {
+            yield {
+                phase: "complete",
+                gangs: new Map([
+                    ["A01", [{
+                        emp_code: "EMP001",
+                        nama: "BUDI",
+                        gang_code: "A01",
+                        jumlah_hk: 1,
+                        upah_bersih: 10.4
+                    }]],
+                    ["A02", [{
+                        emp_code: "EMP002",
+                        nama: "SITI",
+                        gang_code: "A02",
+                        jumlah_hk: 1,
+                        upah_bersih: 10.4
+                    }]]
+                ]),
+                meta: {
+                    total_gangs: 2,
+                    total_employees: 2,
+                    processed_employees: 2,
+                    progress_pct: 100,
+                    message: "complete"
+                }
+            };
+        })();
+
+        const grouped = await (service as any).fetchPayrollData({
+            periodMonth: 4,
+            periodYear: 2026,
+            divisionCode: "P1A",
+            gangCode: "ALL",
+            createdBy: "test",
+            seederMode: "PAYROLL"
+        });
+
+        const groupedTotal = grouped.reduce(
+            (sum: number, gang: any) => sum + Number(gang.payroll_totals?.upah_bersih || 0),
+            0
+        );
+
+        expect(groupedTotal).toBe(21);
+        expect(grouped.map((gang: any) => gang.payroll_totals.upah_bersih).sort()).toEqual([10, 11]);
     });
 });

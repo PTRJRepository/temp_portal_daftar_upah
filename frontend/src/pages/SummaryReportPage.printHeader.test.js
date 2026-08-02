@@ -40,11 +40,13 @@ describe('SummaryReportPage redesigned print header', () => {
     expect(css).toMatch(/@media\s+print\s*{[\s\S]*\.srn-paper-accent-line\s*{[\s\S]*display:\s*block\s*!important;/);
   });
 
-  it('keeps thumbprint as right-side table columns and zero-margin A4 print setup', () => {
+  it('keeps thumbprint as right-side table columns and printable A4 setup', () => {
     expect(pageSource).toContain('<th>THUMBPRINT</th>');
     expect(pageSource).toContain('<th>SELISIH</th>');
     expect(pageSource).toContain('summary-compare-cell');
     expect(pageSource).toContain('function buildThumbprintRowSpans');
+    expect(pageSource).toContain('function formatComparisonThumbprint');
+    expect(pageSource).toContain('function formatComparisonSelisih');
     expect(pageSource).toContain('rowSpan={comparisonCell.rowSpan}');
     expect(pageSource).toContain('Lanjutan Detail Per Gang / Estate');
     expect(pageSource).toContain('thumb_print');
@@ -52,13 +54,37 @@ describe('SummaryReportPage redesigned print header', () => {
     expect(pageSource).toContain('PRINT_DETAIL_ROWS_PER_PAGE');
     expect(pageSource).toContain('filteredData.slice(PRINT_SUMMARY_ROWS)');
     expect(pageSource).toContain('chunkRows(detailPrintRows, PRINT_DETAIL_ROWS_PER_PAGE)');
-    expect(pageSource).toContain("printReport({ orientation: 'landscape', margin: '0' })");
-    expect(css).toMatch(/@media\s+print\s*{[\s\S]*\.srn-paper\s*{[\s\S]*overflow:\s*hidden\s*!important;/);
+    expect(pageSource).toContain("printReport({ orientation: 'landscape' })");
+    expect(css).toMatch(/@media\s+print\s*{[\s\S]*@page\s*{[\s\S]*margin:\s*6mm;/);
+    expect(css).toMatch(/@media\s+print\s*{[\s\S]*\.srn-paper\s*{[\s\S]*overflow:\s*visible\s*!important;/);
     expect(css).toMatch(/@media\s+print\s*{[\s\S]*\.srn-paper\s*{[\s\S]*display:\s*flex\s*!important;/);
     expect(css).toMatch(/@media\s+print\s*{[\s\S]*\.srn-paper\s*{[\s\S]*flex-direction:\s*column\s*!important;/);
     expect(css).toMatch(/@media\s+print\s*{[\s\S]*\.srn-paper \+ \.srn-paper\s*{[\s\S]*break-before:\s*page\s*!important;/);
     expect(css).toMatch(/@media\s+print\s*{[\s\S]*\.srn-paper-header\s*{[\s\S]*break-after:\s*avoid\s*!important;/);
     expect(css).toMatch(/@media\s+print\s*{[\s\S]*\.srn-page-container > :not\(\.srn-print-section\),[\s\S]*\.srn-content-body > :not\(\.srn-print-section\)\s*{[\s\S]*display:\s*none\s*!important;/);
+  });
+
+  it('keeps print rowspan cells aligned and places signatures after the gang detail table', () => {
+    const printPage2Block = pageSource.slice(
+      pageSource.indexOf('function PrintPage2'),
+      pageSource.indexOf('// ---- Print Page 3')
+    );
+    const printPage3Block = pageSource.slice(
+      pageSource.indexOf('function PrintPage3'),
+      pageSource.indexOf('// ===== MAIN COMPONENT')
+    );
+
+    expect(pageSource).not.toContain('<td className="num-cell summary-compare-cell">-</td>');
+    expect(pageSource).toContain('{comparisonCell && (');
+    expect(pageSource).toContain('formatComparisonThumbprint(comparisonCell)');
+    expect(pageSource).toContain('formatComparisonSelisih(comparisonCell)');
+    expect(printPage2Block).not.toContain('srn-paper-with-signature');
+    expect(printPage2Block).not.toContain('<SignatureSection />');
+    expect(printPage3Block).toContain("isLastDetailPage ? ' srn-paper-with-signature' : ''");
+    expect(printPage3Block).toContain('{isLastDetailPage && <SignatureSection />}');
+    expect(css).toMatch(/@media\s+print\s*{[\s\S]*\.srn-paper-with-signature\s*{[\s\S]*min-height:\s*calc\(210mm - 12mm\)\s*!important;/);
+    expect(css).toMatch(/@media\s+print\s*{[\s\S]*\.srn-signatures\s*{[\s\S]*display:\s*grid\s*!important;/);
+    expect(css).toMatch(/@media\s+print\s*{[\s\S]*\.srn-paper-with-signature \.srn-paper-footer\s*{[\s\S]*position:\s*static\s*!important;/);
   });
 
   it('uses gang composition for the distribution chart when a division is selected', () => {

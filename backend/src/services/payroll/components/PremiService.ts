@@ -221,11 +221,13 @@ export class PremiService extends BasePayrollComponentService<PremiInput, PremiO
                 WHERE EmpCode = ?
                   AND TrxDate >= ? AND TrxDate <= ?
                   AND DocDesc LIKE '%PREMI%'
+                  AND Status IN (1, 3)
                 UNION ALL
                 SELECT DocDesc, Amount FROM PR_ADTRANS_ARC
                 WHERE EmpCode = ?
                   AND TrxDate >= ? AND TrxDate <= ?
                   AND DocDesc LIKE '%PREMI%'
+                  AND Status = 3
             ) combined
             GROUP BY DocDesc
         `, [emp_code, startDate, endDate, emp_code, startDate, endDate]);
@@ -277,11 +279,13 @@ export class PremiService extends BasePayrollComponentService<PremiInput, PremiO
                 WHERE RTRIM(EmpCode) IN (${empList})
                   AND TrxDate >= ? AND TrxDate <= ?
                   AND DocDesc LIKE '%PREMI%'
+                  AND Status IN (1, 3)
                 UNION ALL
                 SELECT EmpCode, DocDesc, Amount FROM PR_ADTRANS_ARC
                 WHERE RTRIM(EmpCode) IN (${empList})
                   AND TrxDate >= ? AND TrxDate <= ?
                   AND DocDesc LIKE '%PREMI%'
+                  AND Status = 3
             ) combined
             GROUP BY EmpCode, DocDesc
         `, [startDate, endDate, startDate, endDate]);

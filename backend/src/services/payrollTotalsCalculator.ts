@@ -89,6 +89,14 @@ export interface PayrollTotals {
     [key: string]: any; // Allow dynamic custom pendapatan fields
 }
 
+const ROUNDING_EPSILON = 1e-6;
+
+function roundPayrollTotal(value: number): number {
+    if (!Number.isFinite(value)) return 0;
+    const epsilon = value >= 0 ? ROUNDING_EPSILON : -ROUNDING_EPSILON;
+    return Math.round(value + epsilon);
+}
+
 /**
  * Calculate totals for a list of employees, replicating the EXACT frontend logic.
  * 
@@ -120,7 +128,7 @@ export function calculatePayrollTotals(employees: any[], label: string): Payroll
     // Helper to sum a numeric field across all ACTIVE employees.
     // Canonical payroll rows should already contain normalized derived values.
     const agg = (field: string): number => {
-        return Math.round(
+        return roundPayrollTotal(
             activeEmployees.reduce((total, emp) => {
                 const val = Number(emp[field] || 0);
                 return total + val;
@@ -130,7 +138,7 @@ export function calculatePayrollTotals(employees: any[], label: string): Payroll
 
     // Helper to sum nested other_incomes array by type - EXACT same as frontend aggOtherIncomes()
     const aggOtherIncomes = (type: string): number => {
-        return Math.round(
+        return roundPayrollTotal(
             activeEmployees.reduce((total, emp) => {
                 if (emp.other_incomes && Array.isArray(emp.other_incomes)) {
                     const found = emp.other_incomes.find((oi: any) => oi.type === type);
@@ -145,7 +153,7 @@ export function calculatePayrollTotals(employees: any[], label: string): Payroll
 
     // Helper to sum nested premi object fields - EXACT same as frontend aggNested('premi', k)
     const aggPremi = (field: string): number => {
-        return Math.round(
+        return roundPayrollTotal(
             activeEmployees.reduce((total, emp) => {
                 if (emp.premi && typeof emp.premi === 'object') {
                     return total + Number(emp.premi[field] || 0);
@@ -160,7 +168,7 @@ export function calculatePayrollTotals(employees: any[], label: string): Payroll
     // payrollTotalsCalculator expects flat fields like pot_kontan, pot_thr, pot_pinjam, pot_kl
     // This helper tries both: flat field first (reportService compatibility), then nested object (dataExtractorService)
     const aggPotongan = (flatField: string, nestedKey: string): number => {
-        return Math.round(
+        return roundPayrollTotal(
             activeEmployees.reduce((total, emp) => {
                 // First try flat field (from reportService)
                 let val = Number(emp[flatField] || 0);
@@ -309,15 +317,15 @@ export function calculatePayrollTotals(employees: any[], label: string): Payroll
     });
 
     // Add standard types: THR, BONUS, CUSTOM
-    totals.pendapatan_thr = otherIncomesTypeSums['THR'] ? Math.round(otherIncomesTypeSums['THR']) : totals.pendapatan_thr;
-    totals.pendapatan_bonus = otherIncomesTypeSums['BONUS'] ? Math.round(otherIncomesTypeSums['BONUS']) : totals.pendapatan_bonus;
-    totals.pendapatan_custom = otherIncomesTypeSums['CUSTOM'] ? Math.round(otherIncomesTypeSums['CUSTOM']) : totals.pendapatan_custom;
+    totals.pendapatan_thr = otherIncomesTypeSums['THR'] ? roundPayrollTotal(otherIncomesTypeSums['THR']) : totals.pendapatan_thr;
+    totals.pendapatan_bonus = otherIncomesTypeSums['BONUS'] ? roundPayrollTotal(otherIncomesTypeSums['BONUS']) : totals.pendapatan_bonus;
+    totals.pendapatan_custom = otherIncomesTypeSums['CUSTOM'] ? roundPayrollTotal(otherIncomesTypeSums['CUSTOM']) : totals.pendapatan_custom;
 
     // Add custom types from other_incomes (KONTAN, INSENTIF, etc.)
     Object.entries(otherIncomesTypeSums).forEach(([type, sum]) => {
         if (!['THR', 'BONUS', 'CUSTOM'].includes(type)) {
             const fieldKey = `pendapatan_${type.toLowerCase()}`;
-            totals[fieldKey] = Math.round(sum);
+            totals[fieldKey] = roundPayrollTotal(sum);
         }
     });
 
@@ -404,6 +412,129 @@ export function calculateGangTotalsMap(gangs: Array<{ gang_code: string; employe
     });
     
     return totalsMap;
+}
+
+const TOTAL_IDENTITY_FIELDS = new Set([
+    'no',
+    'jenis_kelamin',
+    'nik',
+    'nama',
+    'upah_dasar',
+    'beras_rate',
+    'jabatan_rate',
+    'masa_kerja_tahun',
+    'lembur_jam'
+]);
+
+/**
+ * Calculate a displayed grand total from already-displayed gang totals.
+ *
+ * Use this for reconciliation checks and export/display breakdown totals. The
+ * canonical division grand total still comes from employee rows via
+ * calculatePayrollTotals().
+ */
+export function calculateGrandTotalFromGangTotals(gangTotals: PayrollTotals[], label: string = 'GRAND TOTAL'): PayrollTotals {
+    const grandTotal = createEmptyTotals(label);
+
+    for (const gangTotal of gangTotals) {
+        for (const [field, value] of Object.entries(gangTotal)) {
+            if (TOTAL_IDENTITY_FIELDS.has(field)) continue;
+
+            if (field === 'premi' && value && typeof value === 'object' && !Array.isArray(value)) {
+                grandTotal.premi = grandTotal.premi || {};
+                for (const [premiField, premiValue] of Object.entries(value as Record<string, unknown>)) {
+                    grandTotal.premi[premiField] = (grandTotal.premi[premiField] || 0) + roundPayrollTotal(Number(premiValue) || 0);
+                }
+                continue;
+            }
+
+            if (field === 'potongan_upah_kotor' && value && typeof value === 'object' && !Array.isArray(value)) {
+                const potongan = value as { dynamic?: Record<string, unknown> };
+                if (potongan.dynamic) {
+                    grandTotal.potongan_upah_kotor = grandTotal.potongan_upah_kotor || { dynamic: {} };
+                    grandTotal.potongan_upah_kotor.dynamic = grandTotal.potongan_upah_kotor.dynamic || {};
+                    for (const [potonganField, potonganValue] of Object.entries(potongan.dynamic)) {
+                        grandTotal.potongan_upah_kotor.dynamic[potonganField] =
+                            (grandTotal.potongan_upah_kotor.dynamic[potonganField] || 0) + roundPayrollTotal(Number(potonganValue) || 0);
+                    }
+                }
+                continue;
+            }
+
+            if (typeof value === 'number' && Number.isFinite(value)) {
+                grandTotal[field] = (Number(grandTotal[field]) || 0) + roundPayrollTotal(value);
+            }
+        }
+    }
+
+    grandTotal.nama = label;
+    return grandTotal;
+}
+
+function clonePayrollTotals(total: PayrollTotals): PayrollTotals {
+    return {
+        ...total,
+        premi: total.premi ? { ...total.premi } : total.premi,
+        potongan_upah_kotor: total.potongan_upah_kotor
+            ? {
+                ...total.potongan_upah_kotor,
+                dynamic: total.potongan_upah_kotor.dynamic
+                    ? { ...total.potongan_upah_kotor.dynamic }
+                    : total.potongan_upah_kotor.dynamic
+            }
+            : total.potongan_upah_kotor
+    };
+}
+
+function pickReconciliationTarget(totals: PayrollTotals[], field: string): number {
+    let targetIndex = 0;
+    let targetMagnitude = -1;
+
+    totals.forEach((total, index) => {
+        const magnitude = Math.abs(Number(total[field]) || 0);
+        if (magnitude > targetMagnitude) {
+            targetMagnitude = magnitude;
+            targetIndex = index;
+        }
+    });
+
+    return targetIndex;
+}
+
+/**
+ * Keep canonical division grand totals unchanged while making displayed gang
+ * breakdowns add back to that canonical total.
+ *
+ * Rounding residues usually come from fractional lembur/allowance values. The
+ * residue is assigned to the largest contributing gang for each field, so the
+ * division total remains the source of truth and breakdown exports reconcile.
+ */
+export function reconcileGangTotalsToGrandTotal(gangTotals: PayrollTotals[], grandTotal: PayrollTotals): PayrollTotals[] {
+    if (!gangTotals.length) return [];
+
+    const reconciled = gangTotals.map(clonePayrollTotals);
+    const fields = new Set<string>();
+
+    for (const total of [grandTotal, ...gangTotals]) {
+        Object.entries(total).forEach(([field, value]) => {
+            if (TOTAL_IDENTITY_FIELDS.has(field)) return;
+            if (typeof value === 'number' && Number.isFinite(value)) {
+                fields.add(field);
+            }
+        });
+    }
+
+    fields.forEach((field) => {
+        const targetValue = roundPayrollTotal(Number(grandTotal[field]) || 0);
+        const currentSum = reconciled.reduce((sum, total) => sum + roundPayrollTotal(Number(total[field]) || 0), 0);
+        const delta = targetValue - currentSum;
+        if (delta === 0) return;
+
+        const targetIndex = pickReconciliationTarget(reconciled, field);
+        reconciled[targetIndex][field] = roundPayrollTotal(Number(reconciled[targetIndex][field]) || 0) + delta;
+    });
+
+    return reconciled;
 }
 
 /**

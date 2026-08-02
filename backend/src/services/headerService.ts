@@ -92,6 +92,7 @@ export class HeaderService {
                     JOIN HR_GANGLN g ON ln.EmpCode = g.GangMember
                     WHERE g.GangCode = ?
                       AND t.DocDate >= ? AND t.DocDate < ?
+                      AND t.Status = 3
                       AND (${premiCondition})
                       AND UPPER(t.DocDesc) NOT LIKE '%ADJ%'
                       AND UPPER(t.DocDesc) NOT LIKE '%BRONDOL%'
@@ -103,6 +104,7 @@ export class HeaderService {
                     FROM PR_ADTRANS_ARC t
                     JOIN PR_ADTRANSLN_ARC ln ON t.ID = ln.MasterID
                     WHERE t.DocDate >= ? AND t.DocDate < ?
+                      AND t.Status = 3
                       AND (${premiCondition})
                       AND UPPER(t.DocDesc) NOT LIKE '%ADJ%'
                       AND UPPER(t.DocDesc) NOT LIKE '%BRONDOL%'
@@ -145,6 +147,7 @@ export class HeaderService {
                     JOIN HR_GANGLN g ON ln.EmpCode = g.GangMember
                     WHERE g.GangCode = ?
                       AND t.DocDate >= ? AND t.DocDate < ?
+                      AND t.Status = 3
                       AND UPPER(t.DocDesc) LIKE '%POT%'
                       AND UPPER(t.DocDesc) NOT LIKE '%ADJ%'
                       AND ln.Amount < 0
@@ -155,6 +158,7 @@ export class HeaderService {
                     FROM PR_ADTRANS_ARC t
                     JOIN PR_ADTRANSLN_ARC ln ON t.ID = ln.MasterID
                     WHERE t.DocDate >= ? AND t.DocDate < ?
+                      AND t.Status = 3
                       AND UPPER(t.DocDesc) LIKE '%POT%'
                       AND UPPER(t.DocDesc) NOT LIKE '%ADJ%'
                       AND ln.Amount < 0

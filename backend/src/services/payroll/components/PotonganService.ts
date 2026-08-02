@@ -219,10 +219,12 @@ export class PotonganService extends BasePayrollComponentService<PotonganInput, 
                 SELECT Amount FROM PR_ADTRANS
                 WHERE RTRIM(EmpCode) = ? AND TrxDate >= ? AND TrxDate <= ?
                   AND DocDesc LIKE ?
+                  AND Status IN (1, 3)
                 UNION ALL
                 SELECT Amount FROM PR_ADTRANS_ARC
                 WHERE RTRIM(EmpCode) = ? AND TrxDate >= ? AND TrxDate <= ?
                   AND DocDesc LIKE ?
+                  AND Status = 3
             ) combined
         `;
 
@@ -259,10 +261,12 @@ export class PotonganService extends BasePayrollComponentService<PotonganInput, 
                 SELECT DocDesc, Amount FROM PR_ADTRANS
                 WHERE RTRIM(EmpCode) = ? AND TrxDate >= ? AND TrxDate <= ?
                   AND DocDesc LIKE 'POT%'
+                  AND Status IN (1, 3)
                 UNION ALL
                 SELECT DocDesc, Amount FROM PR_ADTRANS_ARC
                 WHERE RTRIM(EmpCode) = ? AND TrxDate >= ? AND TrxDate <= ?
                   AND DocDesc LIKE 'POT%'
+                  AND Status = 3
             ) combined
             GROUP BY DocDesc
         `;

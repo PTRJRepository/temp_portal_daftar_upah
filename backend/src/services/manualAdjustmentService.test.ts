@@ -842,6 +842,56 @@ describe("manual adjustment ADCode rules", () => {
         }
     });
 
+    it("normalizes POTONGAN_BERSIH non-PPH saves to POTONGAN HUTANG task mapping", async () => {
+        const originalGetInstance = Database.getInstance;
+        const originalUpsertPreset = manualAdjustmentPresetService.upsertPreset;
+        const calls: QueryCall[] = [];
+        const upsertPreset = mock(async () => 126);
+        const mockDb = {
+            queryOne: async () => null,
+            query: async (sql: string, params?: any[]) => {
+                calls.push({ sql, params: params || [] });
+                if (sql.includes("INSERT INTO dbo.payroll_manual_adjustments")) return [{ id: 94 }];
+                return [];
+            }
+        };
+
+        (Database as any).getInstance = () => mockDb;
+        (manualAdjustmentPresetService as any).upsertPreset = upsertPreset;
+
+        try {
+            const id = await manualAdjustmentService.saveAdjustment({
+                period_month: 4,
+                period_year: 2026,
+                emp_code: "A0001",
+                gang_code: "G1H",
+                division_code: "PG2A",
+                adjustment_type: "POTONGAN_BERSIH",
+                adjustment_name: "POTONGAN PINJAMAN",
+                amount: -1000,
+                ad_code: "DE0100",
+                task_code: "DE0100P2A",
+                base_task_code: "DE0100",
+                task_desc: "(DE) POTONGAN PINJAMAN",
+                remarks: "POTONGAN PINJAMAN | DE0100 - (DE) POTONGAN PINJAMAN | -1000 | sync:MANUAL | match:MANUAL"
+            });
+
+            const insertCall = calls.find((call) => call.sql.includes("INSERT INTO dbo.payroll_manual_adjustments"));
+            expect(id).toBe(94);
+            expect(insertCall?.params).toContain("POTONGAN PINJAMAN | DE0002 - (DE) POTONGAN HUTANG | -1000 | sync:MANUAL | match:MANUAL");
+            expect(upsertPreset).toHaveBeenCalledTimes(1);
+            expect(upsertPreset.mock.calls[0][0]).toMatchObject({
+                ad_code: "DE0002",
+                task_code: "DE0002P2A",
+                base_task_code: "DE0002",
+                task_desc: "(DE) POTONGAN HUTANG"
+            });
+        } finally {
+            (Database as any).getInstance = originalGetInstance;
+            (manualAdjustmentPresetService as any).upsertPreset = originalUpsertPreset;
+        }
+    });
+
     it("skips auto-preset upsert when ADCode remains descriptive after mapping lookup", async () => {
         const originalGetInstance = Database.getInstance;
         const originalSearchOptions = taskCodeOptionService.searchOptions;
@@ -2182,6 +2232,10 @@ describe("manual adjustment grouped response", () => {
             {
                 transaction_index: 1,
                 adjustment_id: 1,
+                record_group_key: "adjustment:1",
+                record_action: "NEW",
+                record_detail_index: 1,
+                record_detail_count: 1,
                 adjustment_type: "PREMI",
                 adjustment_name: "PREMI PRUNING",
                 emp_code: "A0001",
@@ -2210,6 +2264,10 @@ describe("manual adjustment grouped response", () => {
             {
                 transaction_index: 2,
                 adjustment_id: 2,
+                record_group_key: "adjustment:2",
+                record_action: "NEW",
+                record_detail_index: 1,
+                record_detail_count: 1,
                 adjustment_type: "PREMI",
                 adjustment_name: "PREMI RITASE",
                 emp_code: "A0001",
@@ -2244,6 +2302,185 @@ describe("manual adjustment grouped response", () => {
             "PREMI PRUNING",
             "PREMI RITASE"
         ]);
+    });
+
+    it("marks first detail per adjustment_id as NEW and later details as ADD", () => {
+        const grouped = buildGroupedManualAdjustmentResponse([
+            {
+                id: 101,
+                period_month: 4,
+                period_year: 2026,
+                emp_code: "A0001",
+                nik: "1902050504860001",
+                emp_name: "AHMAD TEST",
+                gang_code: "G1H",
+                division_code: "AB1",
+                adjustment_type: "PREMI",
+                adjustment_name: "PREMI PRUNING",
+                amount: 450000,
+                metadata_json: JSON.stringify({
+                    input_type: "blok",
+                    items: [
+                        { subblok: "P09/01", gang_code: "G1H", jumlah: 300000 },
+                        { subblok: "P09/02", gang_code: "G1H", jumlah: 150000 }
+                    ],
+                    total_amount: 450000
+                })
+            },
+            {
+                id: 202,
+                period_month: 4,
+                period_year: 2026,
+                emp_code: "A0001",
+                nik: "1902050504860001",
+                emp_name: "AHMAD TEST",
+                gang_code: "G1H",
+                division_code: "AB1",
+                adjustment_type: "PREMI",
+                adjustment_name: "PREMI PRUNING",
+                amount: 125000,
+                metadata_json: JSON.stringify({
+                    input_type: "blok",
+                    items: [{ subblok: "P10/01", gang_code: "G1H", jumlah: 125000 }],
+                    total_amount: 125000
+                })
+            }
+        ] as any);
+
+        const transactions = grouped.divisions[0].gangs[0].employees[0].premium_transactions;
+        expect(transactions.map((tx) => ({
+            adjustment_id: tx.adjustment_id,
+            record_group_key: tx.record_group_key,
+            record_action: tx.record_action,
+            record_detail_index: tx.record_detail_index,
+            record_detail_count: tx.record_detail_count,
+            subblok: tx.subblok
+        }))).toEqual([
+            {
+                adjustment_id: 101,
+                record_group_key: "adjustment:101",
+                record_action: "NEW",
+                record_detail_index: 1,
+                record_detail_count: 2,
+                subblok: "P0901"
+            },
+            {
+                adjustment_id: 101,
+                record_group_key: "adjustment:101",
+                record_action: "ADD",
+                record_detail_index: 2,
+                record_detail_count: 2,
+                subblok: "P0902"
+            },
+            {
+                adjustment_id: 202,
+                record_group_key: "adjustment:202",
+                record_action: "NEW",
+                record_detail_index: 1,
+                record_detail_count: 1,
+                subblok: "P1001"
+            }
+        ]);
+    });
+
+    it("starts each employee record with NEW even when premium names match", () => {
+        const grouped = buildGroupedManualAdjustmentResponse([
+            {
+                id: 301,
+                period_month: 4,
+                period_year: 2026,
+                emp_code: "A0001",
+                nik: "1902050504860001",
+                emp_name: "AHMAD TEST",
+                gang_code: "G1H",
+                division_code: "AB1",
+                adjustment_type: "PREMI",
+                adjustment_name: "PREMI PRUNING",
+                amount: 300000,
+                metadata_json: JSON.stringify({
+                    input_type: "blok",
+                    items: [{ subblok: "P09/01", gang_code: "G1H", jumlah: 300000 }],
+                    total_amount: 300000
+                })
+            },
+            {
+                id: 302,
+                period_month: 4,
+                period_year: 2026,
+                emp_code: "B0002",
+                nik: "1902050504860002",
+                emp_name: "BUDI TEST",
+                gang_code: "G1H",
+                division_code: "AB1",
+                adjustment_type: "PREMI",
+                adjustment_name: "PREMI PRUNING",
+                amount: 150000,
+                metadata_json: JSON.stringify({
+                    input_type: "blok",
+                    items: [{ subblok: "P09/02", gang_code: "G1H", jumlah: 150000 }],
+                    total_amount: 150000
+                })
+            }
+        ] as any);
+
+        const employees = grouped.divisions[0].gangs[0].employees;
+        expect(employees.map((employee) => ({
+            emp_code: employee.emp_code,
+            first_action: employee.premium_transactions[0].record_action,
+            first_record_key: employee.premium_transactions[0].record_group_key
+        }))).toEqual([
+            { emp_code: "A0001", first_action: "NEW", first_record_key: "adjustment:301" },
+            { emp_code: "B0002", first_action: "NEW", first_record_key: "adjustment:302" }
+        ]);
+    });
+
+    it("force_insert skips existing-row update and inserts a new manual adjustment record", async () => {
+        const originalGetInstance = Database.getInstance;
+        const originalUpsertPreset = manualAdjustmentPresetService.upsertPreset;
+        const calls: QueryCall[] = [];
+        const mockDb = {
+            queryOne: async (sql: string, params?: any[]) => {
+                calls.push({ sql, params: params || [] });
+                if (sql.includes("payroll_manual_adjustments")) {
+                    return { id: 77 };
+                }
+                return null;
+            },
+            query: async (sql: string, params?: any[]) => {
+                calls.push({ sql, params: params || [] });
+                return [{ id: 78 }];
+            }
+        };
+
+        (Database as any).getInstance = () => mockDb;
+        (manualAdjustmentPresetService as any).upsertPreset = mock(async () => 78);
+
+        try {
+            const id = await manualAdjustmentService.saveAdjustment({
+                period_month: 4,
+                period_year: 2026,
+                emp_code: "A0001",
+                gang_code: "G1H",
+                adjustment_type: "PREMI",
+                adjustment_name: "PREMI PRUNING",
+                amount: 300000,
+                ad_code: "AL3PM0601P1A",
+                task_desc: "(AL) TUNJANGAN PREMI ((PM) PRUNING)",
+                metadata_json: JSON.stringify({
+                    input_type: "blok",
+                    items: [{ subblok: "P0901", gang_code: "G1H", jumlah: 300000 }],
+                    total_amount: 300000
+                }),
+                force_insert: true
+            });
+
+            expect(id).toBe(78);
+            expect(calls.some((call) => call.sql.includes("SET emp_code = ?"))).toBe(false);
+            expect(calls.some((call) => call.sql.includes("INSERT INTO dbo.payroll_manual_adjustments"))).toBe(true);
+        } finally {
+            (Database as any).getInstance = originalGetInstance;
+            (manualAdjustmentPresetService as any).upsertPreset = originalUpsertPreset;
+        }
     });
 
     it("normalizes subblok codes in detail items and premium transactions by removing symbols", () => {
@@ -2823,6 +3060,48 @@ describe("manualAdjustmentService duplicate PR_ADTRANS report", () => {
         }
     });
 
+    it("aggregates multiple extend_db_ptrj manual rows before comparing category totals", async () => {
+        const originalGetInstance = Database.getInstance;
+        let dbPtrjCall = 0;
+        const dbPtrj = {
+            query: async () => {
+                dbPtrjCall++;
+                if (dbPtrjCall === 1) return [{ emp_code: "A0001", nik: "1902050504860001", premi: 7000 }];
+                return [
+                    { emp_code: "A0001", category: "premi", doc_desc: "INSENTIF PANEN", doc_id: "AD001", amount: 5000 },
+                    { emp_code: "A0001", category: "premi", doc_desc: "KINERJA", doc_id: "AD002", amount: 2000 }
+                ];
+            }
+        };
+        const dbExtend = {
+            query: async () => [
+                { emp_code: "1902050504860001", adjustment_type: "PREMI", adjustment_name: "INSENTIF PANEN", amount: 5000, remarks: "premi insentif", gang_code: "A2M", division_code: "P1A" },
+                { emp_code: "1902050504860001", adjustment_type: "PREMI", adjustment_name: "KINERJA", amount: 2000, remarks: "premi kinerja", gang_code: "A2M", division_code: "P1A" }
+            ]
+        };
+
+        (Database as any).getInstance = (database?: string) => database ? dbExtend : dbPtrj;
+
+        try {
+            const result = await manualAdjustmentService.compareAdtransWithAdjustments(4, 2026, "P1A", ["premi"]);
+            expect(result.match_count).toBe(1);
+            expect(result.mismatch_count).toBe(0);
+            expect(result.comparisons).toEqual([expect.objectContaining({
+                emp_code: "A0001",
+                stored_emp_identifier: "1902050504860001",
+                category: "premi",
+                source_amount: 7000,
+                stored_amount: 7000,
+                diff: 0,
+                status: "MATCH",
+                extend_db_ptrj_amount: 7000,
+                extend_db_ptrj_remarks: "premi insentif || premi kinerja"
+            })]);
+        } finally {
+            (Database as any).getInstance = originalGetInstance;
+        }
+    });
+
     it("includes premi, koreksi, potongan, and pph missing details in compare defaults", async () => {
         const originalGetInstance = Database.getInstance;
         const dbPtrj = {
@@ -2968,17 +3247,16 @@ describe("manualAdjustmentService duplicate PR_ADTRANS report", () => {
                 emp_code: "A0001",
                 stored_emp_identifier: "1902050504860001",
                 category: "premi",
-                source_amount: 7000,
+                source_amount: 5000,
                 stored_amount: 5000,
-                diff: 2000,
-                status: "MISMATCH",
-                db_ptrj_amount: 7000,
+                diff: 0,
+                status: "MATCH",
+                db_ptrj_amount: 5000,
                 extend_db_ptrj_amount: 5000,
                 extend_db_ptrj_remarks: "premi manual user"
             });
             expect(item.db_ptrj_doc_desc_details).toEqual([
-                { doc_desc: "INSENTIF PANEN", doc_id: "AD001", amount: 5000 },
-                { doc_desc: "KINERJA", doc_id: "AD002", amount: 2000 }
+                { doc_desc: "INSENTIF PANEN", doc_id: "AD001", amount: 5000 }
             ]);
         } finally {
             (Database as any).getInstance = originalGetInstance;

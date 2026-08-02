@@ -7,7 +7,6 @@ describe("payrollAutoBufferService", () => {
             jabatanText: "karyawan",
             roleText: "karyawan",
             hariKerja: 10,
-            kehadiran: 10,
             masaKerjaTahun: 3,
             isSpsiMember: false,
             dbJabatanJumlah: 25000,
@@ -24,7 +23,6 @@ describe("payrollAutoBufferService", () => {
             jabatanText: "karyawan panen",
             roleText: "karyawan perawatan",
             hariKerja: 12,
-            kehadiran: 12,
             masaKerjaTahun: 4,
             isSpsiMember: false,
             dbJabatanJumlah: 42000,
@@ -41,7 +39,6 @@ describe("payrollAutoBufferService", () => {
             jabatanText: "karywan panen",
             roleText: "karywan helper",
             hariKerja: 12,
-            kehadiran: 12,
             masaKerjaTahun: 4,
             isSpsiMember: false,
             dbJabatanJumlah: 42000,
@@ -58,7 +55,6 @@ describe("payrollAutoBufferService", () => {
             jabatanText: "karyawan",
             roleText: "karyawan",
             hariKerja: 0,
-            kehadiran: 0,
             masaKerjaTahun: 3,
             isSpsiMember: false,
             dbJabatanJumlah: 25000,
@@ -75,7 +71,6 @@ describe("payrollAutoBufferService", () => {
             jabatanText: "karyawan",
             roleText: "karyawan",
             hariKerja: 25,
-            kehadiran: 25,
             masaKerjaTahun: 3,
             isSpsiMember: true,
             divisionCode: "IJL",
@@ -91,7 +86,6 @@ describe("payrollAutoBufferService", () => {
             jabatanText: "karyawan",
             roleText: "karyawan",
             hariKerja: 25,
-            kehadiran: 25,
             masaKerjaTahun: 3,
             isSpsiMember: true,
             dbJabatanJumlah: 400,
@@ -103,5 +97,23 @@ describe("payrollAutoBufferService", () => {
         expect(result.display.spsiDeduction).toBe(400);
         expect(result.valueSourceCompare.pot_spsi).toEqual({ db_ptrj: 400, active: 4000 });
         expect(result.valueSyncFrame.pot_spsi).toBe("red");
+    });
+
+    // [FIX] tunjangan jabatan pakai hari_kerja (effective, exclude cuti), BUKAN total HK raw.
+    // hariKerja=0 → attendanceDays=0 → auto null → fallback ke dbJabatanJumlah.
+    // Kehadiran raw (hk) tak boleh dipakai lagi sebagai fallback.
+    it("uses hari_kerja only for jabatan; falls back to db amount when hari_kerja=0", () => {
+        const result = payrollAutoBufferService.calculateAutomaticValues({
+            jabatanText: "mandor",
+            roleText: "mandor",
+            hariKerja: 0,
+            masaKerjaTahun: 3,
+            isSpsiMember: false,
+            dbJabatanJumlah: 5000,
+            dbMasaKerjaJumlah: 0
+        });
+
+        expect(result.jabatanUsedFallback).toBe(true);
+        expect(result.jabatanAmount).toBe(5000);
     });
 });

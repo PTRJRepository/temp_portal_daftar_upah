@@ -55,6 +55,19 @@ describe("buildAutomationAdjustmentOptions", () => {
                 adj_ad_code: null,
                 doc_desc: "(DE) SPSI",
                 base_task_code: "D400"
+            },
+            {
+                ad_code: "D500",
+                task_code: "D500P1A",
+                task_desc: "(DE) POTONGAN PPH21",
+                loc_code: "P1A",
+                task_type: null,
+                task_grp: null,
+                task_nature: null,
+                is_deduction: 1,
+                adj_ad_code: null,
+                doc_desc: "(DE) POTONGAN PPH21",
+                base_task_code: "D500"
             }
         ];
 
@@ -85,11 +98,11 @@ describe("buildAutomationAdjustmentOptions", () => {
                 category: "potongan_upah_bersih",
                 adjustment_type: "POTONGAN_BERSIH",
                 adjustment_name: "POTONGAN PINJAMAN",
-                ad_code: "D300",
+                ad_code: "DE0002",
                 description: "POTONGAN PINJAMAN",
-                task_code: "D300P1A",
-                task_desc: "(DE) POTONGAN PINJAMAN",
-                base_task_code: "D300",
+                task_code: "DE0002P1A",
+                task_desc: "(DE) POTONGAN HUTANG",
+                base_task_code: "DE0002",
                 loc_code: "P1A"
             }
         ]);

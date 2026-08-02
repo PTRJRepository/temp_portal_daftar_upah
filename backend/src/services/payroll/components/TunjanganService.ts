@@ -166,10 +166,12 @@ export class TunjanganService extends BasePayrollComponentService<TunjanganInput
                 SELECT Amount FROM PR_ADTRANS
                 WHERE EmpCode = ? AND TrxDate >= ? AND TrxDate <= ?
                   AND DocDesc LIKE ?
+                  AND Status IN (1, 3)
                 UNION ALL
                 SELECT Amount FROM PR_ADTRANS_ARC
                 WHERE EmpCode = ? AND TrxDate >= ? AND TrxDate <= ?
                   AND DocDesc LIKE ?
+                  AND Status = 3
             ) combined
         `, [empCode, startDate, endDate, `%${pattern}%`, empCode, startDate, endDate, `%${pattern}%`]);
 

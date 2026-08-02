@@ -169,6 +169,31 @@ export async function deleteLockedManualAdjustmentColumn(token, params = {}) {
     }
 }
 
+export async function validateLockedPremiumConversion(token, { from, to }) {
+    try {
+        const response = await axios.get(`${BASE_URL}/manual-adjustment/validate-conversion`, {
+            params: { from, to },
+            headers: { Authorization: `Bearer ${token}` }
+        })
+        return response.data
+    } catch (error) {
+        console.error('[LockedDivisionService] Failed to validate premium conversion:', error)
+        throw error
+    }
+}
+
+export async function convertLockedPremiumType(token, payload) {
+    try {
+        const response = await axios.post(`${BASE_URL}/manual-adjustment/convert-type`, payload, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+        return response.data
+    } catch (error) {
+        console.error('[LockedDivisionService] Failed to convert premium type:', error)
+        throw error
+    }
+}
+
 export async function saveLockedProfileOverride(token, payload) {
     try {
         const response = await axios.post(`payroll/overrides/profile`, payload, {

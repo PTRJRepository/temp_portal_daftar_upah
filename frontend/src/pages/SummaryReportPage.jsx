@@ -95,6 +95,17 @@ function buildThumbprintRowSpans(rows, comparisonTotal = null) {
   return rowSpanByIndex;
 }
 
+function formatComparisonThumbprint(comparisonCell) {
+  const thumbPrint = Number(comparisonCell?.thumbPrint || 0);
+  return thumbPrint ? formatNumber(thumbPrint) : '-';
+}
+
+function formatComparisonSelisih(comparisonCell) {
+  const thumbPrint = Number(comparisonCell?.thumbPrint || 0);
+  const selisih = Number(comparisonCell?.selisih || 0);
+  return thumbPrint || selisih ? formatNumber(selisih) : '-';
+}
+
 function getPreviousPeriod(month, year) {
   const currentMonth = Number(month);
   const currentYear = Number(year);
@@ -397,17 +408,15 @@ function SummaryTable({ data, grandTotal, comparisonTotal, onCellEdit, editMode,
                     {formatNumber(getDynamicPremiValue(row, h))}
                   </td>
                 ))}
-                <td className="num-cell" style={{ fontWeight: 700 }}>
-                  {formatNumber(row.total_premi)}
-                </td>
+                <EditableCell editMode={editMode} value={row.total_premi} onSave={v => onCellEdit(row.gang_code, 'total_premi', v)} />
                 <EditableCell editMode={editMode} value={row.total_lembur} onSave={v => onCellEdit(row.gang_code, 'total_lembur', v)} />
-                <td className="num-cell">{formatNumber(row.total_pph21)}</td>
+                <EditableCell editMode={editMode} value={row.total_pph21} onSave={v => onCellEdit(row.gang_code, 'total_pph21', v)} />
                 <EditableCell editMode={editMode} value={row.total_spsi} onSave={v => onCellEdit(row.gang_code, 'total_spsi', v)} />
                 <EditableCell editMode={editMode} value={row.total_upah_bersih} onSave={v => onCellEdit(row.gang_code, 'total_upah_bersih', v)} isCurrency />
                 {comparisonCell && (
                   <>
-                    <td className="num-cell summary-compare-cell" rowSpan={comparisonCell.rowSpan}>{comparisonCell.thumbPrint ? formatNumber(comparisonCell.thumbPrint) : '-'}</td>
-                    <td className={`num-cell summary-compare-cell ${comparisonCell.selisih < 0 ? 'negative' : comparisonCell.selisih > 0 ? 'positive' : ''}`} rowSpan={comparisonCell.rowSpan}>{comparisonCell.thumbPrint || comparisonCell.selisih ? formatNumber(comparisonCell.selisih) : '-'}</td>
+                    <td className="num-cell summary-compare-cell" rowSpan={comparisonCell.rowSpan}>{formatComparisonThumbprint(comparisonCell)}</td>
+                    <td className={`num-cell summary-compare-cell ${comparisonCell.selisih < 0 ? 'negative' : comparisonCell.selisih > 0 ? 'positive' : ''}`} rowSpan={comparisonCell.rowSpan}>{formatComparisonSelisih(comparisonCell)}</td>
                   </>
                 )}
               </tr>
@@ -531,8 +540,8 @@ function PrintPage1({ grandTotal, comparisonTotal, periodLabel, printDate, usern
                   <td className="num-cell">{formatNumber(row.total_upah_bersih)}</td>
                   {comparisonCell && (
                     <>
-                      <td className="num-cell summary-compare-cell" rowSpan={comparisonCell.rowSpan}>{comparisonCell.thumbPrint ? formatNumber(comparisonCell.thumbPrint) : '-'}</td>
-                      <td className={`num-cell summary-compare-cell ${comparisonCell.selisih < 0 ? 'negative' : comparisonCell.selisih > 0 ? 'positive' : ''}`} rowSpan={comparisonCell.rowSpan}>{comparisonCell.thumbPrint || comparisonCell.selisih ? formatNumber(comparisonCell.selisih) : '-'}</td>
+                      <td className="num-cell summary-compare-cell" rowSpan={comparisonCell.rowSpan}>{formatComparisonThumbprint(comparisonCell)}</td>
+                      <td className={`num-cell summary-compare-cell ${comparisonCell.selisih < 0 ? 'negative' : comparisonCell.selisih > 0 ? 'positive' : ''}`} rowSpan={comparisonCell.rowSpan}>{formatComparisonSelisih(comparisonCell)}</td>
                     </>
                   )}
                 </tr>
@@ -562,7 +571,6 @@ function PrintPage1({ grandTotal, comparisonTotal, periodLabel, printDate, usern
           </div>
         )}
       </div>
-      <SignatureSection />
       <footer className="srn-paper-footer">
         <span>Dicetak: {printDate}</span>
         <span>Payroll Reporting System - PT. Rebinmas Jaya</span>
@@ -669,7 +677,7 @@ function PrintPage3({ rows, grandTotal, comparisonTotal, periodLabel, printDate,
   const thumbprintRowSpans = buildThumbprintRowSpans(rows, comparisonTotal);
 
   return (
-    <article className="srn-paper srn-paper-detail" id={`print-page-${pageNumber}`}>
+    <article className={`srn-paper srn-paper-detail${isLastDetailPage ? ' srn-paper-with-signature' : ''}`} id={`print-page-${pageNumber}`}>
       <ReportPrintHeader
         title={pageNumber === 2 ? 'Detail Per Gang / Estate' : 'Lanjutan Detail Per Gang / Estate'}
         period={`Divisi: ${divisionLabel} | Periode: ${periodLabel}`}
@@ -710,8 +718,8 @@ function PrintPage3({ rows, grandTotal, comparisonTotal, periodLabel, printDate,
                   <td className="num-cell">{formatNumber(row.total_upah_bersih)}</td>
                   {comparisonCell && (
                     <>
-                      <td className="num-cell summary-compare-cell" rowSpan={comparisonCell.rowSpan}>{comparisonCell.thumbPrint ? formatNumber(comparisonCell.thumbPrint) : '-'}</td>
-                      <td className={`num-cell summary-compare-cell ${comparisonCell.selisih < 0 ? 'negative' : comparisonCell.selisih > 0 ? 'positive' : ''}`} rowSpan={comparisonCell.rowSpan}>{comparisonCell.thumbPrint || comparisonCell.selisih ? formatNumber(comparisonCell.selisih) : '-'}</td>
+                      <td className="num-cell summary-compare-cell" rowSpan={comparisonCell.rowSpan}>{formatComparisonThumbprint(comparisonCell)}</td>
+                      <td className={`num-cell summary-compare-cell ${comparisonCell.selisih < 0 ? 'negative' : comparisonCell.selisih > 0 ? 'positive' : ''}`} rowSpan={comparisonCell.rowSpan}>{formatComparisonSelisih(comparisonCell)}</td>
                     </>
                   )}
                 </tr>
@@ -736,6 +744,7 @@ function PrintPage3({ rows, grandTotal, comparisonTotal, periodLabel, printDate,
           )}
         </table>
       </div>
+      {isLastDetailPage && <SignatureSection />}
       <footer className="srn-paper-footer">
         <span>Dicetak: {printDate}</span>
         <span>Payroll Reporting System - PT. Rebinmas Jaya</span>
@@ -762,6 +771,7 @@ export default function SummaryReportPage({ onBack, initialDivision, initialMont
   const [periods, setPeriods] = useState([]);
   const [summaryData, setSummaryData] = useState([]);
   const [previousSummaryData, setPreviousSummaryData] = useState([]);
+  const [comparisonTotal, setComparisonTotal] = useState(null);
   const [gangDescriptions, setGangDescriptions] = useState({});
   const [filteredHeaders, setFilteredHeaders] = useState([]);
   const [showDetail, setShowDetail] = useState(false);
@@ -827,7 +837,7 @@ export default function SummaryReportPage({ onBack, initialDivision, initialMont
   // Grand total from filtered data
   const grandTotal = useMemo(() => buildGrandTotal(filteredData), [filteredData]);
 
-  const divisionComparisonTotal = useMemo(() => buildGrandTotal(mergedData), [mergedData]);
+  const divisionComparisonTotal = useMemo(() => comparisonTotal || buildGrandTotal(mergedData), [comparisonTotal, mergedData]);
 
   const previousGrandTotal = useMemo(() => buildGrandTotal(previousFilteredData), [previousFilteredData]);
 
@@ -958,6 +968,7 @@ export default function SummaryReportPage({ onBack, initialDivision, initialMont
       });
       if (result.success) {
         setSummaryData(result.data || []);
+        setComparisonTotal(result.comparison_total || null);
         const uniqueHeaders = [];
         const seen = new Set();
         for (const h of (result.filtered_headers || [])) {
@@ -1038,7 +1049,7 @@ export default function SummaryReportPage({ onBack, initialDivision, initialMont
       setError('Pilih satu divisi terlebih dahulu. Summary Report dan Uraian Premi dihitung untuk lingkup satu divisi.');
       return;
     }
-    printReport({ orientation: 'landscape', margin: '0' });
+    printReport({ orientation: 'landscape' });
   };
 
   // Export CSV

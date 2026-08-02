@@ -445,6 +445,36 @@ export async function updateGangCell(token, { month, year, gang_code, field, val
     return response.data;
 }
 
+/**
+ * Update a single division-level summary cell via override storage
+ * @param {string} token - Auth token
+ * @param {Object} params - parameters
+ * @param {number} params.month - Month (1-12)
+ * @param {number} params.year - Year
+ * @param {string} params.division_code - Division code
+ * @param {string} params.field - Field name to update
+ * @param {number} params.value - New value
+ * @returns {Promise<Object>} Result
+ */
+export async function updateDivisionCell(token, { month, year, division_code, field, value }) {
+    const url = `${BACKEND_BASE}/payroll/summary/update-division-cell`;
+
+    const response = await axios.post(url, {
+        month,
+        year,
+        division_code,
+        field,
+        value
+    }, {
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    });
+
+    return response.data;
+}
+
 export default {
     fetchDivisionSummary,
     fetchAvailablePeriods,

@@ -5,6 +5,66 @@
  */
 
 const DISPLAY_ONLY_TOTAL_FIELDS = new Set(['koreksi_hk']);
+const ROUNDING_EPSILON = 1e-6;
+const LEDGER_IDENTITY_FIELDS = new Set([
+  'no', 'nik', 'nama', 'emp_code', 'jenis_kelamin', 'gender',
+  'gang_code', 'loc_code', 'id', 'type', 'employee_count',
+  'status_ptkp', 'kategori_ter', 'task_code', 'task_desc',
+]);
+const LEDGER_NON_AMOUNT_FIELDS = new Set([
+  'jumlah_hk', 'hari_kerja', 'kehadiran', 'total_jam_kerja',
+  'lembur_jam', 'masa_kerja_tahun', 'tarif_pajak_ter',
+  'upah_dasar', 'beras_rate', 'jabatan_rate'
+]);
+const LEDGER_AMOUNT_FIELD_PATTERN = /^(jumlah_|total_|pot_|premi_|lembur_|gaji_|upah_|beras_|jabatan_|masa_|koreksi_|penghasilan_|pph21_|astek_|bpjs_|thr_|bonus_|exgratia_|pendapatan_|taxable_)/;
+
+const roundPayrollTotal = (value) => {
+  const numberValue = Number(value) || 0;
+  if (!Number.isFinite(numberValue)) return 0;
+  return Math.round(numberValue + (numberValue >= 0 ? ROUNDING_EPSILON : -ROUNDING_EPSILON));
+};
+
+const isEmployeePayrollRow = (row) => {
+  if (!row || typeof row !== 'object') return false;
+  if (row.type === 'employee') return true;
+  if (row.type === 'gang_header' || row.type === 'gang_total' || row.type === 'grand_total') return false;
+  if (row.isHeader || row.isTotal || row.isGrandTotal || row.isDivisionTotal) return false;
+  return true;
+};
+
+const isGangTotalRow = (row) => row?.type === 'gang_total' || row?.isTotal === true;
+
+const toFiniteOrNull = (value) => {
+  if (value === undefined || value === null || value === '') return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const isPayrollLedgerAmountField = (field) => {
+  const key = String(field || '').trim();
+  if (!key) return false;
+  const lower = key.toLowerCase();
+  if (DISPLAY_ONLY_TOTAL_FIELDS.has(key) || DISPLAY_ONLY_TOTAL_FIELDS.has(lower)) return false;
+  if (LEDGER_IDENTITY_FIELDS.has(key) || LEDGER_IDENTITY_FIELDS.has(lower)) return false;
+  if (LEDGER_NON_AMOUNT_FIELDS.has(key) || LEDGER_NON_AMOUNT_FIELDS.has(lower)) return false;
+  if (lower.endsWith('_rate') || lower.includes('_jam')) return false;
+  return LEDGER_AMOUNT_FIELD_PATTERN.test(key);
+};
+
+const hasNumericField = (rows, field) => rows.some(row => toFiniteOrNull(row?.[field]) !== null);
+
+const collectLedgerAmountFields = (rows, grandTotal = null) => {
+  const fields = new Set();
+  [...(Array.isArray(rows) ? rows : []), grandTotal].forEach(row => {
+    if (!row || typeof row !== 'object') return;
+    Object.entries(row).forEach(([field, value]) => {
+      if (!isPayrollLedgerAmountField(field)) return;
+      if (toFiniteOrNull(value) === null) return;
+      fields.add(field);
+    });
+  });
+  return Array.from(fields);
+};
 
 const resolveGrossDeductionWithoutAutomaticHk = (emp, absVal) => {
   const sourceTotal = absVal(emp.potongan_upah_kotor_total) || absVal(emp.pot_koreksi);
@@ -259,6 +319,190 @@ export const PayrollAggregator = {
    */
   calculateGrandTotal: (allRows) => {
     return PayrollAggregator._sumRows(allRows);
+  },
+
+  /**
+   * Calculate a displayed grand total from already-calculated gang totals.
+   * This keeps global totals equal to the sum of visible/exported group totals
+   * when currency formatting rounds each subtotal row.
+   */
+  calculateGrandTotalFromGangTotals: (gangTotals) => {
+    if (!gangTotals || gangTotals.length === 0) return {};
+
+    const totals = {};
+    const identityFields = new Set([
+      'no', 'nik', 'nama', 'emp_code', 'jenis_kelamin', 'gender',
+      'gang_code', 'loc_code', 'id', 'type',
+    ]);
+
+    gangTotals.forEach(row => {
+      Object.entries(row || {}).forEach(([key, value]) => {
+        if (DISPLAY_ONLY_TOTAL_FIELDS.has(key) || identityFields.has(key)) return;
+        if (typeof value === 'number' || (!isNaN(parseFloat(value)) && isFinite(value))) {
+          totals[key] = (totals[key] || 0) + roundPayrollTotal(value);
+        }
+      });
+    });
+
+    return totals;
+  },
+
+  reconcileGangTotalsToGrandTotal: (gangTotals, grandTotal) => {
+    if (!gangTotals || gangTotals.length === 0) return [];
+
+    const identityFields = new Set([
+      'no', 'nik', 'nama', 'emp_code', 'jenis_kelamin', 'gender',
+      'gang_code', 'loc_code', 'id', 'type',
+    ]);
+    const reconciled = gangTotals.map(total => ({ ...total }));
+    const fields = new Set();
+
+    [grandTotal, ...gangTotals].forEach(total => {
+      Object.entries(total || {}).forEach(([key, value]) => {
+        if (DISPLAY_ONLY_TOTAL_FIELDS.has(key) || identityFields.has(key)) return;
+        if (typeof value === 'number' || (!isNaN(parseFloat(value)) && isFinite(value))) {
+          fields.add(key);
+        }
+      });
+    });
+
+    fields.forEach(key => {
+      const targetValue = roundPayrollTotal(grandTotal?.[key]);
+      const currentSum = reconciled.reduce((sum, total) => sum + roundPayrollTotal(total?.[key]), 0);
+      const delta = targetValue - currentSum;
+      if (delta === 0) return;
+
+      let targetIndex = 0;
+      let targetMagnitude = -1;
+      reconciled.forEach((total, index) => {
+        const magnitude = Math.abs(Number(total?.[key]) || 0);
+        if (magnitude > targetMagnitude) {
+          targetMagnitude = magnitude;
+          targetIndex = index;
+        }
+      });
+
+      reconciled[targetIndex][key] = roundPayrollTotal(reconciled[targetIndex][key]) + delta;
+    });
+
+    return reconciled;
+  },
+
+  reconcileDisplayedGangTotalRows: (rows, grandTotal, options = {}) => {
+    if (!Array.isArray(rows) || rows.length === 0) return rows || [];
+
+    const gangTotalRows = rows.filter(isGangTotalRow);
+    if (gangTotalRows.length === 0) return rows;
+
+    const employeeRows = rows.filter(isEmployeePayrollRow);
+    const shouldRebuildFromEmployees = Boolean(options.rebuildFromEmployees);
+    const targetGrandTotal = grandTotal || (shouldRebuildFromEmployees
+      ? PayrollAggregator.calculateGrandTotal(employeeRows)
+      : null);
+
+    if (!targetGrandTotal) return rows;
+
+    const sourceGangTotals = gangTotalRows.map(row => {
+      if (!shouldRebuildFromEmployees) return { ...row };
+      return {
+        ...row,
+        ...PayrollAggregator.calculateGangTotals(row.gang_code, employeeRows)
+      };
+    });
+    const reconciledGangTotals = PayrollAggregator.reconcileGangTotalsToGrandTotal(sourceGangTotals, targetGrandTotal);
+
+    let subtotalIndex = 0;
+    return rows.map(row => {
+      if (!isGangTotalRow(row)) return row;
+
+      const reconciled = reconciledGangTotals[subtotalIndex] || row;
+      subtotalIndex += 1;
+
+      return {
+        ...row,
+        ...reconciled,
+        type: row.type,
+        isTotal: row.isTotal,
+        id: row.id,
+        gang_code: row.gang_code,
+        nama: row.nama,
+        emp_code: row.emp_code,
+        no: row.no,
+        nik: row.nik,
+        jenis_kelamin: row.jenis_kelamin
+      };
+    });
+  },
+
+  buildDisplayLedgerRows: (rows, grandTotal = null, options = {}) => {
+    if (!Array.isArray(rows) || rows.length === 0) return rows || [];
+
+    const allocateToGrandTotal = Boolean(options.allocateToGrandTotal && grandTotal);
+    const roundedRows = rows.map(row => {
+      if (!isEmployeePayrollRow(row)) return row;
+
+      const next = { ...row };
+      collectLedgerAmountFields([row]).forEach(field => {
+        const value = toFiniteOrNull(next[field]);
+        if (value !== null) {
+          next[field] = roundPayrollTotal(value);
+        }
+      });
+      return next;
+    });
+
+    const employeeRows = roundedRows.filter(isEmployeePayrollRow);
+    if (employeeRows.length === 0) return roundedRows;
+
+    if (allocateToGrandTotal) {
+      const fields = collectLedgerAmountFields(employeeRows, grandTotal)
+        .filter(field => hasNumericField(employeeRows, field));
+      const maxRoundingDelta = Math.max(10, employeeRows.length * 2);
+
+      fields.forEach(field => {
+        const targetValue = roundPayrollTotal(grandTotal?.[field]);
+        const currentValue = employeeRows.reduce((sum, row) => sum + roundPayrollTotal(row?.[field]), 0);
+        const delta = targetValue - currentValue;
+        if (delta === 0) return;
+
+        // Guard: only allocate small rounding residue. Larger deltas indicate real data drift.
+        if (Math.abs(delta) > maxRoundingDelta) return;
+
+        let targetIndex = -1;
+        let targetMagnitude = -1;
+        employeeRows.forEach((row, index) => {
+          const value = toFiniteOrNull(row?.[field]);
+          if (value === null) return;
+          const magnitude = Math.abs(value);
+          if (magnitude > targetMagnitude) {
+            targetMagnitude = magnitude;
+            targetIndex = index;
+          }
+        });
+
+        if (targetIndex < 0) return;
+        employeeRows[targetIndex][field] = roundPayrollTotal(employeeRows[targetIndex][field]) + delta;
+      });
+    }
+
+    return roundedRows.map(row => {
+      if (!isGangTotalRow(row)) return row;
+
+      const rebuiltTotals = PayrollAggregator.calculateGangTotals(row.gang_code, employeeRows);
+      return {
+        ...row,
+        ...rebuiltTotals,
+        type: row.type,
+        isTotal: row.isTotal,
+        id: row.id,
+        gang_code: row.gang_code,
+        nama: row.nama,
+        emp_code: row.emp_code,
+        no: row.no,
+        nik: row.nik,
+        jenis_kelamin: row.jenis_kelamin
+      };
+    });
   },
 
   /**

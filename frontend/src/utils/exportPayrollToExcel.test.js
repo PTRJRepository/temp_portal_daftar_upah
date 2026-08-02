@@ -7,7 +7,10 @@ vi.mock('exceljs', () => ({
 vi.mock('file-saver', () => ({ saveAs: vi.fn() }));
 
 import {
+  assertPayrollExportUiParity,
+  buildPayrollExportSheetModel,
   buildPayrollExportColumns,
+  buildPayrollWorkbookSheetModels,
   formatPayrollExportCellValue,
   resolvePayrollWorkbookSheetVariants,
 } from './exportPayrollToExcel';
@@ -36,7 +39,7 @@ describe('buildPayrollExportColumns', () => {
     expect(fields).toEqual(['nama', 'pot_pph21']);
   });
 
-  it('removes tax detail columns but keeps the actual PPH21 deduction', () => {
+  it('keeps Daftar Upah detail columns including tax details', () => {
     const columnDefs = [
       { field: 'status_ptkp', headers: ['PAJAK', null, null, 'PTKP'], w: 80 },
       { field: 'kategori_ter', headers: ['PAJAK', null, null, 'TER'], w: 55 },
@@ -51,7 +54,17 @@ describe('buildPayrollExportColumns', () => {
 
     const fields = buildPayrollExportColumns([], columnDefs).map((col) => col.field);
 
-    expect(fields).toEqual(['pot_pph21', 'upah_bersih']);
+    expect(fields).toEqual([
+      'status_ptkp',
+      'kategori_ter',
+      'penghasilan_bruto',
+      'tarif_pajak_ter',
+      'pph21_ter',
+      'premi_pph',
+      'taxable_pendapatan_lainnya',
+      'pot_pph21',
+      'upah_bersih',
+    ]);
   });
 
   it('adds controlled other-income detail columns before the total column', () => {
@@ -87,6 +100,22 @@ describe('buildPayrollExportColumns', () => {
       'THR (+)',
     ]);
     expect(columns.find((col) => col.field === 'pendapatan_kontan')?.headers[3]).toBe('KONTANAN (+)');
+  });
+
+  it('keeps total pendapatan lainnya when only later employee rows have values', () => {
+    const rows = [
+      { type: 'employee', emp_code: 'A001', nama: 'Sari', total_pendapatan_lainnya: 0 },
+      { type: 'employee', emp_code: 'A002', nama: 'Rina', total_pendapatan_lainnya: 125000 },
+    ];
+    const columnDefs = [
+      { field: 'nama', headers: ['IDENTITAS', null, null, 'NAMA'], w: 120 },
+      { field: 'total_premi', headers: ['PREMI', null, null, 'TOTAL'], w: 95 },
+      { field: 'upah_bersih', headers: ['UPAH BERSIH', null, null, 'JUMLAH'], w: 115 },
+    ];
+
+    const fields = buildPayrollExportColumns(rows, columnDefs).map((col) => col.field);
+
+    expect(fields).toContain('total_pendapatan_lainnya');
   });
 
   it('builds a compact Ringkas version with core columns and other-income details', () => {
@@ -201,6 +230,7 @@ describe('buildPayrollExportColumns', () => {
       'pot_astek',
       'pot_spsi',
       'pot_pph21',
+      'premi_pph',
       'pendapatan_thr_pengurang',
       'pendapatan_kontan_pengurang',
       'total_potongan_bersih',
@@ -257,12 +287,12 @@ describe('buildPayrollExportColumns', () => {
       'total_premi',
       'potongan_upah_kotor_total',
       'jumlah_upah_kotor',
+      'total_pendapatan_lainnya_pengurang',
       'pendapatan_thr_pengurang',
       'pendapatan_kontan_pengurang',
       'pendapatan_bonus_pengurang',
       'total_potongan',
     ]);
-    expect(fields).not.toContain('total_pendapatan_lainnya_pengurang');
     expect(columns.find((col) => col.field === 'pendapatan_bonus')?.headers).toEqual([
       'PENDAPATAN LAINNYA',
       'URAIAN',
@@ -371,7 +401,193 @@ describe('buildPayrollExportColumns', () => {
     expect(formatPayrollExportCellValue(rows[0], { field: 'pendapatan_bonus_pengurang' })).toBe(-200000);
   });
 
-  it('uses Excel formulas for row totals, gang totals, and grand totals in workbook export', () => {
+  it('keeps parity-critical values from the UI source in every workbook sheet model', () => {
+    const rows = [
+      { type: 'gang_header', gang_code: 'A01' },
+      {
+        type: 'employee',
+        emp_code: 'A001',
+        nik: 'N001',
+        nama: 'Sari',
+        gaji_pokok_aktual: 1000000,
+        total_tunjangan: 200000,
+        total_premi: 300000,
+        pendapatan_thr: 500000,
+        pendapatan_kontan: 125000,
+        total_pendapatan_lainnya: 625000,
+        potongan_upah_kotor_total: 50000,
+        jumlah_upah_kotor: 2075000,
+        pot_astek: 80000,
+        pot_bpjs_kesehatan_pekerja: 40000,
+        pot_bpjs_pensiun_pekerja: 40000,
+        pot_spsi: 4000,
+        pot_pph21: 30000,
+        premi_pph: 10000,
+        total_potongan: 819000,
+        total_potongan_bersih: 829000,
+        upah_bersih: 1256000,
+      },
+      {
+        type: 'gang_total',
+        gang_code: 'A01',
+        total_pendapatan_lainnya: 625000,
+        jumlah_upah_kotor: 2075000,
+        total_potongan: 819000,
+        total_potongan_bersih: 829000,
+        upah_bersih: 1256000,
+      },
+    ];
+    const columnDefs = [
+      { field: 'emp_code', headers: ['IDENTITAS', null, null, 'EMP CODE'], w: 90 },
+      { field: 'nama', headers: ['IDENTITAS', null, null, 'NAMA'], w: 120 },
+      { field: 'gaji_pokok_aktual', headers: ['GAJI', null, null, 'GP AKTUAL'], w: 95 },
+      { field: 'total_tunjangan', headers: ['TUNJANGAN', null, null, 'TOTAL'], w: 95 },
+      { field: 'total_premi', headers: ['PREMI', null, null, 'TOTAL'], w: 95 },
+      { field: 'total_pendapatan_lainnya', headers: ['PENDAPATAN LAINNYA', null, null, 'TOTAL (+)'], w: 100 },
+      { field: 'potongan_upah_kotor_total', headers: ['POTONGAN UPAH KOTOR', null, null, 'TOTAL'], w: 95 },
+      { field: 'jumlah_upah_kotor', headers: ['UPAH KOTOR', null, null, 'JUMLAH'], w: 118 },
+      { field: 'pot_astek', headers: ['POTONGAN UPAH BERSIH', 'CARUMAN', 'ASTEK', 'PEK.'], w: 75 },
+      { field: 'pot_bpjs_kesehatan_pekerja', headers: ['POTONGAN UPAH BERSIH', 'CARUMAN', 'BPJS KES', 'PEK.'], w: 75 },
+      { field: 'pot_bpjs_pensiun_pekerja', headers: ['POTONGAN UPAH BERSIH', 'CARUMAN', 'BPJS PEN', 'PEK.'], w: 75 },
+      { field: 'pot_spsi', headers: ['POTONGAN UPAH BERSIH', null, null, 'SPSI'], w: 86 },
+      { field: 'pot_pph21', headers: ['POTONGAN UPAH BERSIH', null, null, 'PPH21'], w: 86 },
+      { field: 'premi_pph', headers: ['POTONGAN UPAH BERSIH', null, null, 'PREMI PPH'], w: 90 },
+      { field: 'total_potongan', headers: ['POTONGAN UPAH BERSIH', null, null, 'TOTAL'], w: 100 },
+      { field: 'total_potongan_bersih', headers: ['POTONGAN UPAH BERSIH', null, null, 'TOTAL BERSIH'], w: 100 },
+      { field: 'upah_bersih', headers: ['UPAH BERSIH', null, null, 'JUMLAH'], w: 115 },
+    ];
+    const models = buildPayrollWorkbookSheetModels(rows, columnDefs, rows[2], {
+      division: 'P1A',
+      gangCode: 'A01',
+      month: 6,
+      year: 2026,
+    });
+
+    for (const model of models) {
+      const employee = model.rows.find((row) => row.type === 'employee');
+      expect(employee.valuesByField.upah_bersih).toBe(1256000);
+      if (employee.valuesByField.jumlah_upah_kotor !== undefined) {
+        expect(employee.valuesByField.jumlah_upah_kotor).toBe(2075000);
+      }
+      if (employee.valuesByField.total_potongan_bersih !== undefined) {
+        expect(employee.valuesByField.total_potongan_bersih).toBe(-829000);
+      }
+      expect(assertPayrollExportUiParity(model, rows)).toBe(true);
+    }
+  });
+
+  it('fails loudly when a sheet model diverges from the UI source value', () => {
+    const rows = [{ type: 'employee', emp_code: 'A001', nama: 'Sari', upah_bersih: 1256000 }];
+    const columnDefs = [
+      { field: 'emp_code', headers: ['IDENTITAS', null, null, 'EMP CODE'], w: 90 },
+      { field: 'nama', headers: ['IDENTITAS', null, null, 'NAMA'], w: 120 },
+      { field: 'upah_bersih', headers: ['UPAH BERSIH', null, null, 'JUMLAH'], w: 115 },
+    ];
+    const model = buildPayrollExportSheetModel(rows, columnDefs, null, {}, 'detail');
+    model.rows[0].valuesByField.upah_bersih = 1;
+
+    expect(() => assertPayrollExportUiParity(model, rows)).toThrow(/Detail\/A001\/upah_bersih: expected 1256000, actual 1/);
+  });
+
+  it('fails loudly when exported gang totals diverge from the UI source value', () => {
+    const rows = [
+      { type: 'gang_header', gang_code: 'A01' },
+      { type: 'employee', emp_code: 'A001', nama: 'Sari', gang_code: 'A01', upah_bersih: 1256000 },
+      { type: 'gang_total', gang_code: 'A01', nama: 'TOTAL GANG A01', upah_bersih: 1256000 },
+    ];
+    const columnDefs = [
+      { field: 'emp_code', headers: ['IDENTITAS', null, null, 'EMP CODE'], w: 90 },
+      { field: 'nama', headers: ['IDENTITAS', null, null, 'NAMA'], w: 120 },
+      { field: 'upah_bersih', headers: ['UPAH BERSIH', null, null, 'JUMLAH'], w: 115 },
+    ];
+    const model = buildPayrollExportSheetModel(rows, columnDefs, null, {}, 'detail');
+    const gangTotal = model.rows.find((row) => row.type === 'gang_total');
+    gangTotal.valuesByField.upah_bersih = 1;
+
+    expect(() => assertPayrollExportUiParity(model, rows)).toThrow(/Detail\/A01\/upah_bersih: expected 1256000, actual 1/);
+  });
+
+  it('uses row sums for grand totals when the UI footer is showing pending edit values', () => {
+    const rows = [
+      { type: 'employee', emp_code: 'A001', nama: 'Sari', upah_bersih: 1256000, total_potongan_bersih: 829000 },
+      { type: 'employee', emp_code: 'A002', nama: 'Rina', upah_bersih: 2440000, total_potongan_bersih: 60000 },
+    ];
+    const staleBackendGrandTotal = {
+      upah_bersih: 1,
+      total_potongan_bersih: 2,
+    };
+    const columnDefs = [
+      { field: 'emp_code', headers: ['IDENTITAS', null, null, 'EMP CODE'], w: 90 },
+      { field: 'nama', headers: ['IDENTITAS', null, null, 'NAMA'], w: 120 },
+      { field: 'total_potongan_bersih', headers: ['POTONGAN UPAH BERSIH', null, null, 'TOTAL BERSIH'], w: 100 },
+      { field: 'upah_bersih', headers: ['UPAH BERSIH', null, null, 'JUMLAH'], w: 115 },
+    ];
+
+    const model = buildPayrollExportSheetModel(
+      rows,
+      columnDefs,
+      staleBackendGrandTotal,
+      { preferRowGrandTotals: true },
+      'detail'
+    );
+
+    expect(model.grandTotalRow.valuesByField.upah_bersih).toBe(3696000);
+    expect(model.grandTotalRow.valuesByField.total_potongan_bersih).toBe(-889000);
+  });
+
+  it('uses backend grand total over displayed subtotal rows by default', () => {
+    const rows = [
+      { type: 'gang_header', gang_code: 'G1' },
+      { type: 'employee', emp_code: 'A001', nama: 'Sari', upah_bersih: 1000.4 },
+      { type: 'gang_total', gang_code: 'G1', upah_bersih: 1001.4 },
+      { type: 'gang_header', gang_code: 'G2' },
+      { type: 'employee', emp_code: 'A002', nama: 'Rina', upah_bersih: 1000.4 },
+      { type: 'gang_total', gang_code: 'G2', upah_bersih: 1001.4 },
+    ];
+    const columnDefs = [
+      { field: 'emp_code', headers: ['IDENTITAS', null, null, 'EMP CODE'], w: 90 },
+      { field: 'nama', headers: ['IDENTITAS', null, null, 'NAMA'], w: 120 },
+      { field: 'upah_bersih', headers: ['UPAH BERSIH', null, null, 'JUMLAH'], w: 115 },
+    ];
+
+    const model = buildPayrollExportSheetModel(
+      rows,
+      columnDefs,
+      { upah_bersih: 3000 },
+      {},
+      'detail'
+    );
+
+    expect(model.grandTotalRow.valuesByField.upah_bersih).toBe(3000);
+  });
+
+  it('can explicitly use displayed subtotal rows for grand totals', () => {
+    const rows = [
+      { type: 'gang_header', gang_code: 'G1' },
+      { type: 'employee', emp_code: 'A001', nama: 'Sari', upah_bersih: 1000.4 },
+      { type: 'gang_total', gang_code: 'G1', upah_bersih: 1001.4 },
+      { type: 'gang_header', gang_code: 'G2' },
+      { type: 'employee', emp_code: 'A002', nama: 'Rina', upah_bersih: 1000.4 },
+      { type: 'gang_total', gang_code: 'G2', upah_bersih: 1001.4 },
+    ];
+    const columnDefs = [
+      { field: 'emp_code', headers: ['IDENTITAS', null, null, 'EMP CODE'], w: 90 },
+      { field: 'nama', headers: ['IDENTITAS', null, null, 'NAMA'], w: 120 },
+      { field: 'upah_bersih', headers: ['UPAH BERSIH', null, null, 'JUMLAH'], w: 115 },
+    ];
+
+    const model = buildPayrollExportSheetModel(
+      rows,
+      columnDefs,
+      { upah_bersih: 3000 },
+      { preferSubtotalGrandTotals: true },
+      'detail'
+    );
+
+    expect(model.grandTotalRow.valuesByField.upah_bersih).toBe(2002);
+  });
+
+  it('uses sheet models and a parity guard instead of recalculating exported employee rows', () => {
     expect(source).toContain('function buildRowFormulaForField');
     expect(source).toContain('function isSelectedNetDeductionFormulaField');
     expect(source).toContain('function numericRef(ref)');
@@ -386,10 +602,11 @@ describe('buildPayrollExportColumns', () => {
     expect(source).not.toContain('-ABS(');
     expect(source).not.toContain('`-${numericRef(subtractRef)}`');
     expect(source).not.toContain("`${numericRef(grossRef) || '0'}-${numericRef(deductionRef) || '0'}`");
-    expect(source).toContain('`N(${columnName}${rowNumber})`');
-    expect(source).toContain('applyEmployeeRowFormulas(excelRow, enhancedColumnDefs, columnIndexMap);');
-    expect(source).toContain('buildTotalFormulaForColumn(col.field, enhancedColumnDefs, columnIndexMap, currentGroupEmployeeRows);');
-    expect(source).toContain('buildTotalFormulaForColumn(col.field, enhancedColumnDefs, columnIndexMap, employeeExcelRows);');
+    expect(source).toContain('buildPayrollWorkbookSheetModels(rows, columnDefs, grandTotal, meta)');
+    expect(source).toContain('assertPayrollExportUiParity(sheetModel, rows);');
+    expect(source).not.toContain('applyEmployeeRowFormulas(excelRow, enhancedColumnDefs, columnIndexMap);');
+    expect(source).not.toContain('buildTotalFormulaForColumn(col.field, enhancedColumnDefs, columnIndexMap, currentGroupEmployeeRows);');
+    expect(source).not.toContain('buildTotalFormulaForColumn(col.field, enhancedColumnDefs, columnIndexMap, employeeExcelRows);');
   });
 
   it('uses one workbook with Detail as the first sheet, then Ringkas and Print', () => {

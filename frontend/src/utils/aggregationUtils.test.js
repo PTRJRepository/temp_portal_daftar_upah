@@ -43,6 +43,18 @@ describe('aggregationUtils payroll formula guards', () => {
     expect(row.upah_bersih).toBe(1_110_000);
   });
 
+  it('treats pendapatan_lainnya as gross addition and matching net deduction', () => {
+    const row = calculateRowTotals({
+      gaji_pokok: 1_000_000,
+      pendapatan_lainnya: 50_000,
+      pot_pph21: 5_000,
+    });
+
+    expect(row.jumlah_upah_kotor).toBe(1_050_000);
+    expect(row.total_potongan).toBe(55_000);
+    expect(row.upah_bersih).toBe(995_000);
+  });
+
   it('does not subtract automatic HK correction again from gross totals', () => {
     const row = calculateRowTotals({
       gaji_pokok: 900_000,

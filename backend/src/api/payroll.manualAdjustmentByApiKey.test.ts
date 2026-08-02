@@ -175,11 +175,11 @@ const searchAutomationAdjustmentOptions = mock(async () => [
         category: "potongan_upah_bersih",
         adjustment_type: "POTONGAN_BERSIH",
         adjustment_name: "POTONGAN PINJAMAN",
-        ad_code: "DE0100",
+        ad_code: "DE0002",
         description: "POTONGAN PINJAMAN",
-        task_code: "DE0100AB1",
-        task_desc: "(DE) POTONGAN PINJAMAN",
-        base_task_code: "DE0100",
+        task_code: "DE0002AB1",
+        task_desc: "(DE) POTONGAN HUTANG",
+        base_task_code: "DE0002",
         loc_code: "AB1"
     }
 ]);

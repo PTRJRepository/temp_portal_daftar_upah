@@ -690,6 +690,9 @@ view=grouped&adjustment_type=PREMI&metadata_only=true
 
 - Gunakan `employee.premium_transactions[]` sebagai sumber utama auto input. Satu item di array ini = satu detail transaksi dari `metadata_json`, misalnya satu subblok, satu kendaraan, atau satu expense.
 - Jangan memakai `premiums[].amount`, `adjustments[].amount`, atau row flat `amount` sebagai detail transaksi. Field itu adalah total row di DB. Contoh `PREMI PRUNING` amount `504900` bisa berasal dari beberapa subblok di metadata.
+- `premium_transactions[].adjustment_id` adalah boundary record lama: satu `adjustment_id` = satu record premi Plantware. Detail pertama pada `adjustment_id` itu harus klik `New`; detail berikutnya pada `adjustment_id` dan employee yang sama harus klik `Add`.
+- Field `record_group_key`, `record_action`, `record_detail_index`, dan `record_detail_count` adalah hint turunan untuk runner. Tetap validasi hint itu terhadap `adjustment_id`, `emp_code`, `nik`, dan `emp_name`; jangan lanjut `Add` bila identitas karyawan berubah.
+- `transaction_index` hanya urutan daftar datar per employee. Jangan pakai field ini sebagai boundary `New`/`Add`.
 - Untuk metadata `input_type = "blok"`, nilai per detail diambil dari `metadata_json.items[].jumlah`, lalu endpoint menampilkannya sebagai `premium_transactions[].jumlah` dan `premium_transactions[].amount`.
 - Untuk field subblok, endpoint menormalisasi simbol: `subblok` hanya berisi huruf dan angka. Contoh `P09/01-A` menjadi `P0901A`. Jika nilai asli mengandung simbol, nilai aslinya tetap tersedia di `subblok_raw`.
 - Untuk metadata `input_type = "kendaraan"`, `expense_code` di response dinormalisasi untuk kebutuhan input Plantware: nilainya menjadi `DRIVER` atau `HELPER`, bukan raw metadata seperti `TRANSPORT`. Ini berlaku di `metadata_json`, `metadata`, `detail_items`, dan `premium_transactions`. Nilai lama disimpan di `expense_code_raw`; sumber keputusan ada di `expense_code_source`.
@@ -699,12 +702,36 @@ view=grouped&adjustment_type=PREMI&metadata_only=true
 **Urutan auto input yang disarankan:**
 
 ```text
+last_employee_key = null
+last_record_key = null
+
 for each estate in data:
   for each gang in estate.gangs:
     for each employee in gang.employees:
+      employee_key = employee.emp_code || employee.nik || employee.emp_name
       for each tx in employee.premium_transactions:
+        record_key = tx.record_group_key || tx.adjustment_id
+
+        if employee_key != last_employee_key:
+          press New
+        else if record_key == null:
+          stop: boundary record tidak bisa dipastikan
+        else if record_key != last_record_key:
+          press New
+        else:
+          assert current UI employee == employee_key
+          press Add
+
         input employee tx.adjustment_name tx.subblok/tx.expense_code/tx.kendaraan tx.amount
+        last_employee_key = employee_key
+        last_record_key = record_key
 ```
+
+Aturan tombol:
+
+- `record_action = "NEW"` berarti klik `New`, tetapi runner tetap harus memastikan employee/record memang berubah atau detail tersebut adalah detail pertama record.
+- `record_action = "ADD"` berarti klik `Add` hanya bila `record_group_key`/`adjustment_id` masih sama dan employee UI masih sama.
+- Jika `emp_code`, `nik`, atau `emp_name` berubah, klik `New` atau hentikan proses. Jangan pernah `Add` lintas nama karyawan.
 
 **Filter umum:**
 
@@ -776,6 +803,10 @@ curl -s "http://localhost:8002/payroll/manual-adjustment/by-api-key?period_month
                 {
                   "transaction_index": 1,
                   "adjustment_id": 1,
+                  "record_group_key": "adjustment:1",
+                  "record_action": "NEW",
+                  "record_detail_index": 1,
+                  "record_detail_count": 2,
                   "adjustment_type": "PREMI",
                   "adjustment_name": "PREMI PRUNING",
                   "emp_code": "A0001",
@@ -796,6 +827,10 @@ curl -s "http://localhost:8002/payroll/manual-adjustment/by-api-key?period_month
                 {
                   "transaction_index": 2,
                   "adjustment_id": 1,
+                  "record_group_key": "adjustment:1",
+                  "record_action": "ADD",
+                  "record_detail_index": 2,
+                  "record_detail_count": 2,
                   "adjustment_type": "PREMI",
                   "adjustment_name": "PREMI PRUNING",
                   "emp_code": "A0001",
@@ -880,6 +915,8 @@ Catatan response grouped:
 
 - `premium_transactions` adalah daftar datar per detail transaksi dari seluruh premi employee tersebut. Ini field utama untuk auto input per subblok/kendaraan/expense.
 - `premium_transactions[].amount` adalah nominal detail transaksi, sama dengan `jumlah` pada metadata jika metadata memakai field `jumlah`.
+- `premium_transactions[].adjustment_id` / `record_group_key` adalah boundary record untuk tombol `New` dan `Add`.
+- `premium_transactions[].record_action` adalah hint tombol yang dihitung dari posisi detail di dalam `adjustment_id`: `NEW` untuk detail pertama, `ADD` untuk detail lanjutan.
 - `estate` / `estate_code` adalah estate/lokasi seperti `AB1`; jangan dibaca sebagai division Plantware.
 - `division_code` di response adalah turunan dari `gang_code`, misalnya `C2H -> C 2` dan `G1H -> G 1`.
 - `ad_code` dan `ad_code_desc` sudah dipisahkan dari `remarks`; automation tidak perlu parse string remarks lagi.

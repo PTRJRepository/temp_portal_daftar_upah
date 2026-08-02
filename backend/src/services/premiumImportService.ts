@@ -8,6 +8,8 @@ export interface PremiumImportRow {
     subblok: string;
     jumlah: number;
     jenis: string;
+    record_action: PremiumImportRecordAction | null;
+    row_number: number;
 }
 
 export interface PremiumImportResult {
@@ -20,11 +22,29 @@ export interface PremiumImportResult {
 
 const ALLOWED_JENIS = ['PREMI PRUNING', 'PREMI RAKING'];
 
+type PremiumImportRecordAction = 'NEW' | 'ADD';
+
+type PremiumImportGroup = {
+    empcode: string;
+    jenis: string;
+    gang_code: string;
+    items: { subblok: string; gang_code: string; jumlah: number }[];
+    force_insert: boolean;
+};
+
 function normalizeJenis(value: string): string {
     const cleaned = String(value || '').toUpperCase().trim();
     if (cleaned === 'PRUNING' || cleaned === 'PREMI PRUNING') return 'PREMI PRUNING';
     if (cleaned === 'RAKING' || cleaned === 'CIRCLE RAKING' || cleaned === 'PREMI RAKING') return 'PREMI RAKING';
     return cleaned;
+}
+
+function normalizeRecordAction(value: unknown): PremiumImportRecordAction | null {
+    const cleaned = String(value || '').toUpperCase().trim();
+    if (!cleaned) return null;
+    if (['NEW', 'N', 'BARU'].includes(cleaned)) return 'NEW';
+    if (['ADD', 'A', 'TAMBAH', 'LANJUT', 'CONTINUE', 'CONTINUATION'].includes(cleaned)) return 'ADD';
+    throw new Error(`Aksi "${value}" tidak dikenal. Pakai NEW atau ADD.`);
 }
 
 export async function importPremiumExcel(
@@ -35,29 +55,62 @@ export async function importPremiumExcel(
     manualAdjustmentService: ManualAdjustmentService
 ): Promise<PremiumImportResult> {
     const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.load(buffer);
+    await workbook.xlsx.load(buffer as any);
 
     const worksheet = workbook.worksheets[0];
     if (!worksheet) {
         return { success: false, imported: 0, skipped: 0, errors: ['File Excel kosong atau tidak memiliki worksheet.'], details: [] };
     }
 
-    const rows: PremiumImportRow[] = [];
+    const groups: PremiumImportGroup[] = [];
+    const seenRecordKeys = new Set<string>();
+    let activeGroup: PremiumImportGroup | null = null;
     const errors: string[] = [];
+
+    const startGroup = (row: PremiumImportRow): PremiumImportGroup => {
+        const key = `${row.empcode}||${row.jenis}`;
+        const group: PremiumImportGroup = {
+            empcode: row.empcode,
+            jenis: row.jenis,
+            gang_code: row.gang_code,
+            items: [],
+            force_insert: seenRecordKeys.has(key)
+        };
+        seenRecordKeys.add(key);
+        groups.push(group);
+        activeGroup = group;
+        return group;
+    };
 
     worksheet.eachRow((row, rowNumber) => {
         if (rowNumber === 1) return; // Skip header row
         const values = row.values as any[];
-        const empcode = String(values[1] || '').trim();
-        const gangCode = String(values[2] || '').trim();
+        const rawEmpcode = String(values[1] || '').trim();
+        const rawGangCode = String(values[2] || '').trim();
         const subblok = String(values[3] || '').trim();
         const jumlah = parseFloat(values[4]) || 0;
-        const jenis = normalizeJenis(values[5]);
+        const rawJenis = normalizeJenis(values[5]);
 
-        if (!empcode) {
-            errors.push(`Baris ${rowNumber}: Empcode kosong, dilewati.`);
+        if (!rawEmpcode && !rawGangCode && !subblok && !values[4] && !rawJenis && !values[6]) {
             return;
         }
+
+        let recordAction: PremiumImportRecordAction | null = null;
+        try {
+            recordAction = normalizeRecordAction(values[6]);
+        } catch (e: any) {
+            errors.push(`Baris ${rowNumber}: ${e.message || String(e)}`);
+            return;
+        }
+
+        if (!rawEmpcode && (!activeGroup || recordAction === 'NEW')) {
+            errors.push(`Baris ${rowNumber}: Empcode kosong untuk record baru, dilewati.`);
+            return;
+        }
+        const empcode = rawEmpcode || activeGroup!.empcode;
+        const gangCode = rawGangCode || activeGroup?.gang_code || '';
+        const jenis = rawJenis || activeGroup?.jenis || '';
+
         if (!subblok) {
             errors.push(`Baris ${rowNumber}: Subblok kosong untuk ${empcode}, dilewati.`);
             return;
@@ -71,21 +124,44 @@ export async function importPremiumExcel(
             return;
         }
 
-        rows.push({ empcode, gang_code: gangCode, subblok, jumlah, jenis });
+        const parsedRow: PremiumImportRow = {
+            empcode,
+            gang_code: gangCode,
+            subblok,
+            jumlah,
+            jenis,
+            record_action: recordAction,
+            row_number: rowNumber
+        };
+
+        let targetGroup: PremiumImportGroup;
+        if (recordAction === 'ADD') {
+            if (!activeGroup) {
+                errors.push(`Baris ${rowNumber}: ADD tidak punya record aktif sebelumnya.`);
+                return;
+            }
+            if (rawEmpcode && rawEmpcode !== activeGroup.empcode) {
+                errors.push(`Baris ${rowNumber}: ADD tidak boleh mengganti empcode dari ${activeGroup.empcode} ke ${rawEmpcode}. Gunakan NEW.`);
+                return;
+            }
+            if (rawJenis && rawJenis !== activeGroup.jenis) {
+                errors.push(`Baris ${rowNumber}: ADD tidak boleh mengganti jenis dari ${activeGroup.jenis} ke ${rawJenis}. Gunakan NEW.`);
+                return;
+            }
+            targetGroup = activeGroup;
+        } else if (recordAction === 'NEW') {
+            targetGroup = startGroup(parsedRow);
+        } else if (activeGroup && activeGroup.empcode === empcode && activeGroup.jenis === jenis) {
+            targetGroup = activeGroup;
+        } else {
+            targetGroup = startGroup(parsedRow);
+        }
+
+        targetGroup.items.push({ subblok: parsedRow.subblok, gang_code: parsedRow.gang_code, jumlah: parsedRow.jumlah });
     });
 
-    if (rows.length === 0) {
+    if (groups.length === 0) {
         return { success: false, imported: 0, skipped: 0, errors: ['Tidak ada baris valid untuk diimport.', ...errors], details: [] };
-    }
-
-    // Group by empcode + jenis
-    const groups = new Map<string, { jenis: string; gang_code: string; items: { subblok: string; gang_code: string; jumlah: number }[] }>();
-    for (const row of rows) {
-        const key = `${row.empcode}||${row.jenis}`;
-        if (!groups.has(key)) {
-            groups.set(key, { jenis: row.jenis, gang_code: row.gang_code, items: [] });
-        }
-        groups.get(key)!.items.push({ subblok: row.subblok, gang_code: row.gang_code, jumlah: row.jumlah });
     }
 
     const definitions = premiumDefinitionService.getActiveDefinitions();
@@ -93,8 +169,8 @@ export async function importPremiumExcel(
     let skipped = 0;
     const details: { empcode: string; jenis: string; totalAmount: number; itemCount: number }[] = [];
 
-    for (const [key, group] of groups.entries()) {
-        const [empcode] = key.split('||');
+    for (const group of groups) {
+        const empcode = group.empcode;
         const def = definitions.find((d) => d.adjustment_name === group.jenis);
         if (!def) {
             errors.push(`${empcode}: Definisi untuk "${group.jenis}" tidak ditemukan.`);
@@ -127,7 +203,8 @@ export async function importPremiumExcel(
                 ad_code: def.ad_code,
                 task_desc: def.task_desc,
                 remarks: `${group.jenis} | ${def.ad_code} | ${totalAmount} | sync:MANUAL | match:MANUAL | IMPORT_EXCEL`,
-                metadata_json: JSON.stringify(metadataJson)
+                metadata_json: JSON.stringify(metadataJson),
+                force_insert: group.force_insert
             });
             imported++;
             details.push({ empcode, jenis: group.jenis, totalAmount, itemCount: group.items.length });

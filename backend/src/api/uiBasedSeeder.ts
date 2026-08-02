@@ -13,7 +13,12 @@
 import { Database } from "../db/client";
 import { dataExtractorService } from "../services/dataExtractorService";
 import { AggregationRecord } from "../services/payrollDataService";
-import { calculatePayrollTotals } from "../services/payrollTotalsCalculator";
+import {
+    calculatePayrollTotals,
+    reconcileGangTotalsToGrandTotal,
+    type PayrollTotals
+} from "../services/payrollTotalsCalculator";
+import { normalizeManualAdjustmentDivisionCode } from "../services/payroll/manualAdjustments/manualAdjustmentNaming";
 
 interface SeedResult {
     gang_code: string;
@@ -40,6 +45,7 @@ export async function seedFromUI(
 
     const extDb = Database.getExtendedInstance();
     const results: SeedResult[] = [];
+    const dbDivisionCode = normalizeManualAdjustmentDivisionCode(division) || division;
 
     try {
         // [CLEANUP] Delete existing data for this division/period before seeding
@@ -48,7 +54,7 @@ export async function seedFromUI(
             const deleteResult = await extDb.query(`
                 DELETE FROM dbo.daftar_upah_aggregation_history
                 WHERE period_month = ? AND period_year = ? AND division_code = ?
-            `, [month, year, division]);
+            `, [month, year, dbDivisionCode]);
             
             const deletedCount = deleteResult?.rowsAffected || 0;
             if (deletedCount > 0) {
@@ -91,11 +97,21 @@ export async function seedFromUI(
 
         console.log(`📋 Found ${Object.keys(gangsMap).length} gangs\n`);
 
+        const gangEntries = Object.entries(gangsMap);
+        const reconciledPayrollTotalsByGang = buildReconciledPayrollTotalsByGang(
+            gangEntries,
+            calculatePayrollTotals(rows, "GRAND TOTAL")
+        );
+
         // Step 3: Calculate and insert per-gang totals
-        for (const [gangCode, employees] of Object.entries(gangsMap)) {
+        for (const [gangCode, employees] of gangEntries) {
             try {
                 // Calculate aggregation record from employee data
-                const aggregation = calculateGangAggregation(gangCode, employees);
+                const aggregation = calculateGangAggregation(
+                    gangCode,
+                    employees,
+                    reconciledPayrollTotalsByGang[gangCode]
+                );
 
                 console.log(`  Gang ${gangCode}: ${employees.length} emp | bersih: ${aggregation.total_upah_bersih.toLocaleString('id-ID')}`);
 
@@ -125,7 +141,7 @@ export async function seedFromUI(
                         ?, ?, GETDATE(), GETDATE(), ?
                     )
                 `, [
-                    month, year, division,
+                    month, year, dbDivisionCode,
                     aggregation.gang_code,
                     aggregation.gang_description,
                     aggregation.total_employees,
@@ -203,13 +219,32 @@ export async function seedFromUI(
     }
 }
 
+function buildReconciledPayrollTotalsByGang(
+    gangEntries: Array<[string, any[]]>,
+    grandPayrollTotals: PayrollTotals
+): Record<string, PayrollTotals> {
+    const payrollTotalsByGang = gangEntries.map(([gangCode, employees]) =>
+        calculatePayrollTotals(employees, `TOTAL ${gangCode}`)
+    );
+    const reconciledTotals = reconcileGangTotalsToGrandTotal(payrollTotalsByGang, grandPayrollTotals);
+
+    return gangEntries.reduce<Record<string, PayrollTotals>>((map, [gangCode], index) => {
+        map[gangCode] = reconciledTotals[index] || payrollTotalsByGang[index];
+        return map;
+    }, {});
+}
+
 /**
  * Calculate aggregation record for a single gang
  * Matches the AggregationRecord interface from PayrollDataService exactly
  */
-export function calculateGangAggregation(gangCode: string, employees: any[]): AggregationRecord {
+export function calculateGangAggregation(
+    gangCode: string,
+    employees: any[],
+    payrollTotalsOverride?: PayrollTotals
+): AggregationRecord {
     const activeEmployees = employees.filter((emp) => (Number(emp.jumlah_hk) || 0) > 0);
-    const daftarUpahTotals = calculatePayrollTotals(employees, "TOTAL");
+    const daftarUpahTotals = payrollTotalsOverride || calculatePayrollTotals(employees, "TOTAL");
 
     // Accumulators
     let totalEmployees = daftarUpahTotals.employee_count;

@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { Database } from "../db/client";
+import { resolvePotonganBersihHutangTaskCode } from "./payroll/manualAdjustments/potonganBersihTaskCode";
 
 export interface TaskCodeOption {
     ad_code: string;
@@ -157,18 +158,27 @@ export function buildAutomationAdjustmentOptions(options: TaskCodeOption[]): Aut
         const classification = classifyAutomationAdjustmentOption(option);
         if (!description || !classification) continue;
 
-        const key = `${classification.category}|${option.ad_code}|${description}|${option.loc_code || ""}`;
+        const mappedTaskCode = classification.adjustment_type === "POTONGAN_BERSIH"
+            ? resolvePotonganBersihHutangTaskCode(option.loc_code)
+            : {
+                ad_code: option.ad_code,
+                task_code: option.task_code,
+                base_task_code: option.base_task_code,
+                task_desc: option.task_desc
+            };
+
+        const key = `${classification.category}|${mappedTaskCode.ad_code}|${description}|${option.loc_code || ""}`;
         if (seen.has(key)) continue;
         seen.add(key);
 
         result.push({
             ...classification,
             adjustment_name: description,
-            ad_code: option.ad_code,
+            ad_code: mappedTaskCode.ad_code,
             description,
-            task_code: option.task_code,
-            task_desc: option.task_desc,
-            base_task_code: option.base_task_code,
+            task_code: mappedTaskCode.task_code,
+            task_desc: mappedTaskCode.task_desc,
+            base_task_code: mappedTaskCode.base_task_code,
             loc_code: option.loc_code
         });
     }

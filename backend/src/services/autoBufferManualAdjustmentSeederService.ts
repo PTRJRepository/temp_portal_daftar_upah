@@ -167,7 +167,6 @@ export function buildAutoBufferSeedEntries(
         const empName = normalizeString(row.emp_name || row.nama).toUpperCase() || null;
         const gangCode = normalizeString(row.gang_code).toUpperCase() || "UNKNOWN";
         const hariKerja = Math.max(0, toNumber(row.hari_kerja));
-        const kehadiran = Math.max(0, toNumber(row.jumlah_hk));
         const masaKerjaTahun = Math.max(
             0,
             Math.floor(toNumber(row.masa_kerja_tahun ?? row.masa_kerja_display_years))
@@ -186,7 +185,6 @@ export function buildAutoBufferSeedEntries(
             jabatanText: normalizeString(row.jabatan_estate || row.jabatan),
             roleText: normalizeString(row.jabatan || row.role),
             hariKerja,
-            kehadiran,
             masaKerjaTahun,
             isSpsiMember,
             dbJabatanJumlah,
@@ -538,13 +536,15 @@ export class AutoBufferManualAdjustmentSeederService {
                 FROM PR_ADTRANS t
                 ${gangJoin}
                 WHERE t.DocDate >= ? AND t.DocDate < ? ${gangCondition}
-                
+                AND t.Status IN (1, 3)
+
                 UNION ALL
-                
+
                 SELECT t.EmpCode, t.ID, t.DocDesc, t.DocDate
                 FROM PR_ADTRANS_ARC t
                 ${gangJoin}
                 WHERE t.DocDate >= ? AND t.DocDate < ? ${gangCondition}
+                AND t.Status = 3
             ) t
             LEFT JOIN HR_EMPLOYEE e ON RTRIM(e.EmpCode) = RTRIM(t.EmpCode)
             JOIN (

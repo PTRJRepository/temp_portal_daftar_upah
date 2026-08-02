@@ -266,6 +266,7 @@ export class ManualAdjustmentVerificationService {
             JOIN PR_ADTRANSLN ln ON t.ID = ln.MasterID
             WHERE UPPER(RTRIM(t.LocCode)) = ?
               AND t.PhyMonth = ? AND t.PhyYear = ?
+              AND t.Status IN (1, 3)
               ${gangWhere} ${empFilter}
             GROUP BY t.EmpCode, e.NewICNo, e.EmpName, t.DocDesc
 
@@ -283,6 +284,7 @@ export class ManualAdjustmentVerificationService {
             JOIN PR_ADTRANSLN_ARC ln ON t.ID = ln.MasterID
             WHERE UPPER(RTRIM(t.LocCode)) = ?
               AND t.PhyMonth = ? AND t.PhyYear = ?
+              AND t.Status = 3
               ${gangWhere} ${empFilter}
             GROUP BY t.EmpCode, e.NewICNo, e.EmpName, t.DocDesc
         `;
@@ -308,6 +310,7 @@ export class ManualAdjustmentVerificationService {
                 JOIN PR_ADTRANSLN ln ON t.ID = ln.MasterID
                 WHERE UPPER(RTRIM(t.LocCode)) = ?
                   AND t.PhyMonth = ? AND t.PhyYear = ?
+                  AND t.Status IN (1, 3)
                   ${gangWhere} ${empFilter}
 
                 UNION ALL
@@ -322,6 +325,7 @@ export class ManualAdjustmentVerificationService {
                 JOIN PR_ADTRANSLN_ARC ln ON t.ID = ln.MasterID
                 WHERE UPPER(RTRIM(t.LocCode)) = ?
                   AND t.PhyMonth = ? AND t.PhyYear = ?
+                  AND t.Status = 3
                   ${gangWhere} ${empFilter}
             `;
 
@@ -526,6 +530,7 @@ export class ManualAdjustmentVerificationService {
             JOIN PR_ADTRANSLN ln ON t.ID = ln.MasterID
             WHERE UPPER(RTRIM(t.LocCode)) = ?
               AND t.PhyMonth = ? AND t.PhyYear = ?
+              AND t.Status IN (1, 3)
               ${gangWhere}
             GROUP BY t.DocDesc
 
@@ -537,6 +542,7 @@ export class ManualAdjustmentVerificationService {
             JOIN PR_ADTRANSLN_ARC ln ON t.ID = ln.MasterID
             WHERE UPPER(RTRIM(t.LocCode)) = ?
               AND t.PhyMonth = ? AND t.PhyYear = ?
+              AND t.Status = 3
               ${gangWhere}
             GROUP BY t.DocDesc
         `, [locCode, periodMonth, periodYear, ...uniqueVirtualGangCodes, locCode, periodMonth, periodYear, ...uniqueVirtualGangCodes]);
@@ -709,6 +715,7 @@ export class ManualAdjustmentVerificationService {
             WHERE RTRIM(t.EmpCode) = ?
               AND t.PhyMonth = ? AND t.PhyYear = ?
               AND UPPER(RTRIM(t.LocCode)) = ?
+              AND t.Status IN (1, 3)
               AND (${conditions})
 
             UNION ALL
@@ -719,6 +726,7 @@ export class ManualAdjustmentVerificationService {
             WHERE RTRIM(t.EmpCode) = ?
               AND t.PhyMonth = ? AND t.PhyYear = ?
               AND UPPER(RTRIM(t.LocCode)) = ?
+              AND t.Status = 3
               AND (${conditions})
         `;
 

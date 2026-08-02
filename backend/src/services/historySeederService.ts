@@ -20,11 +20,12 @@ import { duplicateNikMitigationService } from "./DuplicateNikMitigationService";
 import { resolveHistorySeederCleanupPolicy } from "../utils/historySeederCleanup";
 import { payrollSnapshotBatchService } from "./payrollSnapshotBatchService";
 import { payrollProfileSeedService } from "./payrollProfileSeedService";
-import { calculatePayrollTotals } from "./payrollTotalsCalculator";
+import { calculatePayrollTotals, reconcileGangTotalsToGrandTotal } from "./payrollTotalsCalculator";
 import { debug, error as logError } from "../utils/logger";
 import { processInBatches } from "../utils/batchProcessor";
 import type { EmployeeProfileOverrideRow } from "../types/payroll/payrollOverlay";
 import { normalizeEffectiveStartDate } from "../utils/payrollProfileRules";
+import { normalizeManualAdjustmentDivisionCode } from "./payroll/manualAdjustments/manualAdjustmentNaming";
 
 const CATEGORY = "HistorySeeder";
 
@@ -251,7 +252,7 @@ export class HistorySeederService {
     }
 
     private async fetchPayrollData(options: SeederOptions): Promise<any[]> {
-        const rawRows = await this.withRetry(
+        const rows = await this.withRetry(
             () => this.fetchPayrollRowsFromProgressiveSource(options),
             'extractPayrollDataProgressive'
         );
@@ -260,14 +261,51 @@ export class HistorySeederService {
         const isSeedingVirtual = divisionConfigService.isVirtualDivision(options.divisionCode || '');
         const gangMap = new Map<string, any[]>();
 
-        for (const row of rawRows) {
+        for (const row of rows) {
             const gc = row.gang_code?.trim().toUpperCase() || '';
             if (!isSeedingVirtual && virtualGangCodes.has(gc)) continue;
             if (!gangMap.has(gc)) gangMap.set(gc, []);
             gangMap.get(gc)!.push(row);
         }
 
-        return Array.from(gangMap.entries()).map(([gang_code, employees]) => ({ gang_code, employees }));
+        const gangEntries = Array.from(gangMap.entries()).map(([gang_code, employees]) => ({
+            gang_code,
+            employees,
+            division_code: this.resolveGangDivisionCode(options, { gang_code }, employees)
+        }));
+        const totalsKey = (divisionCode: string, gangCode: string) => `${divisionCode}::${gangCode}`;
+        const reconciledPayrollTotalsByGang = new Map<string, ReturnType<typeof calculatePayrollTotals>>();
+        const entriesByDivision = new Map<string, typeof gangEntries>();
+
+        for (const entry of gangEntries) {
+            if (!entriesByDivision.has(entry.division_code)) entriesByDivision.set(entry.division_code, []);
+            entriesByDivision.get(entry.division_code)!.push(entry);
+        }
+
+        for (const entries of entriesByDivision.values()) {
+            const gangPayrollTotals = entries.map((entry) =>
+                calculatePayrollTotals(entry.employees, `TOTAL ${entry.gang_code}`)
+            );
+            const grandPayrollTotals = calculatePayrollTotals(
+                entries.flatMap((entry) => entry.employees),
+                "GRAND TOTAL"
+            );
+            const reconciledPayrollTotals = reconcileGangTotalsToGrandTotal(gangPayrollTotals, grandPayrollTotals);
+
+            entries.forEach((entry, index) => {
+                reconciledPayrollTotalsByGang.set(
+                    totalsKey(entry.division_code, entry.gang_code),
+                    reconciledPayrollTotals[index] || gangPayrollTotals[index]
+                );
+            });
+        }
+
+        return gangEntries.map(({ gang_code, employees, division_code }) => ({
+            gang_code,
+            employees,
+            division_code,
+            payroll_totals: reconciledPayrollTotalsByGang.get(totalsKey(division_code, gang_code)) || calculatePayrollTotals(employees, `TOTAL ${gang_code}`)
+        }));
     }
 
     private async fetchPayrollRowsFromProgressiveSource(options: SeederOptions): Promise<any[]> {
@@ -295,7 +333,7 @@ export class HistorySeederService {
         if (!employees?.length) return;
 
         const resolvedDivisionCode = this.resolveGangDivisionCode(options, gangData, employees);
-        const totals = this.calculateTotals(employees);
+        const totals = this.calculateTotals(employees, gangData.payroll_totals);
         const dynamicPremiHeaders = this.collectDynamicPremiHeaders(employees);
         const dynamicPotonganHeaders = this.collectDynamicPotonganHeaders(employees);
         const snapshotBatch = await payrollSnapshotBatchService.createNextBatch({
@@ -326,28 +364,30 @@ export class HistorySeederService {
     private resolveGangDivisionCode(options: SeederOptions, gangData: any, employees: any[]): string {
         const scopedDivision = options.divisionCode?.trim();
         if (scopedDivision && scopedDivision.toUpperCase() !== "ALL") {
-            return scopedDivision;
+            return normalizeManualAdjustmentDivisionCode(scopedDivision) || scopedDivision.toUpperCase();
         }
 
         const gangCandidate = [gangData?.division_code, gangData?.loc_code]
             .find((value) => typeof value === "string" && value.trim().length > 0);
         if (gangCandidate) {
-            return String(gangCandidate).trim().toUpperCase();
+            const normalized = normalizeManualAdjustmentDivisionCode(String(gangCandidate));
+            return normalized || String(gangCandidate).trim().toUpperCase();
         }
 
         for (const employee of employees) {
             const employeeCandidate = [employee?.division_code, employee?.loc_code]
                 .find((value) => typeof value === "string" && value.trim().length > 0);
             if (employeeCandidate) {
-                return String(employeeCandidate).trim().toUpperCase();
+                const normalized = normalizeManualAdjustmentDivisionCode(String(employeeCandidate));
+                return normalized || String(employeeCandidate).trim().toUpperCase();
             }
         }
 
         return "ALL";
     }
 
-    private calculateTotals(employees: any[]): any {
-        const daftarUpahTotals = calculatePayrollTotals(employees, "TOTAL");
+    private calculateTotals(employees: any[], payrollTotalsOverride?: any): any {
+        const daftarUpahTotals = payrollTotalsOverride || calculatePayrollTotals(employees, "TOTAL");
         const sum = (field: string): number => Math.round(
             employees.reduce((total, emp) => total + (Number(emp?.[field]) || 0), 0)
         );
@@ -536,10 +576,12 @@ export class HistorySeederService {
                 SELECT t.ID as master_id, t.DocID as DocNo, t.DocDate, t.DocDesc, t.EmpCode, ln.ID as line_id, ln.TaskCode, mt.TaskDesc, ln.Amount
                 FROM PR_ADTRANS t JOIN PR_ADTRANSLN ln ON t.ID = ln.MasterID LEFT JOIN PR_TASKCODE mt ON ln.TaskCode = mt.TaskCode
                 WHERE t.EmpCode IN (${empList}) AND t.DocDate >= '${start}' AND t.DocDate < '${end}'
+                  AND t.Status IN (1, 3)
                 UNION ALL
                 SELECT t.ID as master_id, t.DocID as DocNo, t.DocDate, t.DocDesc, t.EmpCode, ln.ID as line_id, ln.TaskCode, mt.TaskDesc, ln.Amount
                 FROM PR_ADTRANS_ARC t JOIN PR_ADTRANSLN_ARC ln ON t.ID = ln.MasterID LEFT JOIN PR_TASKCODE mt ON ln.TaskCode = mt.TaskCode
                 WHERE t.EmpCode IN (${empList}) AND t.DocDate >= '${start}' AND t.DocDate < '${end}'
+                  AND t.Status = 3
             `);
 
             for (const r of adtransRows) {
@@ -661,6 +703,7 @@ export class HistorySeederService {
                             WHERE RTRIM(t.EmpCode) IN (${placeholders})
                               AND t.DocDate >= ?
                               AND t.DocDate < ?
+                              AND t.Status IN (1, 3)
 
                             UNION ALL
 
@@ -673,6 +716,7 @@ export class HistorySeederService {
                             WHERE RTRIM(t.EmpCode) IN (${placeholders})
                               AND t.DocDate >= ?
                               AND t.DocDate < ?
+                              AND t.Status = 3
                         ) src
                         WHERE UPPER(ISNULL(src.doc_desc, '')) LIKE '%SPSI%'
                            OR ISNULL(src.task_code, '') LIKE 'GA9112%'

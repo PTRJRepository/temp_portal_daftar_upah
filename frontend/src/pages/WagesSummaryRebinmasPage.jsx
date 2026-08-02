@@ -8,7 +8,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ArrowDownRight, ArrowUpRight, Minus, Printer, RefreshCw } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { fetchAllDivisionsTotals, fetchAvailablePeriods, fetchComparisonSummary, fetchVirtualDivisions, updateSPSI } from '../services/summaryReportService';
+import { fetchAllDivisionsTotals, fetchAvailablePeriods, fetchComparisonSummary, fetchVirtualDivisions, updateSPSI, updateDivisionCell } from '../services/summaryReportService';
 import { fetchWagesRecapAll } from '../services/wagesService';
 import { otherIncomesService } from '../services/otherIncomesService';
 import { generatePDF } from '../utils/pdfGenerator';
@@ -84,6 +84,7 @@ export default function WagesSummaryRebinmasPage({ onBack, initialMonth, initial
     const [editMode, setEditMode] = useState(false);
     const [editingValues, setEditingValues] = useState({});
     const [editingSPSI, setEditingSPSI] = useState({});
+    const [editingUpahBersih, setEditingUpahBersih] = useState({});
 
     // State
     const [loading, setLoading] = useState(false);
@@ -223,6 +224,32 @@ export default function WagesSummaryRebinmasPage({ onBack, initialMonth, initial
         } catch (err) {
             console.error('Failed to save SPSI:', err);
             alert('Failed to save SPSI value');
+        }
+    };
+
+    // Handle Upah Bersih Change
+    const handleUpahBersihChange = (divisionCode, value) => {
+        setEditingUpahBersih(prev => ({
+            ...prev,
+            [divisionCode]: value
+        }));
+    };
+
+    // Handle Save Upah Bersih
+    const handleSaveUpahBersih = async (divisionCode, value) => {
+        try {
+            await updateDivisionCell(token, {
+                month,
+                year,
+                division_code: divisionCode,
+                field: 'total_upah_bersih',
+                value: parseFloat(value) || 0
+            });
+            // Refresh data to show updated totals
+            await fetchData();
+        } catch (err) {
+            console.error('Failed to save upah bersih:', err);
+            alert('Failed to save upah bersih value');
         }
     };
 
@@ -984,7 +1011,27 @@ export default function WagesSummaryRebinmasPage({ onBack, initialMonth, initial
                         </td>
                         {/* Portal (Net Pay) */}
                         <td className={`text-right border-right-section ${Number(div.total_manual) === 0 ? 'val-zero' : 'val-positive'}`}>
-                            {formatNumber(div.total_manual)}
+                            {editMode ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                    <input
+                                        type="number"
+                                        className="wsp-input-edit"
+                                        value={editingUpahBersih[div.division_code] !== undefined ? editingUpahBersih[div.division_code] : (div.total_manual ?? div.total_upah_bersih)}
+                                        onChange={(e) => handleUpahBersihChange(div.division_code, e.target.value)}
+                                        style={{ width: '100%', textAlign: 'right', padding: '2px 4px', border: '1px solid #3b82f6', borderRadius: '4px', backgroundColor: '#ffffff', color: '#0f172a' }}
+                                    />
+                                    <button
+                                        onClick={() => handleSaveUpahBersih(div.division_code, editingUpahBersih[div.division_code])}
+                                        className="wsp-btn-sm"
+                                        style={{ fontSize: '0.65rem', padding: '2px 6px', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                                        disabled={editingUpahBersih[div.division_code] === undefined}
+                                    >
+                                        Save
+                                    </button>
+                                </div>
+                            ) : (
+                                formatNumber(div.total_manual)
+                            )}
                         </td>
                         {/* Thumb Print */}
                         <td className={`text-right ${Number(div.thumb_print) === 0 ? 'val-zero' : ''}`}>

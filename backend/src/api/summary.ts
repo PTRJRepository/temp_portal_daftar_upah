@@ -7,6 +7,7 @@ import { Config } from "../config";
 import { deductionAdjustmentService } from "../services/deductionAdjustmentService";
 import { luasAreaService } from "../services/luasAreaService";
 import { thumbprintService } from "../services/thumbprintService";
+import { divisionOverrideService } from "../services/divisionOverrideService";
 import { parseBooleanQueryParam } from "../utils/queryParsers";
 import { resolveUserFromHeaders } from "../utils/authBypass";
 import { chooseSummaryDefaultPeriod } from "../utils/summaryDefaultPeriod";
@@ -360,6 +361,7 @@ export const summaryRoutes = new Elysia({ prefix: "/payroll/summary" })
                 count: result.data.length,
                 data: result.data,
                 grand_total: result.grand_total,
+                comparison_total: result.comparison_total,
                 filtered_headers: result.filtered_headers
             };
         } finally {
@@ -633,6 +635,36 @@ export const summaryRoutes = new Elysia({ prefix: "/payroll/summary" })
             month: t.Number(),
             year: t.Number(),
             gang_code: t.String(),
+            field: t.String(),
+            value: t.Number()
+        })
+    })
+    // --- Update Division-Level Summary Cell ---
+    .post("/update-division-cell", async ({ body }) => {
+        const { month, year, division_code, field, value } = body;
+        try {
+            const allowedFields = [
+                'total_upah_bersih',
+                'total_premi',
+                'total_lembur',
+                'total_pph21',
+                'total_spsi',
+                'total_employees',
+                'total_hk'
+            ];
+            if (!allowedFields.includes(field)) {
+                return { success: false, error: `Invalid field: ${field}` };
+            }
+            const success = await divisionOverrideService.updateOverride(month, year, division_code, field, value);
+            return { success, message: 'Division override saved' };
+        } catch (error: any) {
+            return { success: false, error: error.message || 'Failed to update division cell' };
+        }
+    }, {
+        body: t.Object({
+            month: t.Number(),
+            year: t.Number(),
+            division_code: t.String(),
             field: t.String(),
             value: t.Number()
         })

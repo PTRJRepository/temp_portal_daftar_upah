@@ -60,7 +60,10 @@ export class ReportService {
             .replace(/_ARC\)/g, ')')
             .replace(/_ARC\./g, '.')
             .replace(/_ARC,/g, ',')
-            .replace(/_ARC$/g, '');
+            .replace(/_ARC$/g, '')
+            // LIVE PR_ADTRANS uses Status=1 (synced); ARC uses Status=3 (posted).
+            // Swap the filter back when stripping ARC suffix so LIVE mode queries the right status.
+            .replace(/t\.Status = 3/g, 't.Status = 1');
     }
 
     private async getGangConditionSql(gangCode: string, divisionCode?: string, alias: string = 'g'): Promise<{ sql: string; params: any[] }> {
@@ -156,6 +159,7 @@ export class ReportService {
                 WHERE ${cond.sql}
                     AND t.DocDate >= @start
                     AND t.DocDate < @end
+                    AND t.Status = 3
                     AND COALESCE(ln.Amount,0) > 0
                     AND t.DocDesc IS NOT NULL
                     AND UPPER(t.DocDesc) LIKE 'PREMI%'
@@ -171,6 +175,7 @@ export class ReportService {
                 )
                     AND t.DocDate >= @start
                     AND t.DocDate < @end
+                    AND t.Status = 3
                     AND COALESCE(ln.Amount,0) > 0
                 GROUP BY t.EmpCode, t.DocDesc
             `, gangSubCond.params, startDate, endDate, useArc, true),
@@ -199,6 +204,7 @@ export class ReportService {
                 )
                     AND t.DocDate >= @start
                     AND t.DocDate < @end
+                    AND t.Status = 3
                     AND UPPER(t.DocDesc) LIKE '%TUNJANGAN%'
                 GROUP BY t.EmpCode, t.DocDesc
             `, gangSubCond.params, startDate, endDate, useArc),
@@ -213,6 +219,7 @@ export class ReportService {
                 )
                     AND t.DocDate >= @start
                     AND t.DocDate < @end
+                    AND t.Status = 3
                     AND (UPPER(t.DocDesc) LIKE '%POT%'
                          OR UPPER(t.DocDesc) LIKE '%PPH%'
                          OR UPPER(t.DocDesc) LIKE '%BPJS%'
@@ -643,7 +650,7 @@ export class ReportService {
 
             // Compute other_potongan: all dynamic deductions (kontan, thr, pinjam, etc.)
             const other_potongan = dynamicSum;
-            // pendapatan_lainnya: 0 (reportService doesn't compute THR/Bonus/Custom earnings)
+            const pendapatanLainnya = Math.abs(Number(emp.pendapatan_lainnya) || 0);
             const calc = PayrollCalculator.calculate(
                 {
                     gaji_pokok_aktual: emp.gaji_pokok,
@@ -654,7 +661,7 @@ export class ReportService {
                     total_tunjangan: emp.total_tunjangan,
                     total_premi: emp.total_premi,
                     pot_koreksi: potKoreksi,
-                    pendapatan_lainnya: 0,
+                    pendapatan_lainnya: pendapatanLainnya,
                     pot_astek_pekerja: astekPek,
                     pot_bpjs_kesehatan_pekerja: emp.pot_bpjs_kesehatan_pekerja,
                     pot_bpjs_pensiun_pekerja: bpjsPenPek,

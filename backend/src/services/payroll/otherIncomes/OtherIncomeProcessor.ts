@@ -212,6 +212,7 @@ export class OtherIncomeProcessor {
             WHERE t.DocDate >= ? AND t.DocDate < ?
               AND t.DocType IN ('UPAH LEBIH', 'UPAH LAIN', 'POTONGAN TAMBAHAN')
               AND UPPER(t.DocDesc) NOT LIKE '%ADJ%'
+              AND t.Status = 1
               ${gangCondition}
             ORDER BY ln.EmpCode, t.DocDesc
         `;

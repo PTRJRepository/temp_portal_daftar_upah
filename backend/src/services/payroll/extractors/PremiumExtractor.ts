@@ -128,6 +128,7 @@ export class PremiumExtractor {
                   AND UPPER(t.DocDesc) LIKE '%PREMI%'
                   AND UPPER(t.DocDesc) NOT LIKE '%PPH%'
                   AND UPPER(t.DocDesc) NOT LIKE '%ADJ%'
+                  AND t.Status IN (1, 3)
 
                 UNION ALL
 
@@ -139,6 +140,7 @@ export class PremiumExtractor {
                   AND UPPER(t.DocDesc) LIKE '%PREMI%'
                   AND UPPER(t.DocDesc) NOT LIKE '%PPH%'
                   AND UPPER(t.DocDesc) NOT LIKE '%ADJ%'
+                  AND t.Status = 3
             ) t
             JOIN PR_ADTRANSLN ln ON t.ID = ln.MasterID
             LEFT JOIN PR_TASKCODE mt ON ln.TaskCode = mt.TaskCode

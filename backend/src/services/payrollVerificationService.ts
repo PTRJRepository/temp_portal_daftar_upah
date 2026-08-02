@@ -251,6 +251,7 @@ export class PayrollVerificationService {
             JOIN PR_ADTRANSLN ln ON t.ID = ln.MasterID
             WHERE UPPER(RTRIM(t.LocCode)) = ?
               AND t.PhyMonth = ? AND t.PhyYear = ?
+              AND t.Status = 1
               ${gangWhere} ${empFilter}
             GROUP BY t.EmpCode, e.NewICNo, e.EmpName, t.DocDesc
 
@@ -268,6 +269,7 @@ export class PayrollVerificationService {
             JOIN PR_ADTRANSLN_ARC ln ON t.ID = ln.MasterID
             WHERE UPPER(RTRIM(t.LocCode)) = ?
               AND t.PhyMonth = ? AND t.PhyYear = ?
+              AND t.Status = 3
               ${gangWhere} ${empFilter}
             GROUP BY t.EmpCode, e.NewICNo, e.EmpName, t.DocDesc
         `;
@@ -857,6 +859,7 @@ export class PayrollVerificationService {
                     FROM PR_ADTRANS t
                     JOIN PR_ADTRANSLN ln ON t.ID = ln.MasterID
                     WHERE RTRIM(t.EmpCode) = ? AND t.PhyMonth = ? AND t.PhyYear = ?
+                      AND t.Status = 1
                       AND (${conditions})
                 `;
                 const matchRows = await dbPtrj.query<any>(matchQuery, [adj.emp_code, periodMonth, periodYear]);

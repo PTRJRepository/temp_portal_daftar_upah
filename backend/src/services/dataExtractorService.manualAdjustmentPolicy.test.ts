@@ -123,6 +123,26 @@ describe("resolveManualAdjustmentSourcePolicy", () => {
         expect(compare.premi_jaga).toEqual({ db_ptrj: 350000, active: 350000 });
     });
 
+    it("does not mark manual-only fields red when no DB_PTRJ counterpart exists", () => {
+        const syncMeta = {
+            fieldName: "premi_tiket_manual",
+            adjustmentType: "PREMI" as const,
+            adjustmentName: "PREMI TIKET MANUAL",
+            previousAmount: 0,
+            finalAmount: 125000,
+            hadDbValue: false
+        };
+        const dbPtrjAmount = resolveManualAdjustmentDbPtrjCompareAmount(syncMeta, {}, {});
+        const frame: Record<string, "red" | "green"> = {};
+        const compare: Record<string, { db_ptrj: number; active: number }> = {};
+
+        attachManualAdjustmentValueSourceComparison(frame, compare, syncMeta, dbPtrjAmount);
+
+        expect(dbPtrjAmount).toBeNull();
+        expect(frame).toEqual({});
+        expect(compare).toEqual({});
+    });
+
     it("matches DB_PTRJ premi jaga variants to the manual adjustment name field", () => {
         const syncMeta = {
             fieldName: "premi_jaga",

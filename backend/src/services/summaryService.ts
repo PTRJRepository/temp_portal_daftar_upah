@@ -8,6 +8,7 @@ import { Config } from "../config";
 import { thumbprintService } from "./thumbprintService";
 import { deductionAdjustmentService } from "./deductionAdjustmentService";
 import { luasAreaService } from "./luasAreaService";
+import { divisionOverrideService } from "./divisionOverrideService";
 import { currentPeriodService } from "./currentPeriodService";
 import { debug, info, warn, error as logError } from "../utils/logger";
 
@@ -647,7 +648,13 @@ export class SummaryService {
             });
         }
 
-        const finalResults = await deductionAdjustmentService.applyAdjustmentsToDivisionData(month, year, results);
+        let finalResults = await deductionAdjustmentService.applyAdjustmentsToDivisionData(month, year, results);
+        finalResults = await divisionOverrideService.applyOverridesToDivisionData(
+            month,
+            year,
+            finalResults,
+            ['total_upah_bersih', 'total_premi', 'total_lembur', 'total_pph21', 'total_spsi', 'total_employees', 'total_hk']
+        );
 
         debug(CATEGORY, `getAllDivisionsPremiTotals completed in ${Date.now() - startTime}ms`);
 
@@ -1659,11 +1666,16 @@ WHERE row_rank = 1
 ORDER BY division_code, gang_code`;
 
         const rows = await this.extendDb.query<any>(query, params);
-        
+        const isVirtualDivision = divisionCode ? divisionConfigService.isVirtualDivision(divisionCode) : false;
+        const canonicalDivisionCode = divisionCode ? divisionConfigService.resolveCode(divisionCode) : undefined;
+
         // [FIX] Override gang_description with real descriptions from HR_GANG
         for (const row of rows) {
             if (row.gang_code && gangDescs[row.gang_code]) {
                 row.gang_description = gangDescs[row.gang_code];
+            }
+            if (isVirtualDivision && canonicalDivisionCode) {
+                row.division_code = canonicalDivisionCode;
             }
         }
 
@@ -1791,10 +1803,16 @@ ORDER BY division_code, gang_code`;
             return acc;
         }, {} as Record<string, number>);
 
+        const canonicalThumbprintData: Record<string, number> = {};
+        for (const [key, value] of Object.entries(thumbprintData)) {
+            canonicalThumbprintData[divisionConfigService.resolveCode(key)] = Number(value || 0);
+        }
+
         for (const row of results) {
-            const div = row.division_code || "";
-            const thumbValue = Number(thumbprintData[div] || 0);
-            const divisionUpah = Number(upahByDivision[div] || 0);
+            const rawDiv = row.division_code || "";
+            const div = divisionConfigService.resolveCode(rawDiv);
+            const thumbValue = Number(canonicalThumbprintData[div] || 0);
+            const divisionUpah = Number(upahByDivision[rawDiv] || 0);
             row.thumb_print = thumbValue;
             row.selisih = thumbValue > 0 ? divisionUpah - thumbValue : 0;
         }
@@ -1891,19 +1909,33 @@ ORDER BY division_code, gang_code`;
             dynamic_premi_totals: {} as Record<string, number>
         });
 
-        const divisionComparisonTotals = Object.entries(upahByDivision).reduce((acc, [div, upah]) => {
-            const thumbValue = Number(thumbprintData[div] || 0);
-            acc.thumb_print += thumbValue;
-            acc.selisih += thumbValue > 0 ? Number(upah || 0) - thumbValue : 0;
-            return acc;
-        }, { thumb_print: 0, selisih: 0 });
+        let comparisonThumbprint = 0;
+        if (divisionCode) {
+            const canonicalSelectedDiv = divisionConfigService.resolveCode(divisionCode);
+            comparisonThumbprint = Number(canonicalThumbprintData[canonicalSelectedDiv] || 0);
+        } else {
+            comparisonThumbprint = Object.entries(upahByDivision).reduce((sum, [div]) => {
+                const canonicalDiv = divisionConfigService.resolveCode(div);
+                return sum + Number(canonicalThumbprintData[canonicalDiv] || 0);
+            }, 0);
+        }
+        const comparisonUpah = Object.values(upahByDivision).reduce((a, b) => a + Number(b || 0), 0);
+        const comparisonSelisih = comparisonThumbprint > 0 ? comparisonUpah - comparisonThumbprint : 0;
 
-        grandTotal.thumb_print = divisionComparisonTotals.thumb_print;
-        grandTotal.selisih = divisionComparisonTotals.selisih;
+        grandTotal.thumb_print = comparisonThumbprint;
+        grandTotal.selisih = comparisonSelisih;
+
+        const comparisonTotal = {
+            thumb_print: comparisonThumbprint,
+            selisih: comparisonSelisih,
+        };
+
+        console.log(`[SummaryService] division=${divisionCode} canonical=${canonicalDivisionCode} virtual=${isVirtualDivision} thumbprintData=${JSON.stringify(thumbprintData)} comparisonTotal=${JSON.stringify(comparisonTotal)}`);
 
         return {
             data: results,
             grand_total: grandTotal,
+            comparison_total: comparisonTotal,
             filtered_headers: uniqueFilteredHeaders
         };
     }
@@ -2106,6 +2138,7 @@ ORDER BY division_code, gang_code`;
             'total_lembur',
             'total_spsi',
             'total_upah_bersih',
+            'total_pph21',
             'total_premi',
             'total_premi_insentif',
             'total_premi_kinerja',

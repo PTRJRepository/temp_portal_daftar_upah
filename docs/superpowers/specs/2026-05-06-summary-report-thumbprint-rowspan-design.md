@@ -48,6 +48,16 @@ Modify only Summary Report detail payroll mode:
 
 THR mode remains unchanged.
 
+## Signature Placement Baseline
+
+Summary Report signatures must be printed after the table that lists gang-level detail rows (`Detail Per Gang / Estate` or its continuation), not on the premium appendix / `Uraian Premi Per Jenis` page.
+
+This placement is part of the report layout contract:
+
+- `Uraian Premi Per Jenis` is an appendix page and must not render the approval signature section.
+- The last `Detail Per Gang / Estate` print page renders the signature section immediately after the detail table and before the footer.
+- Print tests should guard this placement so future layout changes do not move signatures back to appendix pages.
+
 ## Testing
 
 Use test-first changes.

@@ -1,7 +1,7 @@
 import { Config } from "../config";
 import { divisionDefinition } from "./divisionDefinition";
 import { DataExtractorService } from "./dataExtractorService";
-import { calculatePayrollTotals } from "./payrollTotalsCalculator";
+import { calculatePayrollTotals, reconcileGangTotalsToGrandTotal } from "./payrollTotalsCalculator";
 
 export interface AggregationRecord {
     gang_code: string;
@@ -152,21 +152,22 @@ export class PayrollDataService {
                 division,
                 includeVirtual
             );
+            const dataRows = result.data_rows || [];
 
             // Group by gang and calculate totals manually to match the raw-tree endpoint response format
             const gangsMap: Record<string, any[]> = {};
-            for (const row of result.data_rows) {
+            for (const row of dataRows) {
                 const gang = row.gang_code || "UNKNOWN";
                 if (!gangsMap[gang]) gangsMap[gang] = [];
                 gangsMap[gang].push(row);
             }
 
-            const calculateTotals = (employees: any[]) => {
+            const calculateTotals = (employees: any[], label: string = "TOTAL") => {
                 const activeEmployees = employees.filter((emp: any) => {
                     return (Number(emp.jumlah_hk) || 0) > 0;
                 });
 
-                const daftarUpahTotals = calculatePayrollTotals(activeEmployees, "TOTAL");
+                const daftarUpahTotals = calculatePayrollTotals(activeEmployees, label);
                 const sum = (field: string): number => Math.round(
                     activeEmployees.reduce((total: number, emp: any) => total + (Number(emp[field]) || 0), 0)
                 );
@@ -236,20 +237,18 @@ export class PayrollDataService {
 
             const gangsList = Object.entries(gangsMap).map(([gang_code, employees]) => ({
                 gang_code,
-                gang_totals: calculateTotals(employees)
+                gang_totals: calculateTotals(employees, `TOTAL ${gang_code}`)
             })).sort((a, b) => a.gang_code.localeCompare(b.gang_code));
 
             const allEmployees = Object.values(gangsMap).flat();
-            const divisionTotals = calculateTotals(allEmployees);
-            const gangUpahBersihTotal = gangsList.reduce(
-                (sum, gang) => sum + (Number(gang.gang_totals.upah_bersih) || 0),
-                0
+            const divisionTotals = calculateTotals(allEmployees, "GRAND TOTAL");
+            const reconciledGangTotals = reconcileGangTotalsToGrandTotal(
+                gangsList.map((gang) => gang.gang_totals as any),
+                divisionTotals as any
             );
-            const upahBersihRoundingDelta = (Number(divisionTotals.upah_bersih) || 0) - Math.round(gangUpahBersihTotal);
-            if (upahBersihRoundingDelta !== 0 && gangsList.length > 0) {
-                gangsList[gangsList.length - 1].gang_totals.upah_bersih =
-                    (Number(gangsList[gangsList.length - 1].gang_totals.upah_bersih) || 0) + upahBersihRoundingDelta;
-            }
+            gangsList.forEach((gang, index) => {
+                gang.gang_totals = reconciledGangTotals[index] || gang.gang_totals;
+            });
 
             return {
                 success: true,

@@ -158,15 +158,15 @@
   {
     "adjustment_type": "POTONGAN_BERSIH",
     "adjustment_name": "POTONGAN BPJS",
-    "ad_code": "(DE) POTONGAN BPJS",
-    "task_desc": "(DE) POTONGAN BPJS",
+    "ad_code": "DE0002",
+    "task_desc": "(DE) POTONGAN HUTANG",
     "input_type": "amount",
     "is_active": true
   },
   {
     "adjustment_type": "POTONGAN_BERSIH",
     "adjustment_name": "POTONGAN X",
-    "ad_code": "(DE) POTONGAN HUTANG",
+    "ad_code": "DE0002",
     "task_desc": "(DE) POTONGAN HUTANG",
     "input_type": "amount",
     "is_active": true

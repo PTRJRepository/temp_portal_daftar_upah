@@ -238,6 +238,7 @@ export class OvertimeExtractor {
               AND t.DocDate < ?
               AND UPPER(t.DocDesc) LIKE '%LEMBUR%'
               AND ln.Amount > 0
+              AND t.Status IN (1, 3)
             GROUP BY RTRIM(t.EmpCode)
 
             UNION ALL
@@ -250,6 +251,7 @@ export class OvertimeExtractor {
               AND t.DocDate < ?
               AND UPPER(t.DocDesc) LIKE '%LEMBUR%'
               AND ln.Amount > 0
+              AND t.Status = 3
             GROUP BY RTRIM(t.EmpCode)
         `, [startDate, endDate, startDate, endDate]);
 

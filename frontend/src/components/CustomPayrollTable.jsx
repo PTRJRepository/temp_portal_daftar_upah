@@ -8,6 +8,7 @@ import { exportPayrollToExcel } from '../utils/exportPayrollToExcel';
 import PayrollScrollChapterBar from './PayrollScrollChapterBar';
 import PayrollViewModeToolbar from './PayrollViewModeToolbar';
 import ManualAdjustmentColumnModal from './ManualAdjustmentColumnModal';
+import ConvertPremiumTypeModal from './ConvertPremiumTypeModal';
 import PremiumDetailPopup from './PremiumDetailPopup';
 import { DeferredPayrollNumberInput } from './PayrollDeferredEditInput';
 import { deleteManualAdjustmentColumn, saveManualAdjustment, fetchPremiumDefinitions } from '../services/manualAdjustmentService';
@@ -21,7 +22,7 @@ import { appendSnapshotVersionToSearchParams, buildPayrollSnapshotCacheKey, norm
 import { resolveEffectiveGangPrefix } from '../utils/payrollRequestScope';
 import { resolveJabatanRate } from '../utils/payrollRowAccessors';
 import { formatOtherIncomeColumnLabel, getOtherIncomeDetailFields } from '../utils/otherIncomeColumns';
-import { isPayrollNumericField, isPayrollTotalDisplayOnlyField, resolveGrandTotalNumericValue } from '../utils/payrollGrandTotalValue';
+import { isPayrollNumericField, isPayrollTotalDisplayOnlyField, isSignedPayrollDeductionField, resolveGrandTotalNumericValue } from '../utils/payrollGrandTotalValue';
 import { buildCanonicalManualAdjustmentName, buildManualColumnPlaceholderPayload, buildPendingManualColumn, resolvePremiumDefinitionForAdjustment } from '../utils/payrollManualAdjustmentNames';
 import { buildPremiumDetailEdit, validatePremiumDetailMetadata } from '../utils/payrollPremiumDetailEdits';
 import { normalizeManualDetailInputType, resolveManualDetailInputType } from '../utils/manualDetailInputType';
@@ -31,6 +32,7 @@ import { PAYROLL_HEADER_GROUPS, getPayrollHeaderGroup, isPayrollGroupToggleable,
 import { buildPayrollHeaderRows, getPayrollChapterWindowForGroup } from '../utils/payrollHeaderLayout';
 import { resolvePayrollClientRuntimePolicy } from '../utils/payrollClientRuntime';
 import { compareEmpCodeValues, sortEmployeesByEmpCode } from '../utils/employeeSort';
+import { PayrollAggregator } from '../utils/PayrollAggregator';
 import {
     buildPayrollViewportChapters,
     detectActivePayrollChapter,
@@ -106,12 +108,6 @@ const formatDecimal = (value) => {
     if (isNaN(n)) return '-';
     return new Intl.NumberFormat('id-ID', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(n);
 };
-
-const NEGATIVE_TOTAL_DISPLAY_FIELDS = new Set([
-    'potongan_upah_kotor_total',
-    'total_potongan',
-    'total_potongan_bersih'
-]);
 
 const formatNegativeTotalNumber = (value) => {
     const n = Number(value) || 0;
@@ -493,6 +489,7 @@ const CustomPayrollTable = memo(function CustomPayrollTable({
     const [addedColumns, setAddedColumns] = useState([]); // Track new columns added in edit mode
     const [pendingDeletedColumns, setPendingDeletedColumns] = useState([]);
     const [manualAdjustmentModal, setManualAdjustmentModal] = useState({ isOpen: false, groupLabel: null, adjustmentType: 'PREMI' });
+    const [convertTypeModal, setConvertTypeModal] = useState({ isOpen: false });
     const [isSavingEdits, setIsSavingEdits] = useState(false);
     const [isSeedingAutoBuffer, setIsSeedingAutoBuffer] = useState(false);
 
@@ -1065,6 +1062,9 @@ const CustomPayrollTable = memo(function CustomPayrollTable({
         }
 
         resultRows = resultRows.map(normalizeGrossDeductionForDisplay);
+        resultRows = PayrollAggregator.buildDisplayLedgerRows(resultRows, hasPendingEdits ? null : grandTotal, {
+            allocateToGrandTotal: !hasPendingEdits
+        });
 
         // Cek apakah streaming masih berjalan
         const isStreaming = !stream.isComplete || (stream.progress && stream.progress.stage !== 'complete');
@@ -1107,7 +1107,7 @@ const CustomPayrollTable = memo(function CustomPayrollTable({
         flushEmployeeRows();
 
         return sortedRows;
-    }, [stream.gangs, streamRows, rows, editedCells, editedKontanCells, stream.isComplete, stream.progress, sortBy, sortOrder]);
+    }, [stream.gangs, streamRows, rows, editedCells, editedKontanCells, hasPendingEdits, grandTotal, stream.isComplete, stream.progress, sortBy, sortOrder]);
 
     const employeeRows = useMemo(
         () => displayRows.filter(row => row.type === 'employee'),
@@ -1244,6 +1244,43 @@ const CustomPayrollTable = memo(function CustomPayrollTable({
             return [];
         }
     }, [token]);
+
+    // Build list of premium columns eligible for type conversion (for ConvertPremiumTypeModal "from" dropdown)
+    const convertiblePremiumColumns = useMemo(() => {
+        const seen = new Set();
+        const cols = [];
+        const push = (name) => {
+            const n = String(name || '').trim();
+            if (!n || seen.has(n)) return;
+            seen.add(n);
+            cols.push({ name: n, type: 'PREMI' });
+        };
+        (addedColumns || []).forEach((c) => { if (String(c?.type || '').toUpperCase() === 'PREMI') push(c.name); });
+        Object.entries(dynamicHeaders?.premi || {}).forEach(([name]) => push(name));
+        return cols;
+    }, [addedColumns, dynamicHeaders]);
+
+    const handlePremiumTypeConverted = useCallback(async (result) => {
+        const converted = Number(result?.converted_count || 0);
+        const skipped = Number(result?.skipped_collision_count || 0);
+        const fromName = convertTypeModal.fromName;
+        // Clear local edit state for the old column field (field key derived from old name)
+        setAddedColumns(prev => prev.filter((c) => String(c?.name || '').toUpperCase() !== String(fromName || '').toUpperCase()));
+        setEditedCells(prev => {
+            const next = {};
+            for (const [key] of Object.entries(prev)) {
+                if (!key.endsWith(`-${fromName}`)) next[key] = prev[key];
+            }
+            return next;
+        });
+        await refreshPremiumDefinitions();
+        triggerPayrollRefresh();
+        showPayrollToast(
+            converted > 0 ? 'success' : 'info',
+            'Konversi premi',
+            `${converted} baris dikonversi${skipped ? `, ${skipped} dilewati (collision)` : ''}.`
+        );
+    }, [convertTypeModal.fromName, refreshPremiumDefinitions, triggerPayrollRefresh]);
 
     // Load premium definitions for popup usage, and refresh when edit tools are opened.
     useEffect(() => {
@@ -3752,7 +3789,7 @@ const CustomPayrollTable = memo(function CustomPayrollTable({
                     render: (row) => {
                         const val = Number(row[field] || 0);
                         if (val === 0) return '-';
-                        return formatNumber(val);
+                        return formatNegativeTotalNumber(val);
                     }
                 });
             }
@@ -3765,7 +3802,7 @@ const CustomPayrollTable = memo(function CustomPayrollTable({
                 render: (row) => {
                     const val = Number(row.total_pendapatan_lainnya || 0);
                     if (val === 0) return '-';
-                    return formatNumber(val);
+                    return formatNegativeTotalNumber(val);
                 }
             });
 
@@ -3896,7 +3933,7 @@ const CustomPayrollTable = memo(function CustomPayrollTable({
                             );
                         }
                         if (displayAmount === 0) return '-';
-                        return formatNumber(displayAmount);
+                        return formatNegativeTotalNumber(displayAmount);
                     }
                 });
             }
@@ -4392,7 +4429,8 @@ const CustomPayrollTable = memo(function CustomPayrollTable({
                 gangCode,
                 month,
                 year,
-                valuePriorityMode: normalizeValuePriorityMode(valuePriorityMode)
+                valuePriorityMode: normalizeValuePriorityMode(valuePriorityMode),
+                preferRowGrandTotals: true
             });
             return fileName;
         } catch (err) {
@@ -4400,7 +4438,7 @@ const CustomPayrollTable = memo(function CustomPayrollTable({
             alert('Gagal export ke Excel: ' + err.message);
             return null;
         }
-    }, [displayRows, columnDefs, grandTotal, division, gangCode, month, year, valuePriorityMode]);
+    }, [displayRows, columnDefs, grandTotal, division, gangCode, month, year, valuePriorityMode, hasPendingEdits]);
 
     // Expose export function to parent
     useEffect(() => {
@@ -5001,6 +5039,36 @@ const CustomPayrollTable = memo(function CustomPayrollTable({
                                                     ×
                                                 </button>
                                             )}
+                                            {isEditMode && cell.field && (() => {
+                                                const colDef = resolveManualColumnDefinition(cell.field);
+                                                if (!colDef || colDef.type !== 'PREMI') return null;
+                                                return (
+                                                    <button
+                                                        type="button"
+                                                        onClick={(event) => {
+                                                            event.stopPropagation();
+                                                            setConvertTypeModal({ isOpen: true, fromField: cell.field, fromName: colDef.name });
+                                                        }}
+                                                        title="Ubah jenis premi ini"
+                                                        style={{
+                                                            border: 0,
+                                                            background: '#2563eb',
+                                                            color: '#fff',
+                                                            borderRadius: 999,
+                                                            width: 16,
+                                                            height: 16,
+                                                            lineHeight: '16px',
+                                                            fontSize: 11,
+                                                            fontWeight: 900,
+                                                            cursor: 'pointer',
+                                                            padding: 0,
+                                                            marginLeft: 4
+                                                        }}
+                                                    >
+                                                        ↻
+                                                    </button>
+                                                );
+                                            })()}
                                             {cell.level === 0 && isPayrollGroupToggleable(cell.label) && (
                                                 <span style={{ fontSize: '10px', marginLeft: '4px' }}>
                                                     {getGroupExpandedState(cell.label) ? '▼' : '▶'}
@@ -5105,7 +5173,7 @@ const CustomPayrollTable = memo(function CustomPayrollTable({
                                         }
                                     }
 
-                                    if (typeof displayVal === 'number' && NEGATIVE_TOTAL_DISPLAY_FIELDS.has(col.field)) {
+                                    if (typeof displayVal === 'number' && isSignedPayrollDeductionField(col.field)) {
                                         displayVal = formatNegativeTotalNumber(displayVal);
                                     } else if (typeof displayVal === 'number') {
                                         displayVal = col.field === 'lembur_jam' ? formatDecimal(displayVal) : formatNumber(displayVal);
@@ -5172,11 +5240,11 @@ const CustomPayrollTable = memo(function CustomPayrollTable({
                                 else if (isPayrollNumericField(col.field)) {
                                     const numericValue = resolveGrandTotalNumericValue({
                                         grandTotal,
-                                        rows: employeeRows,
+                                        rows: displayRows,
                                         field: col.field,
-                                        preferRows: hasPendingEdits
+                                        preferRows: true
                                     });
-                                    val = NEGATIVE_TOTAL_DISPLAY_FIELDS.has(col.field)
+                                    val = isSignedPayrollDeductionField(col.field)
                                         ? formatNegativeTotalNumber(numericValue)
                                         : formatNumber(numericValue);
                                 } else if (val !== undefined && val !== null && val !== '') {
@@ -5230,6 +5298,17 @@ const CustomPayrollTable = memo(function CustomPayrollTable({
                 token={token}
                 division={division}
                 initialAdjustmentType={manualAdjustmentModal.adjustmentType || 'PREMI'}
+            />
+            <ConvertPremiumTypeModal
+                isOpen={convertTypeModal.isOpen}
+                onClose={() => setConvertTypeModal({ isOpen: false })}
+                onConverted={handlePremiumTypeConverted}
+                token={token}
+                month={month}
+                year={year}
+                division={division}
+                isProdMode={isProdMode()}
+                currentColumns={convertiblePremiumColumns}
             />
             <PremiumDetailPopup
                 isOpen={premiumPopup.isOpen}

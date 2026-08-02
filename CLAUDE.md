@@ -217,6 +217,11 @@ The SQL Gateway proxies to MSSQL. MSSQL syntax differs from MySQL/Postgres:
 - Use `TOP N` not `LIMIT N`. `LIMIT` causes "Incorrect syntax near 'LIMIT'".
 - Column availability differs per server profile — `PR_ADTRANS.DocType` exists on `db_ptrj` (SERVER_PROFILE_2) but not always; verify column names against the target profile before querying. `Invalid column name` errors mean the column does not exist on that profile/database.
 - `extend_db_ptrj` (SERVER_PROFILE_1) has NO `PR_ADTRANS` table — raw ADTRANS queries must target `db_ptrj`. `extend_db_ptrj` holds `payroll_manual_adjustments`, `employee_other_incomes`, `attendance_manual_input`.
+- `PR_ADTRANS.Status` filter is MANDATORY in every ADTRANS query. Status semantics differ between LIVE and ARC tables (verified 2026-07-02):
+  - `PR_ADTRANS` (LIVE): `Status = 1` = synced/active. `Status = 14` = draft not yet synced (exclude). `Status = 3` = pre-posted.
+  - `PR_ADTRANS_ARC` (archive): `Status = 3` = posted/final (include). `Status = 14` = void/cancelled (exclude), `Status = 4` = reversed (exclude).
+  - ARC has duplicate headers (same emp+desc+period) with Status=3 (valid repost) AND Status=14 (void) — filter `Status = 3` on ARC skips the voided lines that still carry amounts in `PR_ADTRANSLN_ARC`.
+  - In `reportService.runQueryWithMode`, the SQL template is written for ARC (`Status = 3`); `removeArcSuffix` swaps `t.Status = 3` → `t.Status = 1` when stripping `_ARC` for LIVE mode. Any new ADTRANS query added there must use `t.Status = 3` literal so the swap stays correct.
 
 ---
 

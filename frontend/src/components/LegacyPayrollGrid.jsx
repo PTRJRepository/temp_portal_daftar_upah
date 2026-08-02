@@ -495,13 +495,9 @@ export default function LegacyPayrollGrid({
         flatRows = flatRows.filter(r => r.gang_code === targetGangCode);
       }
 
-      // 2. Calculate Grand Total (PayrollAggregator helper)
-      // We calculate Grand Total based on the FILTERED rows (what user sees)
-      // This ensures Grand Total matches the sum of the visible rows
-      const grandTotal = PayrollAggregator.calculateGrandTotal(flatRows);
-
-      // 3. Process Rows (Group by Gang)
+      // 2. Process Rows (Group by Gang)
       const processedRows = [];
+      const displayedGangTotals = [];
 
       // Group flatRows by gang_code
       const gangsMap = {};
@@ -535,6 +531,7 @@ export default function LegacyPayrollGrid({
 
         // Calculate Subtotal
         const gangTotal = PayrollAggregator.calculateGangTotals(gangCode, flatRows);
+        displayedGangTotals.push(gangTotal);
 
         const subtotalRow = {
           ...gangTotal,
@@ -547,6 +544,25 @@ export default function LegacyPayrollGrid({
           no: ''
         };
         processedRows.push(subtotalRow);
+      });
+
+      const grandTotal = PayrollAggregator.calculateGrandTotal(flatRows);
+      const reconciledGangTotals = PayrollAggregator.reconcileGangTotalsToGrandTotal(displayedGangTotals, grandTotal);
+      let subtotalIndex = 0;
+      processedRows.forEach((row, index) => {
+        if (!row?.isTotal) return;
+        processedRows[index] = {
+          ...row,
+          ...reconciledGangTotals[subtotalIndex],
+          isTotal: true,
+          gang_code: row.gang_code,
+          id: row.id,
+          nama: row.nama,
+          nik: '',
+          jenis_kelamin: '',
+          no: ''
+        };
+        subtotalIndex += 1;
       });
 
       setRows(processedRows);
