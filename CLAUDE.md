@@ -2,6 +2,16 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## ⚠️ WAJIB BACA DULU — CONTEXT LAYER
+
+**Baca `AGENTS_CONTEXT.md` di root** sebelum mengerjakan apa pun yang melibatkan: struktur proyek, port, versi/deploy, atau proxy gateway. Itu single source of truth arsitektur.
+
+**Rule yang mengikat semua agent (termasuk subagents):**
+1. **WAJIB CEK** — saat mulai task yang menyentuh struktur/port/deploy/versi/proxy, baca `AGENTS_CONTEXT.md` dulu.
+2. **WAJIB UPDATE** — setelah mengubah: versi yang dipublish, target proxy, port, tambah route/service, atau struktur besar → perbarui `AGENTS_CONTEXT.md`. Jangan tinggalkan kedaluwarsa.
+3. User mengakses app lewat **proxy gateway :3001** (`D:\Server\Services\Main Dashboard\V1\proxy-gateway-portal`), bukan langsung ke port backend. Saat diminta "publish/arahkan user ke versi X", yang diubah adalah **target proxy** (4 tempat di `routes-config*.json`), bukan sekadar start port.
+4. Graphify scope hanya `backend/src` + `frontend/src` — `versions/*` bukan kode app.
+
 ## Project Overview
 
 This is the PT Rebinmas Daftar Upah payroll reporting system. It is a full-stack app with:
@@ -382,3 +392,57 @@ Current preset data in DB has non-standard names that need normalization to form
 - `remarks` field continues to store pipe-delimited string: `name | adcode | amount | sync:STATUS | match:STATUS`
 - Effective amount calculation: `effectiveAmount = metadata_json?.total_amount ?? amount`
 - Frontend: if column has no premium definition, fall back to current free-text behavior (for existing non-standard columns)
+
+## graphify
+
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+
+Rules:
+- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+
+## Versioned Releases (versions/)
+
+Manual release system for running multiple app versions side-by-side, with low-downtime rollback. Each version is a **clean source snapshot** (no tests/log/tmp) in its own folder, runnable directly.
+
+### Structure
+
+```
+versions/
+├── versions.ps1          <- hub command (PowerShell 5.1): list / start / stop / build / new
+├── README.md             <- full guide
+├── v1.5/                 <- release snapshot (backend/ + frontend/, port 8005)
+└── v2.1/                 <- release snapshot (port 8007)
+```
+
+- Each version folder contains `backend/` (src + data + .env copy) and `frontend/` (src + config + built dist).
+- **node_modules is NOT duplicated** — it's a Windows *junction* pointing to the root `backend/node_modules` & `frontend/node_modules`. One physical install, all versions share it. This is by design — never delete the junction targets.
+- Graph scope stays `backend/src` + `frontend/src` only — `versions/*` snapshots are NOT part of the code graph.
+
+### Hub commands (run from versions/)
+
+```powershell
+cd versions
+.\versions.ps1 list                              # versions + RUNNING/stopped status
+.\versions.ps1 start -Version v1.5 -Background   # start version on its port (builds dist if missing)
+.\versions.ps1 build -Version v1.5               # rebuild frontend for that version
+.\versions.ps1 stop -Version v1.5                # stop by port
+.\versions.ps1 new -Version v2.2 -Port 8008      # create new version from CURRENT WORKING TREE
+```
+
+Port registry lives in `$Versions` block at the top of `versions.ps1`. After `new`, manually add the registry line (not auto-written), then `build` + `start`.
+
+### Key behaviors
+
+- `new` copies the **working tree** (including untracked files like new components) — do NOT switch it to `git archive`, that drops untracked files and breaks builds.
+- `.env` is copied from root `backend/.env` per version (same DB connection). `.env` is git-ignored everywhere — never commit it.
+- Rollback = just `start` the older version on its own port; old versions stay alive alongside new ones (blue-green style).
+- Versions live on distinct ports: v1.5=8005, v2.1=8007. The root app keeps its own port (8002).
+
+### Windows / PowerShell 5.1 notes
+
+- `versions.ps1` MUST keep `param()` as the FIRST statement (anything above it breaks parsing).
+- Keep the file UTF-8 **with BOM**; PowerShell 5.1 misreads no-BOM UTF-8.
+- In `new`, dependency copy uses plain `Copy-Item`, and test stripping uses `Where-Object { $_.Name -match '\.(test|spec)\.' }` (PS 5.1 `-Include` without wildcards silently fails).

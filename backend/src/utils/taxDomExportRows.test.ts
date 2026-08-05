@@ -47,7 +47,9 @@ describe("prepareDomTaxExcelRows", () => {
         expect(result.employees[0].pendapatan_bonus).toBe(50000);
         expect(result.employees[0].pendapatan_thr).toBe(25000);
         expect(result.employees[0].pendapatan_kontan).toBe(15000);
-        expect(result.employees[0].pot_alpa_cth).toBe(-20000);
+        // pot_alpa_cth tidak lagi di-set di taxDomExportRows — potongan alpa dihitung di
+        // taxReportExcelService dengan upah_dasar × jumlah_hari_dalam_bulan (bukan ×HK).
+        expect(result.employees[0].pot_alpa_cth).toBeUndefined();
         expect(result.employees[0].premi_detail).toEqual({
             premi_pruning: 30000,
             premi_brondol: 20000

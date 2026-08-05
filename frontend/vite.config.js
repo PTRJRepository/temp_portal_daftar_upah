@@ -117,7 +117,9 @@ export default defineConfig({
     'process.env.VITE_BACKEND_BASE': JSON.stringify(backendTarget),
     // Also expose mode flags
     'process.env.VITE_PROXY_MODE': JSON.stringify(isProxyMode),
-    'process.env.VITE_BASE_PATH': JSON.stringify(basePath)
+    'process.env.VITE_BASE_PATH': JSON.stringify(basePath),
+    // Versi app — set APP_VERSION saat build (misal: APP_VERSION=v1.5-publish npm run build)
+    'process.env.VITE_APP_VERSION': JSON.stringify(process.env.APP_VERSION || 'dev')
   },
   // Base path: Use /upah/ for proxy mode, / for local development
   base: basePath,

@@ -232,6 +232,19 @@ export class GangService {
     }
 
     /**
+     * Cek apakah gang termasuk "gang percobaan" — satu-satunya gang yang boleh
+     * mengubah PTKP master langsung dari CustomPayrollTable.
+     * Rule (confirmed user 2026-08-03): desc mengandung "PERCOBAAN"
+     * ATAU gang_code berakhiran "P" ATAU gang_code mengandung "BHL".
+     */
+    public isPercobaanGang(gangCode?: string | null, gangDesc?: string | null): boolean {
+        const code = String(gangCode || '').trim().toUpperCase();
+        const desc = String(gangDesc || '').trim().toUpperCase();
+        if (!code && !desc) return false;
+        return desc.includes('PERCOBAAN') || code.endsWith('P') || code.includes('BHL');
+    }
+
+    /**
      * Get gang codes for a virtual division
      * Returns ONLY the specific gang codes, not parent divisions
      * Uses DivisionConfigService for pattern matching

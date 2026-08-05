@@ -2609,6 +2609,7 @@ export class DataExtractorService {
                 gender: String(r.gender || "1"),
                 loc_code: resolvedLocCode,
                 gang_code: rawGangCode, // Return exact fetched code
+                gang_desc: rawDesc, // Gang Description (e.g. "HARVESTING A.KUNYAL (PERCOBAAN)") — for percobaan-gang PTKP gating
                 pay_rate: r.pay_rate || 0,
                 beras_rate: r.beras_rate || 0,
                 join_date: r.join_date || null,
@@ -4413,6 +4414,7 @@ export class DataExtractorService {
                 nik: emp.actual_nik || emp.emp_code,  // NIK from extend_db_ptrj or fallback to emp_code
                 nama: emp.emp_name,
                 gang_code: emp.gang_code,
+                gang_desc: emp.gang_desc || '',
                 loc_code: emp.loc_code,
                 gender: emp.gender,
                 join_date: emp.join_date || null,

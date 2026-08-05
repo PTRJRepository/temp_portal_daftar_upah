@@ -16,6 +16,7 @@ import { ptkpTaxService } from "../services/ptkpTaxService";
 import { EmployeeEstateService } from "../services/employeeEstateService";
 import { Database } from "../db/client";
 import { gangService } from "../services/gangService";
+import { employeeDetailService } from "../services/employeeDetailService";
 import { resolveMonthlyTaxQuery } from "../utils/taxReportQuery";
 import { getApiKeyHeader, getAuthorizationHeader, resolveUserFromHeaders } from "../utils/authBypass";
 import { historyDatabaseService } from "../services/historyDatabaseService";
@@ -1555,6 +1556,19 @@ export const taxReportRoutes = new Elysia({ prefix: "/tax-report" })
             if (!validStatuses.includes(ptkp_status)) {
                 set.status = 400;
                 return { success: false, error: `Invalid PTKP status. Must be one of: ${validStatuses.join(', ')}` };
+            }
+
+            // [GATE] Hanya gang percobaan (desc "PERCOBAAN" / code berakhiran P / code BHL)
+            // yang boleh mengubah PTKP master langsung dari CustomPayrollTable.
+            const empInfo = await employeeDetailService.getEmployeeInfo(empCode).catch(() => null);
+            const employeeGangCode = empInfo?.gang_code || '';
+            const employeeGangDesc = empInfo?.gang_description || '';
+            if (!gangService.isPercobaanGang(employeeGangCode, employeeGangDesc)) {
+                set.status = 403;
+                return {
+                    success: false,
+                    error: `PTKP master hanya bisa diubah untuk gang percobaan (description mengandung PERCOBAAN, gang code berawalan P, atau mengandung BHL). Gang: ${employeeGangCode || 'unknown'} - ${employeeGangDesc || 'unknown'}`
+                };
             }
 
             const username = currentUser?.username || 'system';

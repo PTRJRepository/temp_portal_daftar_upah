@@ -24,6 +24,13 @@ export async function fetchManualAdjustments(token, params) {
     return response.data;
 }
 
+export async function fetchManualEditAllowed(token) {
+    const response = await axios.get('payroll/manual-adjustment/allowed', {
+        headers: authHeaders(token)
+    });
+    return response.data;
+}
+
 export async function saveManualAdjustment(token, payload) {
     const response = await axios.post('payroll/manual-adjustment', payload, {
         headers: authHeaders(token)

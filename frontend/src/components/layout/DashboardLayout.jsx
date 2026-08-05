@@ -92,8 +92,26 @@ export default function DashboardLayout({ children, title, subtitle, actions }) 
             </svg>
           </div>
           <div>
-            <h1 style={{ margin: 0, fontSize: '17px', fontWeight: '700', color: '#f8f9fa', letterSpacing: '0.02em' }}>
+            <h1 style={{ margin: 0, fontSize: '17px', fontWeight: '700', color: '#f8f9fa', letterSpacing: '0.02em', display: 'flex', alignItems: 'center', gap: '8px' }}>
               {title || 'Payroll Dashboard'}
+              {/* Versi running badge */}
+              <span style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                height: '22px',
+                padding: '0 8px',
+                background: '#16a34a',
+                color: '#ffffff',
+                border: '1px solid #15803d',
+                borderRadius: '999px',
+                fontSize: '11px',
+                fontWeight: '700',
+                letterSpacing: '0.3px',
+                whiteSpace: 'nowrap',
+                verticalAlign: 'middle',
+              }} title="Versi aplikasi yang sedang running">
+                {process.env.VITE_APP_VERSION || 'dev'}
+              </span>
             </h1>
             {subtitle && (
               <div style={{ fontSize: '12px', color: '#cbd5e1', fontWeight: '500' }}>

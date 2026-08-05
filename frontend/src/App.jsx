@@ -65,6 +65,7 @@ import ImpactReportPage from './pages/ImpactReportPage'
 import TaxReportPage from './pages/TaxReportPage'
 import OtherIncomesPage from './pages/OtherIncomesPage'
 import { downloadMonthlyTaxReportExcelFromDOM } from './services/taxReportService'
+import { fetchManualEditAllowed } from './services/manualAdjustmentService'
 import { appendSnapshotVersionToSearchParams, normalizeSnapshotVersion } from './utils/payrollSnapshotQuery'
 import { shouldIgnoreGangPrefixForDivision } from './utils/payrollRequestScope'
 import { resolveGangPrefixAfterAvailablePrefixesChange } from './utils/payrollGangPrefixState'
@@ -109,6 +110,32 @@ const OperationalReportWrapper = () => {
   const [payrollDataLoaded, setPayrollDataLoaded] = useState(false);
   const [selectedEmployees, setSelectedEmployees] = useState([]);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [manualEditAllowed, setManualEditAllowed] = useState(true);
+  const [manualEditBlockReason, setManualEditBlockReason] = useState('');
+
+  // Rule cutoff manual input: jika tanggal hari ini > 3, semua input manual dari mode edit diblok.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetchManualEditAllowed(token);
+        if (cancelled) return;
+        setManualEditAllowed(res?.allowed !== false);
+        setManualEditBlockReason(res?.reason || '');
+      } catch {
+        // Gagal fetch → default izinkan (jangan block user saat API error)
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [token]);
+
+  const handleToggleEditMode = () => {
+    if (!manualEditAllowed) {
+      alert(manualEditBlockReason || 'Input manual diblokir: tanggal hari ini > 3.');
+      return;
+    }
+    setIsEditMode(prev => !prev);
+  };
   const [useHistoryDb, setUseHistoryDb] = useState(false);
   const [snapshotVersion, setSnapshotVersion] = useState('');
   const [resolvedSnapshotVersion, setResolvedSnapshotVersion] = useState(null);
@@ -716,27 +743,28 @@ const OperationalReportWrapper = () => {
           {/* Right: Highlighted Edit Button */}
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <button
-              onClick={() => setIsEditMode(!isEditMode)}
+              onClick={handleToggleEditMode}
+              disabled={!manualEditAllowed}
+              title={manualEditAllowed ? (isEditMode ? "Matikan Edit Mode" : "Aktifkan Edit Mode (Data Tabel)") : (manualEditBlockReason || "Input manual diblokir")}
               style={{
                 height: '32px',
                 padding: '0 16px',
-                backgroundColor: isEditMode ? '#d97706' : 'rgba(245, 158, 11, 0.1)',
-                color: isEditMode ? '#ffffff' : '#f59e0b',
-                border: `1px solid ${isEditMode ? '#b45309' : '#f59e0b'}`,
+                backgroundColor: isEditMode ? '#d97706' : (manualEditAllowed ? 'rgba(245, 158, 11, 0.1)' : 'rgba(108, 117, 125, 0.1)'),
+                color: isEditMode ? '#ffffff' : (manualEditAllowed ? '#f59e0b' : '#adb5bd'),
+                border: `1px solid ${isEditMode ? '#b45309' : (manualEditAllowed ? '#f59e0b' : '#ced4da')}`,
                 borderRadius: '6px',
                 fontWeight: '700',
                 fontSize: '0.85rem',
-                cursor: 'pointer',
+                cursor: manualEditAllowed ? 'pointer' : 'not-allowed',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
                 transition: 'all 0.2s',
                 boxShadow: isEditMode ? '0 2px 4px rgba(217, 119, 6, 0.3)' : 'none'
               }}
-              title={isEditMode ? "Matikan Edit Mode" : "Aktifkan Edit Mode (Data Tabel)"}
             >
               <span>{isEditMode ? '🔓' : '✏️'}</span>
-              {isEditMode ? 'Edit Aktif' : 'Mode Edit'}
+              {isEditMode ? 'Edit Aktif' : (manualEditAllowed ? 'Mode Edit' : 'Edit Diblokir')}
             </button>
           </div>
         </div>
@@ -1021,10 +1049,17 @@ const OperationalReportWrapper = () => {
 OperationalReportWrapper.displayName = 'OperationalReportWrapper';
 
 // Protected Route Wrapper
+// Di proxy/prod mode, redirect ke root /login (gateway login), bukan /upah/login.
+// window.location.replace bypass React Router basename (/upah) → langsung ke origin root.
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useAuth();
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    if (isProdMode()) {
+      redirectToExternalLogin();
+    } else {
+      window.location.replace('/login');
+    }
+    return null;
   }
   return children;
 };
@@ -1054,7 +1089,8 @@ function AppInner() {
       // 2. DEV MODE: External Login Redirect
       if (!isAuthenticated && !isLoginPath && !inProdMode) {
         console.log('[App] Dev mode: Not authenticated, redirecting to login')
-        navigate('/login')
+        // Hard redirect ke root /login — bypass React Router basename (/upah) supaya tidak jadi /upah/login
+        window.location.replace('/login')
         return
       }
 

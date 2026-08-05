@@ -250,6 +250,15 @@ const getManualDetailValidation = ({ metadata, inputType, amount, adjustmentType
     return validation.isComplete ? null : validation;
 };
 
+// Gang percobaan = satu-satunya gang yang boleh mengubah PTKP master
+// (rule sama dengan backend gangService.isPercobaanGang, 2026-08-03)
+const isPercobaanGang = (gangCode, gangDesc) => {
+    const code = String(gangCode || '').trim().toUpperCase();
+    const desc = String(gangDesc || '').trim().toUpperCase();
+    if (!code && !desc) return false;
+    return desc.includes('PERCOBAAN') || code.endsWith('P') || code.includes('BHL');
+};
+
 const MANUAL_CELL_DELETE_MARKER = 'DELETE_CELL';
 
 const buildManualCellDeleteRemarks = (name) => `${name || 'MANUAL ADJUSTMENT'} | ${MANUAL_CELL_DELETE_MARKER} | 0`;
@@ -1718,6 +1727,14 @@ const CustomPayrollTable = memo(function CustomPayrollTable({
 
         if (newPtkpStatus === originalValue) return;
 
+        // [GATE] PTKP master hanya boleh diubah untuk gang percobaan
+        // (desc mengandung "PERCOBAAN", code berakhiran P, atau code mengandung BHL).
+        if (!isPercobaanGang(row.gang_code, row.gang_desc)) {
+            showPayrollToast('error', 'PTKP Terkunci',
+                `PTKP master hanya bisa diubah untuk gang percobaan (PERCOBAAN / berakhiran P / BHL). Gang: ${row.gang_code || 'unknown'} - ${row.gang_desc || 'unknown'}`);
+            return;
+        }
+
         // Determine new TER category based on PTKP
         const newTer = (['TK/0', 'TK/1', 'K/0'].includes(newPtkpStatus)) ? 'TER A'
             : (newPtkpStatus === 'K/3') ? 'TER C' : 'TER B';
@@ -2803,13 +2820,23 @@ const CustomPayrollTable = memo(function CustomPayrollTable({
                             const editKey = `${empCode}-status_ptkp`;
                             const isEdited = !!editedCells[editKey];
                             const ptkpOptions = ['TK/0', 'TK/1', 'TK/2', 'TK/3', 'K/0', 'K/1', 'K/2', 'K/3'];
+                            const canEditPtkp = isPercobaanGang(row.gang_code, row.gang_desc);
                             return (
                                 <select
                                     className={`edit-input ${isEdited ? 'cell-edited' : ''}`}
                                     value={row.status_ptkp || 'TK/0'}
-                                    onChange={(e) => handlePtkpEdit(row, e.target.value)}
+                                    onChange={(e) => {
+                                        if (!canEditPtkp) {
+                                            showPayrollToast('error', 'PTKP Terkunci',
+                                                `PTKP master hanya bisa diubah untuk gang percobaan (PERCOBAAN / berakhiran P / BHL). Gang: ${row.gang_code || 'unknown'} ${row.gang_desc ? '- ' + row.gang_desc : ''}`);
+                                            return;
+                                        }
+                                        handlePtkpEdit(row, e.target.value);
+                                    }}
                                     onClick={(e) => e.stopPropagation()}
-                                    style={{ fontSize: '11px', padding: '1px 2px', width: '100%', cursor: 'pointer' }}
+                                    disabled={!canEditPtkp}
+                                    title={canEditPtkp ? 'Ubah status PTKP' : 'PTKP terkunci — hanya gang percobaan yang bisa diubah'}
+                                    style={{ fontSize: '11px', padding: '1px 2px', width: '100%', cursor: canEditPtkp ? 'pointer' : 'not-allowed' }}
                                 >
                                     {ptkpOptions.map(opt => (
                                         <option key={opt} value={opt}>{opt}</option>

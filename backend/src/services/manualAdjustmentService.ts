@@ -1930,6 +1930,19 @@ export class ManualAdjustmentService {
         return ManualAdjustmentService.instance;
     }
 
+    /**
+     * Rule cutoff manual input: jika tanggal hari ini > 3, semua input manual dari mode edit diblok.
+     * Berlaku untuk semua periode (bulan lalu pun diblok). Hanya block tanggal, bukan jam.
+     * `now` di-inject untuk test; default hari ini.
+     */
+    public getManualEditAllowed(now: Date = new Date()): boolean {
+        return now.getDate() <= 3;
+    }
+
+    public getManualEditBlockReason(now: Date = new Date()): string {
+        return `Input manual diblokir: tanggal ${now.getDate()} > 3. Edit manual hanya bisa dilakukan tanggal 1-3 setiap bulan.`;
+    }
+
     private getDatabase(): Database {
         return Database.getInstance(Config.DB_EXTEND_DATABASE, Config.DB_EXTEND_PROFILE);
     }

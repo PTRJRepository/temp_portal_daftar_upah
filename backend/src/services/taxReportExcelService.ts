@@ -484,13 +484,19 @@ export const generateMonthlyTaxExcel = async (
         row.getCell(COL_GP_AKTUAL).value = emp.gaji_pokok_aktual || 0;
         row.getCell(COL_KOREKSI).value = emp.koreksi_hk || 0;
 
-        // Potongan Alpa (from gaji difference: GP_IDEAL - GP_AKTUAL when negative)
-        const hkDiffMainFromFields = (Number(emp.gaji_pokok_aktual) || 0) - (Number(emp.gaji_pokok_ideal) || 0);
-        const explicitKoreksiHkMain = firstFiniteNumberValue(emp.koreksi_hk);
-        const hkDiffMain = explicitKoreksiHkMain !== 0 ? explicitKoreksiHkMain : hkDiffMainFromFields;
-        const potAlpa = resolvePotonganAlpa(emp, hkDiffMain);
-        const lebihHk = resolveLebihHk(emp, hkDiffMain);
+        // Potongan Alpa = GP_IDEAL(penuh) − GP_AKTUAL, di mana GP_IDEAL = jumlah_hari_dalam_bulan × upah_dasar
+        // (BUKAN upah_dasar×HK — yang itu cuma koreksi_hk, bukan hari yang tidak masuk.)
+        // daysInMonthMain sudah dideklarasikan di atas (line ~481).
+        const upahDasarMain = Number(emp.upah_dasar) || 0;
+        const gajiAktualMain = Number(emp.gaji_pokok_aktual) || 0;
+        const gajiIdealPenuhMain = upahDasarMain > 0 ? upahDasarMain * daysInMonthMain : (Number(emp.gaji_pokok_ideal) || 0);
+        // resolvePotonganAlpa expects NEGATIVE fallback (min(0, diff)); alpa = aktual − ideal_penuh
+        const alpaDiffMain = gajiAktualMain - gajiIdealPenuhMain;
+        const potAlpa = resolvePotonganAlpa(emp, alpaDiffMain);
         row.getCell(COL_POT_ALPA).value = potAlpa;
+
+        const hkDiffMain = (gajiAktualMain - (Number(emp.gaji_pokok_ideal) || 0));
+        const lebihHk = resolveLebihHk(emp, hkDiffMain);
         row.getCell(COL_LEBIH_HK).value = lebihHk;
 
         // Tunjangan — Service Time Allow = Lembur
@@ -977,9 +983,13 @@ export const generateMonthlyTaxExcel = async (
                     ? gajiPokokDibayar - (explicitPotonganAlpa > 0 ? -explicitPotonganAlpa : explicitPotonganAlpa)
                     : gajiPokokDibayar;
             const gajiPokokValue = firstFiniteNumberValue(emp.gaji_pokok_bulanan, emp.gaji_pokok_standar, gajiPokokFallback);
+            // Potongan Alpa = GP_IDEAL(penuh) − GP_AKTUAL; GP_IDEAL = hari_dalam_bulan × upah_dasar (bukan ×HK)
+            const alpaIdealStd = upahDasar > 0 ? upahDasar * daysInMonth : gajiPokokValue;
+            // resolvePotonganAlpa expects NEGATIVE fallback; alpa = aktual − ideal_penuh
+            const alpaDiffStd = gajiPokokDibayar - alpaIdealStd;
+            const potonganAlpa = resolvePotonganAlpa(emp, alpaDiffStd);
             const explicitKoreksiHkStd = firstFiniteNumberValue(emp.koreksi_hk);
             const hkDiffStd = explicitKoreksiHkStd !== 0 ? explicitKoreksiHkStd : gajiPokokDibayar - gajiPokokValue;
-            const potonganAlpa = resolvePotonganAlpa(emp, hkDiffStd);
             const lebihHk = resolveLebihHk(emp, hkDiffStd);
 
             // Debug first employee

@@ -66,6 +66,17 @@ function buildAutoBufferSeedEndpointResponse(result: any) {
     };
 }
 
+// Rule cutoff manual input (mode edit): jika tanggal hari ini > 3, semua input manual diblok.
+// Berlaku untuk semua periode. Gate dipasang di route mutasi (manual-edit / manual-adjustment POST),
+// bukan di service — sehingga jalur non-edit (preset, import, convert) tetap berjalan.
+async function getManualEditGate(): Promise<{ allowed: boolean; reason: string }> {
+    const { manualAdjustmentService } = await import("../services/manualAdjustmentService");
+    return {
+        allowed: manualAdjustmentService.getManualEditAllowed(),
+        reason: manualAdjustmentService.getManualEditBlockReason()
+    };
+}
+
 function parseAdjustmentNameOptionTypes(value?: string): { types: AdjustmentNameOptionType[]; invalid: string[] } {
     const aliases: Record<string, AdjustmentNameOptionType> = {
         PREMI: "PREMI",
@@ -552,6 +563,11 @@ export const payrollRoutes = new Elysia({ prefix: "/payroll" })
     // --- Save Manual Edit ---
     .post("/manual-edit", async ({ body, currentUser, set }) => {
         try {
+            const gate = await getManualEditGate();
+            if (!gate.allowed) {
+                set.status = 403;
+                return { success: false, error: gate.reason };
+            }
             const { manualAdjustmentService } = await import("../services/manualAdjustmentService");
             const { cacheService } = await import("../services/cacheService");
             const data = body as any;
@@ -671,8 +687,22 @@ export const payrollRoutes = new Elysia({ prefix: "/payroll" })
             recompute_sync: t.Optional(t.String())
         })
     })
+    .get("/manual-adjustment/allowed", async () => {
+        const { manualAdjustmentService } = await import("../services/manualAdjustmentService");
+        const allowed = manualAdjustmentService.getManualEditAllowed();
+        return {
+            success: true,
+            allowed,
+            reason: allowed ? null : manualAdjustmentService.getManualEditBlockReason()
+        };
+    })
     .post("/manual-adjustment", async ({ body, currentUser, set }) => {
         try {
+            const gate = await getManualEditGate();
+            if (!gate.allowed) {
+                set.status = 403;
+                return { success: false, error: gate.reason };
+            }
             const data = body as any;
             const allowedTypes = ["PREMI", "POTONGAN_KOTOR", "POTONGAN_BERSIH", "PENDAPATAN_LAINNYA"];
 
@@ -734,6 +764,11 @@ export const payrollRoutes = new Elysia({ prefix: "/payroll" })
     // --- Convert premium type (per-column bulk) ---
     .post("/manual-adjustment/convert-type", async ({ body, currentUser, set }) => {
         try {
+            const gate = await getManualEditGate();
+            if (!gate.allowed) {
+                set.status = 403;
+                return { success: false, error: gate.reason };
+            }
             const { manualAdjustmentService } = await import("../services/manualAdjustmentService");
             const { premiumDefinitionService } = await import("../services/premiumDefinitionService");
             // Pre-check validation gate — return 422 with reason if blocked
@@ -766,6 +801,11 @@ export const payrollRoutes = new Elysia({ prefix: "/payroll" })
     })
     .delete("/manual-adjustment/column", async ({ query, set }) => {
         try {
+            const gate = await getManualEditGate();
+            if (!gate.allowed) {
+                set.status = 403;
+                return { success: false, error: gate.reason };
+            }
             const periodMonth = Number(query.period_month);
             const periodYear = Number(query.period_year);
             if (!Number.isInteger(periodMonth) || periodMonth < 1 || periodMonth > 12) {
@@ -805,6 +845,11 @@ export const payrollRoutes = new Elysia({ prefix: "/payroll" })
     })
     .delete("/manual-adjustment/:id", async ({ params, query, set }) => {
         try {
+            const gate = await getManualEditGate();
+            if (!gate.allowed) {
+                set.status = 403;
+                return { success: false, error: gate.reason };
+            }
             const id = Number(params.id);
             if (!Number.isInteger(id) || id <= 0) {
                 set.status = 400;
@@ -1882,6 +1927,21 @@ export const payrollRoutes = new Elysia({ prefix: "/payroll" })
             dry_run: t.Optional(t.Boolean()),
             limit: t.Optional(t.Number())
         })
+    })
+    // --- Locked: Token Verification (used by frontend verifyExternalToken) ---
+    .get("/locked/verify", async ({ currentUser, set }): Promise<any> => {
+        // currentUser is derived from Authorization via derive() (401 if absent).
+        // Frontend lockedDivisionService.verifyExternalToken() expects { valid, ... }
+        const divisions = currentUser?.divisions || [];
+        return {
+            valid: true,
+            username: currentUser.username,
+            role: currentUser.role,
+            divisions,
+            division: divisions[0] || null,
+            id: currentUser.id,
+            full_name: currentUser.full_name
+        };
     })
     // --- Locked Report: Raw Tree (Alias for Proxy/Frontend Compat) ---
     .get("/locked/report/raw-tree", async ({ query, set, currentUser }): Promise<any> => {

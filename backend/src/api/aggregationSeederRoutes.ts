@@ -1238,7 +1238,7 @@ export async function fetchMillData(month: number, year: number) {
 
     // 2. Get Gaji Bersih (Net Salary) - IsTakeHomePay = 1
     const salaryQuery = `
-        SELECT CAST(SUM(CAST([CompAmount] AS DECIMAL(18,2))) AS BIGINT) AS TotalCompAmount
+        SELECT CAST(ROUND(SUM(CAST([CompAmount] AS DECIMAL(18,2))), 0) AS BIGINT) AS TotalCompAmount
         FROM [dbo].[HR_T_PYWeekly_DComponent]
         WHERE [PYNumber] LIKE ?
           AND [IsTakeHomePay] = 1
@@ -1247,7 +1247,7 @@ export async function fetchMillData(month: number, year: number) {
 
     // 3. Get PPh21
     const pphQuery = `
-        SELECT CAST(SUM(ABS(CAST([CompAmount] AS DECIMAL(18,2)))) AS BIGINT) AS totalCount
+        SELECT CAST(ROUND(SUM(ABS(CAST([CompAmount] AS DECIMAL(18,2)))), 0) AS BIGINT) AS totalCount
         FROM [dbo].[HR_T_PYWeekly_DComponent]
         WHERE [PYNumber] LIKE ?
           AND [PYCompCode] LIKE '#PPH21%'
@@ -1256,7 +1256,7 @@ export async function fetchMillData(month: number, year: number) {
 
     // 4. Get SPSI
     const spsiQuery = `
-        SELECT CAST(SUM(ABS(CAST([CompAmount] AS DECIMAL(18,2)))) AS BIGINT) AS totalCount
+        SELECT CAST(ROUND(SUM(ABS(CAST([CompAmount] AS DECIMAL(18,2)))), 0) AS BIGINT) AS totalCount
         FROM [dbo].[HR_T_PYWeekly_DComponent]
         WHERE [PYNumber] LIKE ?
           AND [PYCompCode] LIKE '#POT_spsi%'
@@ -1265,7 +1265,7 @@ export async function fetchMillData(month: number, year: number) {
 
     // 5. Get Overtime
     const otQuery = `
-        SELECT CAST(SUM(CAST([CompAmount] AS DECIMAL(18,2))) AS BIGINT) AS totalCount
+        SELECT CAST(ROUND(SUM(CAST([CompAmount] AS DECIMAL(18,2))), 0) AS BIGINT) AS totalCount
         FROM [dbo].[HR_T_PYWeekly_DComponent]
         WHERE [PYNumber] LIKE ?
           AND [PYCompCode] LIKE '%#OT%'
@@ -1274,7 +1274,7 @@ export async function fetchMillData(month: number, year: number) {
 
     // 6. Get Gaji Pokok
     const gpQuery = `
-        SELECT CAST(SUM(CAST([CompAmount] AS DECIMAL(18,2))) AS BIGINT) AS totalCount
+        SELECT CAST(ROUND(SUM(CAST([CompAmount] AS DECIMAL(18,2))), 0) AS BIGINT) AS totalCount
         FROM [dbo].[HR_T_PYWeekly_DComponent]
         WHERE [PYNumber] LIKE ?
           AND [PYCompCode] = '#GP#'
@@ -1284,9 +1284,9 @@ export async function fetchMillData(month: number, year: number) {
     // 7. Get Total Deductions (all negative components with IsTakeHomePay=1)
     // Note: CompAmount is stored as nvarchar, use CASE to safely convert
     const dedQuery = `
-        SELECT CAST(SUM(CASE WHEN TRY_CAST([CompAmount] AS DECIMAL(18,2)) < 0
+        SELECT CAST(ROUND(SUM(CASE WHEN TRY_CAST([CompAmount] AS DECIMAL(18,2)) < 0
                               THEN ABS(TRY_CAST([CompAmount] AS DECIMAL(18,2)))
-                              ELSE 0 END) AS BIGINT) AS totalCount
+                              ELSE 0 END), 0) AS BIGINT) AS totalCount
         FROM [dbo].[HR_T_PYWeekly_DComponent]
         WHERE [PYNumber] LIKE ?
           AND [IsTakeHomePay] = 1

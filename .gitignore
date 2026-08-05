@@ -28,3 +28,6 @@ _dev_utils/scripts/*
 !_dev_utils/migrate_arc_premi_kinerja_backup_2026-06.json
 backend/_dev_utils/
 Browser Automation/manual-adjustment-grouped-tester.html
+
+# versioning release snapshots - jangan di-commit
+versions/

@@ -157,13 +157,11 @@ export function prepareDomTaxExcelRows(
         next.pendapatan_kontan = kontan;
         if (next.kontanan_amount === undefined) next.kontanan_amount = kontan;
 
-        if (!next.pot_alpa_cth && !next.pot_alpa) {
-            const ideal = toNumber(next.gaji_pokok_ideal);
-            const actual = toNumber(next.gaji_pokok_aktual);
-            if (ideal > 0 && actual > 0 && ideal > actual) {
-                next.pot_alpa_cth = -(ideal - actual);
-            }
-        }
+        // Potongan Alpa dihitung di taxReportExcelService (punya daysInMonth):
+        // potongan_alpa = (jumlah_hari_dalam_bulan × upah_dasar) − gaji_aktual.
+        // JANGAN override pakai gaji_pokok_ideal (upah_dasar×HK) di sini — itu cuma menangkap
+        // koreksi_hk, bukan hari yang tidak masuk (bug: "cuma tampil koreksi HK").
+        // Biarkan emp.pot_alpa/pot_alpa_cth dari sumber lain (kalau ada) tetap dihormati.
 
         if (!next.lebih_hk && !next.lebih_hk_cth) {
             const ideal = toNumber(next.gaji_pokok_ideal);

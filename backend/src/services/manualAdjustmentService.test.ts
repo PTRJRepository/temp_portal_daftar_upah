@@ -3816,3 +3816,23 @@ describe("serializeManualAdjustmentMetadata", () => {
         // serializeManualAdjustmentMetadata(input) → '{"input_type":"blok","items":[]}'
     });
 });
+
+describe("manual edit cutoff rule (tanggal > 3)", () => {
+    it("allows edit on tanggal 1-3", () => {
+        expect(manualAdjustmentService.getManualEditAllowed(new Date(2026, 0, 1))).toBe(true);
+        expect(manualAdjustmentService.getManualEditAllowed(new Date(2026, 0, 2))).toBe(true);
+        expect(manualAdjustmentService.getManualEditAllowed(new Date(2026, 0, 3))).toBe(true);
+    });
+
+    it("blocks edit on tanggal > 3", () => {
+        expect(manualAdjustmentService.getManualEditAllowed(new Date(2026, 0, 4))).toBe(false);
+        expect(manualAdjustmentService.getManualEditAllowed(new Date(2026, 5, 15))).toBe(false);
+        expect(manualAdjustmentService.getManualEditAllowed(new Date(2026, 11, 31))).toBe(false);
+    });
+
+    it("block reason mentions tanggal hari ini", () => {
+        const reason = manualAdjustmentService.getManualEditBlockReason(new Date(2026, 0, 15));
+        expect(reason).toContain("15");
+        expect(reason).toContain("diblokir");
+    });
+});
