@@ -77,6 +77,7 @@ describe("DashboardService tonase analysis report", () => {
                         division_code: "A1",
                         gang_description: "Panen A1",
                         total_upah_bersih: 200000,
+                        total_upah_kotor: 220000,
                         total_hk: 10,
                         total_premi: 30000,
                         total_premi_brondol: 5000,
@@ -136,8 +137,10 @@ describe("DashboardService tonase analysis report", () => {
         expect(report.kpis.total_upah_bersih).toBe(200000);
         expect(report.kpis.total_premi).toBe(30000);
         expect(report.kpis.upah_bersih_per_hk).toBe(20000);
+        expect(report.kpis.upah_kotor_per_hk).toBe(22000);
         expect(report.kpis.premi_per_hk).toBe(3000);
         expect(report.kpis.upah_bersih_per_ton).toBe(20000);
+        expect(report.kpis.upah_kotor_per_ton).toBe(22000);
         expect(report.kpis.premi_per_ton).toBe(3000);
         expect(report.kpis.premi_share).toBe(15);
         expect(report.premium_breakdown.map((p: any) => p.key)).toEqual([

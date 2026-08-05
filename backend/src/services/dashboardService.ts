@@ -17,6 +17,7 @@ type TonaseAggregationRow = {
     division_code?: string;
     gang_description?: string;
     total_upah_bersih?: number;
+    total_upah_kotor?: number;
     total_hk?: number;
     total_premi?: number;
     total_premi_brondol?: number;
@@ -1161,6 +1162,7 @@ export class DashboardService {
                 agg.division_code,
                 agg.gang_description,
                 SUM(ISNULL(agg.total_upah_bersih, 0)) as total_upah_bersih,
+                SUM(ISNULL(agg.total_upah_kotor, 0)) as total_upah_kotor,
                 SUM(ISNULL(agg.total_hk, 0)) as total_hk,
                 SUM(ISNULL(agg.total_premi, 0)) as total_premi,
                 SUM(ISNULL(agg.total_premi_brondol, 0)) as total_premi_brondol,
@@ -1203,6 +1205,7 @@ export class DashboardService {
                 total_ffb_weight: 0,
                 total_hk: 0,
                 total_upah_bersih: 0,
+                total_upah_kotor: 0,
                 total_premi: 0,
                 total_employees: 0,
                 gang_count: 0,
@@ -1221,6 +1224,7 @@ export class DashboardService {
                     total_tonase: 0,
                     total_hk: 0,
                     total_upah_bersih: 0,
+                    total_upah_kotor: 0,
                     total_premi: 0,
                     total_employees: 0,
                     gang_count: 0
@@ -1252,6 +1256,7 @@ export class DashboardService {
                     total_tonase: 0,
                     total_hk: 0,
                     total_upah_bersih: 0,
+                    total_upah_kotor: 0,
                     total_premi: 0,
                     total_employees: 0,
                     gang_count: 0
@@ -1302,16 +1307,19 @@ export class DashboardService {
 
             const totalHk = this.toReportNumber(rawRow.total_hk);
             const totalUpahBersih = this.toReportNumber(rawRow.total_upah_bersih);
+            const totalUpahKotor = this.toReportNumber(rawRow.total_upah_kotor);
             const totalPremi = this.toReportNumber(rawRow.total_premi);
 
             periodTotal.total_hk += totalHk;
             periodTotal.total_upah_bersih += totalUpahBersih;
+            periodTotal.total_upah_kotor += totalUpahKotor;
             periodTotal.total_premi += totalPremi;
             periodTotal.total_employees += this.toReportNumber(rawRow.total_employees);
             periodTotal.gang_count += 1;
             const divisionPeriodTotal = getDivisionPeriodTotal(periodKey, divisionKey);
             divisionPeriodTotal.total_hk += totalHk;
             divisionPeriodTotal.total_upah_bersih += totalUpahBersih;
+            divisionPeriodTotal.total_upah_kotor += totalUpahKotor;
             divisionPeriodTotal.total_premi += totalPremi;
             divisionPeriodTotal.total_employees += this.toReportNumber(rawRow.total_employees);
             divisionPeriodTotal.gang_count += 1;
@@ -1328,6 +1336,7 @@ export class DashboardService {
                 const divisionTotal = getCurrentDivisionTotal(divisionKey);
                 divisionTotal.total_hk += totalHk;
                 divisionTotal.total_upah_bersih += totalUpahBersih;
+                divisionTotal.total_upah_kotor += totalUpahKotor;
                 divisionTotal.total_premi += totalPremi;
                 divisionTotal.total_employees += this.toReportNumber(rawRow.total_employees);
                 divisionTotal.gang_count += 1;
@@ -1362,11 +1371,14 @@ export class DashboardService {
                 total_ffb_weight: this.roundReportNumber(total.total_ffb_weight, 2),
                 total_hk: this.roundReportNumber(total.total_hk, 2),
                 total_upah_bersih: this.roundReportNumber(total.total_upah_bersih),
+                total_upah_kotor: this.roundReportNumber(total.total_upah_kotor),
                 total_premi: this.roundReportNumber(total.total_premi),
                 total_employees: this.roundReportNumber(total.total_employees),
                 upah_bersih_per_hk: this.safeReportRatio(total.total_upah_bersih, total.total_hk),
+                upah_kotor_per_hk: this.safeReportRatio(total.total_upah_kotor, total.total_hk),
                 premi_per_hk: this.safeReportRatio(total.total_premi, total.total_hk),
                 upah_bersih_per_ton: this.safeReportRatio(total.total_upah_bersih, totalTonase),
+                upah_kotor_per_ton: this.safeReportRatio(total.total_upah_kotor, totalTonase),
                 premi_per_ton: this.safeReportRatio(total.total_premi, totalTonase),
                 premi_share: this.safeReportRatio(total.total_premi * 100, total.total_upah_bersih, 2)
             };
@@ -1385,17 +1397,24 @@ export class DashboardService {
                     total_tonase: totalTonase,
                     total_hk: this.roundReportNumber(row.total_hk, 2),
                     total_upah_bersih: this.roundReportNumber(row.total_upah_bersih),
+                    total_upah_kotor: this.roundReportNumber(row.total_upah_kotor),
                     total_premi: this.roundReportNumber(row.total_premi),
                     total_employees: this.roundReportNumber(row.total_employees),
                     gang_count: row.gang_count,
                     upah_bersih_per_hk: hasHarvestMetrics
                         ? this.safeReportRatio(row.total_upah_bersih, row.total_hk)
                         : null,
+                    upah_kotor_per_hk: hasHarvestMetrics
+                        ? this.safeReportRatio(row.total_upah_kotor, row.total_hk)
+                        : null,
                     premi_per_hk: hasHarvestMetrics
                         ? this.safeReportRatio(row.total_premi, row.total_hk)
                         : null,
                     upah_bersih_per_ton: hasHarvestMetrics
                         ? this.safeReportRatio(row.total_upah_bersih, totalTonase)
+                        : null,
+                    upah_kotor_per_ton: hasHarvestMetrics
+                        ? this.safeReportRatio(row.total_upah_kotor, totalTonase)
                         : null,
                     premi_per_ton: hasHarvestMetrics
                         ? this.safeReportRatio(row.total_premi, totalTonase)
@@ -1421,12 +1440,15 @@ export class DashboardService {
                     total_tonase: 0,
                     total_hk: 0,
                     total_upah_bersih: 0,
+                    total_upah_kotor: 0,
                     total_premi: 0,
                     total_employees: 0,
                     gang_count: 0,
                     upah_bersih_per_hk: null,
+                    upah_kotor_per_hk: null,
                     premi_per_hk: null,
                     upah_bersih_per_ton: null,
+                    upah_kotor_per_ton: null,
                     premi_per_ton: null,
                     tonase_share: null,
                     premi_share: null
@@ -1436,6 +1458,7 @@ export class DashboardService {
                     .map(row => {
                         const totalHk = this.toReportNumber(row.total_hk);
                         const totalUpahBersih = this.toReportNumber(row.total_upah_bersih);
+                        const totalUpahKotor = this.toReportNumber(row.total_upah_kotor);
                         const totalPremi = this.toReportNumber(row.total_premi);
                         const totalTonase = this.roundReportNumber(row.effective_ffb_weight, 2);
                         return {
@@ -1445,11 +1468,14 @@ export class DashboardService {
                             total_tonase: totalTonase,
                             total_hk: this.roundReportNumber(totalHk, 2),
                             total_upah_bersih: this.roundReportNumber(totalUpahBersih),
+                            total_upah_kotor: this.roundReportNumber(totalUpahKotor),
                             total_premi: this.roundReportNumber(totalPremi),
                             total_employees: this.roundReportNumber(this.toReportNumber(row.total_employees)),
                             upah_bersih_per_hk: this.safeReportRatio(totalUpahBersih, totalHk),
+                            upah_kotor_per_hk: this.safeReportRatio(totalUpahKotor, totalHk),
                             premi_per_hk: this.safeReportRatio(totalPremi, totalHk),
                             upah_bersih_per_ton: this.safeReportRatio(totalUpahBersih, totalTonase),
+                            upah_kotor_per_ton: this.safeReportRatio(totalUpahKotor, totalTonase),
                             premi_per_ton: this.safeReportRatio(totalPremi, totalTonase)
                         };
                     })
@@ -1468,6 +1494,7 @@ export class DashboardService {
                         total_tonase: 0,
                         total_hk: 0,
                         total_upah_bersih: 0,
+                        total_upah_kotor: 0,
                         total_premi: 0,
                         total_employees: 0,
                         gang_count: 0
@@ -1481,12 +1508,15 @@ export class DashboardService {
                         total_tonase: totalTonase,
                         total_hk: this.roundReportNumber(periodTotal.total_hk, 2),
                         total_upah_bersih: this.roundReportNumber(periodTotal.total_upah_bersih),
+                        total_upah_kotor: this.roundReportNumber(periodTotal.total_upah_kotor),
                         total_premi: this.roundReportNumber(periodTotal.total_premi),
                         total_employees: this.roundReportNumber(periodTotal.total_employees),
                         gang_count: periodTotal.gang_count,
                         upah_bersih_per_hk: this.safeReportRatio(periodTotal.total_upah_bersih, periodTotal.total_hk),
+                        upah_kotor_per_hk: this.safeReportRatio(periodTotal.total_upah_kotor, periodTotal.total_hk),
                         premi_per_hk: this.safeReportRatio(periodTotal.total_premi, periodTotal.total_hk),
                         upah_bersih_per_ton: this.safeReportRatio(periodTotal.total_upah_bersih, totalTonase),
+                        upah_kotor_per_ton: this.safeReportRatio(periodTotal.total_upah_kotor, totalTonase),
                         premi_per_ton: this.safeReportRatio(periodTotal.total_premi, totalTonase),
                         premi_share: this.safeReportRatio(periodTotal.total_premi * 100, periodTotal.total_upah_bersih, 2)
                     };
@@ -1564,8 +1594,8 @@ export class DashboardService {
         }
 
         const previous = trend[trend.length - 2];
-        const costDelta = current.upah_bersih_per_hk !== null && previous?.upah_bersih_per_hk !== null
-            ? current.upah_bersih_per_hk - previous.upah_bersih_per_hk
+        const costDelta = current.upah_kotor_per_hk !== null && previous?.upah_kotor_per_hk !== null
+            ? current.upah_kotor_per_hk - previous.upah_kotor_per_hk
             : null;
         const warnings: string[] = [];
         if (current.gang_count === 0) {
@@ -1602,12 +1632,15 @@ export class DashboardService {
                 total_ffb_weight: current.total_ffb_weight,
                 total_hk: current.total_hk,
                 total_upah_bersih: current.total_upah_bersih,
+                total_upah_kotor: current.total_upah_kotor,
                 total_premi: current.total_premi,
                 total_employees: current.total_employees,
                 gang_count: current.gang_count,
                 upah_bersih_per_hk: current.upah_bersih_per_hk,
+                upah_kotor_per_hk: current.upah_kotor_per_hk,
                 premi_per_hk: current.premi_per_hk,
                 upah_bersih_per_ton: current.upah_bersih_per_ton,
+                upah_kotor_per_ton: current.upah_kotor_per_ton,
                 premi_per_ton: current.premi_per_ton,
                 premi_share: current.premi_share
             },
@@ -1618,8 +1651,8 @@ export class DashboardService {
             insights: {
                 highest_tonase_period: highestTonasePeriod,
                 largest_tonase_movement: largestMovement,
-                upah_bersih_hk_trend: costDelta === null ? "unavailable" : costDelta > 0 ? "rising" : costDelta < 0 ? "falling" : "flat",
-                upah_bersih_hk_delta: costDelta === null ? null : this.roundReportNumber(costDelta),
+                upah_kotor_hk_trend: costDelta === null ? "unavailable" : costDelta > 0 ? "rising" : costDelta < 0 ? "falling" : "flat",
+                upah_kotor_hk_delta: costDelta === null ? null : this.roundReportNumber(costDelta),
                 premium_share: current.premi_share,
                 missing_tonase_count: current.missing_tonase_count
             },

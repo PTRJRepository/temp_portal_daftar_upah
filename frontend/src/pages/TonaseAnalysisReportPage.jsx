@@ -162,7 +162,7 @@ export default function TonaseAnalysisReportPage({ onBack, initialMonth, initial
             ...row,
             label: row.label,
             tonase: row.total_tonase || 0,
-            upahPerHk: row.upah_bersih_per_hk || 0,
+            upahPerHk: row.upah_kotor_per_hk || 0,
             premiPerHk: row.premi_per_hk || 0
         }));
     }, [isDetailMode, reportData, selectedDivisionDetail]);
@@ -218,8 +218,8 @@ export default function TonaseAnalysisReportPage({ onBack, initialMonth, initial
                             <ArrowLeft size={16} /> Kembali
                         </button>
                         <div>
-                            <h1>Analisis Tonase</h1>
-                            <p>Pergerakan tonase total Rebinmas 5 bulan, Cost/HK gang panen, dan uraian premi.</p>
+                            <h1>Analisis Tonase &amp; Biaya</h1>
+                            <p>Basis Upah Kotor (gross): cost/HK, cost/ton, premi, dan tren 5 bulan.</p>
                         </div>
                     </div>
                     <div className="tonase-filter-row">
@@ -329,8 +329,8 @@ export default function TonaseAnalysisReportPage({ onBack, initialMonth, initial
                         />
                         <KpiCard
                             icon={<DollarSign size={16} />}
-                            label="Upah Bersih / HK"
-                            value={formatCurrency(displayKpis.upah_bersih_per_hk)}
+                            label="Upah Kotor / HK"
+                            value={formatCurrency(displayKpis.upah_kotor_per_hk)}
                             note={`Total HK ${formatNumber(displayKpis.total_hk, 2)}`}
                             tone="blue"
                         />
@@ -343,9 +343,9 @@ export default function TonaseAnalysisReportPage({ onBack, initialMonth, initial
                         />
                         <KpiCard
                             icon={<BarChart3 size={16} />}
-                            label="Upah Bersih / Ton"
-                            value={formatCurrency(displayKpis.upah_bersih_per_ton)}
-                            note={`Upah bersih ${formatCurrency(displayKpis.total_upah_bersih)}`}
+                            label="Upah Kotor / Ton"
+                            value={formatCurrency(displayKpis.upah_kotor_per_ton)}
+                            note={`Upah kotor ${formatCurrency(displayKpis.total_upah_kotor)}`}
                             tone="cyan"
                         />
                         <KpiCard
@@ -369,14 +369,14 @@ export default function TonaseAnalysisReportPage({ onBack, initialMonth, initial
                             note={largestMovement ? formatSignedTon(largestMovement.delta_tonase) : 'Data belum tersedia'}
                         />
                         <InsightItem
-                            label="Arah upah/HK"
-                            value={getTrendText(insights.upah_bersih_hk_trend)}
-                            note={insights.upah_bersih_hk_delta === null || insights.upah_bersih_hk_delta === undefined ? 'Perbandingan belum tersedia' : `${formatCurrency(insights.upah_bersih_hk_delta)} vs bulan sebelumnya`}
+                            label="Arah upah kotor/HK"
+                            value={getTrendText(insights.upah_kotor_hk_trend)}
+                            note={insights.upah_kotor_hk_delta === null || insights.upah_kotor_hk_delta === undefined ? 'Perbandingan belum tersedia' : `${formatCurrency(insights.upah_kotor_hk_delta)} vs bulan sebelumnya`}
                         />
                         <InsightItem
                             label="Porsi premi"
                             value={formatPercent(insights.premium_share)}
-                            note="Dari total upah bersih gang panen"
+                            note="Dari total upah kotor gang panen"
                         />
                     </div>
 
@@ -392,7 +392,7 @@ export default function TonaseAnalysisReportPage({ onBack, initialMonth, initial
                                     <th className="text-right">Tonase</th>
                                     <th className="text-right">Share Tonase</th>
                                     <th className="text-right">HK Panen</th>
-                                    <th className="text-right">Upah Bersih</th>
+                                    <th className="text-right">Upah Kotor</th>
                                     <th className="text-right">Premi</th>
                                     <th className="text-right">Upah/HK</th>
                                     <th className="text-right">Premi/HK</th>
@@ -415,9 +415,9 @@ export default function TonaseAnalysisReportPage({ onBack, initialMonth, initial
                                         <td className="text-right">{formatNumber(row.total_tonase, 2)}</td>
                                         <td className="text-right">{formatPercent(row.tonase_share)}</td>
                                         <td className="text-right">{formatNumber(row.total_hk, 2)}</td>
-                                        <td className="text-right">{formatCurrency(row.total_upah_bersih)}</td>
+                                        <td className="text-right">{formatCurrency(row.total_upah_kotor)}</td>
                                         <td className="text-right">{formatCurrency(row.total_premi)}</td>
-                                        <td className="text-right">{formatCurrency(row.upah_bersih_per_hk)}</td>
+                                        <td className="text-right">{formatCurrency(row.upah_kotor_per_hk)}</td>
                                         <td className="text-right">{formatCurrency(row.premi_per_hk)}</td>
                                         <td className="text-right">{formatCurrency(row.premi_per_ton)}</td>
                                     </tr>
@@ -434,9 +434,9 @@ export default function TonaseAnalysisReportPage({ onBack, initialMonth, initial
                                     <td className="text-right">{formatNumber(kpis.total_tonase, 2)}</td>
                                     <td className="text-right">100,00%</td>
                                     <td className="text-right">{formatNumber(kpis.total_hk, 2)}</td>
-                                    <td className="text-right">{formatCurrency(kpis.total_upah_bersih)}</td>
+                                    <td className="text-right">{formatCurrency(kpis.total_upah_kotor)}</td>
                                     <td className="text-right">{formatCurrency(kpis.total_premi)}</td>
-                                    <td className="text-right">{formatCurrency(kpis.upah_bersih_per_hk)}</td>
+                                    <td className="text-right">{formatCurrency(kpis.upah_kotor_per_hk)}</td>
                                     <td className="text-right">{formatCurrency(kpis.premi_per_hk)}</td>
                                     <td className="text-right">{formatCurrency(kpis.premi_per_ton)}</td>
                                 </tr>
@@ -462,8 +462,8 @@ export default function TonaseAnalysisReportPage({ onBack, initialMonth, initial
                                             <strong>{formatNumber(selectedDivisionSummary.total_hk, 2)}</strong>
                                         </div>
                                         <div className="tonase-detail-card">
-                                            <span>Upah/HK</span>
-                                            <strong>{formatCurrency(selectedDivisionSummary.upah_bersih_per_hk)}</strong>
+                                            <span>Upah Kotor/HK</span>
+                                            <strong>{formatCurrency(selectedDivisionSummary.upah_kotor_per_hk)}</strong>
                                         </div>
                                         <div className="tonase-detail-card">
                                             <span>Premi/HK</span>
@@ -484,9 +484,9 @@ export default function TonaseAnalysisReportPage({ onBack, initialMonth, initial
                                                         <th>Gang</th>
                                                         <th>Deskripsi</th>
                                                         <th className="text-right">HK</th>
-                                                        <th className="text-right">Upah Bersih</th>
+                                                        <th className="text-right">Upah Kotor</th>
                                                         <th className="text-right">Premi</th>
-                                                        <th className="text-right">Upah/HK</th>
+                                                        <th className="text-right">Upah Kotor/HK</th>
                                                         <th className="text-right">Premi/HK</th>
                                                     </tr>
                                                 </thead>
@@ -496,9 +496,9 @@ export default function TonaseAnalysisReportPage({ onBack, initialMonth, initial
                                                             <td className="font-bold">{row.gang_code}</td>
                                                             <td>{row.gang_description}</td>
                                                             <td className="text-right">{formatNumber(row.total_hk, 2)}</td>
-                                                            <td className="text-right">{formatCurrency(row.total_upah_bersih)}</td>
+                                                            <td className="text-right">{formatCurrency(row.total_upah_kotor)}</td>
                                                             <td className="text-right">{formatCurrency(row.total_premi)}</td>
-                                                            <td className="text-right">{formatCurrency(row.upah_bersih_per_hk)}</td>
+                                                            <td className="text-right">{formatCurrency(row.upah_kotor_per_hk)}</td>
                                                             <td className="text-right">{formatCurrency(row.premi_per_hk)}</td>
                                                         </tr>
                                                     ))}
@@ -549,9 +549,9 @@ export default function TonaseAnalysisReportPage({ onBack, initialMonth, initial
                                             <th>Periode</th>
                                             <th className="text-right">Tonase</th>
                                             <th className="text-right">HK Panen</th>
-                                            <th className="text-right">Upah Bersih</th>
+                                            <th className="text-right">Upah Kotor</th>
                                             <th className="text-right">Premi</th>
-                                            <th className="text-right">Upah/HK</th>
+                                            <th className="text-right">Upah Kotor/HK</th>
                                             <th className="text-right">Premi/HK</th>
                                             <th className="text-right">Premi/Ton</th>
                                         </tr>
@@ -562,9 +562,9 @@ export default function TonaseAnalysisReportPage({ onBack, initialMonth, initial
                                                 <td className="font-bold">{row.label}</td>
                                                 <td className="text-right">{formatNumber(row.total_tonase, 2)}</td>
                                                 <td className="text-right">{formatNumber(row.total_hk, 2)}</td>
-                                                <td className="text-right">{formatCurrency(row.total_upah_bersih)}</td>
+                                                <td className="text-right">{formatCurrency(row.total_upah_kotor)}</td>
                                                 <td className="text-right">{formatCurrency(row.total_premi)}</td>
-                                                <td className="text-right">{formatCurrency(row.upah_bersih_per_hk)}</td>
+                                                <td className="text-right">{formatCurrency(row.upah_kotor_per_hk)}</td>
                                                 <td className="text-right">{formatCurrency(row.premi_per_hk)}</td>
                                                 <td className="text-right">{formatCurrency(row.premi_per_ton)}</td>
                                             </tr>
@@ -601,7 +601,7 @@ export default function TonaseAnalysisReportPage({ onBack, initialMonth, initial
                                     />
                                     <Legend />
                                     <Bar yAxisId="left" dataKey="tonase" name="Tonase" fill="#059669" radius={[4, 4, 0, 0]} />
-                                    <Line yAxisId="right" type="monotone" dataKey="upahPerHk" name="Upah Bersih/HK" stroke="#1d4ed8" strokeWidth={3} dot={{ r: 4 }} />
+                                    <Line yAxisId="right" type="monotone" dataKey="upahPerHk" name="Upah Kotor/HK" stroke="#1d4ed8" strokeWidth={3} dot={{ r: 4 }} />
                                     <Line yAxisId="right" type="monotone" dataKey="premiPerHk" name="Premi/HK" stroke="#d97706" strokeWidth={3} dot={{ r: 4 }} />
                                 </ComposedChart>
                             </ResponsiveContainer>
@@ -654,7 +654,7 @@ export default function TonaseAnalysisReportPage({ onBack, initialMonth, initial
                                         <th>Periode</th>
                                         <th className="text-right">Tonase</th>
                                         <th className="text-right">HK</th>
-                                        <th className="text-right">Upah/HK</th>
+                                        <th className="text-right">Upah Kotor/HK</th>
                                         <th className="text-right">Premi/HK</th>
                                     </tr>
                                 </thead>
@@ -664,7 +664,7 @@ export default function TonaseAnalysisReportPage({ onBack, initialMonth, initial
                                             <td className="font-bold">{row.label}</td>
                                             <td className="text-right">{formatNumber(row.total_tonase, 2)}</td>
                                             <td className="text-right">{formatNumber(row.total_hk, 2)}</td>
-                                            <td className="text-right">{formatCurrency(row.upah_bersih_per_hk)}</td>
+                                            <td className="text-right">{formatCurrency(row.upah_kotor_per_hk)}</td>
                                             <td className="text-right">{formatCurrency(row.premi_per_hk)}</td>
                                         </tr>
                                     ))}
@@ -676,7 +676,7 @@ export default function TonaseAnalysisReportPage({ onBack, initialMonth, initial
                     <section className="tonase-section tonase-monthly-detail">
                         <div className="tonase-section-header">
                             <h3>Detail Metrik Bulanan</h3>
-                            <span>Upah bersih dan premi dibandingkan dengan tonase</span>
+                            <span>Upah kotor dan premi dibandingkan dengan tonase</span>
                         </div>
                         <table className="wsp-table tonase-detail-table">
                             <thead>
@@ -684,9 +684,9 @@ export default function TonaseAnalysisReportPage({ onBack, initialMonth, initial
                                     <th>Periode</th>
                                     <th className="text-right">Tonase</th>
                                     <th className="text-right">HK</th>
-                                    <th className="text-right">Upah Bersih</th>
+                                    <th className="text-right">Upah Kotor</th>
                                     <th className="text-right">Premi</th>
-                                    <th className="text-right">Upah/Ton</th>
+                                    <th className="text-right">Upah Kotor/Ton</th>
                                     <th className="text-right">Premi/Ton</th>
                                     <th className="text-right">Premi Share</th>
                                 </tr>
@@ -697,9 +697,9 @@ export default function TonaseAnalysisReportPage({ onBack, initialMonth, initial
                                         <td className="font-bold">{row.label}</td>
                                         <td className="text-right">{formatNumber(row.total_tonase, 2)}</td>
                                         <td className="text-right">{formatNumber(row.total_hk, 2)}</td>
-                                        <td className="text-right">{formatCurrency(row.total_upah_bersih)}</td>
+                                        <td className="text-right">{formatCurrency(row.total_upah_kotor)}</td>
                                         <td className="text-right">{formatCurrency(row.total_premi)}</td>
-                                        <td className="text-right">{formatCurrency(row.upah_bersih_per_ton)}</td>
+                                        <td className="text-right">{formatCurrency(row.upah_kotor_per_ton)}</td>
                                         <td className="text-right">{formatCurrency(row.premi_per_ton)}</td>
                                         <td className="text-right">{formatPercent(row.premi_share)}</td>
                                     </tr>
