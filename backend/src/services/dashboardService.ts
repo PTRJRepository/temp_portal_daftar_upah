@@ -78,20 +78,22 @@ export class DashboardService {
             startYear = endYear;
         }
 
-        // Query for 12-month trend
+        // Query for 12-month trend (gang panen saja, basis upah kotor)
         const query = `
             ${this.latestAggregationRowsCte()}
             SELECT
                 h.period_year,
                 h.period_month,
-                SUM(ISNULL(h.total_upah_bersih, 0)) as total_wage,
+                SUM(ISNULL(h.total_upah_kotor, 0)) as total_wage,
                 SUM(ISNULL(h.total_lembur, 0)) as total_ot,
                 SUM(ISNULL(h.total_premi, 0)) as total_premi,
                 SUM(ISNULL(h.total_employees, 0)) as total_headcount,
-                SUM(ISNULL(h.total_hk, 0)) as total_hk
+                SUM(ISNULL(h.total_hk, 0)) as total_hk,
+                SUM(ISNULL(h.total_ffb_weight, 0)) as total_tonase
             FROM latest_rows h
             WHERE
                 h.row_rank = 1
+                AND ${this.harvestGangSql('h.gang_code')}
                 AND
                 (h.period_year > ? OR (h.period_year = ? AND h.period_month >= ?))
                 AND (h.period_year < ? OR (h.period_year = ? AND h.period_month <= ?))
@@ -110,16 +112,24 @@ export class DashboardService {
             ]);
 
             // Map keys to be friendly
-            return rows.map(r => ({
-                period: `${this.getMonthName(r.period_month)} ${r.period_year}`,
-                month: r.period_month,
-                year: r.period_year,
-                total_wage: r.total_wage,
-                total_ot: r.total_ot,
-                total_premi: r.total_premi,
-                total_headcount: r.total_headcount,
-                total_hk: r.total_hk
-            }));
+            return rows.map(r => {
+                const tonase = this.toReportNumber(r.total_tonase);
+                const wage = this.toReportNumber(r.total_wage);
+                const hk = this.toReportNumber(r.total_hk);
+                return {
+                    period: `${this.getMonthName(r.period_month)} ${r.period_year}`,
+                    month: r.period_month,
+                    year: r.period_year,
+                    total_wage: wage,
+                    total_ot: r.total_ot,
+                    total_premi: r.total_premi,
+                    total_headcount: r.total_headcount,
+                    total_hk: hk,
+                    total_tonase: tonase,
+                    cost_per_ton: tonase > 0 ? wage / tonase : null,
+                    cost_per_hk: hk > 0 ? wage / hk : null
+                };
+            });
         } catch (e) {
             console.error("[DashboardService] Error getting trend:", e);
             throw e;
@@ -134,12 +144,14 @@ export class DashboardService {
             ${this.latestAggregationRowsCte()}
             SELECT
                 h.division_code,
-                SUM(ISNULL(h.total_upah_bersih, 0)) as total_wage,
+                SUM(ISNULL(h.total_upah_kotor, 0)) as total_wage,
                 SUM(ISNULL(h.total_lembur, 0)) as total_ot,
                 SUM(ISNULL(h.total_premi, 0)) as total_premi,
-                SUM(ISNULL(h.total_employees, 0)) as headcount
+                SUM(ISNULL(h.total_employees, 0)) as headcount,
+                SUM(ISNULL(h.total_ffb_weight, 0)) as total_tonase,
+                SUM(ISNULL(h.total_hk, 0)) as total_hk
             FROM latest_rows h
-            WHERE h.row_rank = 1 AND h.period_month = ? AND h.period_year = ?
+            WHERE h.row_rank = 1 AND ${this.harvestGangSql('h.gang_code')} AND h.period_month = ? AND h.period_year = ?
             GROUP BY h.division_code
             ORDER BY total_wage DESC
         `;
@@ -155,11 +167,12 @@ export class DashboardService {
             ${this.latestAggregationRowsCte()}
             SELECT TOP ${limit}
                 h.gang_code,
-                SUM(ISNULL(h.total_upah_bersih, 0)) as total_wage,
+                SUM(ISNULL(h.total_upah_kotor, 0)) as total_wage,
                 SUM(ISNULL(h.total_lembur, 0)) as total_ot,
-                SUM(ISNULL(h.total_employees, 0)) as headcount
+                SUM(ISNULL(h.total_employees, 0)) as headcount,
+                SUM(ISNULL(h.total_ffb_weight, 0)) as total_tonase
             FROM latest_rows h
-            WHERE h.row_rank = 1 AND h.period_month = ? AND h.period_year = ?
+            WHERE h.row_rank = 1 AND ${this.harvestGangSql('h.gang_code')} AND h.period_month = ? AND h.period_year = ?
             GROUP BY h.gang_code
             ORDER BY total_wage DESC
         `;
@@ -174,11 +187,12 @@ export class DashboardService {
             ${this.latestAggregationRowsCte()}
             SELECT
                 h.division_code,
-                SUM(ISNULL(h.total_upah_bersih, 0)) as total_cost,
+                SUM(ISNULL(h.total_upah_kotor, 0)) as total_cost,
                 SUM(ISNULL(h.total_employees, 0)) as headcount,
-                SUM(ISNULL(h.total_hk, 0)) as total_man_days
+                SUM(ISNULL(h.total_hk, 0)) as total_man_days,
+                SUM(ISNULL(h.total_ffb_weight, 0)) as total_tonase
             FROM latest_rows h
-            WHERE h.row_rank = 1 AND h.period_month = ? AND h.period_year = ?
+            WHERE h.row_rank = 1 AND ${this.harvestGangSql('h.gang_code')} AND h.period_month = ? AND h.period_year = ?
             GROUP BY h.division_code
             HAVING SUM(ISNULL(h.total_employees, 0)) > 0
             ORDER BY total_cost DESC
@@ -196,11 +210,13 @@ export class DashboardService {
             SELECT
                 h.period_month,
                 h.period_year,
-                SUM(ISNULL(h.total_upah_bersih, 0)) as total_wage,
-                SUM(ISNULL(h.total_hk, 0)) as total_hk
+                SUM(ISNULL(h.total_upah_kotor, 0)) as total_wage,
+                SUM(ISNULL(h.total_hk, 0)) as total_hk,
+                SUM(ISNULL(h.total_ffb_weight, 0)) as total_tonase
             FROM latest_rows h
             WHERE
                 h.row_rank = 1
+                AND ${this.harvestGangSql('h.gang_code')}
                 AND
                 (h.period_year > ? OR (h.period_year = ? AND h.period_month >= ?))
                 AND (h.period_year < ? OR (h.period_year = ? AND h.period_month <= ?))
@@ -213,7 +229,9 @@ export class DashboardService {
         return rows.map(r => ({
             period: `${this.getMonthName(r.period_month)} ${r.period_year}`,
             costPerHk: r.total_hk > 0 ? r.total_wage / r.total_hk : 0,
-            totalHk: r.total_hk
+            costPerTon: r.total_tonase > 0 ? r.total_wage / r.total_tonase : 0,
+            totalHk: r.total_hk,
+            totalTonase: r.total_tonase
         }));
     }
 
@@ -226,10 +244,10 @@ export class DashboardService {
             ${this.latestAggregationRowsCte()}
             SELECT
                 h.gang_code,
-                SUM(ISNULL(h.total_upah_bersih, 0)) as total_wage,
+                SUM(ISNULL(h.total_upah_kotor, 0)) as total_wage,
                 SUM(ISNULL(h.total_hk, 0)) as total_hk
             FROM latest_rows h
-            WHERE h.row_rank = 1 AND h.period_month = ? AND h.period_year = ?
+            WHERE h.row_rank = 1 AND ${this.harvestGangSql('h.gang_code')} AND h.period_month = ? AND h.period_year = ?
             GROUP BY h.gang_code
         `;
 
@@ -348,6 +366,11 @@ export class DashboardService {
      * Update: IJL gangs start with 'L'. 
      * If starts with 'L', we might classify it differently or just mark it as is_ijl.
      */
+    /** SQL fragment: hanya gang panen (suffix H). Terapkan pada alias kolom gang_code. */
+    private harvestGangSql(gangColumn: string): string {
+        return `RIGHT(UPPER(LTRIM(RTRIM(${gangColumn}))), 1) = 'H'`;
+    }
+
     private classifyGangType(gangCode: string): string {
         if (!gangCode || gangCode.length === 0) return 'uncategorized';
 

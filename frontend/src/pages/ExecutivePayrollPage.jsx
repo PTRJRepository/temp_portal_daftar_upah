@@ -495,6 +495,10 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
     const wageChange = kpi ? calcChange(kpi.curr_wage, kpi.prev_wage) : 0;
     const otChange = kpi ? calcChange(kpi.curr_ot, kpi.prev_ot) : 0;
     const headChange = kpi ? calcChange(kpi.curr_headcount, kpi.prev_headcount) : 0;
+    const currentTrend = trends[trends.length - 1] || {};
+    const prevTrend = trends[trends.length - 2] || {};
+    const costPerTon = currentTrend.cost_per_ton ?? null;
+    const costPerTonChange = costPerTon !== null && prevTrend.cost_per_ton ? calcChange(costPerTon, prevTrend.cost_per_ton) : 0;
     const reportPeriodLabel = new Date(year, month - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
     const printGeneratedAt = new Date().toLocaleString('id-ID', {
         day: '2-digit',
@@ -971,11 +975,18 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
                             {kpi && (
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
                                     <KPICard
-                                        title="Total Payroll Cost"
+                                        title="Total Upah Kotor (Panen)"
                                         value={formatCurrency(kpi.curr_wage)}
                                         subValue={`${wageChange >= 0 ? '+' : ''}${wageChange.toFixed(1)}% vs last month`}
                                         trend={wageChange >= 0 ? 'up' : 'down'}
                                         color={wageChange > 5 ? 'red' : 'blue'}
+                                    />
+                                    <KPICard
+                                        title="Cost / Ton"
+                                        value={costPerTon !== null ? formatCurrency(costPerTon) : '-'}
+                                        subValue={`${costPerTonChange >= 0 ? '+' : ''}${costPerTonChange.toFixed(1)}% vs last month · ${formatNumber(currentTrend.total_tonase || 0)} ton`}
+                                        trend={costPerTonChange >= 0 ? 'up' : 'down'}
+                                        color={costPerTonChange > 5 ? 'red' : 'green'}
                                     />
                                     <KPICard
                                         title="Total Overtime"
@@ -985,7 +996,7 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
                                         color={otChange > 0 ? 'orange' : 'green'}
                                     />
                                     <KPICard
-                                        title="Headcount"
+                                        title="Headcount Panen"
                                         value={formatNumber(kpi.curr_headcount)}
                                         subValue={`${headChange >= 0 ? '+' : ''}${headChange.toFixed(1)}% vs last month`}
                                         trend={headChange >= 0 ? 'up' : 'down'}
@@ -996,7 +1007,7 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
 
                             {/* Main Trend Chart */}
                             <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', marginBottom: '2rem' }}>
-                                <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#334155', marginBottom: '1.5rem' }}>12-Month Expenditure Trend</h3>
+                                <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#334155', marginBottom: '1.5rem' }}>Tren 12 Bulan Upah Kotor &amp; Cost/Ton (Gang Panen)</h3>
                                 <div style={{ height: '350px', width: '100%', minHeight: '200px' }}>
                                     <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
                                         <AreaChart data={trends} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
@@ -1015,8 +1026,9 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                             <Tooltip formatter={(val) => formatCurrency(val)} />
                                             <Legend />
-                                            <Area type="monotone" dataKey="total_wage" name="Total Wages" stroke="#3b82f6" fillOpacity={1} fill="url(#colorWage)" />
+                                            <Area type="monotone" dataKey="total_wage" name="Upah Kotor" stroke="#3b82f6" fillOpacity={1} fill="url(#colorWage)" />
                                             <Area type="monotone" dataKey="total_ot" name="Overtime" stroke="#f59e0b" fillOpacity={1} fill="url(#colorOt)" />
+                                            <Line type="monotone" dataKey="cost_per_ton" name="Cost/Ton" stroke="#10b981" strokeWidth={3} dot={{ r: 3 }} />
                                         </AreaChart>
                                     </ResponsiveContainer>
                                 </div>
