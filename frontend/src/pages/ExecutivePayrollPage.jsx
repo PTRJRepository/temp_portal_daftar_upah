@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -96,6 +97,28 @@ const HeroKpiCard = ({ label, value, pct, invert, sparkData, sparkKey, color, he
     );
 };
 
+// Report launcher — navigasi ke report spoke, bawa month/year
+const REPORT_LINKS = [
+    { key: 'tonase', label: 'Cost per Ton', route: '/reports/tonase-analysis' },
+    { key: 'summary', label: 'Ringkasan', route: '/reports/summary' },
+    { key: 'wages', label: 'Upah Rebinmas', route: '/reports/wages-rebinmas' },
+    { key: 'productivity', label: 'Produktivitas', route: '/reports/productivity' },
+    { key: 'gang', label: 'Perbandingan Gang', route: '/gang-comparison-report' },
+];
+const ReportLauncher = ({ month, year, onNavigate }) => (
+    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+        <span style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: C.muted, marginRight: 4 }}>Laporan:</span>
+        {REPORT_LINKS.map(r => (
+            <button key={r.key} onClick={() => onNavigate(`${r.route}?month=${month}&year=${year}`)}
+                style={{ padding: '7px 14px', borderRadius: 999, border: `1px solid ${C.border}`, background: C.surface, color: C.upah, fontSize: 13, fontWeight: 600, cursor: 'pointer', boxShadow: SHADOW, transition: 'all .15s' }}
+                onMouseOver={(e) => { e.currentTarget.style.background = C.upah; e.currentTarget.style.color = '#fff'; }}
+                onMouseOut={(e) => { e.currentTarget.style.background = C.surface; e.currentTarget.style.color = C.upah; }}>
+                {r.label} →
+            </button>
+        ))}
+    </div>
+);
+
 // Insight strip: alert wage spikes + tren cost/ton
 const InsightStrip = ({ spikes, costChange, onSpikeClick }) => {
     const items = [];
@@ -131,14 +154,27 @@ const InsightStrip = ({ spikes, costChange, onSpikeClick }) => {
 
 export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear }) {
     const { token } = useAuth();
+    const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState(null);
     const [error, setError] = useState(null);
     const [availablePeriods, setAvailablePeriods] = useState([]);
 
-    // Filters (Default to current month, can be changed to view historical snapshots)
-    const [month, setMonth] = useState(initialMonth || new Date().getMonth() + 1);
-    const [year, setYear] = useState(initialYear || new Date().getFullYear());
+    // Filters — URL query param = single source of truth (shareable + back browser jalan)
+    const urlMonth = parseInt(searchParams.get('month')) || null;
+    const urlYear = parseInt(searchParams.get('year')) || null;
+    const [month, setMonth] = useState(urlMonth || initialMonth || new Date().getMonth() + 1);
+    const [year, setYear] = useState(urlYear || initialYear || new Date().getFullYear());
+
+    // Sync month/year -> URL
+    useEffect(() => {
+        const next = new URLSearchParams(searchParams);
+        next.set('month', String(month));
+        next.set('year', String(year));
+        if (next.toString() !== searchParams.toString()) setSearchParams(next, { replace: true });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [month, year]);
 
     // Sync state with props when they change (fix navigation freeze)
     useEffect(() => {
@@ -570,8 +606,8 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
         const ot = data.kpi.curr_ot || 0;
 
         return [
-            { name: 'Overtime', value: ot, color: '#f59e0b' },
-            { name: 'Regular Pay & Premi', value: Math.max(0, wage - ot), color: '#3b82f6' }
+            { name: 'Overtime', value: ot, color: C.lembur },
+            { name: 'Regular Pay & Premi', value: Math.max(0, wage - ot), color: C.upah }
         ];
     }, [data?.kpi]);
 
@@ -1069,6 +1105,11 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
                     ) : (
                         <>
 
+                            {/* REPORT LAUNCHER */}
+                            <div style={{ marginBottom: '1.25rem' }}>
+                                <ReportLauncher month={month} year={year} onNavigate={(to) => navigate(to)} />
+                            </div>
+
                             {/* HERO KPI ROW */}
                             {kpi && (
                                 <div style={{ marginBottom: '1.5rem' }}>
@@ -1268,59 +1309,43 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
                                                         );
                                                     }}
                                                 />
-                                                <Bar
-                                                    dataKey="Base"
-                                                    stackId="a"
-                                                    fill="#3b82f6"
-                                                    barSize={22}
-                                                    cursor="pointer"
-                                                    onClick={handleDivisionBarClick}
-                                                />
-                                                <Bar
-                                                    dataKey="Overtime"
-                                                    stackId="a"
-                                                    fill="#f97316"
-                                                    barSize={22}
-                                                    cursor="pointer"
-                                                    onClick={handleDivisionBarClick}
-                                                />
-                                                <Bar
-                                                    dataKey="Premi"
-                                                    stackId="a"
-                                                    fill="#10b981"
-                                                    radius={[0, 4, 4, 0]}
-                                                    barSize={22}
-                                                    cursor="pointer"
-                                                    onClick={handleDivisionBarClick}
-                                                />
+                                                <Bar dataKey="Base" stackId="a" fill={C.upah} barSize={22} cursor="pointer" onClick={handleDivisionBarClick} />
+                                                <Bar dataKey="Overtime" stackId="a" fill={C.lembur} barSize={22} cursor="pointer" onClick={handleDivisionBarClick} />
+                                                <Bar dataKey="Premi" stackId="a" fill={C.premi} radius={[0, 4, 4, 0]} barSize={22} cursor="pointer" onClick={handleDivisionBarClick}>
+                                                    <LabelList dataKey="Total" position="right" formatter={(v) => formatCompactIDR(v)} style={{ fontSize: 10, fill: C.text2, fontWeight: 700 }} />
+                                                </Bar>
                                             </BarChart>
                                         </ResponsiveContainer>
                                     </div>
                                 </div>
 
-                                {/* Overtime Distribution */}
-                                <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
-                                    <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#334155', marginBottom: '1.5rem' }}>Cost Composition</h3>
-                                    <div style={{ height: '300px', display: 'flex', justifyContent: 'center', minHeight: '200px' }}>
+                                {/* Cost Composition Donut */}
+                                <div style={CARD}>
+                                    <div style={SECTION_TITLE}>Komposisi Biaya</div>
+                                    <div style={{ height: '300px', position: 'relative', minHeight: '200px' }}>
                                         <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
                                             <PieChart>
                                                 <Pie
                                                     data={Array.isArray(costComposition) ? costComposition : []}
                                                     cx="50%"
                                                     cy="50%"
-                                                    innerRadius={60}
+                                                    innerRadius={70}
                                                     outerRadius={100}
-                                                    paddingAngle={5}
+                                                    paddingAngle={3}
                                                     dataKey="value"
                                                 >
                                                     {Array.isArray(costComposition) && costComposition.map((entry, index) => (
                                                         <Cell key={`cell-${index}`} fill={entry.color} />
                                                     ))}
                                                 </Pie>
-                                                <Tooltip formatter={(val) => formatCurrency(val)} />
+                                                <Tooltip formatter={(val) => formatCurrency(val)} contentStyle={{ borderRadius: 10, border: `1px solid ${C.border}`, boxShadow: SHADOW_HOVER }} />
                                                 <Legend />
                                             </PieChart>
                                         </ResponsiveContainer>
+                                        <div style={{ position: 'absolute', top: '44%', left: '50%', transform: 'translate(-50%,-50%)', textAlign: 'center', pointerEvents: 'none' }}>
+                                            <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: C.muted }}>Total</div>
+                                            <div style={{ fontSize: 20, fontWeight: 800, color: C.text, fontVariantNumeric: 'tabular-nums' }}>{formatCompactIDR(kpi?.curr_wage || 0)}</div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
