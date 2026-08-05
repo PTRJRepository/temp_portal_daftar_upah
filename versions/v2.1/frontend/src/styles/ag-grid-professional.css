@@ -1,0 +1,433 @@
+/* ============================================
+   AG GRID PROFESSIONAL STYLING
+   PT REBINMAS JAYA - ACCOUNTING OPTIMIZED
+   ============================================ */
+
+/* AG Grid Theme Variables */
+.ag-theme-alpine {
+    --ag-header-height: 40px;
+    --ag-row-height: 34px;
+    --ag-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --ag-font-size: 13px;
+
+    /* Professional colors */
+    --ag-background-color: #FFFFFF;
+    --ag-odd-row-background-color: #FAFAFA;
+    --ag-header-background-color: #F5F7FA;
+    --ag-header-foreground-color: #212121;
+
+    /* Borders */
+    --ag-border-color: #E0E0E0;
+    --ag-row-border-color: #F0F0F0;
+
+    /* Selection */
+    --ag-selected-row-background-color: #E3F2FD;
+    --ag-range-selection-background-color: rgba(25, 118, 210, 0.15);
+    --ag-range-selection-border-color: #1976D2;
+}
+
+/* ============================================
+   COLUMN TYPE COLORS - SOFT HARMONIOUS COLORS
+   ============================================ */
+
+/* IDENTITAS COLUMNS (NO, NIK, Nama) - NO background color */
+.ag-cell[col-id^="nik"],
+.ag-cell[col-id^="nama"],
+.ag-cell[col-id^="no_"],
+.ag-cell[col-id="no"] {
+    background-color: transparent !important;
+    color: #37474F !important;
+    font-weight: 500;
+}
+
+/* ABSENSI COLUMNS (HK, HL, etc) - Soft Blue */
+.ag-cell[col-id^="hk"],
+.ag-cell[col-id^="hl"],
+.ag-cell[col-id^="h_"],
+.ag-cell[col-id="total_hari_kerja"],
+.ag-cell.cell-absensi {
+    background-color: #F5F9FC !important;
+    color: #37474F !important;
+    font-weight: 500;
+    text-align: center;
+}
+
+/* UPAH DASAR - Soft Purple/Lavender */
+.ag-cell[col-id*="upah_dasar"],
+.ag-cell[col-id*="gaji_pokok"],
+.ag-cell[col-id="upah_harian"],
+.ag-cell.cell-upah-dasar {
+    background-color: #FAF5FC !important;
+    color: #37474F !important;
+    font-weight: 600;
+    text-align: right;
+}
+
+/* ============================================
+   SOFT COLUMN DISTINCTION - CELL VALUE STYLING
+   One unified color per parent header group
+   NO colors on: NO, NAMA, TOTAL rows
+   ============================================ */
+
+/* --- TUNJANGAN GROUP - All columns under TUNJANGAN header get same soft cream --- */
+.ag-cell.cell-tunj-beras-rate,
+.ag-cell.cell-tunj-beras-jumlah,
+.ag-cell.cell-tunj-beras,
+.ag-cell.cell-tunj-jabatan-rate,
+.ag-cell.cell-tunj-jabatan-jumlah,
+.ag-cell.cell-tunj-jabatan,
+.ag-cell.cell-tunj-masa-tahun,
+.ag-cell.cell-tunj-masa-jumlah,
+.ag-cell.cell-tunj-masa,
+.ag-cell.cell-tunj-lembur-jam,
+.ag-cell.cell-tunj-lembur-jumlah,
+.ag-cell.cell-tunj-lembur,
+.ag-cell.cell-tunj-general {
+    background-color: #FFFBF5 !important;
+    color: #5D4037 !important;
+}
+
+
+/* --- PREMI GROUP - All columns under PREMI header get same soft green --- */
+.ag-cell.cell-premi-primary,
+.ag-cell.cell-premi-secondary,
+.ag-cell.cell-premi-tertiary,
+.ag-cell.cell-premi-dynamic,
+.ag-cell.cell-premi-panen,
+.ag-cell.cell-premi-angkut {
+    background-color: #F5FAF5 !important;
+    color: #37474F !important;
+}
+
+
+/* --- POTONGAN GROUP - All columns under POTONGAN header get same soft gray --- */
+.ag-cell.cell-pot-general,
+.ag-cell.cell-pot-insurance,
+.ag-cell.cell-pot-bpjs-kesehatan,
+.ag-cell.cell-pot-bpjs-pensiun,
+.ag-cell.cell-pot-tax,
+.ag-cell.cell-pot-correction,
+.ag-cell.cell-pot-spsi,
+.ag-cell.cell-pot-astek,
+.ag-cell.cell-pot-kotor {
+    background-color: #F8F8F8 !important;
+    color: #37474F !important;
+}
+
+/* --- SUMMARY/TOTAL COLUMNS - WITH Highlight Background --- */
+
+/* Jumlah HK / Total Kehadiran - Soft Blue Highlight */
+.ag-cell[col-id="jumlah_hk"],
+.ag-cell[col-id="total_hari_kerja"],
+.ag-cell[col-id*="total_hk"] {
+    background-color: #E3F2FD !important;
+    color: #1565C0 !important;
+    font-weight: 700 !important;
+}
+
+/* Total Tunjangan - Soft Orange/Amber Highlight */
+.ag-cell.cell-total-tunjangan,
+.ag-cell[col-id="total_tunjangan"] {
+    background-color: #FFF3E0 !important;
+    color: #E65100 !important;
+    font-weight: 700 !important;
+}
+
+/* Total Premi - Soft Green Highlight */
+.ag-cell.cell-total-premi,
+.ag-cell[col-id="total_premi"] {
+    background-color: #E8F5E9 !important;
+    color: #2E7D32 !important;
+    font-weight: 700 !important;
+}
+
+/* Total Potongan - Soft Red Highlight */
+.ag-cell.cell-deduction,
+.ag-cell[col-id="total_potongan"] {
+    background-color: #FFEBEE !important;
+    color: #C62828 !important;
+    font-weight: 700 !important;
+}
+
+/* Jumlah Upah Kotor - Soft Yellow Highlight */
+.ag-cell[col-id="jumlah_upah_kotor"],
+.ag-cell[col-id*="upah_kotor"] {
+    background-color: #FFFDE7 !important;
+    color: #F57F17 !important;
+    font-weight: 700 !important;
+}
+
+/* Upah Bersih - Strong Green Highlight (Most Important) */
+.ag-cell.cell-net-salary,
+.ag-cell[col-id="upah_bersih"],
+.ag-cell[col-id="take_home_pay"] {
+    background-color: #E8F5E9 !important;
+    color: #1B5E20 !important;
+    font-weight: 700 !important;
+    border-left: 2px solid #4CAF50 !important;
+    border-right: 2px solid #4CAF50 !important;
+}
+
+/* Other General Total columns */
+.ag-cell.cell-total-group {
+    background-color: #F5F5F5 !important;
+    color: #37474F !important;
+    font-weight: 600 !important;
+}
+
+/* Remove col-id based overrides that were clearing colors */
+.ag-cell[col-id^="tunj"],
+.ag-cell[col-id*="tunjangan"],
+.ag-cell[col-id^="premi"],
+.ag-cell[col-id^="pot"],
+.ag-cell[col-id*="potongan"] {
+    background-color: transparent !important;
+    color: inherit !important;
+}
+
+/* ============================================
+   HEADER STYLING - NO Background Colors
+   ============================================ */
+
+/* Header Groups - just border, no color */
+.ag-header-group-cell {
+    font-weight: 600;
+    border-bottom: 2px solid var(--ag-border-color);
+}
+
+/* All header cells - transparent background */
+.ag-header-cell[col-id^="nik"],
+.ag-header-cell[col-id^="nama"],
+.ag-header-cell[col-id^="hk"],
+.ag-header-cell[col-id^="hl"],
+.ag-header-cell[col-id*="upah"],
+.ag-header-cell[col-id^="tunj"],
+.ag-header-cell[col-id^="premi"],
+.ag-header-cell[col-id^="pot"],
+.ag-header-cell[col-id*="total"],
+.ag-header-cell[col-id="upah_bersih"] {
+    background: transparent !important;
+    color: #37474F !important;
+    font-weight: 600;
+}
+
+/* ============================================
+   ROW STYLING - Clear row separation
+   ============================================ */
+
+/* All rows get a thick bottom border for clear separation */
+.ag-row {
+    border-bottom: 2px solid #BDBDBD !important;
+}
+
+/* Alternating rows with subtle background difference */
+.ag-row-even {
+    background-color: #FFFFFF;
+}
+
+.ag-row-odd {
+    background-color: #FAFAFA;
+}
+
+/* Hover effect - more prominent */
+.ag-row-hover {
+    background-color: #E3F2FD !important;
+    border-bottom: 1px solid #90CAF9 !important;
+}
+
+/* Selected rows */
+.ag-row-selected {
+    background-color: #E3F2FD !important;
+}
+
+.ag-row-selected .ag-cell {
+    border-top: 1px solid #1976D2;
+    border-bottom: 1px solid #1976D2;
+}
+
+/* Pinned rows (GRAND TOTAL) - HIGHEST PRIORITY - Override all column styles */
+.ag-row-pinned {
+    background: linear-gradient(180deg, #1a365d 0%, #2d4a6f 100%) !important;
+    font-weight: 700 !important;
+    border-top: 2px solid #0d1b2a !important;
+    border-bottom: 2px solid #0d1b2a !important;
+}
+
+/* Override ALL cell colors in pinned row - MAXIMUM SPECIFICITY */
+.ag-row-pinned .ag-cell,
+.ag-row-pinned .ag-cell[col-id],
+.ag-row-pinned .ag-cell.cell-tunj-general,
+.ag-row-pinned .ag-cell.cell-premi-general,
+.ag-row-pinned .ag-cell.cell-potongan,
+.ag-row-pinned .ag-cell.text-right,
+.ag-row-pinned .ag-cell.text-red,
+.ag-row-pinned .ag-cell.text-blue-bold,
+.ag-row-pinned .ag-cell.text-green-bold,
+.ag-pinned-bottom-floating-bottom .ag-cell {
+    background: transparent !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    font-size: 11px !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: nowrap !important;
+}
+
+/* Override attribute selectors for pinned */
+.ag-row-pinned .ag-cell[col-id^="tunj"],
+.ag-row-pinned .ag-cell[col-id^="premi"],
+.ag-row-pinned .ag-cell[col-id^="pot"],
+.ag-row-pinned .ag-cell[col-id*="total"],
+.ag-row-pinned .ag-cell[col-id*="upah"],
+.ag-row-pinned .ag-cell[col-id^="beras"],
+.ag-row-pinned .ag-cell[col-id^="jabatan"],
+.ag-row-pinned .ag-cell[col-id^="masa"],
+.ag-row-pinned .ag-cell[col-id^="lembur"],
+.ag-row-pinned .ag-cell[col-id^="hk"],
+.ag-row-pinned .ag-cell[col-id^="hl"],
+.ag-row-pinned .ag-cell[col-id^="cuti"] {
+    background: transparent !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+}
+
+/* ============================================
+   CELL VALUE FORMATTING
+   ============================================ */
+
+/* Negative values */
+.ag-cell-value.negative {
+    color: #D32F2F !important;
+    font-weight: 600;
+}
+
+/* Zero values */
+.ag-cell-value.zero {
+    color: #9E9E9E;
+    font-style: italic;
+}
+
+/* Large numbers */
+.ag-cell-value.large {
+    font-weight: 700;
+}
+
+/* ============================================
+   RANGE SELECTION (Excel-like)
+   ============================================ */
+
+.ag-cell-range-selected:not(.ag-cell-focus) {
+    background-color: rgba(255, 193, 7, 0.2) !important;
+}
+
+.ag-cell-range-selected {
+    border: 1px solid #FFC107 !important;
+}
+
+/* Selection handle */
+.ag-range-handle {
+    background-color: #1976D2;
+    border: 2px solid #FFFFFF;
+    border-radius: 2px;
+    width: 8px;
+    height: 8px;
+}
+
+/* ============================================
+   SCROLLBARS
+   ============================================ */
+
+.ag-body-horizontal-scroll-viewport::-webkit-scrollbar,
+.ag-body-vertical-scroll-viewport::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+.ag-body-horizontal-scroll-viewport::-webkit-scrollbar-track,
+.ag-body-vertical-scroll-viewport::-webkit-scrollbar-track {
+    background: #F5F5F5;
+    border-radius: 6px;
+}
+
+.ag-body-horizontal-scroll-viewport::-webkit-scrollbar-thumb,
+.ag-body-vertical-scroll-viewport::-webkit-scrollbar-thumb {
+    background: #BDBDBD;
+    border-radius: 6px;
+    border: 2px solid #F5F5F5;
+}
+
+.ag-body-horizontal-scroll-viewport::-webkit-scrollbar-thumb:hover,
+.ag-body-vertical-scroll-viewport::-webkit-scrollbar-thumb:hover {
+    background: #9E9E9E;
+}
+
+/* ============================================
+   NUMBER FORMATTING
+   ============================================ */
+
+/* Right-align all numeric columns */
+.ag-cell[col-id]:not([col-id^="nik"]):not([col-id^="nama"]):not([col-id="no"]) {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Currency formatting helper */
+.currency-value {
+    font-family: 'Roboto Mono', monospace;
+}
+
+/* ============================================
+   PERFORMANCE OPTIMIZATIONS
+   ============================================ */
+
+.ag-cell {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.ag-row {
+    will-change: transform;
+}
+
+/* Reduce repaint on scroll */
+.ag-body-viewport {
+    transform: translateZ(0);
+}
+
+/* ============================================
+   HEADER WRAPPING & AUTO-HEIGHT FIXES
+   ============================================ */
+
+.ag-header-cell,
+.ag-header-group-cell {
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+}
+
+.ag-header-cell-label,
+.ag-header-group-cell-label {
+    white-space: normal !important;
+    overflow: visible !important;
+    line-height: 1.25 !important;
+    text-align: center !important;
+    justify-content: center !important;
+    width: 100%;
+}
+
+.ag-header-cell-text,
+.hdr-label {
+    white-space: normal !important;
+    text-overflow: clip !important;
+    word-break: break-word !important;
+    text-align: center !important;
+    width: 100%;
+}
+
+/* Force multiline support for custom components */
+.hdr-group {
+    white-space: normal !important;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

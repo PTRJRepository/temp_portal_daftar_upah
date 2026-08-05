@@ -1,0 +1,816 @@
+/**
+ * PayrollHistoryComparison.css
+ * Styling for wages comparison view
+ */
+
+/* Container */
+.phc-container {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    padding: 24px;
+    margin: 0 auto;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+/* Loading State */
+.phc-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    gap: 16px;
+}
+
+.phc-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid #e5e7eb;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: phc-spin 1s linear infinite;
+}
+
+@keyframes phc-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Error State */
+.phc-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    gap: 16px;
+    color: #ef4444;
+}
+
+.phc-error-icon {
+    font-size: 48px;
+}
+
+/* Header */
+.phc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.phc-header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.phc-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0;
+}
+
+.phc-period-badge {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: white;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.phc-header-right {
+    display: flex;
+    gap: 12px;
+}
+
+/* Buttons */
+.phc-btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.phc-btn-back {
+    background: #f3f4f6;
+    color: #4b5563;
+}
+
+.phc-btn-back:hover {
+    background: #e5e7eb;
+}
+
+.phc-btn-primary {
+    background: #3b82f6;
+    color: white;
+}
+
+.phc-btn-primary:hover {
+    background: #2563eb;
+}
+
+.phc-btn-export {
+    background: #10b981;
+    color: white;
+}
+
+.phc-btn-export:hover {
+    background: #059669;
+}
+
+.phc-btn-export:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+}
+
+/* Filters */
+.phc-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding: 16px;
+    background: #f9fafb;
+    border-radius: 8px;
+}
+
+.phc-filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.phc-filter-group label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.phc-filter-group select,
+.phc-filter-group input {
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    min-width: 140px;
+    background: white;
+}
+
+.phc-filter-group select:focus,
+.phc-filter-group input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.phc-search {
+    flex: 1;
+    min-width: 200px;
+}
+
+.phc-search input {
+    width: 100%;
+}
+
+/* Summary Cards */
+.phc-summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.phc-kpi-card {
+    background: #f9fafb;
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+    border: 1px solid #e5e7eb;
+}
+
+.phc-kpi-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+}
+
+.phc-kpi-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.phc-kpi-percent {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 4px;
+}
+
+/* KPI Card Variants */
+.phc-kpi-match {
+    background: #d1fae5;
+    border-color: #10b981;
+}
+
+.phc-kpi-match .phc-kpi-value {
+    color: #059669;
+}
+
+.phc-kpi-minor {
+    background: #fef3c7;
+    border-color: #f59e0b;
+}
+
+.phc-kpi-minor .phc-kpi-value {
+    color: #d97706;
+}
+
+.phc-kpi-major {
+    background: #fee2e2;
+    border-color: #ef4444;
+}
+
+.phc-kpi-major .phc-kpi-value {
+    color: #dc2626;
+}
+
+.phc-kpi-no-data {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+}
+
+.phc-kpi-no-data .phc-kpi-value {
+    color: #6b7280;
+}
+
+.phc-kpi-variance {
+    background: #ede9fe;
+    border-color: #8b5cf6;
+}
+
+.phc-kpi-variance .phc-kpi-value {
+    color: #7c3aed;
+    font-size: 1.25rem;
+}
+
+/* Table Container */
+.phc-table-container {
+    overflow-x: auto;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}
+
+/* Table */
+.phc-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8125rem;
+}
+
+.phc-table th,
+.phc-table td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+    white-space: nowrap;
+}
+
+.phc-table thead {
+    background: #f9fafb;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+/* Header Groups */
+.phc-header-group th {
+    background: #1f2937;
+    color: white;
+    font-weight: 600;
+    text-align: center;
+    border-bottom: 2px solid #374151;
+}
+
+.phc-header-cols th {
+    background: #374151;
+    color: #e5e7eb;
+    font-weight: 500;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.phc-th-group {
+    background: #1f2937 !important;
+}
+
+.phc-th-group.wages {
+    background: #1e40af !important;
+}
+
+.phc-th-group.comparison {
+    background: #7c3aed !important;
+}
+
+.phc-th-sticky {
+    position: sticky;
+    left: 0;
+    z-index: 20;
+    background: #1f2937 !important;
+}
+
+/* Data Rows */
+.phc-data-row:hover {
+    background: #f9fafb;
+}
+
+.phc-data-row.match {
+    background: #f0fdf4;
+}
+
+.phc-data-row.minor_diff {
+    background: #fffbeb;
+}
+
+.phc-data-row.major_diff {
+    background: #fef2f2;
+}
+
+.phc-data-row.no_wages {
+    background: #f9fafb;
+}
+
+.phc-td-sticky {
+    position: sticky;
+    left: 0;
+    background: white;
+    z-index: 5;
+    font-weight: 600;
+}
+
+.phc-data-row:hover .phc-td-sticky {
+    background: #f9fafb;
+}
+
+.phc-td-name {
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.phc-td-num {
+    text-align: right;
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
+    font-size: 0.75rem;
+}
+
+.phc-td-dim {
+    color: #9ca3af;
+}
+
+.phc-td-neg {
+    color: #ef4444;
+}
+
+.phc-td-highlight {
+    background: #f0fdf4;
+    font-weight: 600;
+}
+
+.phc-td-diff {
+    color: #ef4444;
+    font-weight: 600;
+}
+
+/* Status Badge */
+.phc-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* Expand Button */
+.phc-expand-btn {
+    background: #f3f4f6;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    color: #6b7280;
+    transition: all 0.2s;
+}
+
+.phc-expand-btn:hover {
+    background: #e5e7eb;
+    color: #1f2937;
+}
+
+/* Detail Row */
+.phc-detail-row {
+    background: #f9fafb;
+}
+
+.phc-detail-cell {
+    padding: 0 !important;
+}
+
+.phc-detail-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    padding: 20px;
+    background: #f9fafb;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.phc-detail-section {
+    background: white;
+    border-radius: 8px;
+    padding: 16px;
+    border: 1px solid #e5e7eb;
+}
+
+.phc-detail-section h4 {
+    margin: 0 0 12px 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.phc-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.phc-detail-grid > div {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8125rem;
+}
+
+.phc-detail-grid > div > span:first-child {
+    color: #6b7280;
+}
+
+.phc-detail-grid > div > span:last-child {
+    font-weight: 500;
+    color: #1f2937;
+}
+
+.phc-text-diff {
+    color: #ef4444;
+    font-weight: 600;
+}
+
+.phc-text-ok {
+    color: #10b981;
+    font-weight: 600;
+}
+
+.phc-text-neg {
+    color: #ef4444;
+}
+
+.phc-text-highlight {
+    color: #3b82f6;
+}
+
+.phc-no-data {
+    color: #9ca3af;
+    font-style: italic;
+    font-size: 0.875rem;
+}
+
+/* Detail Group Header */
+.phc-detail-group-header {
+    background: #f3f4f6;
+    padding: 6px 8px;
+    margin-top: 12px;
+    margin-bottom: 4px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #4b5563;
+}
+
+.phc-detail-group-header:first-child {
+    margin-top: 0;
+}
+
+/* Comparison Summary Section */
+.phc-comparison-summary {
+    background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+    border-color: #3b82f6;
+}
+
+.phc-comparison-summary h4 {
+    color: #1d4ed8;
+}
+
+/* Empty State */
+.phc-empty-row {
+    height: 200px;
+}
+
+.phc-empty-cell {
+    text-align: center;
+    color: #9ca3af;
+    font-style: italic;
+    vertical-align: middle;
+}
+
+/* Footer */
+.phc-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #e5e7eb;
+    font-size: 0.8125rem;
+    color: #6b7280;
+}
+
+.phc-footer-legend {
+    display: flex;
+    gap: 16px;
+}
+
+.phc-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.phc-legend-badge {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.625rem;
+}
+
+.phc-legend-badge.match {
+    background: #d1fae5;
+    color: #059669;
+}
+
+.phc-legend-badge.minor {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+.phc-legend-badge.major {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .phc-summary-cards {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .phc-filters {
+        flex-wrap: wrap;
+    }
+    
+    .phc-filter-group {
+        min-width: calc(50% - 8px);
+    }
+}
+
+@media (max-width: 768px) {
+    .phc-container {
+        padding: 16px;
+    }
+    
+    .phc-header {
+        flex-direction: column;
+        gap: 16px;
+        align-items: flex-start;
+    }
+    
+    .phc-header-left {
+        flex-wrap: wrap;
+    }
+    
+    .phc-summary-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .phc-detail-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .phc-footer {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
+    
+    .phc-footer-legend {
+        flex-wrap: wrap;
+    }
+}
+
+/* Print Styles */
+@media print {
+    @page {
+        size: landscape;
+        margin: 1cm;
+    }
+
+    /* Reset background colors for printing */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    body {
+        background: white !important;
+        font-size: 8pt !important;
+    }
+
+    /* Hide UI elements */
+    .phc-btn,
+    .phc-filters,
+    .phc-expand-btn,
+    .phc-header,
+    .phc-footer-legend,
+    .phc-detail-row {
+        display: none !important;
+    }
+
+    /* Container adjustments */
+    .phc-container {
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+        max-width: none !important;
+    }
+
+    /* Print Header */
+    .phc-print-header {
+        display: block !important;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #000;
+        padding-bottom: 10px;
+    }
+
+    .phc-print-title {
+        font-size: 16pt;
+        font-weight: bold;
+        text-align: center;
+        margin: 0 0 10px 0;
+        color: #000;
+    }
+
+    .phc-print-meta {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        font-size: 9pt;
+    }
+
+    /* Summary Cards in Print */
+    .phc-summary-cards {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 10px !important;
+        margin-bottom: 20px !important;
+        page-break-inside: avoid;
+    }
+
+    .phc-kpi-card {
+        padding: 8px !important;
+        border: 1px solid #ccc !important;
+        background: #f9f9f9 !important;
+    }
+
+    .phc-kpi-value {
+        font-size: 11pt !important;
+    }
+
+    /* Table Adjustments */
+    .phc-table-container {
+        border: none !important;
+        overflow: visible !important;
+    }
+
+    .phc-table {
+        font-size: 7.5pt !important;
+        width: 100% !important;
+        table-layout: auto !important;
+        border: 1px solid #000 !important;
+    }
+
+    .phc-table th, 
+    .phc-table td {
+        border: 1px solid #000 !important;
+        padding: 4px 6px !important;
+        white-space: normal !important; /* Allow wrapping in print */
+    }
+
+    /* Light headers for print; keep separators visible between columns */
+    .phc-table thead th,
+    .phc-header-group th,
+    .phc-header-cols th,
+    .phc-th-group,
+    .phc-th-group.wages,
+    .phc-th-group.comparison,
+    .phc-th-sticky {
+        background: #fff !important;
+        color: #000 !important;
+        border: 1pt solid #000 !important;
+    }
+
+    .phc-header-group th {
+        border-bottom: 1.5pt solid #000 !important;
+    }
+
+    /* Sticky headers don't work in print well */
+    .phc-th-sticky {
+        position: static !important;
+        z-index: auto !important;
+    }
+
+    .phc-td-sticky {
+        position: static !important;
+        background-color: transparent !important;
+        z-index: auto !important;
+    }
+
+    .phc-td-sticky {
+        background: white !important;
+    }
+
+    /* Specific column widths for better fit */
+    .phc-td-name {
+        max-width: 150px !important;
+    }
+
+    /* Highlight differences in B&W printing */
+    .phc-td-diff {
+        background-color: #eee !important;
+        font-weight: bold !important;
+        text-decoration: underline !important;
+    }
+
+    /* Status column optimization */
+    .phc-status-badge {
+        border: 1px solid #ccc !important;
+        background: transparent !important;
+        color: black !important;
+        padding: 1px 4px !important;
+    }
+
+    /* Legend/Footer */
+    .phc-footer {
+        margin-top: 15px !important;
+        border-top: 1px solid #000 !important;
+        page-break-before: auto;
+    }
+
+    .print-only {
+        display: block !important;
+    }
+
+    .only-print {
+        display: block !important;
+    }
+}
+
+/* Screen utility for print header */
+.only-print {
+    display: none;
+}

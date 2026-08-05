@@ -1,0 +1,8 @@
+# generated / derived — jangan di-version-control
+_logs/
+*.log
+*.log.err
+.env
+node_modules
+dist
+tsconfig.tsbuildinfo

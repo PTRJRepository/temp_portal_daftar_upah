@@ -1,0 +1,228 @@
+/* ============================================
+   GLOBAL PRINT OPTIMIZATION (READY-TO-PRINT)
+   ============================================ */
+
+/* Force Landscape - must be outside @media print */
+@page {
+    size: A4 landscape;
+    margin: 5mm;
+}
+
+@media print {
+
+    /* Reset layout for print */
+    html,
+    body {
+        width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        font-family: Arial, sans-serif !important;
+    }
+
+    #root,
+    .App,
+    .print-content-area {
+        width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
+        position: static !important;
+        display: block !important;
+    }
+
+    /* ============================================
+       THE BINGKAI (DOCUMENT FRAME)
+       Main container for all reports
+       ============================================ */
+    .sw-document,
+    .wsp-document,
+    .ir-document,
+    .tax-report-table-wrapper,
+    .summary-report-grid-container,
+    .comparison-report-container,
+    .wages-summary-container {
+        border: 1.5pt solid #000 !important;
+        padding: 5mm !important;
+        margin: 0 auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        background: #fff !important;
+        overflow: visible !important;
+        position: relative !important;
+    }
+
+    /* ============================================
+       TABLE REFINEMENT (NO CUTOFFS)
+       ============================================ */
+    table {
+        width: 100% !important;
+        table-layout: auto !important;
+        /* Let columns adjust naturally */
+        border-collapse: collapse !important;
+        border: 1pt solid #000 !important;
+        page-break-inside: auto !important;
+        margin-bottom: 20pt !important;
+    }
+
+    tr {
+        page-break-inside: avoid !important;
+        page-break-after: auto !important;
+    }
+
+    th,
+    td {
+        border: 0.5pt solid #000 !important;
+        padding: 4pt 5pt !important;
+        font-size: 8pt !important;
+        white-space: nowrap !important;
+        color: #000 !important;
+        vertical-align: middle !important;
+    }
+
+    /* Allow wrapping only in first column or description columns - wrap per WORD */
+    td:first-child,
+    td[class*="name"],
+    td[class*="desc"],
+    td[class*="description"] {
+        white-space: normal !important;
+        overflow-wrap: break-word !important;
+        word-break: keep-all !important;
+    }
+
+    th {
+        background-color: #f1f5f9 !important;
+        font-weight: bold !important;
+        text-transform: uppercase !important;
+        text-align: center !important;
+    }
+
+    /* Professional Zebra for contrast */
+    tr:nth-child(even) {
+        background-color: #f8fafc !important;
+    }
+
+    /* Total Rows - High Visibility */
+    tr.grand-total td,
+    tr.total-row td,
+    tr.grand-total-row td,
+    tfoot td {
+        background-color: #e2e8f0 !important;
+        font-weight: bold !important;
+        border-top: 1.5pt solid #000 !important;
+    }
+
+    /* ============================================
+       SIGNATURE SECTION
+       Standardized 3-person block
+       ============================================ */
+    .print-signature-section {
+        margin-top: 12pt !important;
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        width: 100% !important;
+        page-break-inside: avoid !important;
+    }
+
+    .signature-block {
+        width: 30% !important;
+        text-align: center !important;
+    }
+
+    .signature-space {
+        height: 30pt !important;
+    }
+
+    .signature-name {
+        border-top: 1pt solid #000 !important;
+        display: inline-block !important;
+        min-width: 120pt !important;
+        font-weight: bold !important;
+        padding-top: 2pt !important;
+    }
+
+    /* ============================================
+       UTILITIES
+       ============================================ */
+    .no-print,
+    .action-bar,
+    .filter-section,
+    .sidebar,
+    .sidebar-backdrop,
+    .no-print-area,
+    button,
+    nav {
+        display: none !important;
+    }
+
+    .print-only {
+        display: block !important;
+    }
+
+    /* Remove Scrollbars */
+    * {
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+    }
+
+    *::-webkit-scrollbar {
+        display: none !important;
+    }
+}
+
+/* ============================================
+   WEB HEADER TIDY UP (NON-PRINT)
+   Makes the filter/header section look professional
+   ============================================ */
+.report-header-web {
+    background: #ffffff;
+    padding: 1.25rem 1.5rem;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.report-header-info {
+    flex: 1;
+    min-width: 250px;
+}
+
+.report-header-info h1 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #0f172a;
+    font-weight: 700;
+}
+
+.report-header-info p {
+    margin: 0.25rem 0 0 0;
+    color: #64748b;
+    font-size: 0.85rem;
+}
+
+.report-header-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.report-filter-badge {
+    background: #f1f5f9;
+    color: #475569;
+    padding: 0.35rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid #e2e8f0;
+}

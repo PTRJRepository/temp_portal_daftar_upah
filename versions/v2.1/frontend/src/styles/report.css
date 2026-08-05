@@ -1,0 +1,446 @@
+/* Text wrapping for all cells - prevent overflow */
+.ag-cell,
+.ag-cell-value,
+.ag-header-cell-text,
+.ag-header-group-text {
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+  line-height: 1.3 !important;
+  max-width: 100% !important;
+}
+
+/* Header cells should wrap text */
+.ag-header-cell-label {
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+  line-height: 1.2 !important;
+}
+
+/* Allow AG Grid to auto-size rows based on content */
+.ag-row {
+  min-height: auto !important;
+}
+
+.grid-wrapper {
+  padding: 8px;
+}
+
+.ag-theme-alpine {
+  --ag-header-height: 30px;
+  --ag-row-height: 26px;
+}
+
+.header-strong {
+  background: #34495e;
+  color: #fff;
+  font-weight: 700;
+  border: 1px solid #d0d0d0;
+}
+
+.cell-right {
+  text-align: right;
+}
+
+.cell-center {
+  text-align: center;
+}
+
+/* ---- NEW INTUITIVE STYLES ---- */
+
+/* Header Group Colors - Parent Level */
+/* Use !important to override default AG Grid themes where necessary */
+.header-identitas {
+  background-color: #eceff1 !important;
+  border-bottom: 2px solid #b0bec5;
+  color: #37474f;
+}
+
+.header-absensi {
+  background-color: #e1f5fe !important;
+  border-bottom: 2px solid #81d4fa;
+  color: #0277bd;
+}
+
+.header-upah {
+  background-color: #e0f2f1 !important;
+  border-bottom: 2px solid #80cbc4;
+  color: #00695c;
+}
+
+.header-tunjangan {
+  background-color: #f3e5f5 !important;
+  border-bottom: 2px solid #ce93d8;
+  color: #7b1fa2;
+}
+
+.header-premi {
+  background-color: #fff3e0 !important;
+  border-bottom: 2px solid #ffcc80;
+  color: #e65100;
+}
+
+.header-potongan {
+  background-color: #ffebee !important;
+  border-bottom: 2px solid #ef9a9a;
+  color: #c62828;
+}
+
+.header-ringkasan {
+  background-color: #e8f5e9 !important;
+  border-bottom: 2px solid #a5d6a7;
+  color: #2e7d32;
+}
+
+/* Text Colors for Cells */
+.text-green-bold {
+  color: #2e7d32 !important;
+  font-weight: 700;
+}
+
+.text-red {
+  color: #c62828 !important;
+  font-weight: 500;
+}
+
+.text-blue-bold {
+  color: #1565c0 !important;
+  font-weight: 700;
+}
+
+/* Ensure header text is bold for these groups */
+.header-identitas .ag-header-group-text,
+.header-identitas .ag-header-cell-text {
+  font-weight: 600;
+}
+
+.header-absensi .ag-header-group-text,
+.header-absensi .ag-header-cell-text {
+  font-weight: 600;
+}
+
+.header-upah .ag-header-group-text,
+.header-upah .ag-header-cell-text {
+  font-weight: 600;
+}
+
+.header-tunjangan .ag-header-group-text,
+.header-tunjangan .ag-header-cell-text {
+  font-weight: 600;
+}
+
+.header-premi .ag-header-group-text,
+.header-premi .ag-header-cell-text {
+  font-weight: 600;
+}
+
+.header-potongan .ag-header-group-text,
+.header-potongan .ag-header-cell-text {
+  font-weight: 600;
+}
+
+.header-ringkasan .ag-header-group-text,
+.header-ringkasan .ag-header-cell-text {
+  font-weight: 600;
+}
+
+/* Legacy Styles (keeping some for safety, removing conflicting ones) */
+.col-upah-bersih {
+  background: #ffe082;
+  color: #bf360c;
+  font-weight: 700;
+  border: 2px solid #d0d0d0;
+}
+
+.col-jumlah-kotor {
+  background: #ffebee;
+  color: #b71c1c;
+  font-weight: 700;
+}
+
+.col-total-potongan {
+  background: #e3f2fd;
+  color: #0d47a1;
+  font-weight: 700;
+}
+
+.row-odd .ag-cell {
+  background: #ffffff;
+}
+
+.row-even .ag-cell {
+  background: #fff8e1;
+}
+
+/* --- UPDATED GRAND TOTAL STYLES --- */
+.grand-total .ag-cell {
+  background-color: #37474f !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  font-size: 12px;
+  border-top: 2px solid #263238 !important;
+  border-bottom: 2px solid #263238 !important;
+}
+
+.grand-total .ag-cell-value {
+  display: flex;
+  justify-content: flex-end;
+  /* Align numbers to right */
+  width: 100%;
+}
+
+/* Special highlighting for key totals in Grand Total row */
+.grand-total .cell-net-salary {
+  background-color: #ff6f00 !important;
+  /* Amber for Net Salary */
+  color: #fff !important;
+  font-size: 13px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.grand-total .cell-deduction {
+  background-color: #b71c1c !important;
+  /* Dark Red for Deductions */
+  color: #fff !important;
+}
+
+.ag-row-pinned .ag-cell {
+  background: #ffffcc;
+  font-weight: 700;
+}
+
+.ag-row-selected .ag-cell {
+  outline: 2px solid #ff7043;
+  font-weight: 700 !important;
+  background-color: #fff3e0 !important;
+}
+
+.cuti-col-odd {
+  background-color: #f5f5f5;
+}
+
+.cuti-col-even {
+  background-color: #ffffff;
+}
+
+/* Soft header/cell colors for consistent differentiation */
+.hdr-premi-hi {
+  background: #e8f5e9;
+  color: #1b5e20;
+}
+
+.cell-premi-hi {
+  background: #f3fbf4;
+  color: #1b5e20;
+}
+
+.hdr-premi-pruning {
+  background: #e3f2fd;
+  color: #0d47a1;
+}
+
+.cell-premi-pruning {
+  background: #f4f9ff;
+  color: #0d47a1;
+}
+
+.hdr-premi-brondol {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.cell-premi-brondol {
+  background: #fff8e6;
+  color: #e65100;
+}
+
+.hdr-premi-angkut-tbs {
+  background: #ede7f6;
+  color: #4527a0;
+}
+
+.cell-premi-angkut-tbs {
+  background: #f6f2fb;
+  color: #4527a0;
+}
+
+.hdr-premi-angkut-material {
+  background: #fce4ec;
+  color: #ad1457;
+}
+
+.cell-premi-angkut-material {
+  background: #fff0f5;
+  color: #ad1457;
+}
+
+.hdr-premi-pupuk {
+  background: #f1f8e9;
+  color: #33691e;
+}
+
+.cell-premi-pupuk {
+  background: #f8fcf2;
+  color: #33691e;
+}
+
+.hdr-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hdr-toggle {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 12px;
+}
+
+.hdr-label {
+  font-weight: 600;
+}
+
+.hdr-level-1 {
+  background: #e8edf7;
+}
+
+.hdr-level-2 {
+  background: #eef7e8;
+}
+
+.hdr-level-3 {
+  background: #f7eee8;
+}
+
+.hdr-group.kind-income {
+  background: #e8f5e9;
+  color: #1b5e20;
+}
+
+.hdr-group.kind-deduction {
+  background: #e3f2fd;
+  color: #0d47a1;
+}
+
+.hdr-income {
+  background: #f1f8e9;
+  color: #2e7d32;
+}
+
+.cell-income {
+  background: #f9fff4;
+}
+
+.hdr-deduction {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.cell-deduction {
+  background: #f6fbff;
+}
+
+.loading-screen {
+  opacity: 0.9999
+}
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.fade-in {
+  animation: fadeIn .3s ease-out forwards
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0
+  }
+
+  to {
+    opacity: 1
+  }
+}
+
+.loading-overlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  color: #333;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #ccc;
+  border-top-color: #1976d2;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.loading-text {
+  margin-top: 10px;
+}
+
+.error-text {
+  color: #b71c1c;
+}
+
+.info-text {
+  color: #455a64;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- DIVISION GRAND TOTAL STYLES --- */
+.division-grand-total .ag-cell {
+  background-color: #0d47a1 !important;
+  /* Dark Blue */
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  font-size: 13px;
+  border-top: 3px solid #002171 !important;
+  border-bottom: 3px solid #002171 !important;
+  text-transform: uppercase;
+}
+
+.division-grand-total .ag-cell-value {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+/* --- GANG HEADER SEGMENTATION --- */
+.gang-header-segment {
+  width: 100%;
+  height: 100%;
+  background-color: #37474f;
+  /* Very Dark Grey */
+  color: #eceff1;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  padding-left: 16px;
+  font-size: 14px;
+  border-bottom: 2px solid #cfd8dc;
+  border-top: 2px solid #cfd8dc;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+}

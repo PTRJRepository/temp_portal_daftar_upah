@@ -1,0 +1,1935 @@
+[
+  {
+    "Estate": "AB1",
+    "Gangs": [
+      {
+        "Gang": "G1H",
+        "Details": [
+          {
+            "Empcode": "G0008",
+            "Employee": "MOHAMMAD SAID",
+            "SubBlok": "P09/01",
+            "Amount": 304000
+          },
+          {
+            "Empcode": "G0008",
+            "Employee": "MOHAMMAD SAID",
+            "SubBlok": "P09/02",
+            "Amount": 206000
+          },
+          {
+            "Empcode": "G0008",
+            "Employee": "MOHAMMAD SAID",
+            "SubBlok": "P09/03",
+            "Amount": 206000
+          },
+          {
+            "Empcode": "G0352",
+            "Employee": "MAHSUN",
+            "SubBlok": "P09/01",
+            "Amount": 348000
+          },
+          {
+            "Empcode": "G0352",
+            "Employee": "MAHSUN",
+            "SubBlok": "P09/02",
+            "Amount": 206000
+          },
+          {
+            "Empcode": "G0352",
+            "Employee": "MAHSUN",
+            "SubBlok": "P09/03",
+            "Amount": 206000
+          },
+          {
+            "Empcode": "G0494",
+            "Employee": "BAHIKI",
+            "SubBlok": "P09/01",
+            "Amount": 280000
+          },
+          {
+            "Empcode": "G0494",
+            "Employee": "BAHIKI",
+            "SubBlok": "P09/02",
+            "Amount": 206000
+          },
+          {
+            "Empcode": "G0494",
+            "Employee": "BAHIKI",
+            "SubBlok": "P09/03",
+            "Amount": 206000
+          },
+          {
+            "Empcode": "G0581",
+            "Employee": "ASNI",
+            "SubBlok": "P09/01",
+            "Amount": 293000
+          },
+          {
+            "Empcode": "G0581",
+            "Employee": "ASNI",
+            "SubBlok": "P09/02",
+            "Amount": 206000
+          },
+          {
+            "Empcode": "G0581",
+            "Employee": "ASNI",
+            "SubBlok": "P09/03",
+            "Amount": 206000
+          },
+          {
+            "Empcode": "G0597",
+            "Employee": "ABDURRAHMAN",
+            "SubBlok": "P09/01",
+            "Amount": 282000
+          },
+          {
+            "Empcode": "G0597",
+            "Employee": "ABDURRAHMAN",
+            "SubBlok": "P09/02",
+            "Amount": 206000
+          },
+          {
+            "Empcode": "G0597",
+            "Employee": "ABDURRAHMAN",
+            "SubBlok": "P09/03",
+            "Amount": 206000
+          },
+          {
+            "Empcode": "G0600",
+            "Employee": "M. WIREDADI MUSTAFA",
+            "SubBlok": "P09/01",
+            "Amount": 406000
+          },
+          {
+            "Empcode": "G0600",
+            "Employee": "M. WIREDADI MUSTAFA",
+            "SubBlok": "P09/02",
+            "Amount": 314000
+          },
+          {
+            "Empcode": "G0600",
+            "Employee": "M. WIREDADI MUSTAFA",
+            "SubBlok": "P09/03",
+            "Amount": 318000
+          },
+          {
+            "Empcode": "G0605",
+            "Employee": "MUHAMMAD SALEH",
+            "SubBlok": "P09/01",
+            "Amount": 404000
+          },
+          {
+            "Empcode": "G0605",
+            "Employee": "MUHAMMAD SALEH",
+            "SubBlok": "P09/02",
+            "Amount": 314000
+          },
+          {
+            "Empcode": "G0605",
+            "Employee": "MUHAMMAD SALEH",
+            "SubBlok": "P09/03",
+            "Amount": 318000
+          },
+          {
+            "Empcode": "G0606",
+            "Employee": "IMRON ROSYDI",
+            "SubBlok": "P09/01",
+            "Amount": 649000
+          },
+          {
+            "Empcode": "G0606",
+            "Employee": "IMRON ROSYDI",
+            "SubBlok": "P09/02",
+            "Amount": 412000
+          },
+          {
+            "Empcode": "G0606",
+            "Employee": "IMRON ROSYDI",
+            "SubBlok": "P09/03",
+            "Amount": 412000
+          },
+          {
+            "Empcode": "G0607",
+            "Employee": "MUHAMAD EPISUDIN",
+            "SubBlok": "P09/01",
+            "Amount": 516000
+          },
+          {
+            "Empcode": "G0607",
+            "Employee": "MUHAMAD EPISUDIN",
+            "SubBlok": "P09/02",
+            "Amount": 314000
+          },
+          {
+            "Empcode": "G0607",
+            "Employee": "MUHAMAD EPISUDIN",
+            "SubBlok": "P09/03",
+            "Amount": 318000
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "Estate": "2A",
+    "Gangs": [
+      {
+        "Gang": null,
+        "Details": [
+          {
+            "Empcode": "C0162",
+            "Employee": "MULYADI",
+            "SubBlok": "P97/20",
+            "Amount": 3650000
+          },
+          {
+            "Empcode": "C0155",
+            "Employee": "RICA",
+            "SubBlok": "P97/20",
+            "Amount": 3638000
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "Estate": "P2B",
+    "Gangs": [
+      {
+        "Gang": "D1M",
+        "Details": [
+          {
+            "Empcode": "D0037",
+            "Employee": "SANTI",
+            "SubBlok": "P9701",
+            "Amount": 2570000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0037",
+            "Employee": "SANTI",
+            "SubBlok": "P9702",
+            "Amount": 0,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0037",
+            "Employee": "SANTI",
+            "SubBlok": "P9801",
+            "Amount": 0,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0031",
+            "Employee": "SURYATI",
+            "SubBlok": "P9701",
+            "Amount": 291000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0031",
+            "Employee": "SURYATI",
+            "SubBlok": "P9702",
+            "Amount": 1986000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0031",
+            "Employee": "SURYATI",
+            "SubBlok": "P9801",
+            "Amount": 0,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0024",
+            "Employee": "ANDIWATI",
+            "SubBlok": "P9701",
+            "Amount": 463000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0024",
+            "Employee": "ANDIWATI",
+            "SubBlok": "P9702",
+            "Amount": 500000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0024",
+            "Employee": "ANDIWATI",
+            "SubBlok": "P9801",
+            "Amount": 451000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0015",
+            "Employee": "KARMILA",
+            "SubBlok": "P9701",
+            "Amount": 157000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0015",
+            "Employee": "KARMILA",
+            "SubBlok": "P9702",
+            "Amount": 474000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0015",
+            "Employee": "KARMILA",
+            "SubBlok": "P9801",
+            "Amount": 0,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0027",
+            "Employee": "TUTI",
+            "SubBlok": "P9701",
+            "Amount": 0,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0027",
+            "Employee": "TUTI",
+            "SubBlok": "P9702",
+            "Amount": 141000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0027",
+            "Employee": "TUTI",
+            "SubBlok": "P9801",
+            "Amount": 0,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0030",
+            "Employee": "SUNDARI",
+            "SubBlok": "P9701",
+            "Amount": 0,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0030",
+            "Employee": "SUNDARI",
+            "SubBlok": "P9702",
+            "Amount": 0,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0030",
+            "Employee": "SUNDARI",
+            "SubBlok": "P9801",
+            "Amount": 1100000,
+            "Jenis": "RAKING"
+          }
+        ]
+      },
+      {
+        "Gang": "D1H",
+        "Details": [
+          {
+            "Empcode": "D0145",
+            "Employee": "ERI H",
+            "SubBlok": "P9701",
+            "Amount": 278000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0145",
+            "Employee": "ERI H",
+            "SubBlok": "P9702",
+            "Amount": 280000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0145",
+            "Employee": "ERI H",
+            "SubBlok": "P9801",
+            "Amount": 428000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0330",
+            "Employee": "SEVENDRI",
+            "SubBlok": "P9701",
+            "Amount": 285000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0330",
+            "Employee": "SEVENDRI",
+            "SubBlok": "P9702",
+            "Amount": 283000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0330",
+            "Employee": "SEVENDRI",
+            "SubBlok": "P9801",
+            "Amount": 370000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0361",
+            "Employee": "KARTONO",
+            "SubBlok": "P9701",
+            "Amount": 143000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0361",
+            "Employee": "KARTONO",
+            "SubBlok": "P9702",
+            "Amount": 283000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0361",
+            "Employee": "KARTONO",
+            "SubBlok": "P9801",
+            "Amount": 370000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0050",
+            "Employee": "PURGANDI",
+            "SubBlok": "P9701",
+            "Amount": 143000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0050",
+            "Employee": "PURGANDI",
+            "SubBlok": "P9702",
+            "Amount": 283000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0050",
+            "Employee": "PURGANDI",
+            "SubBlok": "P9801",
+            "Amount": 370000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0355",
+            "Employee": "AZRI DONA",
+            "SubBlok": "P9701",
+            "Amount": 285000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0355",
+            "Employee": "AZRI DONA",
+            "SubBlok": "P9702",
+            "Amount": 283000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0355",
+            "Employee": "AZRI DONA",
+            "SubBlok": "P9801",
+            "Amount": 370000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0060",
+            "Employee": "ROLAND",
+            "SubBlok": "P9701",
+            "Amount": 427000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0060",
+            "Employee": "ROLAND",
+            "SubBlok": "P9702",
+            "Amount": 0,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0060",
+            "Employee": "ROLAND",
+            "SubBlok": "P9801",
+            "Amount": 370000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0057",
+            "Employee": "HAIDI",
+            "SubBlok": "P9701",
+            "Amount": 285000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0057",
+            "Employee": "HAIDI",
+            "SubBlok": "P9702",
+            "Amount": 283000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0057",
+            "Employee": "HAIDI",
+            "SubBlok": "P9801",
+            "Amount": 526000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0051",
+            "Employee": "SAHDAN",
+            "SubBlok": "P9701",
+            "Amount": 235000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0051",
+            "Employee": "SAHDAN",
+            "SubBlok": "P9702",
+            "Amount": 290000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0051",
+            "Employee": "SAHDAN",
+            "SubBlok": "P9801",
+            "Amount": 460000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0328",
+            "Employee": "HARYANTO",
+            "SubBlok": "P9701",
+            "Amount": 143000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0328",
+            "Employee": "HARYANTO",
+            "SubBlok": "P9702",
+            "Amount": 0,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0328",
+            "Employee": "HARYANTO",
+            "SubBlok": "P9801",
+            "Amount": 0,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0324",
+            "Employee": "ROSMANSYAH",
+            "SubBlok": "P9701",
+            "Amount": 294000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0324",
+            "Employee": "ROSMANSYAH",
+            "SubBlok": "P9702",
+            "Amount": 297000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0324",
+            "Employee": "ROSMANSYAH",
+            "SubBlok": "P9801",
+            "Amount": 372000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0055",
+            "Employee": "ANDI",
+            "SubBlok": "P9701",
+            "Amount": 145000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0055",
+            "Employee": "ANDI",
+            "SubBlok": "P9702",
+            "Amount": 0,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0055",
+            "Employee": "ANDI",
+            "SubBlok": "P9801",
+            "Amount": 372000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0352",
+            "Employee": "SABIBI",
+            "SubBlok": "P9701",
+            "Amount": 426000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0352",
+            "Employee": "SABIBI",
+            "SubBlok": "P9702",
+            "Amount": 578000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0352",
+            "Employee": "SABIBI",
+            "SubBlok": "P9801",
+            "Amount": 371000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0083",
+            "Employee": "POPPY ADEYANTI",
+            "SubBlok": "P9701",
+            "Amount": 148000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0083",
+            "Employee": "POPPY ADEYANTI",
+            "SubBlok": "P9702",
+            "Amount": 295000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0083",
+            "Employee": "POPPY ADEYANTI",
+            "SubBlok": "P9801",
+            "Amount": 1143000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0054",
+            "Employee": "RICKI",
+            "SubBlok": "P9701",
+            "Amount": 0,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0054",
+            "Employee": "RICKI",
+            "SubBlok": "P9702",
+            "Amount": 283000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0054",
+            "Employee": "RICKI",
+            "SubBlok": "P9801",
+            "Amount": 375000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0043",
+            "Employee": "JANUAR",
+            "SubBlok": "P9701",
+            "Amount": 0,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0043",
+            "Employee": "JANUAR",
+            "SubBlok": "P9702",
+            "Amount": 141000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0043",
+            "Employee": "JANUAR",
+            "SubBlok": "P9801",
+            "Amount": 370000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0211",
+            "Employee": "ELYANDI",
+            "SubBlok": "P9701",
+            "Amount": 0,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0211",
+            "Employee": "ELYANDI",
+            "SubBlok": "P9702",
+            "Amount": 141000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0211",
+            "Employee": "ELYANDI",
+            "SubBlok": "P9801",
+            "Amount": 0,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0350",
+            "Employee": "KAMALUDIN",
+            "SubBlok": "P9701",
+            "Amount": 0,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0350",
+            "Employee": "KAMALUDIN",
+            "SubBlok": "P9702",
+            "Amount": 0,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0350",
+            "Employee": "KAMALUDIN",
+            "SubBlok": "P9801",
+            "Amount": 371000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0266",
+            "Employee": "ALI MAS DESI",
+            "SubBlok": "P9701",
+            "Amount": 0,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0266",
+            "Employee": "ALI MAS DESI",
+            "SubBlok": "P9702",
+            "Amount": 0,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0266",
+            "Employee": "ALI MAS DESI",
+            "SubBlok": "P9801",
+            "Amount": 372000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0149",
+            "Employee": "EFRIYONO",
+            "SubBlok": "P9701",
+            "Amount": 0,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0149",
+            "Employee": "EFRIYONO",
+            "SubBlok": "P9702",
+            "Amount": 0,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0149",
+            "Employee": "EFRIYONO",
+            "SubBlok": "P9801",
+            "Amount": 370000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0044",
+            "Employee": "FERBI HANJAYA",
+            "SubBlok": "P9701",
+            "Amount": 0,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0044",
+            "Employee": "FERBI HANJAYA",
+            "SubBlok": "P9702",
+            "Amount": 0,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0044",
+            "Employee": "FERBI HANJAYA",
+            "SubBlok": "P9801",
+            "Amount": 372000,
+            "Jenis": "RAKING"
+          }
+        ]
+      },
+      {
+        "Gang": "D2H",
+        "Details": [
+          {
+            "Empcode": "D0170",
+            "Employee": "MUSTAFIDIN",
+            "SubBlok": "P9713",
+            "Amount": 173000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0170",
+            "Employee": "MUSTAFIDIN",
+            "SubBlok": "P9714",
+            "Amount": 230000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0170",
+            "Employee": "MUSTAFIDIN",
+            "SubBlok": "P9715",
+            "Amount": 207000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0252",
+            "Employee": "ANGKAT JP",
+            "SubBlok": "P9713",
+            "Amount": 220000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0252",
+            "Employee": "ANGKAT JP",
+            "SubBlok": "P9714",
+            "Amount": 232000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0252",
+            "Employee": "ANGKAT JP",
+            "SubBlok": "P9715",
+            "Amount": 222000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0118",
+            "Employee": "MASTONI",
+            "SubBlok": "P9713",
+            "Amount": 206000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0118",
+            "Employee": "MASTONI",
+            "SubBlok": "P9714",
+            "Amount": 204000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0118",
+            "Employee": "MASTONI",
+            "SubBlok": "P9715",
+            "Amount": 208000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0296",
+            "Employee": "YEFFRI",
+            "SubBlok": "P9713",
+            "Amount": 211000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0296",
+            "Employee": "YEFFRI",
+            "SubBlok": "P9714",
+            "Amount": 234000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0296",
+            "Employee": "YEFFRI",
+            "SubBlok": "P9715",
+            "Amount": 200000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0239",
+            "Employee": "AMILUDIN",
+            "SubBlok": "P9713",
+            "Amount": 204000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0239",
+            "Employee": "AMILUDIN",
+            "SubBlok": "P9714",
+            "Amount": 204000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0239",
+            "Employee": "AMILUDIN",
+            "SubBlok": "P9715",
+            "Amount": 200000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0296",
+            "Employee": "YEFRI",
+            "SubBlok": "P9713",
+            "Amount": 196000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0296",
+            "Employee": "YEFRI",
+            "SubBlok": "P9714",
+            "Amount": 233000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0296",
+            "Employee": "YEFRI",
+            "SubBlok": "P9715",
+            "Amount": 180000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0131",
+            "Employee": "ISKANDAR",
+            "SubBlok": "P9713",
+            "Amount": 211000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0131",
+            "Employee": "ISKANDAR",
+            "SubBlok": "P9714",
+            "Amount": 231000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0131",
+            "Employee": "ISKANDAR",
+            "SubBlok": "P9715",
+            "Amount": 206000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0127",
+            "Employee": "ANTON BAHAR",
+            "SubBlok": "P9713",
+            "Amount": 204000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0127",
+            "Employee": "ANTON BAHAR",
+            "SubBlok": "P9714",
+            "Amount": 204000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0127",
+            "Employee": "ANTON BAHAR",
+            "SubBlok": "P9715",
+            "Amount": 200000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0370",
+            "Employee": "SUPARDI.S",
+            "SubBlok": "P9713",
+            "Amount": 212000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0370",
+            "Employee": "SUPARDI.S",
+            "SubBlok": "P9714",
+            "Amount": 233000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0370",
+            "Employee": "SUPARDI.S",
+            "SubBlok": "P9715",
+            "Amount": 207000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0117",
+            "Employee": "SUNARDI",
+            "SubBlok": "P9713",
+            "Amount": 204000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0117",
+            "Employee": "SUNARDI",
+            "SubBlok": "P9714",
+            "Amount": 204000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0117",
+            "Employee": "SUNARDI",
+            "SubBlok": "P9715",
+            "Amount": 205000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0378",
+            "Employee": "ZAINUL",
+            "SubBlok": "P9713",
+            "Amount": 220000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0378",
+            "Employee": "ZAINUL",
+            "SubBlok": "P9714",
+            "Amount": 223000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0378",
+            "Employee": "ZAINUL",
+            "SubBlok": "P9715",
+            "Amount": 237000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0378",
+            "Employee": "ZAINUL",
+            "SubBlok": "P9715",
+            "Amount": 240000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0114",
+            "Employee": "BAMBANG",
+            "SubBlok": "P9713",
+            "Amount": 186000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0114",
+            "Employee": "BAMBANG",
+            "SubBlok": "P9714",
+            "Amount": 195000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0114",
+            "Employee": "BAMBANG",
+            "SubBlok": "P9715",
+            "Amount": 219000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0116",
+            "Employee": "EDDI TRISNO",
+            "SubBlok": "P9713",
+            "Amount": 163000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0116",
+            "Employee": "EDDI TRISNO",
+            "SubBlok": "P9714",
+            "Amount": 216000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0116",
+            "Employee": "EDDI TRISNO",
+            "SubBlok": "P9715",
+            "Amount": 219000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0353",
+            "Employee": "TEGUH",
+            "SubBlok": "P9713",
+            "Amount": 143000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0353",
+            "Employee": "TEGUH",
+            "SubBlok": "P9714",
+            "Amount": 209000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0353",
+            "Employee": "TEGUH",
+            "SubBlok": "P9715",
+            "Amount": 208000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0365",
+            "Employee": "NANDAR ASMARA",
+            "SubBlok": "P9713",
+            "Amount": 204000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0365",
+            "Employee": "NANDAR ASMARA",
+            "SubBlok": "P9714",
+            "Amount": 194000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0365",
+            "Employee": "NANDAR ASMARA",
+            "SubBlok": "P9715",
+            "Amount": 206000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0113",
+            "Employee": "EDI",
+            "SubBlok": "P9713",
+            "Amount": 204000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0113",
+            "Employee": "EDI",
+            "SubBlok": "P9714",
+            "Amount": 191000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0113",
+            "Employee": "EDI",
+            "SubBlok": "P9715",
+            "Amount": 206000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0133",
+            "Employee": "MURAI",
+            "SubBlok": "P9713",
+            "Amount": 206000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0133",
+            "Employee": "MURAI",
+            "SubBlok": "P9714",
+            "Amount": 213000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0133",
+            "Employee": "MURAI",
+            "SubBlok": "P9715",
+            "Amount": 227000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0240",
+            "Employee": "SUPARDI",
+            "SubBlok": "P9713",
+            "Amount": 204000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0240",
+            "Employee": "SUPARDI",
+            "SubBlok": "P9714",
+            "Amount": 200000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0240",
+            "Employee": "SUPARDI",
+            "SubBlok": "P9715",
+            "Amount": 208000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0382",
+            "Employee": "ZULKIFLI",
+            "SubBlok": "P9713",
+            "Amount": 232000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0382",
+            "Employee": "ZULKIFLI",
+            "SubBlok": "P9714",
+            "Amount": 191000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0382",
+            "Employee": "ZULKIFLI",
+            "SubBlok": "P9715",
+            "Amount": 226000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0205",
+            "Employee": "BENNY.K",
+            "SubBlok": "P9713",
+            "Amount": 220000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0205",
+            "Employee": "BENNY.K",
+            "SubBlok": "P9714",
+            "Amount": 216000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0205",
+            "Employee": "BENNY.K",
+            "SubBlok": "P9715",
+            "Amount": 219000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0120",
+            "Employee": "EDDY",
+            "SubBlok": "P9713",
+            "Amount": 200000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0120",
+            "Employee": "EDDY",
+            "SubBlok": "P9714",
+            "Amount": 200000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0120",
+            "Employee": "EDDY",
+            "SubBlok": "P9715",
+            "Amount": 206000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0119",
+            "Employee": "MULYONO",
+            "SubBlok": "P9713",
+            "Amount": 200000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0119",
+            "Employee": "MULYONO",
+            "SubBlok": "P9714",
+            "Amount": 200000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0119",
+            "Employee": "MULYONO",
+            "SubBlok": "P9715",
+            "Amount": 206000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0121",
+            "Employee": "ARYANTO",
+            "SubBlok": "P9713",
+            "Amount": 204000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0121",
+            "Employee": "ARYANTO",
+            "SubBlok": "P9714",
+            "Amount": 204000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0121",
+            "Employee": "ARYANTO",
+            "SubBlok": "P9715",
+            "Amount": 206000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0124",
+            "Employee": "ADI.G",
+            "SubBlok": "P9713",
+            "Amount": 209000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0124",
+            "Employee": "ADI.G",
+            "SubBlok": "P9714",
+            "Amount": 154000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0124",
+            "Employee": "ADI.G",
+            "SubBlok": "P9715",
+            "Amount": 210000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0123",
+            "Employee": "SUKARDINATA",
+            "SubBlok": "P9713",
+            "Amount": 209000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0123",
+            "Employee": "SUKARDINATA",
+            "SubBlok": "P9714",
+            "Amount": 174000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0123",
+            "Employee": "SUKARDINATA",
+            "SubBlok": "P9715",
+            "Amount": 238000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0354",
+            "Employee": "EDI BUDI.K",
+            "SubBlok": "P9713",
+            "Amount": 204000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0354",
+            "Employee": "EDI BUDI.K",
+            "SubBlok": "P9714",
+            "Amount": 204000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0354",
+            "Employee": "EDI BUDI.K",
+            "SubBlok": "P9715",
+            "Amount": 206000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0125",
+            "Employee": "AGUSTIAN",
+            "SubBlok": "P9713",
+            "Amount": 204000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0125",
+            "Employee": "AGUSTIAN",
+            "SubBlok": "P9714",
+            "Amount": 204000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0125",
+            "Employee": "AGUSTIAN",
+            "SubBlok": "P9715",
+            "Amount": 204000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0108",
+            "Employee": "HENY.I",
+            "SubBlok": "P9713",
+            "Amount": 204000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0108",
+            "Employee": "HENY.I",
+            "SubBlok": "P9714",
+            "Amount": 204000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0108",
+            "Employee": "HENY.I",
+            "SubBlok": "P9715",
+            "Amount": 200000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0126",
+            "Employee": "HENDI",
+            "SubBlok": "P9713",
+            "Amount": 204000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0126",
+            "Employee": "HENDI",
+            "SubBlok": "P9714",
+            "Amount": 199000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0126",
+            "Employee": "HENDI",
+            "SubBlok": "P9715",
+            "Amount": 200000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0327",
+            "Employee": "ROZI ISKANDAR",
+            "SubBlok": "P9713",
+            "Amount": 200000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0327",
+            "Employee": "ROZI ISKANDAR",
+            "SubBlok": "P9714",
+            "Amount": 241000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "D0327",
+            "Employee": "ROZI ISKANDAR",
+            "SubBlok": "P9715",
+            "Amount": 260000,
+            "Jenis": "RAKING"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "Estate": "P1A",
+    "Gangs": [
+      {
+        "Gang": "A3H",
+        "Details": [
+          {
+            "Empcode": "A0124",
+            "Employee": "EPAN",
+            "SubBlok": "P9706",
+            "Amount": 257000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0500",
+            "Employee": "EFYANTO",
+            "SubBlok": "P9706",
+            "Amount": 257000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0943",
+            "Employee": "MASTARUDIN",
+            "SubBlok": "P9706",
+            "Amount": 247000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0118",
+            "Employee": "SARJUNO",
+            "SubBlok": "P9706",
+            "Amount": 257000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0848",
+            "Employee": "ARYANDA PUTRA",
+            "SubBlok": "P9706",
+            "Amount": 900000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0115",
+            "Employee": "JANUAR",
+            "SubBlok": "P9706",
+            "Amount": 260000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0474",
+            "Employee": "SUNO",
+            "SubBlok": "P9706",
+            "Amount": 250000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0957",
+            "Employee": "WAWAN",
+            "SubBlok": "P9706",
+            "Amount": 257000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0707",
+            "Employee": "BURHAN YAHADI",
+            "SubBlok": "P9706",
+            "Amount": 1075000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0123",
+            "Employee": "SYAMSUDDIN",
+            "SubBlok": "P9706",
+            "Amount": 900000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0839",
+            "Employee": "APRIANSA",
+            "SubBlok": "P9706",
+            "Amount": 256000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0119",
+            "Employee": "EDI",
+            "SubBlok": "P9706",
+            "Amount": 257000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0832",
+            "Employee": "MUHAMMAT RIDUAN SAPI'I",
+            "SubBlok": "P9706",
+            "Amount": 264000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0956",
+            "Employee": "ABDUL AZIZ",
+            "SubBlok": "P9706",
+            "Amount": 240000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0840",
+            "Employee": "JAHIDI",
+            "SubBlok": "P9706",
+            "Amount": 260000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0838",
+            "Employee": "WAHYUDI",
+            "SubBlok": "P9706",
+            "Amount": 260000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0117",
+            "Employee": "SUGENG",
+            "SubBlok": "P9706",
+            "Amount": 254000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0946",
+            "Employee": "LUKMAN",
+            "SubBlok": "P9706",
+            "Amount": 250000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0116",
+            "Employee": "SUDARNO",
+            "SubBlok": "P9706",
+            "Amount": 250000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0114",
+            "Employee": "JUNI",
+            "SubBlok": "P9706",
+            "Amount": 270000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0928",
+            "Employee": "HARTADI",
+            "SubBlok": "P9706",
+            "Amount": 254000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0947",
+            "Employee": "M SUPANDRI",
+            "SubBlok": "P9706",
+            "Amount": 259000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0927",
+            "Employee": "M ABDUL MANAN",
+            "SubBlok": "P9706",
+            "Amount": 258000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0929",
+            "Employee": "SAEPUDIN",
+            "SubBlok": "P9706",
+            "Amount": 259000,
+            "Jenis": "RAKING"
+          }
+        ]
+      },
+      {
+        "Gang": "A3P",
+        "Details": [
+          {
+            "Empcode": "A0970",
+            "Employee": "JUNAIDI",
+            "SubBlok": "P9706",
+            "Amount": 253000,
+            "Jenis": "RAKING"
+          }
+        ]
+      },
+      {
+        "Gang": "A1H",
+        "Details": [
+          {
+            "Empcode": "A0039",
+            "Employee": "NANO",
+            "SubBlok": "P9602",
+            "Amount": 201000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0039",
+            "Employee": "NANO",
+            "SubBlok": "P9604",
+            "Amount": 563000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0191",
+            "Employee": "YULIANTO",
+            "SubBlok": "P9603",
+            "Amount": 344000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0192",
+            "Employee": "SUSANTO",
+            "SubBlok": "P9603",
+            "Amount": 274000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0192",
+            "Employee": "SUSANTO",
+            "SubBlok": "P9604",
+            "Amount": 257000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0194",
+            "Employee": "ASPI",
+            "SubBlok": "P9603",
+            "Amount": 522000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0196",
+            "Employee": "YULIANSYAH",
+            "SubBlok": "P9603",
+            "Amount": 290000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0199",
+            "Employee": "YUDI R TANTO",
+            "SubBlok": "P9602",
+            "Amount": 631000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0199",
+            "Employee": "YUDI R TANTO",
+            "SubBlok": "P9603",
+            "Amount": 278000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0201",
+            "Employee": "KADLI",
+            "SubBlok": "P9603",
+            "Amount": 282000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0201",
+            "Employee": "KADLI",
+            "SubBlok": "P9604",
+            "Amount": 309000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0203",
+            "Employee": "RAHMAT IQBAL",
+            "SubBlok": "P9603",
+            "Amount": 286000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0395",
+            "Employee": "AKHMAD SAHID",
+            "SubBlok": "P9603",
+            "Amount": 489000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0631",
+            "Employee": "HERNAWADI",
+            "SubBlok": "P9603",
+            "Amount": 430000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0631",
+            "Employee": "HERNAWADI",
+            "SubBlok": "P9604",
+            "Amount": 252000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0694",
+            "Employee": "SAHDAN SIBAH",
+            "SubBlok": "P9603",
+            "Amount": 223000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0694",
+            "Employee": "SAHDAN SIBAH",
+            "SubBlok": "P9604",
+            "Amount": 218000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0712",
+            "Employee": "USMAN",
+            "SubBlok": "P9602",
+            "Amount": 413000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0712",
+            "Employee": "USMAN",
+            "SubBlok": "P9603",
+            "Amount": 278000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0784",
+            "Employee": "SAHDAN",
+            "SubBlok": "P9603",
+            "Amount": 297000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0798",
+            "Employee": "HERI PURNAMA",
+            "SubBlok": "P9604",
+            "Amount": 360000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0802",
+            "Employee": "MUHYIN",
+            "SubBlok": "P9602",
+            "Amount": 427000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0802",
+            "Employee": "MUHYIN",
+            "SubBlok": "P9603",
+            "Amount": 310000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0812",
+            "Employee": "SUPARDI",
+            "SubBlok": "P9602",
+            "Amount": 215000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0812",
+            "Employee": "SUPARDI",
+            "SubBlok": "P9603",
+            "Amount": 348000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0820",
+            "Employee": "SAWALUDIN",
+            "SubBlok": "P9602",
+            "Amount": 292000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0820",
+            "Employee": "SAWALUDIN",
+            "SubBlok": "P9603",
+            "Amount": 522000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0822",
+            "Employee": "MUSTAAN",
+            "SubBlok": "P9602",
+            "Amount": 277000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0822",
+            "Employee": "MUSTAAN",
+            "SubBlok": "P9603",
+            "Amount": 278000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0827",
+            "Employee": "RUSLAN",
+            "SubBlok": "P9602",
+            "Amount": 618000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0835",
+            "Employee": "JUMADIL",
+            "SubBlok": "P9603",
+            "Amount": 230000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0835",
+            "Employee": "JUMADIL",
+            "SubBlok": "P9604",
+            "Amount": 374000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0851",
+            "Employee": "SUDIRMAN",
+            "SubBlok": "P9603",
+            "Amount": 171000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0851",
+            "Employee": "SUDIRMAN",
+            "SubBlok": "P9604",
+            "Amount": 552000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0852",
+            "Employee": "AWALUDIN",
+            "SubBlok": "P9603",
+            "Amount": 303000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0852",
+            "Employee": "AWALUDIN",
+            "SubBlok": "P9604",
+            "Amount": 384000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0856",
+            "Employee": "SAPAR WADI",
+            "SubBlok": "P9602",
+            "Amount": 752000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0856",
+            "Employee": "SAPAR WADI",
+            "SubBlok": "P9603",
+            "Amount": 345000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0876",
+            "Employee": "YANTO",
+            "SubBlok": "P9602",
+            "Amount": 202000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0876",
+            "Employee": "YANTO",
+            "SubBlok": "P9603",
+            "Amount": 325000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0884",
+            "Employee": "AHMAD ROZI",
+            "SubBlok": "P9603",
+            "Amount": 367000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0884",
+            "Employee": "AHMAD ROZI",
+            "SubBlok": "P9604",
+            "Amount": 623000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0920",
+            "Employee": "HARTAWAN",
+            "SubBlok": "P9603",
+            "Amount": 482000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0921",
+            "Employee": "MUHIBULLAH",
+            "SubBlok": "P9602",
+            "Amount": 579000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0921",
+            "Employee": "MUHIBULLAH",
+            "SubBlok": "P9603",
+            "Amount": 326000,
+            "Jenis": "RAKING"
+          }
+        ]
+      },
+      {
+        "Gang": "A1P",
+        "Details": [
+          {
+            "Empcode": "A0972",
+            "Employee": "NASIB ADRIAN",
+            "SubBlok": "P9603",
+            "Amount": 328000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0973",
+            "Employee": "SAHID",
+            "SubBlok": "P9602",
+            "Amount": 320000,
+            "Jenis": "RAKING"
+          },
+          {
+            "Empcode": "A0973",
+            "Employee": "SAHID",
+            "SubBlok": "P9603",
+            "Amount": 318000,
+            "Jenis": "RAKING"
+          }
+        ]
+      }
+    ]
+  }
+]

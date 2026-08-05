@@ -1,0 +1,1287 @@
+/**
+ * LampiranPremiAppendix - Enhanced Comprehensive Premium Appendix Styles
+ * Professional Financial Report Aesthetic for PT REBINMAS
+ * Features: Premium Matrix, Visual Cards, Badge System, Print-Optimized
+ */
+
+/* =============================================
+   CSS Variables - Premium Theme
+   ============================================= */
+:root {
+    --lampiran-primary: #1e293b;
+    --lampiran-secondary: #334155;
+    --lampiran-accent: #3b82f6;
+    --lampiran-success: #10b981;
+    --lampiran-warning: #f59e0b;
+    --lampiran-danger: #ef4444;
+    --lampiran-muted: #64748b;
+    --lampiran-light: #f1f5f9;
+    --lampiran-border: #e2e8f0;
+    --lampiran-white: #ffffff;
+    --lampiran-dark: #0f172a;
+    --lampiran-gold: #d97706;
+    --lampiran-teal: #0d9488;
+}
+
+/* =============================================
+   Main Container
+   ============================================= */
+.lampiran-premi-appendix {
+    background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+    padding: 2rem;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: var(--lampiran-primary);
+    min-height: 100vh;
+}
+
+/* =============================================
+   Enhanced Header
+   ============================================= */
+.lampiran-header-enhanced {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 1.5rem;
+    border-bottom: 3px solid var(--lampiran-primary);
+    margin-bottom: 1.5rem;
+    background: linear-gradient(135deg, var(--lampiran-white) 0%, var(--lampiran-light) 100%);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid var(--lampiran-border);
+}
+
+.lampiran-header-left {
+    display: flex;
+    gap: 1.25rem;
+    align-items: flex-start;
+}
+
+.lampiran-logo {
+    width: 85px;
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.lampiran-header-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.lampiran-company {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--lampiran-primary);
+    margin: 0;
+    letter-spacing: -0.02em;
+    text-shadow: 1px 1px 0 rgba(255,255,255,0.8);
+}
+
+.lampiran-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--lampiran-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.lampiran-period {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.9rem;
+    color: var(--lampiran-muted);
+    font-weight: 500;
+}
+
+.lampiran-period-badge {
+    background: var(--lampiran-primary);
+    color: var(--lampiran-white);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.lampiran-period-divider {
+    color: var(--lampiran-border);
+}
+
+.lampiran-period-value {
+    color: var(--lampiran-primary);
+    font-weight: 600;
+}
+
+.lampiran-header-stats {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.lampiran-stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: var(--lampiran-primary);
+    border-radius: 8px;
+    color: var(--lampiran-white);
+    min-width: 70px;
+}
+
+.lampiran-stat-value {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--lampiran-success);
+}
+
+.lampiran-stat-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.8;
+}
+
+/* =============================================
+   KPI Cards
+   ============================================= */
+.lampiran-kpi-row {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.lampiran-kpi-card {
+    display: flex;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: var(--lampiran-white);
+    border: 1px solid var(--lampiran-border);
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.lampiran-kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.15);
+}
+
+.lampiran-kpi-hero {
+    background: linear-gradient(135deg, var(--lampiran-primary) 0%, var(--lampiran-secondary) 100%);
+    border-color: var(--lampiran-primary);
+    grid-row: span 1;
+}
+
+.lampiran-kpi-hero .lampiran-kpi-label,
+.lampiran-kpi-hero .lampiran-kpi-value,
+.lampiran-kpi-hero .lampiran-kpi-meta {
+    color: var(--lampiran-white);
+}
+
+.lampiran-kpi-hero .lampiran-kpi-value {
+    font-size: 1.5rem;
+    color: var(--lampiran-success);
+}
+
+.lampiran-kpi-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--lampiran-light);
+    border-radius: 10px;
+    flex-shrink: 0;
+}
+
+.lampiran-kpi-icon svg {
+    width: 24px;
+    height: 24px;
+    stroke: var(--lampiran-primary);
+}
+
+.lampiran-kpi-icon.secondary {
+    background: #f0fdf4;
+}
+.lampiran-kpi-icon.secondary svg {
+    stroke: var(--lampiran-success);
+}
+
+.lampiran-kpi-icon.accent {
+    background: #eff6ff;
+}
+.lampiran-kpi-icon.accent svg {
+    stroke: var(--lampiran-accent);
+}
+
+.lampiran-kpi-icon.success {
+    background: #fef3c7;
+}
+.lampiran-kpi-icon.success svg {
+    stroke: var(--lampiran-gold);
+}
+
+.lampiran-kpi-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.2rem;
+}
+
+.lampiran-kpi-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--lampiran-muted);
+}
+
+.lampiran-kpi-value {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--lampiran-primary);
+    line-height: 1.2;
+}
+
+.lampiran-kpi-value.small {
+    font-size: 1rem;
+}
+
+.lampiran-kpi-meta {
+    font-size: 0.75rem;
+    color: var(--lampiran-muted);
+}
+
+/* =============================================
+   Premium Legend
+   ============================================= */
+.lampiran-premi-legend {
+    background: var(--lampiran-white);
+    border: 1px solid var(--lampiran-border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.lampiran-legend-title {
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--lampiran-primary);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--lampiran-border);
+}
+
+.lampiran-legend-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.lampiran-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.75rem;
+    background: var(--lampiran-light);
+    border-radius: 6px;
+    font-size: 0.8rem;
+}
+
+.lampiran-legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.lampiran-legend-name {
+    font-weight: 600;
+    color: var(--lampiran-primary);
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.lampiran-legend-value {
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 700;
+    color: var(--lampiran-secondary);
+}
+
+.lampiran-legend-percent {
+    font-size: 0.7rem;
+    color: var(--lampiran-muted);
+}
+
+/* =============================================
+   Charts Section
+   ============================================= */
+.lampiran-charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.lampiran-chart-card {
+    background: var(--lampiran-white);
+    border: 1px solid var(--lampiran-border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.lampiran-chart-wide {
+    grid-column: 1 / -1;
+}
+
+.lampiran-chart-header {
+    margin-bottom: 1rem;
+}
+
+.lampiran-chart-title {
+    font-size: 0.85rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--lampiran-primary);
+}
+
+.lampiran-chart-subtitle {
+    font-size: 0.75rem;
+    color: var(--lampiran-muted);
+    margin-top: 0.25rem;
+}
+
+.lampiran-chart-container {
+    height: 260px;
+}
+
+.lampiran-chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--lampiran-border);
+}
+
+.lampiran-chart-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.75rem;
+}
+
+.lampiran-legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+/* =============================================
+   Premium Matrix Section
+   ============================================= */
+.lampiran-matrix-section {
+    margin-bottom: 1.5rem;
+    background: var(--lampiran-white);
+    border: 1px solid var(--lampiran-border);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.lampiran-matrix-header {
+    padding: 1.25rem;
+    background: linear-gradient(135deg, var(--lampiran-primary) 0%, var(--lampiran-secondary) 100%);
+    color: var(--lampiran-white);
+}
+
+.lampiran-matrix-title {
+    font-size: 1rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.lampiran-matrix-subtitle {
+    font-size: 0.8rem;
+    opacity: 0.8;
+    margin-top: 0.25rem;
+}
+
+.lampiran-matrix-wrapper {
+    overflow-x: auto;
+}
+
+.lampiran-matrix-table {
+    width: 100%;
+    min-width: 800px;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+}
+
+.lampiran-matrix-table thead th {
+    background: var(--lampiran-light);
+    padding: 0.75rem 0.5rem;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid var(--lampiran-border);
+}
+
+.lampiran-matrix-th-estate {
+    width: 10%;
+    text-align: left !important;
+}
+
+.lampiran-matrix-th-gang {
+    width: 15%;
+    text-align: left !important;
+}
+
+.lampiran-matrix-th-premi {
+    min-width: 80px;
+}
+
+.lampiran-matrix-th-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.lampiran-matrix-th-name {
+    font-weight: 800;
+}
+
+.lampiran-matrix-th-total {
+    font-size: 0.6rem;
+    color: var(--lampiran-muted);
+    font-weight: 500;
+}
+
+.lampiran-matrix-th-total-col {
+    background: var(--lampiran-primary) !important;
+    color: var(--lampiran-white) !important;
+    min-width: 100px;
+}
+
+.lampiran-matrix-estate-cell {
+    padding: 0.6rem 0.5rem;
+    font-weight: 900;
+    color: var(--lampiran-primary);
+    background: var(--lampiran-light);
+    border-bottom: 1px solid var(--lampiran-border);
+    vertical-align: middle;
+}
+
+.lampiran-matrix-gang-cell {
+    padding: 0.6rem 0.5rem;
+    border-bottom: 1px solid var(--lampiran-border);
+}
+
+.lampiran-matrix-gang-name {
+    font-weight: 700;
+    color: var(--lampiran-primary);
+    font-size: 0.85rem;
+}
+
+.lampiran-matrix-gang-desc {
+    font-size: 0.7rem;
+    color: var(--lampiran-muted);
+    margin-top: 0.15rem;
+}
+
+.lampiran-matrix-premi-cell {
+    padding: 0.5rem 0.25rem;
+    text-align: center;
+    border-bottom: 1px solid var(--lampiran-border);
+}
+
+.lampiran-matrix-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid;
+}
+
+.lampiran-matrix-badge.zero {
+    color: var(--lampiran-muted);
+}
+
+.lampiran-matrix-total-cell {
+    padding: 0.6rem 0.5rem;
+    text-align: right;
+    border-bottom: 1px solid var(--lampiran-border);
+}
+
+.lampiran-matrix-total-value {
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 800;
+    color: var(--lampiran-primary);
+    font-size: 0.85rem;
+}
+
+.lampiran-matrix-group-subtotal {
+    background: #f8fafc;
+}
+
+.lampiran-matrix-group-subtotal td {
+    border-top: 1px solid var(--lampiran-muted);
+    border-bottom: 1px solid var(--lampiran-border);
+    font-weight: 700;
+}
+
+.lampiran-matrix-subtotal-label {
+    padding: 0.5rem 0.75rem !important;
+    font-weight: 800;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--lampiran-primary);
+    background: #f1f5f9;
+}
+
+.lampiran-matrix-subtotal-value {
+    padding: 0.5rem 0.25rem;
+    text-align: center;
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 600;
+    color: var(--lampiran-secondary);
+    background: #f1f5f9;
+}
+
+.lampiran-matrix-subtotal-total {
+    padding: 0.5rem 0.5rem;
+    text-align: right;
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 800;
+    color: var(--lampiran-primary);
+    background: #e2e8f0;
+}
+
+.lampiran-matrix-div-subtotal {
+    background: var(--lampiran-primary) !important;
+}
+
+.lampiran-matrix-div-subtotal td {
+    color: var(--lampiran-white);
+    font-weight: 800;
+}
+
+.lampiran-matrix-div-subtotal .lampiran-matrix-subtotal-label {
+    background: transparent;
+    color: var(--lampiran-white);
+}
+
+.lampiran-matrix-div-subtotal .lampiran-matrix-subtotal-value {
+    background: transparent;
+    color: var(--lampiran-light);
+}
+
+.lampiran-matrix-div-subtotal .lampiran-matrix-subtotal-total {
+    background: var(--lampiran-success);
+    color: var(--lampiran-dark);
+}
+
+.lampiran-matrix-table tfoot td {
+    background: var(--lampiran-dark);
+    color: var(--lampiran-white);
+    font-weight: 900;
+    font-size: 0.9rem;
+    padding: 0.75rem 0.5rem;
+}
+
+/* =============================================
+   Detail Table Section
+   ============================================= */
+.lampiran-table-section {
+    margin-bottom: 1.5rem;
+}
+
+.lampiran-table-header {
+    padding: 1rem 1.25rem;
+    background: linear-gradient(135deg, var(--lampiran-secondary) 0%, var(--lampiran-primary) 100%);
+    border-radius: 12px 12px 0 0;
+    border: 1px solid var(--lampiran-border);
+    border-bottom: none;
+}
+
+.lampiran-table-title {
+    font-size: 1rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--lampiran-white);
+}
+
+.lampiran-table-subtitle {
+    font-size: 0.8rem;
+    color: var(--lampiran-light);
+    margin-top: 0.25rem;
+}
+
+.lampiran-table-wrapper {
+    overflow-x: auto;
+    border: 1px solid var(--lampiran-border);
+    border-radius: 0 0 12px 12px;
+}
+
+.lampiran-table {
+    width: 100%;
+    min-width: 900px;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    background: var(--lampiran-white);
+}
+
+/* Table Header */
+.lampiran-table thead th {
+    background: linear-gradient(180deg, var(--lampiran-primary) 0%, var(--lampiran-secondary) 100%);
+    color: var(--lampiran-white);
+    font-weight: 700;
+    text-align: center;
+    padding: 0.75rem 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.7rem;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.lampiran-th-no { width: 5%; }
+.lampiran-th-gang { width: 25%; text-align: left !important; }
+.lampiran-th-premi { width: 15%; }
+.lampiran-th-detail { width: 55%; }
+
+/* Table Cells */
+.lampiran-table td {
+    padding: 0.6rem 0.5rem;
+    border-bottom: 1px solid var(--lampiran-border);
+    vertical-align: top;
+}
+
+.lampiran-no-data {
+    text-align: center;
+    padding: 3rem !important;
+    color: var(--lampiran-muted);
+    font-style: italic;
+}
+
+/* Division Header - Dark Blue */
+.lampiran-division-header {
+    background: var(--lampiran-primary) !important;
+}
+
+.lampiran-division-cell {
+    padding: 0.75rem 1rem !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.lampiran-division-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.lampiran-division-badge {
+    background: var(--lampiran-success);
+    color: var(--lampiran-dark);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.lampiran-division-name {
+    font-weight: 900;
+    font-size: 1rem;
+    color: var(--lampiran-white);
+    letter-spacing: 0.05em;
+}
+
+.lampiran-division-right {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.lampiran-division-gang-count {
+    font-size: 0.8rem;
+    color: var(--lampiran-light);
+}
+
+.lampiran-division-total {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.lampiran-division-total-label {
+    font-size: 0.75rem;
+    color: var(--lampiran-light);
+}
+
+.lampiran-division-total-value {
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 700;
+    color: var(--lampiran-success);
+    background: rgba(16, 185, 129, 0.2);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+}
+
+/* Group Header - Medium Gray */
+.lampiran-group-header {
+    background: var(--lampiran-muted) !important;
+}
+
+.lampiran-group-cell {
+    padding: 0.5rem 1rem !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.lampiran-group-badge {
+    font-weight: 700;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--lampiran-white);
+}
+
+.lampiran-group-count {
+    font-size: 0.7rem;
+    color: var(--lampiran-light);
+}
+
+/* Gang Row - Alternating */
+.lampiran-gang-row {
+    background: var(--lampiran-white);
+}
+
+.lampiran-gang-row:nth-child(even) {
+    background: var(--lampiran-light);
+}
+
+.lampiran-cell-no {
+    text-align: center;
+    color: var(--lampiran-muted);
+    font-size: 0.8rem;
+}
+
+.lampiran-cell-gang {
+    text-align: left;
+}
+
+.lampiran-gang-code {
+    font-weight: 700;
+    color: var(--lampiran-primary);
+    font-size: 0.85rem;
+}
+
+.lampiran-gang-name {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--lampiran-muted);
+    margin-top: 0.15rem;
+}
+
+.lampiran-cell-premi {
+    text-align: right;
+}
+
+.lampiran-premi-amount {
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 700;
+    color: var(--lampiran-primary);
+    font-size: 0.85rem;
+}
+
+.lampiran-cell-detail {
+    text-align: left;
+}
+
+/* Premium Badges */
+.lampiran-premi-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.lampiran-premi-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    border: 1px solid;
+    font-size: 0.7rem;
+}
+
+.lampiran-badge-name {
+    font-weight: 600;
+}
+
+.lampiran-badge-value {
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 700;
+}
+
+.lampiran-no-premi {
+    color: var(--lampiran-muted);
+    font-style: italic;
+}
+
+/* Group Subtotal */
+.lampiran-group-subtotal {
+    background: #f1f5f9 !important;
+}
+
+.lampiran-group-subtotal td {
+    border-top: 2px solid var(--lampiran-muted) !important;
+    border-bottom: 1px solid var(--lampiran-border) !important;
+}
+
+/* Division Subtotal */
+.lampiran-division-subtotal {
+    background: #e2e8f0 !important;
+}
+
+.lampiran-division-subtotal td {
+    border-top: 2px solid var(--lampiran-primary) !important;
+    border-bottom: 2px solid var(--lampiran-primary) !important;
+}
+
+.lampiran-subtotal-label {
+    padding-left: 1rem !important;
+    font-weight: 900;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--lampiran-primary);
+}
+
+.lampiran-subtotal-value {
+    text-align: right;
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 900;
+    font-size: 0.95rem;
+    color: var(--lampiran-primary);
+    background: #cbd5e1 !important;
+}
+
+.lampiran-subtotal-detail {
+    font-size: 0.75rem;
+    color: var(--lampiran-muted);
+}
+
+.lampiran-div-breakdown {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.lampiran-div-breakdown-item {
+    font-size: 0.7rem;
+    padding: 0.15rem 0.4rem;
+    background: var(--lampiran-light);
+    border-radius: 3px;
+}
+
+/* Grand Total */
+.lampiran-table tfoot td {
+    background: var(--lampiran-dark) !important;
+    color: var(--lampiran-white);
+    font-weight: 900;
+    font-size: 0.95rem;
+    padding: 0.75rem 0.5rem !important;
+    border: none;
+}
+
+.lampiran-grand-breakdown {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.lampiran-grand-breakdown-item {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+}
+
+/* =============================================
+   Footer
+   ============================================= */
+.lampiran-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--lampiran-border);
+    font-size: 0.75rem;
+    color: var(--lampiran-muted);
+}
+
+.lampiran-footer-left {
+    display: flex;
+    gap: 1rem;
+}
+
+.lampiran-footer-user {
+    color: var(--lampiran-light);
+}
+
+/* =============================================
+   Animations
+   ============================================= */
+@keyframes lampiranFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.lampiran-kpi-card,
+.lampiran-chart-card,
+.lampiran-matrix-section,
+.lampiran-table-section {
+    animation: lampiranFadeIn 0.4s ease-out forwards;
+}
+
+.lampiran-kpi-row .lampiran-kpi-card:nth-child(1) { animation-delay: 0.05s; }
+.lampiran-kpi-row .lampiran-kpi-card:nth-child(2) { animation-delay: 0.1s; }
+.lampiran-kpi-row .lampiran-kpi-card:nth-child(3) { animation-delay: 0.15s; }
+.lampiran-kpi-row .lampiran-kpi-card:nth-child(4) { animation-delay: 0.2s; }
+
+/* =============================================
+   Print Styles
+   ============================================= */
+@media print {
+    @page {
+        size: A4 landscape;
+        margin: 8mm;
+    }
+
+    .lampiran-premi-appendix {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        page-break-before: always !important;
+        break-before: page !important;
+        page-break-after: auto !important;
+        break-after: auto !important;
+        background: #fff !important;
+        font-size: 8pt !important;
+        line-height: 1.15 !important;
+    }
+
+    /* Hide non-essential elements */
+    .lampiran-header-stats,
+    .lampiran-kpi-row,
+    .lampiran-premi-legend,
+    .lampiran-charts-grid {
+        display: none !important;
+    }
+
+    /* Compact Header */
+    .lampiran-header-enhanced {
+        padding: 8pt !important;
+        margin-bottom: 10pt !important;
+        border-bottom: 2pt solid #000 !important;
+        border-radius: 0 !important;
+    }
+
+    .lampiran-logo {
+        width: 40pt !important;
+    }
+
+    .lampiran-company {
+        font-size: 14pt !important;
+        font-weight: 900 !important;
+        margin: 0 !important;
+    }
+
+    .lampiran-title {
+        font-size: 9pt !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        margin: 0 !important;
+    }
+
+    .lampiran-period {
+        font-size: 8pt !important;
+    }
+
+    .lampiran-period-badge {
+        padding: 2pt 6pt !important;
+        font-size: 7pt !important;
+    }
+
+    /* Matrix Section - Print Focus */
+    .lampiran-matrix-section {
+        margin-bottom: 12pt !important;
+    }
+
+    .lampiran-matrix-header {
+        padding: 6pt !important;
+    }
+
+    .lampiran-matrix-title {
+        font-size: 10pt !important;
+    }
+
+    .lampiran-matrix-table {
+        font-size: 7.5pt !important;
+    }
+
+    .lampiran-matrix-table thead th {
+        padding: 3pt 2pt !important;
+        font-size: 6.5pt !important;
+    }
+
+    .lampiran-matrix-th-estate,
+    .lampiran-matrix-estate-cell { width: 8% !important; }
+    .lampiran-matrix-th-gang,
+    .lampiran-matrix-gang-cell { width: 12% !important; }
+
+    .lampiran-matrix-badge {
+        font-size: 6pt !important;
+        padding: 1pt 3pt !important;
+    }
+
+    .lampiran-matrix-subtotal-label,
+    .lampiran-matrix-subtotal-value,
+    .lampiran-matrix-subtotal-total {
+        font-size: 7pt !important;
+        padding: 2pt !important;
+    }
+
+    /* Table Section - Print Focus */
+    .lampiran-table-header {
+        padding: 6pt 10pt !important;
+        border-radius: 0 !important;
+    }
+
+    .lampiran-table-title {
+        font-size: 10pt !important;
+    }
+
+    .lampiran-table-wrapper {
+        border-radius: 0 !important;
+    }
+
+    .lampiran-table {
+        width: 100% !important;
+        min-width: unset !important;
+        font-size: 7.5pt !important;
+        table-layout: fixed !important;
+    }
+
+    /* Column widths */
+    .lampiran-th-no,
+    .lampiran-cell-no { width: 4% !important; }
+    .lampiran-th-gang,
+    .lampiran-cell-gang { width: 20% !important; }
+    .lampiran-th-premi,
+    .lampiran-cell-premi,
+    .lampiran-subtotal-value { width: 13% !important; }
+    .lampiran-th-detail,
+    .lampiran-cell-detail,
+    .lampiran-subtotal-detail { width: 63% !important; }
+
+    /* Table header */
+    .lampiran-table thead th {
+        background: #fff !important;
+        color: #000 !important;
+        font-size: 7pt !important;
+        font-weight: 900 !important;
+        padding: 3pt 2pt !important;
+        border: 0.5pt solid #000 !important;
+        text-align: center !important;
+        vertical-align: middle !important;
+    }
+
+    .lampiran-th-gang { text-align: left !important; }
+
+    /* All cells */
+    .lampiran-table td {
+        padding: 2pt !important;
+        border: 0.5pt solid #000 !important;
+        vertical-align: top !important;
+        font-size: 7.5pt !important;
+    }
+
+    /* Division header */
+    .lampiran-division-header {
+        background: #1e293b !important;
+        page-break-after: avoid !important;
+    }
+
+    .lampiran-division-cell {
+        background: #1e293b !important;
+        color: #fff !important;
+        padding: 4pt !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .lampiran-division-badge {
+        background: #10b981 !important;
+        color: #000 !important;
+        font-size: 6pt !important;
+    }
+
+    .lampiran-division-name {
+        font-size: 9pt !important;
+    }
+
+    .lampiran-division-total-value {
+        background: transparent !important;
+        padding: 0 !important;
+        font-size: 8pt !important;
+    }
+
+    /* Group header */
+    .lampiran-group-header {
+        background: #64748b !important;
+        page-break-after: avoid !important;
+    }
+
+    .lampiran-group-cell {
+        background: #64748b !important;
+        color: #fff !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* Gang row */
+    .lampiran-gang-row:nth-child(even) td {
+        background: #f5f5f5 !important;
+    }
+
+    .lampiran-gang-code {
+        font-size: 8pt !important;
+    }
+
+    .lampiran-gang-name {
+        font-size: 6.5pt !important;
+    }
+
+    .lampiran-premi-badge {
+        font-size: 5.5pt !important;
+        padding: 1pt 2pt !important;
+    }
+
+    /* Subtotals */
+    .lampiran-group-subtotal td {
+        background: #e5e5e5 !important;
+        font-weight: 800 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .lampiran-division-subtotal td {
+        background: #cbd5e1 !important;
+        font-weight: 900 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .lampiran-subtotal-label {
+        padding-left: 4pt !important;
+    }
+
+    .lampiran-subtotal-value {
+        text-align: right !important;
+    }
+
+    /* Grand total */
+    .lampiran-table tfoot td {
+        background: #000 !important;
+        color: #fff !important;
+        font-size: 9pt !important;
+        padding: 4pt !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* Footer */
+    .lampiran-footer {
+        margin-top: 8pt !important;
+        padding-top: 4pt !important;
+        font-size: 7pt !important;
+    }
+}
+
+/* =============================================
+   Responsive
+   ============================================= */
+@media (max-width: 1200px) {
+    .lampiran-kpi-row {
+        grid-template-columns: 1.5fr 1fr 1fr;
+    }
+
+    .lampiran-kpi-card:last-child {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 1024px) {
+    .lampiran-kpi-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .lampiran-charts-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .lampiran-chart-wide {
+        grid-column: 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .lampiran-header-enhanced {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .lampiran-kpi-row {
+        grid-template-columns: 1fr;
+    }
+
+    .lampiran-table {
+        min-width: 600px;
+    }
+}

@@ -1,0 +1,1637 @@
+/* ============================================
+   SIMPLE & CLEAN PRINT STYLES
+   Guaranteed to work properly
+   ============================================ */
+
+/* Page setup - must be outside @media print */
+@page {
+    size: A4 landscape;
+    margin: 8mm 10mm 8mm 10mm;
+}
+
+/* Visibility Helpers */
+.print-only,
+.print-show,
+.only-print {
+    display: none !important;
+}
+
+@media print {
+
+    /* Hide everything that shouldn't print */
+    .no-print,
+    .report-header-web,
+    button,
+    select,
+    input {
+        display: none !important;
+    }
+
+    /* Show print-only elements */
+    .print-only {
+        display: block !important;
+    }
+    
+    tr.print-only {
+        display: table-row !important;
+    }
+    
+    th.print-only,
+    td.print-only {
+        display: table-cell !important;
+    }
+
+    /* Reset everything */
+    *,
+    *::before,
+    *::after {
+        box-shadow: none !important;
+        text-shadow: none !important;
+    }
+
+    body {
+        background: white !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        font-family: Arial, sans-serif !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* Container - simple reset */
+    .wsp-container {
+        padding: 0 !important;
+        background: white !important;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow: visible !important;
+    }
+
+    .wsp-container:has(.wages-comparison-page) {
+        width: 297mm !important;
+        max-width: 297mm !important;
+        min-width: 297mm !important;
+    }
+
+    /* Document wrapper - simple borders */
+    .wsp-document {
+        border: none !important; /* Remove outer border in print to prevent gap issues */
+        padding: 0 !important;
+        padding-bottom: 50px !important; /* Extra space to prevent signatures from being cut off */
+        margin: 0 !important;
+        background: white !important;
+    }
+
+    .wages-comparison-page {
+        width: 281mm !important;
+        min-width: 0 !important;
+        max-width: 281mm !important;
+        margin: 8mm auto !important;
+        padding: 0 !important;
+        padding-bottom: 0 !important;
+        overflow: visible !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Letterhead - clean and professional */
+    .wsp-letterhead {
+        display: block !important;
+        text-align: center !important;
+        margin: 0 auto 15px auto !important;
+        padding: 8px 0 12px 0 !important;
+        border-bottom: 2.5pt solid black !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        page-break-after: avoid !important;
+        page-break-inside: avoid !important;
+    }
+
+    .wsp-logo {
+        display: block !important;
+        width: 55px !important;
+        margin: 0 auto 6px auto !important;
+        visibility: visible !important;
+    }
+
+    .wsp-company-name {
+        display: block !important;
+        font-size: 19px !important;
+        font-weight: 800 !important;
+        margin: 4px 0 !important;
+        color: black !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.8px !important;
+        visibility: visible !important;
+    }
+
+    .wsp-report-title {
+        display: block !important;
+        font-size: 18px !important;
+        font-weight: 800 !important;
+        margin: 10px 0 6px 0 !important;
+        color: black !important;
+        text-transform: uppercase !important;
+        letter-spacing: 1.2px !important;
+        visibility: visible !important;
+    }
+
+    .wsp-report-title.wsp-report-title-main {
+        font-size: 20px !important;
+        font-weight: 900 !important;
+        margin: 10px 0 6px 0 !important;
+    }
+
+    .wsp-report-period {
+        display: block !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        margin: 6px 0 0 0 !important;
+        color: #333 !important;
+    }
+
+    .wsp-report-subtitle {
+        display: block !important;
+        font-size: 11px !important;
+        font-weight: 500 !important;
+        margin: 5px 0 !important;
+        color: #475569 !important;
+        visibility: visible !important;
+    }
+
+    .wsp-report-period {
+        display: inline-block !important;
+        font-size: 12px !important;
+        margin: 8px auto !important;
+        color: black !important;
+        padding: 5px 10px !important;
+        background-color: #f1f5f9 !important;
+        border-radius: 6px !important;
+        visibility: visible !important;
+    }
+
+    /* KPI Cards - simple grid */
+    .wsp-kpi-grid {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 10px !important;
+        margin: 12px 0 18px 0 !important;
+        page-break-inside: avoid !important;
+    }
+
+    .wsp-kpi-card {
+        border: 1.5pt solid black !important;
+        padding: 10px !important;
+        text-align: center !important;
+        background: white !important;
+    }
+
+    .wsp-kpi-card.highlight {
+        background: #e8e8e8 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .wsp-kpi-label {
+        font-size: 9px !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        margin-bottom: 4px !important;
+        color: black !important;
+    }
+
+    .wsp-kpi-value {
+        font-size: 14px !important;
+        font-weight: 800 !important;
+        color: black !important;
+    }
+
+    .wsp-kpi-grid.comparison-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        gap: 6pt !important;
+        align-items: stretch !important;
+    }
+
+    .wsp-kpi-card.comparison-card {
+        min-width: 0 !important;
+        padding: 6pt !important;
+        gap: 3pt !important;
+        overflow: hidden !important;
+    }
+
+    .wsp-kpi-card-top,
+    .wsp-kpi-compare-row,
+    .wsp-mini-kpi-meta {
+        min-width: 0 !important;
+    }
+
+    .wsp-kpi-card-top {
+        display: flex !important;
+        align-items: flex-start !important;
+        justify-content: space-between !important;
+        gap: 3pt !important;
+    }
+
+    .wsp-kpi-current-label {
+        font-size: 6.5pt !important;
+        font-weight: 700 !important;
+        color: #000 !important;
+        text-transform: uppercase !important;
+    }
+
+    .wsp-kpi-current-value {
+        font-family: 'Roboto Mono', monospace !important;
+        font-size: 9pt !important;
+        font-weight: 800 !important;
+        color: #000 !important;
+        line-height: 1.1 !important;
+        overflow-wrap: anywhere !important;
+    }
+
+    .wsp-kpi-value.comparison-main-value {
+        font-size: 9pt !important;
+        line-height: 1.1 !important;
+        white-space: normal !important;
+        overflow-wrap: anywhere !important;
+    }
+
+    .wsp-kpi-previous-line {
+        display: flex !important;
+        justify-content: space-between !important;
+        gap: 3pt !important;
+        font-size: 5.8pt !important;
+        line-height: 1.1 !important;
+        color: #000 !important;
+        overflow-wrap: anywhere !important;
+    }
+
+    .wsp-kpi-delta-chip {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 1.5pt !important;
+        width: fit-content !important;
+        max-width: 100% !important;
+        padding: 1.5pt 2.5pt !important;
+        font-size: 5.8pt !important;
+        line-height: 1.05 !important;
+        border: 0.7pt solid #000 !important;
+        border-radius: 0 !important;
+    }
+
+    .wsp-kpi-compare-row {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 3pt !important;
+    }
+
+    .wsp-kpi-trend-box {
+        min-width: 0 !important;
+        padding: 3pt !important;
+    }
+
+    .wsp-kpi-direction {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 1pt !important;
+        font-size: 6pt !important;
+        white-space: nowrap !important;
+    }
+
+    .wsp-mini-kpi-grid {
+        display: grid !important;
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        gap: 5pt !important;
+        margin: 0 0 8pt 0 !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    .wsp-mini-kpi-card {
+        min-width: 0 !important;
+        padding: 5pt !important;
+        border: 1pt solid #000 !important;
+        background: #fff !important;
+    }
+
+    .wsp-mini-kpi-value,
+    .wsp-mini-kpi-meta {
+        overflow-wrap: anywhere !important;
+    }
+
+    /* Table wrapper */
+    .wsp-table-wrapper {
+        border: 1.5pt solid black !important;
+        margin: 15px 0 20px 0 !important;
+        overflow: visible !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        page-break-inside: auto !important;
+    }
+
+    /* Comparison table - ensure efficient width usage */
+    .wsp-table.comparison-table {
+        width: 100% !important;
+        table-layout: auto !important;
+        font-size: 7.5pt !important;
+    }
+
+    .wsp-table.comparison-table th,
+    .wsp-table.comparison-table td {
+        padding: 2px 1px !important;
+        font-size: 7.5pt !important;
+    }
+
+    .wsp-table.comparison-table .div-code {
+        font-size: 7.5pt !important;
+    }
+
+    .wsp-table.comparison-table .div-desc {
+        font-size: 6.5pt !important;
+    }
+
+    /* TABLE - Clean and Simple */
+    /* TABLE - Clean and Simple */
+    .wsp-table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        font-size: 8.5pt !important;
+        table-layout: auto !important;
+        page-break-inside: auto !important;
+    }
+
+    .wsp-table thead {
+        display: table-header-group !important;
+        visibility: visible !important;
+        position: relative !important;
+    }
+
+    .wsp-table thead tr {
+        display: table-row !important;
+        visibility: visible !important;
+    }
+
+    .wsp-table thead tr.wsp-header-master,
+    .wsp-table thead tr.wsp-header-sub {
+        display: table-row !important;
+        visibility: visible !important;
+        page-break-after: avoid !important;
+    }
+
+    /* All headers - Simple black & white */
+    .wsp-table th {
+        display: table-cell !important;
+        visibility: visible !important;
+        background: white !important;
+        border: 1px solid #000 !important;
+        padding: 4px 3px !important;
+        font-weight: 700 !important;
+        text-align: center !important;
+        font-size: 8pt !important;
+        color: #000 !important;
+    }
+
+    /* Master header row - Simple black border bottom */
+    .wsp-table thead tr.wsp-header-master th {
+        display: table-cell !important;
+        visibility: visible !important;
+        background: white !important;
+        color: #000 !important;
+        font-size: 9pt !important;
+        font-weight: 900 !important;
+        padding: 5px 4px !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.03em !important;
+        border: 1.5pt solid #000 !important;
+        border-bottom: 2pt solid #000 !important;
+    }
+
+    /* Sub header row - Simple */
+    .wsp-table thead tr.wsp-header-sub th {
+        display: table-cell !important;
+        visibility: visible !important;
+        background: white !important;
+        color: #000 !important;
+        font-size: 8pt !important;
+        font-weight: 700 !important;
+        padding: 4px 3px !important;
+        border: 1px solid #000 !important;
+    }
+
+    /* All table cells */
+    .wsp-table td {
+        border: 1px solid black !important;
+        padding: 4px 3px !important;
+        font-size: 8.5pt !important;
+        color: black !important;
+        vertical-align: middle !important;
+        background: white !important;
+    }
+
+    /* Text alignment */
+    .wsp-table td.text-right {
+        text-align: right !important;
+        font-family: 'Courier New', monospace !important;
+    }
+
+    .wsp-table td.text-left {
+        text-align: left !important;
+    }
+
+    .wsp-table td.text-center {
+        text-align: center !important;
+    }
+
+    /* Division column - Give it more space */
+    .wsp-table td:first-child,
+    .wsp-table th:first-child {
+        width: 25% !important;
+        text-align: left !important;
+        font-weight: bold !important;
+    }
+
+    .div-code {
+        font-size: 10px !important;
+        font-weight: bold !important;
+    }
+
+    .div-desc {
+        font-size: 9px !important;
+        color: #333 !important;
+        margin-top: 2px !important;
+    }
+
+    /* Estate headers */
+    .wsp-table tr.estate-header td {
+        background: #e0e0e0 !important;
+        font-weight: bold !important;
+        font-size: 11px !important;
+        padding: 6px 5px !important;
+    }
+
+    /* Subtotal rows */
+    .wsp-table tr.subtotal td {
+        background: #f0f0f0 !important;
+        font-weight: bold !important;
+    }
+
+    /* Grand total row */
+    .wsp-table tfoot tr.wsp-grand-total td {
+        background: #1a1a1a !important;
+        color: white !important;
+        font-weight: bold !important;
+        font-size: 11px !important;
+        padding: 6px 4px !important;
+        border: 2px solid black !important;
+    }
+
+    /* Zero values */
+    .wsp-table td.val-zero {
+        color: #999 !important;
+    }
+
+    /* Sticky columns - disable in print */
+    .sticky-col,
+    .th-sticky-col {
+        position: static !important;
+    }
+
+    /* Group separators - clearer boundaries between header groups */
+    .wsp-table th.th-group-manpower,
+    .wsp-table th.th-group-deductions,
+    .wsp-table th.th-group-income {
+        border-right: 2px solid black !important;
+    }
+    
+    .wsp-table td.border-right-section {
+        border-right: 2px solid black !important;
+    }
+
+    /* Ensure table headers behave correctly in multi-page prints */
+    .wsp-table thead {
+        display: table-header-group !important;
+        position: static !important; /* Position static is safer for print thead */
+    }
+
+    .wsp-table thead tr {
+        page-break-inside: avoid !important;
+        page-break-after: avoid !important;
+    }
+
+    /* Standardize header columns for print to prevent overlapping */
+    .wsp-table th {
+        word-wrap: break-word !important;
+        white-space: normal !important;
+        line-height: 1.1 !important;
+        padding: 4px 2px !important;
+        vertical-align: middle !important;
+    }
+
+    /* Reset specific group widths for print to ensure they fit */
+    .th-group-manpower { width: 10% !important; }
+    .th-group-deductions { width: 15% !important; }
+    .th-group-income { width: 25% !important; }
+    .th-group-compare { width: 20% !important; }
+
+    /* Fix: Do not hide premiums via CSS only if it breaks the table structure.
+       Instead, we will use .no-print on individual cells in the JSX for better control. */
+    .th-group-uraian,
+    .th-group-premi {
+        /* Reset any previous hiding that might have been there */
+        display: table-cell !important;
+        visibility: visible !important;
+    }
+
+    /* Helper to hide specific detail columns in print to save space */
+    .print-hide-column,
+    .print-hide-detail {
+        display: none !important;
+    }
+
+    /* Signature section - ensure not cut off */
+    .wsp-signature-section {
+        display: flex !important;
+        justify-content: space-between !important;
+        margin-top: 2rem !important;
+        padding-top: 1.5rem !important;
+        border-top: 1.5pt solid #000 !important;
+        page-break-inside: avoid !important;
+        page-break-before: auto !important;
+    }
+
+    .wsp-signature-block {
+        text-align: center !important;
+        flex: 1 !important;
+        min-width: 150px !important;
+    }
+
+    .wsp-signature-title {
+        font-size: 10px !important;
+        font-weight: 700 !important;
+        margin-bottom: 35px !important;
+    }
+
+    .wsp-signature-name {
+        font-size: 11px !important;
+        font-weight: bold !important;
+        border-top: 1px solid black !important;
+        padding-top: 3px !important;
+        display: inline-block !important;
+        min-width: 120px !important;
+    }
+
+    /* Footer */
+    .wsp-footer {
+        margin-top: 15px !important;
+        padding-top: 8px !important;
+        border-top: 1px solid black !important;
+        font-size: 9px !important;
+        color: #333 !important;
+    }
+
+    /* Ensure no page breaks in bad places */
+    tr,
+    .wsp-kpi-card,
+    .wsp-signature-section,
+    .wsp-signature-block,
+    .wsp-footer {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    .wsp-letterhead {
+        page-break-after: avoid !important;
+    }
+
+    .wsp-table thead {
+        page-break-after: avoid !important;
+    }
+
+    /* Hide trend indicators in print to save space */
+    .trend-indicator {
+        display: none !important;
+    }
+
+    .wages-rebinmas-print-document .wages-rebinmas-summary-table {
+        width: 100% !important;
+        table-layout: fixed !important;
+        border-collapse: collapse !important;
+        font-size: 9pt !important;
+    }
+
+    .wages-rebinmas-print-document .wsp-letterhead {
+        display: grid !important;
+        grid-template-columns: 30mm minmax(0, 1fr) !important;
+        grid-template-rows: repeat(5, auto) !important;
+        align-items: center !important;
+        column-gap: 5mm !important;
+        row-gap: 1pt !important;
+        text-align: left !important;
+        margin: 0 0 6pt 0 !important;
+        padding: 0 0 5pt 0 !important;
+        border-bottom: 2pt solid #000 !important;
+        width: 100% !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    .wages-rebinmas-print-document .wsp-letterhead .wsp-logo {
+        grid-column: 1 !important;
+        grid-row: 1 / span 5 !important;
+        width: 28mm !important;
+        max-width: 28mm !important;
+        height: auto !important;
+        align-self: center !important;
+        justify-self: center !important;
+        margin: 0 !important;
+        display: block !important;
+    }
+
+    .wages-rebinmas-print-document .wsp-letterhead .wsp-company-name,
+    .wages-rebinmas-print-document .wsp-letterhead .wsp-report-title,
+    .wages-rebinmas-print-document .wsp-letterhead .wsp-report-subtitle,
+    .wages-rebinmas-print-document .wsp-letterhead .wsp-report-period,
+    .wages-rebinmas-print-document .wsp-letterhead .report-print-meta-grid,
+    .wages-rebinmas-print-document .wsp-letterhead .report-print-note {
+        grid-column: 2 !important;
+        text-align: left !important;
+        justify-content: flex-start !important;
+        justify-self: stretch !important;
+        width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    .wages-rebinmas-print-document .wsp-letterhead .wsp-company-name {
+        font-size: 15pt !important;
+        line-height: 1.05 !important;
+        margin: 0 !important;
+    }
+
+    .wages-rebinmas-print-document .wsp-letterhead .wsp-report-title {
+        font-size: 13pt !important;
+        line-height: 1.05 !important;
+        margin: 1pt 0 0 0 !important;
+        letter-spacing: 0.3pt !important;
+    }
+
+    .wages-rebinmas-print-document .wsp-letterhead .wsp-report-subtitle,
+    .wages-rebinmas-print-document .wsp-letterhead .wsp-report-period {
+        font-size: 8pt !important;
+        line-height: 1.1 !important;
+        margin: 1pt 0 0 0 !important;
+        padding: 0 !important;
+        background: transparent !important;
+        border-radius: 0 !important;
+        display: block !important;
+    }
+
+    .wages-rebinmas-print-document .wsp-letterhead .report-print-meta-grid {
+        gap: 2pt !important;
+        margin: 2pt 0 0 0 !important;
+    }
+
+    .wages-rebinmas-print-document .wsp-letterhead .report-source-badge {
+        font-size: 6.5pt !important;
+        padding: 1.4pt 3pt !important;
+    }
+
+    .wages-rebinmas-print-document .wsp-letterhead .report-print-note {
+        font-size: 6.5pt !important;
+        line-height: 1.15 !important;
+        margin: 1.5pt 0 0 0 !important;
+    }
+
+    .wages-rebinmas-print-document .wages-rebinmas-summary-table .wages-col-division {
+        width: 18% !important;
+    }
+
+    .wages-rebinmas-print-document .wages-rebinmas-summary-table .wages-col-workers {
+        width: 7% !important;
+    }
+
+    .wages-rebinmas-print-document .wages-rebinmas-summary-table .wages-col-hk {
+        width: 7% !important;
+    }
+
+    .wages-rebinmas-print-document .wages-rebinmas-summary-table .wages-col-pph {
+        width: 8% !important;
+    }
+
+    .wages-rebinmas-print-document .wages-rebinmas-summary-table .wages-col-spsi {
+        width: 7% !important;
+    }
+
+    .wages-rebinmas-print-document .wages-rebinmas-summary-table .wages-col-premi {
+        width: 13% !important;
+    }
+
+    .wages-rebinmas-print-document .wages-rebinmas-summary-table .wages-col-lembur {
+        width: 10% !important;
+    }
+
+    .wages-rebinmas-print-document .wages-rebinmas-summary-table .wages-col-netpay {
+        width: 14% !important;
+    }
+
+    .wages-rebinmas-print-document .wages-rebinmas-summary-table .wages-col-thumbprint {
+        width: 9% !important;
+    }
+
+    .wages-rebinmas-print-document .wages-rebinmas-summary-table .wages-col-diff {
+        width: 7% !important;
+    }
+
+    .wages-rebinmas-print-document .wages-rebinmas-summary-table th,
+    .wages-rebinmas-print-document .wages-rebinmas-summary-table td {
+        text-align: center !important;
+        vertical-align: middle !important;
+        font-size: 8.8pt !important;
+        line-height: 1.12 !important;
+        padding: 2.8pt 2pt !important;
+        white-space: normal !important;
+        overflow-wrap: anywhere !important;
+        word-break: normal !important;
+    }
+
+    .wages-rebinmas-print-document .wages-rebinmas-summary-table thead th {
+        font-size: 8.6pt !important;
+        font-weight: 900 !important;
+        padding: 3pt 2pt !important;
+        background: white !important;
+        color: #000 !important;
+        border: 1pt solid #000 !important;
+        border-bottom: 1.4pt solid #000 !important;
+    }
+
+    .wages-rebinmas-print-document .wages-rebinmas-summary-table td.text-right {
+        text-align: center !important;
+        font-family: Arial, sans-serif !important;
+        white-space: nowrap !important;
+    }
+
+    .wages-rebinmas-print-document .wages-rebinmas-summary-table td.division-name,
+    .wages-rebinmas-print-document .wages-rebinmas-summary-table td:first-child,
+    .wages-rebinmas-print-document .wages-rebinmas-summary-table th:first-child,
+    .wages-rebinmas-print-document .wages-rebinmas-summary-table tfoot td:first-child {
+        text-align: center !important;
+        padding-left: 2pt !important;
+    }
+
+    .wages-rebinmas-print-document .div-desc {
+        font-size: 8pt !important;
+        font-weight: 900 !important;
+        line-height: 1.08 !important;
+        margin-top: 0 !important;
+        color: #000 !important;
+        text-align: center !important;
+    }
+
+    .wages-rebinmas-print-document .div-code {
+        font-size: 6.8pt !important;
+        font-weight: 600 !important;
+        line-height: 1.05 !important;
+        color: #111 !important;
+        text-align: center !important;
+    }
+
+    .wages-rebinmas-print-document .wages-rebinmas-summary-table tr.estate-header td {
+        font-size: 8.6pt !important;
+        font-weight: 900 !important;
+        text-align: center !important;
+        padding: 2.8pt !important;
+        border-top: 1.4pt solid #000 !important;
+        border-bottom: 1.1pt solid #000 !important;
+    }
+
+    .wages-rebinmas-print-document .wages-rebinmas-summary-table tr.subtotal td,
+    .wages-rebinmas-print-document .wages-rebinmas-summary-table tfoot tr.wsp-grand-total td {
+        font-size: 8.6pt !important;
+        text-align: center !important;
+        padding: 3pt 2pt !important;
+    }
+
+    .wages-rebinmas-print-document .wages-rebinmas-comparison-table {
+        width: 100% !important;
+        table-layout: fixed !important;
+        font-size: 8.1pt !important;
+    }
+
+    .wages-rebinmas-print-document .wages-rebinmas-comparison-table .wages-comparison-col-division {
+        width: 18% !important;
+    }
+
+    .wages-rebinmas-print-document .wages-rebinmas-comparison-table .wages-comparison-col-workers {
+        width: 6% !important;
+    }
+
+    .wages-rebinmas-print-document .wages-rebinmas-comparison-table .wages-comparison-col-premi-detail {
+        width: 0 !important;
+    }
+
+    .wages-rebinmas-print-document .wages-rebinmas-comparison-table .wages-comparison-col-premi-total {
+        width: 10% !important;
+    }
+
+    .wages-rebinmas-print-document .wages-rebinmas-comparison-table .wages-comparison-col-lembur,
+    .wages-rebinmas-print-document .wages-rebinmas-comparison-table .wages-comparison-col-pph,
+    .wages-rebinmas-print-document .wages-rebinmas-comparison-table .wages-comparison-col-spsi {
+        width: 7% !important;
+    }
+
+    .wages-rebinmas-print-document .wages-rebinmas-comparison-table .wages-comparison-col-gaji {
+        width: 9% !important;
+    }
+
+    .wages-rebinmas-print-document .wages-rebinmas-comparison-table .wages-comparison-col-tbs {
+        width: 7% !important;
+    }
+
+    .wages-rebinmas-print-document .wages-rebinmas-comparison-table .wages-comparison-col-selisih {
+        width: 8% !important;
+    }
+
+    .wages-rebinmas-print-document .wages-rebinmas-comparison-table th,
+    .wages-rebinmas-print-document .wages-rebinmas-comparison-table td {
+        text-align: center !important;
+        vertical-align: middle !important;
+        font-size: 8pt !important;
+        line-height: 1.1 !important;
+        padding: 2.4pt 1.6pt !important;
+        white-space: normal !important;
+        overflow-wrap: anywhere !important;
+    }
+
+    .wages-rebinmas-print-document .wages-rebinmas-comparison-table td.text-right {
+        text-align: center !important;
+        font-family: Arial, sans-serif !important;
+        white-space: nowrap !important;
+    }
+
+    .wages-rebinmas-print-document .wages-comparison-print-wrapper {
+        border: 1.5pt solid #000 !important;
+        margin: 5pt 0 8pt !important;
+        padding: 0 !important;
+        width: 100% !important;
+        overflow: visible !important;
+    }
+
+    .wages-rebinmas-print-document .wages-comparison-print-table {
+        width: 100% !important;
+        table-layout: fixed !important;
+        border-collapse: collapse !important;
+        border: 0 !important;
+        margin: 0 !important;
+        font-size: 8.5pt !important;
+    }
+
+    .wages-rebinmas-print-document .wages-comparison-print-table .wages-print-col-division {
+        width: 18% !important;
+    }
+
+    .wages-rebinmas-print-document .wages-comparison-print-table .wages-print-col-workers {
+        width: 6% !important;
+    }
+
+    .wages-rebinmas-print-document .wages-comparison-print-table .wages-print-col-premi {
+        width: 10% !important;
+    }
+
+    .wages-rebinmas-print-document .wages-comparison-print-table .wages-print-col-lembur {
+        width: 7% !important;
+    }
+
+    .wages-rebinmas-print-document .wages-comparison-print-table .wages-print-col-pph {
+        width: 7% !important;
+    }
+
+    .wages-rebinmas-print-document .wages-comparison-print-table .wages-print-col-spsi {
+        width: 6% !important;
+    }
+
+    .wages-rebinmas-print-document .wages-comparison-print-table .wages-print-col-gaji {
+        width: 10% !important;
+    }
+
+    .wages-rebinmas-print-document .wages-comparison-print-table .wages-print-col-selisih {
+        width: 8% !important;
+    }
+
+    .wages-rebinmas-print-document .wages-comparison-print-table .wages-print-col-tbs {
+        width: 6% !important;
+    }
+
+    .wages-rebinmas-print-document .wages-comparison-print-table th,
+    .wages-rebinmas-print-document .wages-comparison-print-table td {
+        text-align: center !important;
+        vertical-align: middle !important;
+        font-size: 8.2pt !important;
+        line-height: 1.1 !important;
+        padding: 2.5pt 1.6pt !important;
+        white-space: normal !important;
+        overflow-wrap: anywhere !important;
+        word-break: normal !important;
+        border: 0.7pt solid #000 !important;
+        color: #000 !important;
+    }
+
+    .wages-rebinmas-print-document .wages-comparison-print-table thead th {
+        font-size: 7.9pt !important;
+        font-weight: 900 !important;
+        line-height: 1.05 !important;
+        background: white !important;
+        color: #000 !important;
+        border: 1pt solid #000 !important;
+        text-transform: uppercase !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .wages-rebinmas-print-document .wages-comparison-print-table thead tr.wsp-header-master th {
+        border-bottom: 1.5pt solid #000 !important;
+    }
+
+    .wages-rebinmas-print-document .wages-comparison-print-table td.division-name,
+    .wages-rebinmas-print-document .wages-comparison-print-table td:first-child,
+    .wages-rebinmas-print-document .wages-comparison-print-table th:first-child,
+    .wages-rebinmas-print-document .wages-comparison-print-table tfoot td:first-child {
+        text-align: center !important;
+        padding-left: 1.6pt !important;
+    }
+
+    .wages-rebinmas-print-document .wages-comparison-print-table tbody td:not(:first-child),
+    .wages-rebinmas-print-document .wages-comparison-print-table tfoot td:not(:first-child) {
+        white-space: nowrap !important;
+        font-family: Arial, sans-serif !important;
+    }
+
+    .wages-rebinmas-print-document .wages-comparison-print-table tfoot td {
+        background: #111 !important;
+        color: #fff !important;
+        font-weight: 900 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .wages-rebinmas-print-document .wages-comparison-print-table tfoot td.text-diff-pos,
+    .wages-rebinmas-print-document .wages-comparison-print-table tfoot td.text-diff-neg,
+    .wages-rebinmas-print-document .wages-comparison-print-table tfoot td.text-neutral {
+        color: #fff !important;
+    }
+
+    .wages-rebinmas-print-document .wages-comparison-cell-value {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 1.2pt !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        white-space: nowrap !important;
+    }
+
+    .wages-rebinmas-print-document .wages-comparison-print-table .trend-indicator {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin-left: 0 !important;
+        width: 7pt !important;
+        height: 7pt !important;
+        vertical-align: middle !important;
+    }
+
+    .wages-rebinmas-print-document .wages-comparison-print-table .trend-indicator svg {
+        width: 7pt !important;
+        height: 7pt !important;
+        display: block !important;
+    }
+
+    .wages-rebinmas-print-document .wages-comparison-print-table .trend-up,
+    .wages-rebinmas-print-document .wages-comparison-print-table .trend-down-red {
+        color: #dc2626 !important;
+    }
+
+    .wages-rebinmas-print-document .wages-comparison-print-table .trend-down,
+    .wages-rebinmas-print-document .wages-comparison-print-table .trend-up-green {
+        color: #16a34a !important;
+    }
+}
+
+/* ============================================
+   WAGES REBINMAS ALT 5 - PROFESSIONAL GRID
+   Scoped to standard Wages Summary print pages
+   ============================================ */
+
+.wages-summary-page,
+.wages-audit-page {
+    border: 2px solid #0b1f3a;
+    background: #ffffff;
+    box-shadow: 0 16px 46px rgba(15, 23, 42, 0.14);
+    position: relative;
+}
+
+.wages-audit-page {
+    width: 1123px;
+    min-height: 794px;
+    margin: 0 auto 28px;
+    padding: 26px 30px 18px;
+}
+
+.wages-audit-grid.two-col {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+    gap: 14px;
+    margin-bottom: 14px;
+}
+
+.wages-audit-panel {
+    border: 1px solid #d7e1ee;
+    background: #ffffff;
+    padding: 12px;
+}
+
+.wages-audit-panel.full-width {
+    margin-top: 12px;
+}
+
+.wages-audit-panel h2 {
+    margin: 0 0 8px;
+    font-size: 12px;
+    line-height: 1.2;
+    color: #081f3a;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.wages-audit-notes ul,
+.wages-validation-list ul {
+    margin: 0;
+    padding-left: 18px;
+    color: #0f172a;
+    font-size: 11px;
+    line-height: 1.55;
+}
+
+.wages-validation-list li::marker {
+    content: "ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œ ";
+    color: #15803d;
+    font-weight: 800;
+}
+
+.wages-audit-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 54px;
+    padding: 3px 7px;
+    border: 1px solid currentColor;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.wages-audit-status.ok {
+    color: #15803d;
+    background: #ecfdf5;
+}
+
+.wages-audit-status.review {
+    color: #b91c1c;
+    background: #fef2f2;
+}
+
+.wages-report-footer {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 12px;
+}
+
+.wages-report-footer > div:nth-child(2) {
+    text-align: center;
+}
+
+.wages-report-footer > div:last-child {
+    text-align: right;
+}
+
+.wages-audit-signature {
+    margin-top: 14px;
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+.wages-rebinmas-print-document .wages-audit-detail-table .division-name span {
+    display: block;
+    margin-top: 2px;
+    font-size: 10px;
+    color: #64748b;
+}
+
+@media print {
+    @page {
+        size: A4 landscape;
+        margin: 0;
+    }
+
+    .wsp-container {
+        background: #fff !important;
+    }
+
+    .wages-summary-page,
+    .wages-audit-page {
+        width: 297mm !important;
+        min-width: 0 !important;
+        height: 210mm !important;
+        min-height: 210mm !important;
+        max-height: 210mm !important;
+        box-sizing: border-box !important;
+        margin: 0 !important;
+        padding: 8mm 9mm 7mm !important;
+        border: 0 !important;
+        box-shadow: none !important;
+        overflow: hidden !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .wages-last-print-page {
+        page-break-after: auto !important;
+        break-after: auto !important;
+    }
+
+    .wages-audit-page .wsp-letterhead,
+    .wages-summary-page .wsp-letterhead {
+        border-bottom: 2pt solid #081f3a !important;
+    }
+
+    .wages-rebinmas-print-document .wages-audit-letterhead .wsp-company-name {
+        color: #081f3a !important;
+        font-family: Georgia, 'Times New Roman', serif !important;
+    }
+
+    .wages-audit-grid.two-col {
+        grid-template-columns: 1fr 0.85fr !important;
+        gap: 5mm !important;
+        margin: 0 0 4mm !important;
+    }
+
+    .wages-audit-panel {
+        border: 0.8pt solid #0b1f3a !important;
+        padding: 3mm !important;
+        background: #fff !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    .wages-audit-panel h2 {
+        font-size: 8pt !important;
+        color: #081f3a !important;
+        margin: 0 0 2mm !important;
+    }
+
+    .wages-audit-notes ul,
+    .wages-validation-list ul {
+        font-size: 7.5pt !important;
+        line-height: 1.35 !important;
+    }
+
+    .wages-rebinmas-print-document .wages-rebinmas-summary-table thead th,
+    .wages-rebinmas-print-document .wages-audit-summary-table thead th,
+    .wages-rebinmas-print-document .wages-audit-detail-table thead th {
+        background: #081f3a !important;
+        color: #ffffff !important;
+        border: 0.8pt solid #0b1f3a !important;
+    }
+
+    .wages-rebinmas-print-document .wages-rebinmas-summary-table tr.estate-header td {
+        background: #eaf2ff !important;
+        color: #081f3a !important;
+        border-top: 1.4pt solid #0b1f3a !important;
+        border-bottom: 1pt solid #0b1f3a !important;
+    }
+
+    .wages-rebinmas-print-document .wages-rebinmas-summary-table tr.subtotal td,
+    .wages-rebinmas-print-document .wages-audit-summary-table tfoot td,
+    .wages-rebinmas-print-document .wages-audit-detail-table tfoot td {
+        background: #eaf2ff !important;
+        color: #081f3a !important;
+        border: 0.8pt solid #0b1f3a !important;
+        font-weight: 900 !important;
+    }
+
+    .wages-rebinmas-print-document .wages-rebinmas-summary-table tfoot tr.wsp-grand-total td {
+        background: #071326 !important;
+        color: #ffffff !important;
+        border: 0.8pt solid #071326 !important;
+    }
+
+    .wages-rebinmas-print-document .wages-audit-summary-table,
+    .wages-rebinmas-print-document .wages-audit-detail-table {
+        width: 100% !important;
+        table-layout: fixed !important;
+        border-collapse: collapse !important;
+        margin: 0 !important;
+    }
+
+    .wages-rebinmas-print-document .wages-audit-summary-table th,
+    .wages-rebinmas-print-document .wages-audit-summary-table td {
+        font-size: 7.5pt !important;
+        line-height: 1.12 !important;
+        padding: 2.2pt 2pt !important;
+        border: 0.7pt solid #1f334c !important;
+    }
+
+    .wages-rebinmas-print-document .wages-audit-detail-table th,
+    .wages-rebinmas-print-document .wages-audit-detail-table td {
+        font-size: 6.8pt !important;
+        line-height: 1.08 !important;
+        padding: 1.8pt 1.5pt !important;
+        border: 0.65pt solid #1f334c !important;
+        color: #0f172a !important;
+        white-space: normal !important;
+        overflow-wrap: anywhere !important;
+    }
+
+    .wages-rebinmas-print-document .wages-audit-detail-table td.text-right,
+    .wages-rebinmas-print-document .wages-audit-summary-table td.text-right {
+        text-align: right !important;
+        white-space: nowrap !important;
+    }
+
+    .wages-rebinmas-print-document .wages-audit-detail-table .division-name {
+        text-align: left !important;
+        overflow-wrap: break-word !important;
+    }
+
+    .wages-rebinmas-print-document .wages-audit-detail-table .division-name span {
+        font-size: 5.8pt !important;
+        color: #334155 !important;
+    }
+
+    .wages-audit-status {
+        min-width: 0 !important;
+        padding: 1.4pt 2.4pt !important;
+        border-radius: 0 !important;
+        font-size: 5.8pt !important;
+        line-height: 1 !important;
+    }
+
+    .wages-report-footer {
+        margin-top: 3mm !important;
+        padding-top: 2mm !important;
+        border-top: 0.8pt solid #0b1f3a !important;
+        display: grid !important;
+        grid-template-columns: 1fr auto 1fr !important;
+        font-size: 7pt !important;
+        color: #334155 !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    .wages-audit-signature .wsp-signature-section {
+        margin-top: 4mm !important;
+        padding-top: 3mm !important;
+        border-top: 0.8pt solid #0b1f3a !important;
+    }
+
+    .wages-audit-signature .signature-space {
+        height: 18mm !important;
+    }
+}
+
+.wages-report-print-set {
+    width: 100%;
+}
+
+.pdf-export-active.wages-report-print-set {
+    background: #ffffff;
+}
+
+.pdf-export-active.wages-report-print-set .wages-summary-page,
+.pdf-export-active.wages-report-print-set .wages-audit-page {
+    width: 297mm !important;
+    min-width: 297mm !important;
+    height: 210mm !important;
+    min-height: 210mm !important;
+    max-height: 210mm !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    page-break-after: always !important;
+    break-after: page !important;
+}
+
+.pdf-export-active.wages-report-print-set .wages-last-print-page {
+    page-break-after: auto !important;
+    break-after: auto !important;
+}
+
+@media print {
+    .wages-report-print-set {
+        display: contents !important;
+    }
+}
+
+/* Wages Summary infographic appendix (data-driven, no audit pages in print flow) */
+.wages-infographic-page {
+    width: 1123px;
+    min-height: 794px;
+    margin: 0 auto 28px;
+    padding: 26px 30px 18px;
+    border: 2px solid #0b1f3a;
+    background: #ffffff;
+    box-shadow: 0 16px 46px rgba(15, 23, 42, 0.14);
+    position: relative;
+}
+
+.wages-infographic-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin: 12px 0;
+}
+
+.wages-infographic-kpi-grid.secondary {
+    margin-top: -4px;
+}
+
+.wages-infographic-kpi {
+    border: 1.5px solid #0b1f3a;
+    border-left: 5px solid #081f3a;
+    padding: 10px;
+    background: #f8fbff;
+}
+
+.wages-infographic-kpi span,
+.wages-infographic-kpi small {
+    display: block;
+    color: #64748b;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.wages-infographic-kpi strong {
+    display: block;
+    margin: 5px 0 3px;
+    color: #081f3a;
+    font-size: 18px;
+    line-height: 1.1;
+}
+
+.wages-infographic-layout {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 12px;
+}
+
+.wages-infographic-panel {
+    border: 1px solid #d7e1ee;
+    background: #ffffff;
+    padding: 11px;
+}
+
+.wages-infographic-panel.wide {
+    grid-column: span 2;
+}
+
+.wages-infographic-panel h2 {
+    margin: 0 0 8px;
+    color: #081f3a;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.wages-bar-list {
+    display: grid;
+    gap: 7px;
+}
+
+.wages-bar-list.compact {
+    gap: 5px;
+}
+
+.wages-bar-row {
+    display: grid;
+    grid-template-columns: 160px minmax(0, 1fr) 105px;
+    gap: 8px;
+    align-items: center;
+    font-size: 11px;
+}
+
+.wages-bar-label {
+    color: #0f172a;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.wages-bar-track,
+.wages-variance-track {
+    height: 10px;
+    background: #eaf2ff;
+    border: 1px solid #9eb2ca;
+    overflow: hidden;
+}
+
+.wages-bar-track span,
+.wages-variance-track span {
+    display: block;
+    height: 100%;
+    background: #1e63d6;
+}
+
+.wages-bar-track.workers span {
+    background: #0b2b52;
+}
+
+.wages-bar-track.premi span {
+    background: #1e63d6;
+}
+
+.wages-bar-track.lembur span {
+    background: #0b2b52;
+}
+
+.wages-bar-track.deduction span {
+    background: #64748b;
+}
+
+.wages-bar-value {
+    text-align: right;
+    color: #0f172a;
+    font-weight: 800;
+}
+
+.wages-share-stack {
+    display: flex;
+    height: 32px;
+    border: 1px solid #0b1f3a;
+    overflow: hidden;
+    background: #eaf2ff;
+}
+
+.wages-share-stack span {
+    display: grid;
+    place-items: center;
+    min-width: 42px;
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.wages-share-stack .premi { background: #1e63d6; }
+.wages-share-stack .lembur { background: #0b2b52; }
+.wages-share-stack .pph { background: #081f3a; }
+.wages-share-stack .spsi { background: #64748b; }
+
+.wages-share-legend {
+    display: grid;
+    gap: 4px;
+    margin-top: 8px;
+    color: #334155;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.wages-infographic-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.wages-infographic-table th {
+    background: #081f3a;
+    color: #fff;
+    border: 1px solid #0b1f3a;
+    padding: 6px;
+    font-size: 10px;
+}
+
+.wages-infographic-table td {
+    border: 1px solid #d7e1ee;
+    padding: 5px 6px;
+    font-size: 10px;
+}
+
+@media print {
+    .wages-summary-page,
+    .wages-infographic-page {
+        width: 297mm !important;
+        min-width: 0 !important;
+        height: 210mm !important;
+        min-height: 210mm !important;
+        max-height: 210mm !important;
+        box-sizing: border-box !important;
+        margin: 0 !important;
+        padding: 8mm 9mm 7mm !important;
+        border: 0 !important;
+        box-shadow: none !important;
+        overflow: hidden !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .wages-infographic-page .wsp-letterhead,
+    .wages-summary-page .wsp-letterhead {
+        border-bottom: 2pt solid #081f3a !important;
+    }
+
+    .wages-infographic-kpi-grid {
+        gap: 3mm !important;
+        margin: 3mm 0 !important;
+    }
+
+    .wages-infographic-kpi {
+        padding: 2.4mm !important;
+        border: 0.8pt solid #0b1f3a !important;
+        border-left: 2pt solid #081f3a !important;
+    }
+
+    .wages-infographic-kpi span,
+    .wages-infographic-kpi small {
+        font-size: 6.5pt !important;
+    }
+
+    .wages-infographic-kpi strong {
+        font-size: 11pt !important;
+    }
+
+    .wages-infographic-layout {
+        gap: 3mm !important;
+    }
+
+    .wages-infographic-panel {
+        padding: 2.5mm !important;
+        border: 0.8pt solid #0b1f3a !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    .wages-infographic-panel h2 {
+        font-size: 7.5pt !important;
+        margin-bottom: 2mm !important;
+    }
+
+    .wages-bar-row {
+        grid-template-columns: 38mm minmax(0, 1fr) 26mm !important;
+        gap: 2mm !important;
+        font-size: 6.7pt !important;
+    }
+
+    .wages-bar-track,
+    .wages-variance-track {
+        height: 6pt !important;
+    }
+
+    .wages-share-stack {
+        height: 18pt !important;
+    }
+
+    .wages-share-stack span,
+    .wages-share-legend {
+        font-size: 6.5pt !important;
+    }
+
+    .wages-infographic-table th,
+    .wages-infographic-table td {
+        font-size: 6.4pt !important;
+        padding: 1.6pt 2pt !important;
+        border: 0.65pt solid #1f334c !important;
+    }
+
+    .wages-infographic-table th {
+        background: #081f3a !important;
+        color: #fff !important;
+    }
+
+    .pdf-export-active.wages-report-print-set .wages-infographic-page {
+        width: 297mm !important;
+        min-width: 297mm !important;
+        height: 210mm !important;
+        min-height: 210mm !important;
+        max-height: 210mm !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        page-break-after: auto !important;
+        break-after: auto !important;
+    }
+}
+
+.pdf-export-active.wages-report-print-set .wages-summary-page,
+.pdf-export-active.wages-report-print-set .wages-infographic-page {
+    width: 297mm !important;
+    min-width: 297mm !important;
+    height: 210mm !important;
+    min-height: 210mm !important;
+    max-height: 210mm !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    page-break-after: always !important;
+    break-after: page !important;
+}

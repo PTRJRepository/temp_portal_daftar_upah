@@ -1,0 +1,317 @@
+.period-slider-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    max-width: 600px;
+}
+
+.period-slider-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 4px;
+}
+
+.period-slider-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary, #1f2937);
+    letter-spacing: 0.5px;
+}
+
+.period-slider-quick-nav {
+    display: flex;
+    gap: 4px;
+}
+
+.period-slider-track-wrapper {
+    position: relative;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 12px 0;
+    background: var(--neutral-50, #f9fafb);
+    border: 1px solid var(--neutral-200, #e5e7eb);
+    border-radius: 12px;
+    cursor: grab;
+    user-select: none;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--neutral-300, #d1d5db) transparent;
+}
+
+.period-slider-track-wrapper::-webkit-scrollbar {
+    height: 6px;
+}
+
+.period-slider-track-wrapper::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 3px;
+}
+
+.period-slider-track-wrapper::-webkit-scrollbar-thumb {
+    background: var(--neutral-300, #d1d5db);
+    border-radius: 3px;
+}
+
+.period-slider-track-wrapper::-webkit-scrollbar-thumb:hover {
+    background: var(--neutral-400, #9ca3af);
+}
+
+.period-slider-track-wrapper.dragging {
+    cursor: grabbing;
+    scroll-behavior: auto;
+}
+
+.period-slider-track-wrapper:focus {
+    outline: none;
+    border-color: var(--primary-500, #3b82f6);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.period-slider-track-wrapper:focus:not(:focus-visible) {
+    outline: none;
+    box-shadow: none;
+}
+
+.period-slider-track {
+    display: flex;
+    gap: 8px;
+    padding: 0 12px;
+    min-width: min-content;
+}
+
+.period-slider-item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 72px;
+    height: 60px;
+    padding: 8px 12px;
+    background: var(--surface-primary, #ffffff);
+    border: 2px solid var(--neutral-200, #e5e7eb);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.period-slider-item:hover:not(:disabled) {
+    border-color: var(--primary-400, #60a5fa);
+    background: var(--primary-50, #eff6ff);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.period-slider-item:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.period-slider-item:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.period-slider-item.selected {
+    background: linear-gradient(135deg, var(--primary-500, #3b82f6) 0%, var(--primary-600, #2563eb) 100%);
+    border-color: var(--primary-600, #2563eb);
+    box-shadow: 0 4px 16px rgba(37, 99, 235, 0.3);
+    transform: scale(1.05);
+}
+
+.period-slider-item.selected .period-slider-month,
+.period-slider-item.selected .period-slider-year {
+    color: white;
+}
+
+.period-slider-item.current:not(.selected) {
+    border-color: var(--success-400, #4ade80);
+    background: var(--success-50, #f0fdf4);
+}
+
+.period-slider-item.current:not(.selected) .period-slider-month {
+    color: var(--success-600, #16a34a);
+    font-weight: 600;
+}
+
+.period-slider-item.history-period {
+    border-style: dashed;
+    border-color: var(--neutral-400, #9ca3af);
+}
+
+.period-slider-item.history-period:not(.selected):not(.current) {
+    background: var(--neutral-50, #f9fafb);
+    border-color: var(--neutral-300, #d1d5db);
+}
+
+.period-slider-item.history-period:not(.selected) .period-slider-year {
+    color: var(--neutral-500, #6b7280);
+    font-style: italic;
+}
+
+.period-slider-markers {
+    position: absolute;
+    left: 6px;
+    right: 6px;
+    bottom: 5px;
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    pointer-events: none;
+}
+
+.period-slider-marker {
+    min-width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    font-weight: 700;
+    line-height: 1;
+    background: rgba(15, 23, 42, 0.08);
+    color: #334155;
+}
+
+.period-slider-marker-current {
+    background: var(--success-100, #dcfce7);
+    color: var(--success-700, #15803d);
+}
+
+.period-slider-marker-history {
+    background: var(--neutral-200, #e5e7eb);
+    color: var(--neutral-700, #374151);
+}
+
+.period-slider-marker-archive {
+    background: var(--primary-100, #dbeafe);
+    color: var(--primary-700, #1d4ed8);
+}
+
+.period-slider-item.selected .period-slider-marker {
+    background: rgba(255, 255, 255, 0.22);
+    color: white;
+}
+
+.period-slider-month {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary, #1f2937);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.period-slider-year {
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--text-secondary, #6b7280);
+}
+
+.period-slider-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 4px;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.period-slider-hint {
+    font-size: 11px;
+    color: var(--text-secondary, #6b7280);
+}
+
+.period-slider-position {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--neutral-500, #6b7280);
+    background: var(--neutral-100, #f3f4f6);
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+.period-slider-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 28px;
+    padding: 0 10px;
+    background: var(--surface-primary, #ffffff);
+    border: 1px solid var(--neutral-300, #d1d5db);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+}
+
+.period-slider-btn:hover:not(:disabled) {
+    background: var(--primary-50, #eff6ff);
+    border-color: var(--primary-400, #60a5fa);
+}
+
+.period-slider-btn:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.period-slider-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.period-slider-btn-small {
+    width: 32px;
+    padding: 0;
+}
+
+@media (max-width: 768px) {
+    .period-slider-container {
+        max-width: 100%;
+    }
+
+    .period-slider-item {
+        min-width: 64px;
+        height: 54px;
+        padding: 6px 8px;
+    }
+
+    .period-slider-month {
+        font-size: 12px;
+    }
+
+    .period-slider-year {
+        font-size: 10px;
+    }
+
+    .period-slider-label {
+        font-size: 13px;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    .period-slider-track-wrapper {
+        background: var(--neutral-900, #111827);
+        border-color: var(--neutral-700, #374151);
+    }
+
+    .period-slider-item {
+        background: var(--neutral-800, #1f2937);
+        border-color: var(--neutral-700, #374151);
+    }
+
+    .period-slider-item:hover:not(:disabled) {
+        background: var(--neutral-700, #374151);
+        border-color: var(--primary-500, #3b82f6);
+    }
+
+    .period-slider-month {
+        color: var(--text-primary, #f9fafb);
+    }
+
+    .period-slider-year {
+        color: var(--text-secondary, #9ca3af);
+    }
+}

@@ -1,0 +1,401 @@
+/* ============================================
+   WAGES SUMMARY - OPTIMIZED PRINT STYLES
+   Professional Financial Report Print Layout
+   ============================================ */
+
+@page {
+    size: A4 landscape;
+    margin: 10mm;
+}
+
+@media print {
+    /* Global resets */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        box-sizing: border-box !important;
+    }
+
+    body {
+        background: #fff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+        width: 100% !important;
+        font-family: 'Inter', Arial, sans-serif !important;
+    }
+
+    /* Hide UI elements */
+    .no-print,
+    .print-hide-additional,
+    .print-hide-detail,
+    .wsp-btn-sm,
+    .report-header-web {
+        display: none !important;
+    }
+
+    /* Show print-only elements */
+    .print-show-only {
+        display: table-cell !important;
+    }
+
+    .print-show {
+        display: block !important;
+    }
+
+    /* Container reset */
+    .wsp-container {
+        background: #fff !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: visible !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    /* Document wrapper */
+    .wsp-document {
+        box-shadow: none !important;
+        border: 2px solid #000 !important;
+        margin: 0 !important;
+        padding: 0.8rem !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        background: #fff !important;
+        page-break-inside: avoid !important;
+    }
+
+    /* Letterhead */
+    .wsp-letterhead {
+        text-align: center !important;
+        margin-bottom: 0.6rem !important;
+        padding-bottom: 0.4rem !important;
+        border-bottom: 2px solid #000 !important;
+        page-break-after: avoid !important;
+    }
+
+    .wsp-logo {
+        width: 45px !important;
+        height: auto !important;
+        margin-bottom: 0.2rem !important;
+    }
+
+    .wsp-company-name {
+        font-size: 1.2rem !important;
+        font-weight: 800 !important;
+        margin: 0 !important;
+        color: #000 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.05em !important;
+        line-height: 1.3 !important;
+    }
+
+    .wsp-report-title {
+        font-size: 0.85rem !important;
+        font-weight: 700 !important;
+        margin: 0.15rem 0 0 0 !important;
+        color: #000 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.08em !important;
+        line-height: 1.3 !important;
+    }
+
+    .wsp-report-period {
+        font-size: 0.7rem !important;
+        font-weight: 600 !important;
+        margin: 0.1rem 0 0 0 !important;
+        color: #000 !important;
+        line-height: 1.3 !important;
+    }
+
+    /* KPI Cards */
+    .wsp-kpi-grid {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 0.3rem !important;
+        margin-bottom: 0.5rem !important;
+        page-break-inside: avoid !important;
+    }
+
+    .wsp-kpi-card {
+        border: 1px solid #000 !important;
+        padding: 0.3rem !important;
+        text-align: center !important;
+        page-break-inside: avoid !important;
+        background: #fff !important;
+    }
+
+    .wsp-kpi-card.highlight {
+        background: #f0f0f0 !important;
+        border: 1.5px solid #000 !important;
+    }
+
+    .wsp-kpi-label {
+        font-size: 0.55rem !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        margin-bottom: 0.1rem !important;
+        color: #000 !important;
+        line-height: 1.2 !important;
+    }
+
+    .wsp-kpi-value {
+        font-size: 0.85rem !important;
+        font-weight: 800 !important;
+        color: #000 !important;
+        font-family: 'Roboto Mono', monospace !important;
+        line-height: 1.2 !important;
+    }
+
+    /* Table wrapper */
+    .wsp-table-wrapper {
+        border: 1.5px solid #000 !important;
+        margin-bottom: 0.5rem !important;
+        page-break-inside: avoid !important;
+        overflow: visible !important;
+    }
+
+    /* Main table */
+    .wsp-table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        table-layout: fixed !important;
+        font-size: 0.65rem !important;
+        page-break-inside: avoid !important;
+    }
+
+    .wsp-table thead {
+        display: table-header-group !important;
+        page-break-after: avoid !important;
+    }
+
+    .wsp-table tbody {
+        page-break-inside: avoid !important;
+    }
+
+    .wsp-table tfoot {
+        display: table-footer-group !important;
+        page-break-before: avoid !important;
+    }
+
+    /* Headers */
+    .wsp-table thead th {
+        background: #e5e5e5 !important;
+        color: #000 !important;
+        font-weight: 800 !important;
+        text-align: center !important;
+        padding: 0.25rem 0.2rem !important;
+        border: 1px solid #000 !important;
+        font-size: 0.65rem !important;
+        line-height: 1.2 !important;
+        vertical-align: middle !important;
+        white-space: normal !important;
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+    }
+
+    .wsp-table thead tr.wsp-header-master th {
+        background: #d5d5d5 !important;
+        font-size: 0.7rem !important;
+        font-weight: 900 !important;
+        padding: 0.3rem 0.25rem !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.02em !important;
+    }
+
+    .wsp-table thead tr.wsp-header-sub th {
+        background: #f0f0f0 !important;
+        font-size: 0.6rem !important;
+        padding: 0.2rem 0.15rem !important;
+    }
+
+    /* Table cells */
+    .wsp-table tbody td {
+        padding: 0.2rem 0.2rem !important;
+        border: 1px solid #000 !important;
+        font-size: 0.65rem !important;
+        line-height: 1.25 !important;
+        vertical-align: middle !important;
+        color: #000 !important;
+        white-space: normal !important;
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+    }
+
+    /* Text alignment */
+    .wsp-table td.text-right {
+        text-align: right !important;
+        font-family: 'Roboto Mono', monospace !important;
+    }
+
+    .wsp-table td.text-left {
+        text-align: left !important;
+    }
+
+    .wsp-table td.text-center {
+        text-align: center !important;
+    }
+
+    /* Division column */
+    .wsp-table td.division-name,
+    .wsp-table td:first-child {
+        text-align: left !important;
+        font-weight: 700 !important;
+        padding-left: 0.3rem !important;
+    }
+
+    .div-code {
+        font-size: 0.65rem !important;
+        font-weight: 700 !important;
+        line-height: 1.3 !important;
+        color: #000 !important;
+    }
+
+    .div-desc {
+        font-size: 0.6rem !important;
+        color: #333 !important;
+        font-weight: 500 !important;
+        margin-top: 0.08rem !important;
+        line-height: 1.2 !important;
+    }
+
+    /* Special rows */
+    .wsp-table tr.estate-header td {
+        background: #e0e0e0 !important;
+        font-weight: 800 !important;
+        font-size: 0.7rem !important;
+        padding: 0.25rem 0.3rem !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.03em !important;
+    }
+
+    .wsp-table tr.subtotal td {
+        background: #f0f0f0 !important;
+        font-weight: 700 !important;
+        font-size: 0.65rem !important;
+    }
+
+    .wsp-table tfoot tr.wsp-grand-total td {
+        background: #1a1a1a !important;
+        color: #fff !important;
+        font-weight: 800 !important;
+        font-size: 0.7rem !important;
+        padding: 0.25rem 0.25rem !important;
+        border: 1.5px solid #000 !important;
+    }
+
+    /* Value states */
+    .wsp-table td.val-zero {
+        color: #999 !important;
+    }
+
+    .wsp-table td.val-positive {
+        color: #000 !important;
+    }
+
+    /* Sticky columns - disable in print */
+    .sticky-col,
+    .th-sticky-col {
+        position: static !important;
+        box-shadow: none !important;
+        background: inherit !important;
+    }
+
+    /* Signature section */
+    .wsp-signature-section {
+        display: flex !important;
+        justify-content: space-between !important;
+        margin-top: 0.8rem !important;
+        padding: 0.3rem 0 !important;
+        page-break-inside: avoid !important;
+    }
+
+    .wsp-signature-block {
+        text-align: center !important;
+        flex: 1 !important;
+        margin: 0 0.3rem !important;
+    }
+
+    .wsp-signature-title {
+        font-size: 0.65rem !important;
+        font-weight: 700 !important;
+        margin-bottom: 2rem !important;
+        white-space: nowrap !important;
+        color: #000 !important;
+    }
+
+    .wsp-signature-name {
+        font-size: 0.65rem !important;
+        font-weight: 700 !important;
+        border-top: 1px solid #000 !important;
+        padding-top: 0.15rem !important;
+        width: 80% !important;
+        margin: 0 auto !important;
+        white-space: nowrap !important;
+        color: #000 !important;
+    }
+
+    /* Footer */
+    .wsp-footer {
+        margin-top: 0.6rem !important;
+        padding-top: 0.2rem !important;
+        border-top: 1px solid #000 !important;
+        font-size: 0.6rem !important;
+        color: #333 !important;
+        page-break-inside: avoid !important;
+    }
+
+    /* Comparison mode elements */
+    .wsp-kpi-card.comparison-card {
+        padding: 0.3rem !important;
+    }
+
+    .wsp-kpi-trend-box {
+        border: 1px solid #000 !important;
+        padding: 0.2rem !important;
+        background: #fff !important;
+    }
+
+    .wsp-kpi-trend-box .trend-label {
+        font-size: 0.5rem !important;
+        color: #000 !important;
+        font-weight: 700 !important;
+    }
+
+    .wsp-kpi-trend-box .trend-value {
+        font-size: 0.7rem !important;
+        font-weight: 700 !important;
+        color: #000 !important;
+    }
+
+    .wsp-kpi-diff {
+        font-size: 0.6rem !important;
+        font-weight: 700 !important;
+        border: 1px solid #000 !important;
+        padding: 0.1rem !important;
+    }
+
+    /* Utility classes */
+    .page-break-before {
+        page-break-before: always !important;
+    }
+
+    .page-break-after {
+        page-break-after: always !important;
+    }
+
+    .avoid-break {
+        page-break-inside: avoid !important;
+    }
+
+    /* Remove all shadows */
+    * {
+        box-shadow: none !important;
+    }
+
+    /* Ensure borders are visible */
+    .wsp-table th,
+    .wsp-table td {
+        border: 1px solid #000 !important;
+    }
+}

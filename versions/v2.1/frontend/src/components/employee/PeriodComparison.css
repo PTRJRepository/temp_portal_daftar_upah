@@ -1,0 +1,189 @@
+/* PeriodComparison Styles */
+
+.period-comparison {
+    margin: 20px 0;
+}
+
+.period-comparison h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: #1f2937;
+}
+
+/* Period Selectors */
+.period-selectors {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 30px;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: #f9fafb;
+    border-radius: 8px;
+}
+
+.period-selector {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.period-selector label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #374151;
+}
+
+.loading-text,
+.no-data-text {
+    font-size: 0.8rem;
+    color: #6b7280;
+}
+
+.vs-divider {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #9ca3af;
+}
+
+/* Comparison Table */
+.comparison-table-container {
+    overflow-x: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+}
+
+.comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.comparison-table thead {
+    background: #f3f4f6;
+}
+
+.comparison-table th {
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.comparison-table td {
+    padding: 10px 16px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.comparison-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.comparison-table tbody tr:hover {
+    background: #f9fafb;
+}
+
+/* Section Rows */
+.section-row td {
+    background: #f3f4f6;
+    font-weight: 600;
+    color: #374151;
+    padding: 8px 16px;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+}
+
+/* Value Cells */
+.value-cell {
+    text-align: right;
+    font-family: 'Courier New', monospace;
+    font-weight: 500;
+}
+
+.period1-col {
+    background: rgba(59, 130, 246, 0.03);
+}
+
+.period2-col {
+    background: rgba(139, 92, 246, 0.03);
+}
+
+/* Diff Cell */
+.diff-cell {
+    text-align: center;
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+}
+
+.diff-cell.positive {
+    color: #059669;
+    background: rgba(5, 150, 105, 0.1);
+}
+
+.diff-cell.negative {
+    color: #dc2626;
+    background: rgba(220, 38, 38, 0.1);
+}
+
+.diff-cell.neutral {
+    color: #6b7280;
+}
+
+/* Bold Text */
+.bold {
+    font-weight: 700;
+}
+
+/* Highlight Row */
+.highlight-row {
+    background: linear-gradient(90deg, rgba(5, 150, 105, 0.05), rgba(139, 92, 246, 0.05)) !important;
+}
+
+.highlight-row td {
+    font-weight: 600;
+}
+
+/* Unit */
+.unit {
+    font-size: 0.8rem;
+    color: #6b7280;
+    font-weight: normal;
+}
+
+/* Error */
+.comparison-error {
+    padding: 20px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    color: #991b1b;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .period-selectors {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .vs-divider {
+        transform: rotate(90deg);
+    }
+
+    .comparison-table {
+        font-size: 0.8rem;
+    }
+
+    .comparison-table th,
+    .comparison-table td {
+        padding: 8px 10px;
+    }
+
+    .value-cell {
+        min-width: 80px;
+    }
+}

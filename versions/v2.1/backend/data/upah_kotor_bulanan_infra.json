@@ -1,0 +1,182 @@
+[
+    {
+        "no": 1,
+        "nama": "YOYO",
+        "upah_bulanan": {
+            "januari": 4164470,
+            "februari": 3791160,
+            "maret": 4188570,
+            "april": 4059600,
+            "mei": 4192070,
+            "juni": 4059600,
+            "juli": 4192070,
+            "agustus": 4192070,
+            "september": 4059600,
+            "oktober": 4192070,
+            "november": 4059600,
+            "desember": 0
+        }
+    },
+    {
+        "no": 2,
+        "nama": "JAMILA",
+        "upah_bulanan": {
+            "januari": 7598620,
+            "februari": 6892589,
+            "maret": 7354229,
+            "april": 6789296,
+            "mei": 7525784,
+            "juni": 6934948,
+            "juli": 7503376,
+            "agustus": 7480967,
+            "september": 6531602,
+            "oktober": 7783477,
+            "november": 5868295,
+            "desember": 0
+        }
+    },
+    {
+        "no": 3,
+        "nama": "JUNI MI'UN",
+        "upah_bulanan": {
+            "januari": 6360413,
+            "februari": 5023613,
+            "maret": 5422373,
+            "april": 5603167,
+            "mei": 6677227,
+            "juni": 6499490,
+            "juli": 0,
+            "agustus": 0,
+            "september": 0,
+            "oktober": 0,
+            "november": 0,
+            "desember": 0
+        }
+    },
+    {
+        "no": 4,
+        "nama": "SUHANDI",
+        "upah_bulanan": {
+            "januari": 4188820,
+            "februari": 3918605,
+            "maret": 4196970,
+            "april": 4186345,
+            "mei": 4196970,
+            "juni": 4063100,
+            "juli": 4196970,
+            "agustus": 4556970,
+            "september": 4574874,
+            "oktober": 5086070,
+            "november": 4768955,
+            "desember": 0
+        }
+    },
+    {
+        "no": 5,
+        "nama": "MINARNI",
+        "upah_bulanan": {
+            "januari": 5498385,
+            "februari": 5013810,
+            "maret": 5477240,
+            "april": 5237433,
+            "mei": 5766045,
+            "juni": 5172709,
+            "juli": 5795953,
+            "agustus": 6185594,
+            "september": 5478718,
+            "oktober": 5911493,
+            "november": 5019352,
+            "desember": 0
+        }
+    },
+    {
+        "no": 6,
+        "nama": "SUPRIADI",
+        "upah_bulanan": {
+            "januari": 4223720,
+            "februari": 3689290,
+            "maret": 4228370,
+            "april": 4093600,
+            "mei": 4228370,
+            "juni": 4093600,
+            "juli": 4228370,
+            "agustus": 4228370,
+            "september": 4093600,
+            "oktober": 4093600,
+            "november": 3958830,
+            "desember": 0
+        }
+    },
+    {
+        "no": 7,
+        "nama": "HARIAH",
+        "upah_bulanan": {
+            "januari": 6950193,
+            "februari": 5256115,
+            "maret": 7263907,
+            "april": 5552667,
+            "mei": 5594504,
+            "juni": 7625415,
+            "juli": 8417924,
+            "agustus": 7521600,
+            "september": 6236114,
+            "oktober": 1571077,
+            "november": 6239613,
+            "desember": 0
+        }
+    },
+    {
+        "no": 8,
+        "nama": "YUSMARDIAN",
+        "upah_bulanan": {
+            "januari": 4082100,
+            "februari": 3899403,
+            "maret": 4374870,
+            "april": 4240100,
+            "mei": 4224870,
+            "juni": 4090100,
+            "juli": 4330100,
+            "agustus": 4554870,
+            "september": 4195330,
+            "oktober": 4090100,
+            "november": 4090100,
+            "desember": 0
+        }
+    },
+    {
+        "no": 9,
+        "nama": "YULHANI",
+        "upah_bulanan": {
+            "januari": 4164470,
+            "februari": 3662190,
+            "maret": 4192070,
+            "april": 4059600,
+            "mei": 4192070,
+            "juni": 3930630,
+            "juli": 4195570,
+            "agustus": 4195570,
+            "september": 4063100,
+            "oktober": 4063100,
+            "november": 4063100,
+            "desember": 0
+        }
+    },
+    {
+        "no": 10,
+        "nama": "HENDRIX",
+        "upah_bulanan": {
+            "januari": 4044600,
+            "februari": 3647490,
+            "maret": 4182970,
+            "april": 4076100,
+            "mei": 4076100,
+            "juni": 4076100,
+            "juli": 4076100,
+            "agustus": 4210870,
+            "september": 4076100,
+            "oktober": 4210870,
+            "november": 3941330,
+            "desember": 0
+        }
+    }
+]

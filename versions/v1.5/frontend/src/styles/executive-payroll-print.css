@@ -1,0 +1,353 @@
+.executive-print-report {
+  display: none;
+}
+
+@page executive-payroll-landscape {
+  size: A4 landscape;
+  margin: 0;
+}
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 0;
+  }
+
+  html,
+  body,
+  #root {
+    width: 297mm !important;
+    min-width: 297mm !important;
+    max-width: 297mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  .executive-payroll-page {
+    page: executive-payroll-landscape;
+    width: 297mm !important;
+    min-width: 0 !important;
+    max-width: 297mm !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+    color: #000 !important;
+    font-family: Arial, sans-serif !important;
+  }
+
+  .executive-page-header,
+  .executive-dashboard-screen {
+    display: none !important;
+  }
+
+  #executive-print-report.executive-print-report {
+    display: block !important;
+    width: 281mm !important;
+    min-width: 0 !important;
+    max-width: 281mm !important;
+    min-height: 194mm !important;
+    margin: 8mm auto !important;
+    padding: 0 !important;
+    color: #0f172a !important;
+    background: #fff !important;
+    box-sizing: border-box !important;
+    font-family: Arial, sans-serif !important;
+    font-size: 6.8pt !important;
+    line-height: 1.12 !important;
+    page: executive-payroll-landscape;
+  }
+
+  #executive-print-report *,
+  #executive-print-report *::before,
+  #executive-print-report *::after {
+    box-sizing: border-box !important;
+    color: inherit !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    letter-spacing: 0 !important;
+  }
+
+  #executive-print-report .executive-print-header {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 49mm !important;
+    gap: 5mm !important;
+    align-items: stretch !important;
+    margin: 0 0 4pt !important;
+    padding: 4.5mm 5mm !important;
+    border: 1pt solid #0b1f3a !important;
+    border-bottom: 2pt solid #081f3a !important;
+    background: #081f3a !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  #executive-print-report .executive-print-eyebrow {
+    margin: 0 0 2pt !important;
+    font-size: 6.4pt !important;
+    font-weight: 900 !important;
+    line-height: 1 !important;
+    text-transform: uppercase !important;
+    color: #dbeafe !important;
+  }
+
+  #executive-print-report h2 {
+    margin: 0 !important;
+    font-size: 15pt !important;
+    font-weight: 900 !important;
+    line-height: 1.05 !important;
+    color: #ffffff !important;
+  }
+
+  #executive-print-report p {
+    margin: 2pt 0 0 !important;
+    font-size: 7.4pt !important;
+    font-weight: 700 !important;
+    line-height: 1.15 !important;
+    color: #e2e8f0 !important;
+  }
+
+  #executive-print-report .executive-print-meta-box {
+    display: grid !important;
+    grid-template-columns: 13mm minmax(0, 1fr) !important;
+    gap: 1.5pt 2pt !important;
+    align-content: center !important;
+    padding: 4pt !important;
+    border: 0.8pt solid #93c5fd !important;
+    background: #0b2b52 !important;
+    font-size: 6.2pt !important;
+    line-height: 1.08 !important;
+  }
+
+  #executive-print-report .executive-print-meta-box span {
+    font-weight: 700 !important;
+    color: #bfdbfe !important;
+  }
+
+  #executive-print-report .executive-print-meta-box strong {
+    font-weight: 900 !important;
+    overflow-wrap: anywhere !important;
+    color: #ffffff !important;
+  }
+
+  #executive-print-report .executive-print-kpi-grid {
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    gap: 4pt !important;
+    margin: 0 0 5pt !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  #executive-print-report .executive-print-kpi-card,
+  #executive-print-report .executive-print-insight-grid article {
+    min-width: 0 !important;
+    padding: 4pt !important;
+    border: 0.75pt solid #9eb2ca !important;
+    background: #f8fbff !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  #executive-print-report .executive-print-kpi-card span,
+  #executive-print-report .executive-print-insight-grid span {
+    display: block !important;
+    margin: 0 0 1pt !important;
+    font-size: 5.8pt !important;
+    font-weight: 900 !important;
+    line-height: 1.05 !important;
+    text-transform: uppercase !important;
+    color: #475569 !important;
+  }
+
+  #executive-print-report .executive-print-kpi-card strong {
+    display: block !important;
+    margin: 0 !important;
+    font-size: 8.6pt !important;
+    font-weight: 900 !important;
+    line-height: 1.05 !important;
+    overflow-wrap: anywhere !important;
+    color: #081f3a !important;
+  }
+
+  #executive-print-report .executive-print-kpi-card small,
+  #executive-print-report .executive-print-insight-grid small {
+    display: block !important;
+    margin: 1pt 0 0 !important;
+    font-size: 5.8pt !important;
+    font-weight: 700 !important;
+    line-height: 1.08 !important;
+    overflow-wrap: anywhere !important;
+    color: #64748b !important;
+  }
+
+  #executive-print-report .executive-print-insight-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 3pt !important;
+    margin: 0 0 5pt !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  #executive-print-report .executive-print-insight-grid strong {
+    display: block !important;
+    font-size: 9pt !important;
+    font-weight: 900 !important;
+    line-height: 1 !important;
+    overflow-wrap: anywhere !important;
+    color: #081f3a !important;
+  }
+
+  #executive-print-report .executive-print-section {
+    margin: 0 0 5pt !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+
+  #executive-print-report .executive-print-section-title {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 4pt !important;
+    margin: 0 !important;
+    padding: 2.4pt 3.5pt !important;
+    border: 0.8pt solid #0b1f3a !important;
+    border-bottom: 0 !important;
+    background: #eaf2ff !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  #executive-print-report .executive-print-section-title h3 {
+    margin: 0 !important;
+    font-size: 7.4pt !important;
+    font-weight: 900 !important;
+    line-height: 1 !important;
+    text-transform: uppercase !important;
+    color: #081f3a !important;
+  }
+
+  #executive-print-report .executive-print-section-title span {
+    font-size: 5.8pt !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+    color: #334155 !important;
+  }
+
+  #executive-print-report .executive-print-table {
+    width: 100% !important;
+    table-layout: fixed !important;
+    border-collapse: collapse !important;
+    border: 0.8pt solid #0b1f3a !important;
+    margin: 0 !important;
+    font-size: 6.25pt !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+
+  #executive-print-report .executive-print-table thead {
+    display: table-header-group !important;
+  }
+
+  #executive-print-report .executive-print-table tfoot {
+    display: table-footer-group !important;
+  }
+
+  #executive-print-report .executive-print-table tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  #executive-print-report .executive-print-table th {
+    background: #081f3a !important;
+    color: #ffffff !important;
+    border: 0.65pt solid #0b1f3a !important;
+    padding: 1.6pt 1pt !important;
+    font-size: 5.55pt !important;
+    font-weight: 900 !important;
+    line-height: 1.05 !important;
+    text-align: center !important;
+    text-transform: uppercase !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  #executive-print-report .executive-print-table td {
+    border: 0.55pt solid #1f334c !important;
+    padding: 1.55pt 1pt !important;
+    font-size: 6.05pt !important;
+    font-weight: 700 !important;
+    line-height: 1.05 !important;
+    vertical-align: middle !important;
+    background: #fff !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  #executive-print-report .executive-print-table tbody tr:nth-child(even) td {
+    background: #f8fbff !important;
+  }
+
+  #executive-print-report .executive-print-table tbody tr:nth-child(odd) td {
+    background: #ffffff !important;
+  }
+
+  #executive-print-report .executive-print-table tfoot td {
+    border-top: 1.2pt solid #0b1f3a !important;
+    font-weight: 900 !important;
+    background: #eaf2ff !important;
+    color: #081f3a !important;
+  }
+
+  #executive-print-report .executive-print-table .strong {
+    font-weight: 900 !important;
+  }
+
+  #executive-print-report .executive-print-table .text-right {
+    text-align: right !important;
+  }
+
+  #executive-print-report .executive-print-table .text-center {
+    text-align: center !important;
+  }
+
+  #executive-print-report .executive-print-division-table th:nth-child(1),
+  #executive-print-report .executive-print-division-table td:nth-child(1) {
+    width: 8% !important;
+  }
+
+  #executive-print-report .executive-print-division-table th:nth-child(2),
+  #executive-print-report .executive-print-division-table td:nth-child(2) {
+    width: 15% !important;
+  }
+
+  #executive-print-report .executive-print-division-table th:nth-child(7),
+  #executive-print-report .executive-print-division-table td:nth-child(7),
+  #executive-print-report .executive-print-division-table th:nth-child(9),
+  #executive-print-report .executive-print-division-table td:nth-child(9) {
+    width: 8% !important;
+  }
+
+  #executive-print-report .executive-print-two-column {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr) !important;
+    gap: 6pt !important;
+    align-items: start !important;
+    margin: 0 0 5pt !important;
+  }
+
+  #executive-print-report .executive-print-two-column .executive-print-section {
+    margin: 0 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  #executive-print-report .executive-print-alert-section {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}

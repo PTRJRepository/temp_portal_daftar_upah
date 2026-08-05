@@ -1,0 +1,161 @@
+/* CurrentPeriodBadge Styles */
+
+.current-period-badge-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.current-period-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+}
+
+.current-period-label {
+    font-weight: 600;
+    color: #6b7280;
+}
+
+.current-period-value {
+    font-weight: 600;
+    color: #1f2937;
+}
+
+/* Period Badge */
+.period-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.period-icon {
+    font-size: 1rem;
+}
+
+.period-text {
+    font-weight: 700;
+}
+
+.period-type-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    opacity: 0.9;
+}
+
+.period-badge.period-current {
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+}
+
+.period-badge.period-historical {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+}
+
+.period-badge.period-future {
+    background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+}
+
+/* Compact Period Badge */
+.compact-period-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border: 1px solid;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+/* Period Selector with Badge */
+.period-selector-with-badge {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.current-period-hint {
+    padding: 6px 12px;
+    background: #f3f4f6;
+    border-radius: 6px;
+}
+
+.period-selector-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.period-input-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.period-input-group label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.period-select {
+    padding: 6px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    background: #fff;
+    cursor: pointer;
+}
+
+.period-select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Period Notice */
+.period-notice {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+}
+
+.historical-notice-compact {
+    background: #fef3c7;
+    border: 1px solid #fcd34d;
+    color: #92400e;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .current-period-badge-container {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .period-selector-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .period-input-group {
+        width: 100%;
+    }
+
+    .period-select {
+        flex: 1;
+    }
+}

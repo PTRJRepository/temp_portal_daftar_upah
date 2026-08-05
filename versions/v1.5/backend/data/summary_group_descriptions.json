@@ -1,0 +1,224 @@
+{
+  "description": "Mapping kandidat untuk label group/asistensi di Summary Report print. Field location_name perlu dilengkapi dari data operasional jika nama spesifik seperti AIK BAU tidak tersedia di repo.",
+  "extraction_rule": {
+    "group_number": "digit pertama dari gang_code, contoh A1H -> 1, B2H -> 2, K3H -> 3",
+    "division_source": "division_code atau mapping gang prefix lama",
+    "display_format": "GROUP {group_number} - {location_name || division_name || estate_name}"
+  },
+  "sources": [
+    {
+      "type": "documentation",
+      "path": "dokumentasi/division_to_gang_mechanism.md",
+      "usage": "Mapping prefix gang lama ke divisi"
+    },
+    {
+      "type": "database",
+      "table": "dbo.HR_GANG",
+      "usage": "GangCode dan Description realtime jika tersedia"
+    },
+    {
+      "type": "database",
+      "table": "dbo.Divisi_Description",
+      "usage": "Deskripsi division_code jika tersedia"
+    }
+  ],
+  "estates": {
+    "P": {
+      "estate_name": "ESTATE PARIT GUNUNG",
+      "divisions": {
+        "P1A": {
+          "legacy_code": "PG1A",
+          "gang_prefix": "A",
+          "division_name": "Parit Gunung 1A",
+          "group_number": "1",
+          "location_name": null,
+          "example_location_from_user": "AIK BAU",
+          "status": "needs_confirmation"
+        },
+        "P1B": {
+          "legacy_code": "PG1B",
+          "gang_prefix": "B",
+          "division_name": "Parit Gunung 1B",
+          "group_number": "1",
+          "location_name": null,
+          "status": "needs_confirmation"
+        },
+        "P2A": {
+          "legacy_code": "PG2A",
+          "gang_prefix": "C",
+          "division_name": "Parit Gunung 2A",
+          "group_number": "2",
+          "location_name": null,
+          "status": "needs_confirmation"
+        },
+        "P2B": {
+          "legacy_code": "PG2B",
+          "gang_prefix": "D",
+          "division_name": "Parit Gunung 2B",
+          "group_number": "2",
+          "location_name": null,
+          "status": "needs_confirmation"
+        },
+        "PGE": {
+          "legacy_code": "PGE",
+          "gang_prefix": null,
+          "division_name": "Parit Gunung Estate",
+          "group_number": null,
+          "location_name": null,
+          "status": "inferred_from_code_only"
+        }
+      }
+    },
+    "A": {
+      "estate_name": "ESTATE AIR RUAK",
+      "divisions": {
+        "ARA": {
+          "legacy_code": "ARA",
+          "gang_prefix": "F",
+          "division_name": "Ara Estate",
+          "group_number": null,
+          "location_name": null,
+          "status": "needs_confirmation"
+        },
+        "ARB1": {
+          "legacy_code": "ARB1",
+          "gang_prefix": "G",
+          "division_name": "Arbei Estate 1",
+          "group_number": "1",
+          "location_name": null,
+          "status": "needs_confirmation"
+        },
+        "ARB2": {
+          "legacy_code": "ARB2",
+          "gang_prefix": "H",
+          "division_name": "Arbei Estate 2",
+          "group_number": "2",
+          "location_name": null,
+          "status": "needs_confirmation"
+        },
+        "AB1": {
+          "legacy_code": "AB1",
+          "gang_prefix": null,
+          "division_name": "Air Batu 1",
+          "group_number": "1",
+          "location_name": null,
+          "status": "inferred_from_code_only"
+        },
+        "AB2": {
+          "legacy_code": "AB2",
+          "gang_prefix": null,
+          "division_name": "Air Batu 2",
+          "group_number": "2",
+          "location_name": null,
+          "status": "inferred_from_code_only"
+        },
+        "ARC": {
+          "legacy_code": "AREC",
+          "gang_prefix": "J",
+          "division_name": "Area Civil / ARC",
+          "group_number": null,
+          "location_name": null,
+          "status": "needs_confirmation"
+        }
+      }
+    },
+    "K": {
+      "estate_name": "DARRUR MAKMUR ESTATE",
+      "divisions": {
+        "DME": {
+          "legacy_code": "DME",
+          "gang_prefix": "E",
+          "division_name": "Darrur Makmur Estate",
+          "group_number": null,
+          "location_name": null,
+          "status": "needs_confirmation"
+        }
+      }
+    },
+    "N": {
+      "estate_name": "NURSERY",
+      "divisions": {
+        "NRS": {
+          "legacy_code": "NRS",
+          "gang_prefix": null,
+          "division_name": "Nursery",
+          "group_number": null,
+          "location_name": null,
+          "status": "virtual_division"
+        }
+      }
+    },
+    "W": {
+      "estate_name": "WORKSHOP (PG & AR)",
+      "divisions": {
+        "WKS_PG": {
+          "legacy_code": "WKS_PG",
+          "gang_prefix": null,
+          "division_name": "Workshop Parit Gunung",
+          "group_number": null,
+          "location_name": null,
+          "status": "virtual_division"
+        },
+        "WKS_AR": {
+          "legacy_code": "WKS_AR",
+          "gang_prefix": null,
+          "division_name": "Workshop Air Ruak",
+          "group_number": null,
+          "location_name": null,
+          "status": "virtual_division"
+        }
+      }
+    },
+    "I": {
+      "estate_name": "DIVISI INFRASTRUKTUR",
+      "divisions": {
+        "INF": {
+          "legacy_code": "INFRA",
+          "gang_prefix": "I",
+          "division_name": "Infrastructure",
+          "group_number": null,
+          "location_name": null,
+          "status": "virtual_division"
+        },
+        "IJL": {
+          "legacy_code": "IJL",
+          "gang_prefix": "L",
+          "division_name": "PT. Impian Jaya Lestari",
+          "group_number": null,
+          "location_name": null,
+          "status": "needs_confirmation"
+        }
+      }
+    },
+    "M": {
+      "estate_name": "OPERASI MILL",
+      "divisions": {
+        "MILL": {
+          "legacy_code": "MILL",
+          "gang_prefix": null,
+          "division_name": "General Mill Operations",
+          "group_number": null,
+          "location_name": "General Mill Operations",
+          "status": "found_in_code"
+        }
+      }
+    }
+  },
+  "group_label_overrides": {
+    "P": {
+      "1": null,
+      "2": null,
+      "3": null
+    },
+    "A": {
+      "1": null,
+      "2": null,
+      "3": null
+    },
+    "K": {
+      "1": null,
+      "2": null,
+      "3": null
+    }
+  }
+}

@@ -1,0 +1,228 @@
+/* ThumbprintVerification Styles */
+
+.thumbprint-verification {
+    margin: 15px 0;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.thumbprint-verification.loading,
+.thumbprint-verification.no-data {
+    padding: 15px;
+    text-align: center;
+    font-size: 0.9rem;
+    color: #6b7280;
+}
+
+.thumbprint-verification.no-data {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: #f9fafb;
+}
+
+.thumbprint-verification.match {
+    border-color: #10b981;
+    background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+}
+
+.thumbprint-verification.mismatch {
+    border-color: #f59e0b;
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+}
+
+/* Verification Header */
+.verification-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 15px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s ease;
+}
+
+.verification-header:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.verification-icon {
+    font-size: 1.2rem;
+}
+
+.verification-title {
+    flex: 1;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.verification-status {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.thumbprint-verification.match .verification-status {
+    background: #10b981;
+    color: white;
+}
+
+.thumbprint-verification.mismatch .verification-status {
+    background: #f59e0b;
+    color: white;
+}
+
+.expand-icon {
+    font-size: 0.8rem;
+    color: #6b7280;
+}
+
+/* Verification Summary */
+.verification-summary {
+    display: flex;
+    justify-content: space-around;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.6);
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.summary-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.summary-item .label {
+    font-size: 0.75rem;
+    color: #6b7280;
+    text-transform: uppercase;
+}
+
+.summary-item .value {
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+}
+
+.summary-item.diff .value.neutral {
+    color: #059669;
+}
+
+.summary-item.diff .value.positive {
+    color: #dc2626;
+}
+
+.summary-item.diff .value.negative {
+    color: #2563eb;
+}
+
+/* Verification Details */
+.verification-details {
+    padding: 15px;
+    background: white;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        max-height: 0;
+    }
+    to {
+        opacity: 1;
+        max-height: 500px;
+    }
+}
+
+.verification-details h4 {
+    margin: 0 0 10px 0;
+    font-size: 0.9rem;
+    color: #374151;
+}
+
+/* Thumbprint Table */
+.thumbprint-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.thumbprint-table th {
+    padding: 8px;
+    text-align: left;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.thumbprint-table td {
+    padding: 6px 8px;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.thumbprint-table tbody tr.current-period {
+    background: #eff6ff;
+    font-weight: 600;
+}
+
+.thumbprint-table .number {
+    text-align: right;
+    font-family: 'Courier New', monospace;
+}
+
+.thumbprint-table .number.match {
+    color: #10b981;
+}
+
+.thumbprint-table .number.mismatch {
+    color: #dc2626;
+}
+
+.thumbprint-note {
+    margin: 10px 0 0 0;
+    color: #9ca3af;
+}
+
+/* Compact Badge */
+.compact-thumbprint {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.compact-thumbprint.match {
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #10b981;
+}
+
+.compact-thumbprint.mismatch {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #f59e0b;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .verification-summary {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .verification-details {
+        overflow-x: auto;
+    }
+
+    .thumbprint-table {
+        font-size: 0.75rem;
+    }
+}

@@ -1,0 +1,236 @@
+/* 
+ * FINANCIAL SUMMARY PROFESSIONAL THEME V2 (Classic Monochrome)
+ * Scoped strictly to .financial-report-container
+ */
+
+.financial-report-container {
+    --fin-primary: #000000;
+    /* Pure Black for maximum contrast */
+    --fin-secondary: #334155;
+    /* Dark Slate for secondary text */
+    --fin-accent: #0f172a;
+    /* Navy Black for accents (very subtle) */
+    --fin-bg: #ffffff;
+    /* Pure White Background */
+    --fin-border: #cbd5e1;
+    /* Classic Gray Border */
+    --fin-text-main: #000000;
+    /* Black text */
+    --fin-text-light: #64748b;
+    /* Slate text */
+    --fin-white: #ffffff;
+    --fin-hover: #f1f5f9;
+    /* very light gray hover */
+    --header-bg: #1a202c;
+    /* Dark Charcoal for headers */
+
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background-color: var(--fin-bg);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- KPI CARDS --- */
+.financial-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    padding: 1.5rem 2rem;
+    background: var(--fin-white);
+    border-bottom: 1px solid var(--fin-border);
+}
+
+.financial-kpi-card {
+    background: var(--fin-white);
+    border: 1px solid var(--fin-border);
+    border-radius: 4px;
+    /* Sharper corners for professional look */
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.financial-kpi-title {
+    color: var(--fin-text-light);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+}
+
+.financial-kpi-value {
+    color: var(--fin-primary);
+    font-size: 1.75rem;
+    font-weight: 300;
+    /* Thinner weight for elegance */
+    font-family: 'Roboto Mono', monospace;
+    letter-spacing: -1px;
+}
+
+/* --- ACTION BAR --- */
+.financial-action-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background: var(--fin-white);
+    /* White background for header */
+    color: var(--fin-primary);
+    border-bottom: 1px solid var(--fin-border);
+}
+
+.financial-report-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin: 0;
+    letter-spacing: -0.03em;
+    color: var(--fin-primary);
+    text-transform: uppercase;
+}
+
+.financial-report-subtitle {
+    font-size: 0.85rem;
+    color: var(--fin-text-light);
+    margin-top: 0.25rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.fin-btn {
+    background: var(--fin-white);
+    border: 1px solid var(--fin-border);
+    color: var(--fin-secondary);
+    padding: 0.6rem 1.2rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.fin-btn:hover {
+    background: var(--fin-hover);
+    border-color: var(--fin-secondary);
+    color: var(--fin-primary);
+}
+
+.fin-btn-primary {
+    background: var(--fin-primary);
+    border-color: var(--fin-primary);
+    color: var(--fin-white);
+}
+
+.fin-btn-primary:hover {
+    background: #333;
+    border-color: #333;
+}
+
+/* --- AG GRID OVERRIDES (SCOPED) --- */
+.financial-report-grid {
+    flex: 1;
+    width: 100%;
+}
+
+.financial-report-grid .ag-root-wrapper {
+    border: none;
+}
+
+/* Headers */
+.financial-report-grid .ag-header {
+    background-color: var(--header-bg);
+    border-bottom: 4px solid #000;
+    /* Thick black line under header */
+    height: auto !important;
+}
+
+.financial-report-grid .ag-header-cell,
+.financial-report-grid .ag-header-group-cell {
+    color: #cbd5e1;
+    /* Light gray text */
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.financial-report-grid .ag-header-cell-label {
+    justify-content: center;
+}
+
+/* Rows */
+.financial-report-grid .ag-row {
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 13px;
+    color: var(--fin-text-main);
+}
+
+.financial-report-grid .ag-row-odd {
+    background-color: #ffffff;
+}
+
+.financial-report-grid .ag-row-even {
+    background-color: #fcfcfc;
+    /* Very subtle banding */
+}
+
+/* Cells */
+.financial-report-grid .ag-cell {
+    display: flex;
+    align-items: center;
+}
+
+/* Numbers - Monospace and Right Aligned */
+.financial-report-grid .ag-cell-value {
+    width: 100%;
+}
+
+.financial-report-grid .ag-right-aligned-header .ag-header-cell-label {
+    justify-content: flex-end;
+}
+
+/* TOTAL ROWS - The "Classic" look */
+.financial-total-row {
+    background-color: #f1f5f9 !important;
+    /* Light Gray */
+    font-weight: 700;
+    border-top: 2px solid #000 !important;
+    /* Black line above totals */
+    border-bottom: 1px solid #000 !important;
+}
+
+.financial-total-row .ag-cell {
+    color: #000 !important;
+}
+
+.financial-grand-total {
+    background-color: #000000 !important;
+    /* Black background */
+    color: #ffffff !important;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+}
+
+.financial-grand-total .ag-cell {
+    color: #ffffff !important;
+}
+
+/* Positive Values - No color, just bold or standard */
+.financial-cell-positive {
+    color: #000000;
+}
+
+/* Header Group Colors - REMOVED (All Black/Charcoal) */
+.financial-report-grid .header-section-income,
+.financial-report-grid .header-section-premi,
+.financial-report-grid .header-section-deduction,
+.financial-report-grid .header-section-absensi,
+.financial-report-grid .header-section-identitas {
+    background-color: var(--header-bg) !important;
+    /* Unified dark header */
+}

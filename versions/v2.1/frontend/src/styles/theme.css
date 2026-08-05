@@ -1,0 +1,519 @@
+@import url('./print-optimization.css');
+
+:root {
+  /* Brand Colors - Elegant Corporate Slate/Blue */
+  --primary-50: #f8fafc;
+  --primary-100: #f1f5f9;
+  --primary-200: #e2e8f0;
+  --primary-300: #cbd5e1;
+  --primary-400: #94a3b8;
+  --primary-500: #64748b;
+  --primary-600: #475569;
+  --primary-700: #334155;
+  --primary-800: #1e293b;
+  --primary-900: #0f172a;
+  --primary-950: #020617;
+
+  /* Neutral / Slate - Professional Grey */
+  --neutral-50: #f8fafc;
+  --neutral-100: #f1f5f9;
+  --neutral-200: #e2e8f0;
+  --neutral-300: #cbd5e1;
+  --neutral-400: #94a3b8;
+  --neutral-500: #64748b;
+  --neutral-600: #475569;
+  --neutral-700: #334155;
+  --neutral-800: #1e293b;
+  --neutral-900: #0f172a;
+
+  /* Components */
+  --bg-body: var(--neutral-300);
+  /* Darker backdrop to make paper cards pop */
+  --bg-card: #ffffff;
+  --border-color: var(--neutral-300);
+  --text-main: var(--neutral-800);
+  --text-secondary: var(--neutral-600);
+  --text-muted: var(--neutral-400);
+
+  /* AG Grid Overrides */
+  --ag-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --ag-font-size: 13px;
+  --ag-header-height: 44px;
+  --ag-row-height: 32px;
+  /* Compact for accounting */
+  --ag-header-background-color: #ffffff;
+  --ag-header-foreground-color: var(--neutral-700);
+  --ag-border-color: var(--neutral-300);
+  --ag-odd-row-background-color: #ffffff;
+  --ag-row-hover-color: var(--neutral-100);
+  --ag-selected-row-background-color: rgba(15, 23, 42, 0.05);
+  /* very light slate */
+  --ag-range-selection-border-color: var(--primary-600);
+  --ag-range-selection-background-color: rgba(15, 23, 42, 0.05);
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  /* Prevent scrolling on body, let content handle it */
+}
+
+body {
+  font-family: var(--ag-font-family);
+  background-color: var(--bg-body);
+  color: var(--text-main);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Root container - takes full viewport height */
+#root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  /* Let internal containers handle scrolling */
+}
+
+/* Layout Utilities */
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.flex-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.gap-2 {
+  gap: 0.5rem;
+}
+
+.gap-4 {
+  gap: 1rem;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.h-full {
+  height: 100%;
+}
+
+/* Sidebar Backdrop Interactive Pointer */
+.sidebar-backdrop {
+  transition: background-color 0.4s ease, backdrop-filter 0.4s ease;
+}
+
+.sidebar-backdrop:hover {
+  background-color: rgba(0, 0, 0, 0.6) !important;
+  cursor: pointer;
+}
+
+.sidebar-backdrop:active {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+}
+
+/* Card Style - Professional Paper Look */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  /* Sharper corners for corporate look */
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  /* Floating paper shadow */
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 4px;
+  /* Sharper */
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  gap: 0.5rem;
+  font-family: var(--ag-font-family);
+}
+
+.btn-primary {
+  background-color: var(--primary-900);
+  /* Slate-900 for professional look */
+  color: white;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  border-color: var(--primary-900);
+}
+
+.btn-primary:hover {
+  background-color: #000000;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background-color: white;
+  border-color: var(--neutral-300);
+  color: var(--neutral-700);
+}
+
+.btn-secondary:hover {
+  background-color: var(--neutral-50);
+  border-color: var(--neutral-400);
+}
+
+.btn-icon {
+  padding: 0.4rem;
+  border-radius: 4px;
+  color: var(--neutral-500);
+  background: transparent;
+  border: 1px solid transparent;
+}
+
+.btn-icon:hover {
+  background: var(--neutral-100);
+  color: var(--neutral-700);
+}
+
+/* Inputs */
+.input-field {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--neutral-300);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  color: var(--text-main);
+  background: white;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3px var(--primary-100);
+}
+
+/* AG Grid Customization for Accounting */
+.ag-theme-alpine {
+  border-top: 1px solid var(--neutral-200) !important;
+}
+
+.ag-header-cell {
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.025em;
+}
+
+.ag-header-group-cell-label {
+  justify-content: center;
+  font-weight: 800;
+}
+
+/* Column Specific Styling - Clean & Professional */
+.ag-header-cell-text {
+  font-weight: 700;
+  color: var(--neutral-700);
+}
+
+/* --- SECTIONS (Header & Cells) --- */
+
+/* 1. Identitas - Neutral/Grey */
+.header-section-identitas {
+  background-color: var(--neutral-50) !important;
+  border-bottom: 2px solid var(--neutral-300) !important;
+}
+
+/* 2. Absensi */
+.header-section-absensi {
+  background-color: var(--neutral-100) !important;
+  border-bottom: 2px solid var(--neutral-400) !important;
+}
+
+.cell-absensi {
+  background-color: #fafafa;
+  color: var(--neutral-700);
+  font-weight: 500;
+}
+
+/* 3. Income (Upah Dasar/Pokok) */
+.header-section-income {
+  background-color: #f8fafc !important;
+  border-bottom: 2px solid #94a3b8 !important;
+}
+
+.cell-income {
+  background-color: #ffffff;
+  color: var(--neutral-800);
+}
+
+/* 4. Premi */
+.header-section-premi {
+  background-color: #f1f5f9 !important;
+  border-bottom: 2px solid #64748b !important;
+}
+
+.cell-premi {
+  background-color: #f8fafc;
+  color: var(--neutral-800);
+  font-weight: 500;
+}
+
+/* 5. Deduction (Potongan) - Subtle Red */
+.header-section-deduction {
+  background-color: #fef2f2 !important;
+  border-bottom: 2px solid #fca5a5 !important;
+}
+
+.cell-deduction {
+  background-color: #fffafb;
+  color: #991b1b;
+}
+
+/* 6. Net Salary - Standout Slate */
+.header-section-net {
+  background-color: #e2e8f0 !important;
+  border-bottom: 2px solid #475569 !important;
+}
+
+.cell-net-salary {
+  background-color: #f1f5f9;
+  font-weight: 700;
+  color: #0f172a;
+  border-left: 1px solid #cbd5e1;
+}
+
+/* Grand Total Row */
+.row-grand-total {
+  background-color: var(--neutral-100) !important;
+  font-weight: 800;
+  font-size: 13px;
+  border-top: 2px solid var(--neutral-400) !important;
+  color: var(--neutral-900);
+}
+
+/* Cell Number Formatting */
+.cell-accounting {
+  font-family: 'Roboto Mono', 'Menlo', monospace;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  letter-spacing: -0.025em;
+}
+
+/* Selection Stats Footer */
+.selection-stats-bar {
+  height: 32px;
+  background: #f8fafc;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 16px;
+  gap: 24px;
+  font-size: 11px;
+  color: var(--neutral-600);
+  font-family: var(--ag-font-family);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stat-label {
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--neutral-400);
+}
+
+.stat-value {
+  font-family: 'Roboto Mono', monospace;
+  font-weight: 600;
+  color: var(--neutral-800);
+}
+
+/* Highlighted Row Styling */
+.ag-row-selected {
+  background-color: var(--ag-selected-row-background-color) !important;
+  font-weight: 600 !important;
+  color: var(--primary-900) !important;
+}
+
+.ag-row-selected .ag-cell {
+  /* Ensure cells inherit the bold weight */
+  font-weight: 600 !important;
+}
+
+
+/* =============================================
+   GLOBAL PRINT FIX - Import Print Optimization
+   ============================================= */
+
+/* Fallback print styles for any component not covered by print-optimization.css */
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 8mm 8mm 8mm 8mm;
+  }
+
+  body {
+    overflow: visible !important;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+
+  /* Fix for AG Grid in print mode - No ellipsis on numeric data */
+  .ag-theme-alpine,
+  .ag-root-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+  }
+
+  /* AG Grid cells - No ellipsis */
+  .ag-cell,
+  .ag-cell-value {
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: nowrap !important;
+  }
+
+  /* AG Grid containers */
+  .ag-center-cols-container {
+    overflow: visible !important;
+  }
+
+  /* AG Grid rows */
+  .ag-row {
+    overflow: visible !important;
+  }
+}
+
+/* =============================================
+   PROXY MODE FIX - Full viewport when accessed via proxy path (e.g., /upah/)
+   ============================================= */
+
+/* Ensure full viewport layout in all modes */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+  overflow: hidden;
+  /* Fix for mobile browsers */
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  height: 100%;
+  height: 100dvh;
+  /* Dynamic viewport height for mobile browsers */
+  overflow: hidden;
+  position: relative;
+  position: fixed;
+  width: 100%;
+  top: 0;
+  left: 0;
+}
+
+#root {
+  height: 100vh;
+  height: 100dvh;
+  /* Dynamic viewport height */
+  width: 100vw;
+  position: relative;
+  overflow: hidden;
+}
+
+/* When accessed via proxy (e.g., /upah/), ensure no extra spacing */
+body::before,
+body::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* Remove any default margins/padding that might cause spacing */
+body>*:first-child {
+  margin-top: 0 !important;
+}
+
+/* Ensure layout containers take full height */
+body>#root {
+  min-height: 100vh;
+  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* Fix for any container that might have unwanted margin */
+[style*="margin"] {
+  margin-top: env(safe-area-inset-top, 0px) !important;
+}
+
+/* Ensure proper viewport sizing in mobile/proxy mode */
+@viewport {
+  width: device-width;
+  zoom: 1.0;
+}
+
+/* Additional fix: Remove any potential spacing from proxy template */
+body>div:first-child {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+/* Ensure DashboardLayout takes full height */
+body>#root>div {
+  height: 100vh !important;
+  height: 100dvh !important;
+}
+
+/* Progress Bar Animation */
+@keyframes progress-bar-stripes {
+  0% { background-position: 1rem 0; }
+  100% { background-position: 0 0; }
+}
+
+.progress-bar-animated {
+  animation: progress-bar-stripes 1s linear infinite;
+}
+
+/* Print Override for Proxy Mode Fixes */
+@media print {
+
+  html,
+  body,
+  #root,
+  body>#root,
+  body>#root>div {
+    height: auto !important;
+    min-height: auto !important;
+    position: static !important;
+    overflow: visible !important;
+    width: auto !important;
+  }
+}

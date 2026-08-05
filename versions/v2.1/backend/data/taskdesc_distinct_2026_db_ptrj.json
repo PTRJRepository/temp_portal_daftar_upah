@@ -1,0 +1,640 @@
+{
+  "generated_at": "2026-04-26T18:26:41.957Z",
+  "source_database": "db_ptrj",
+  "year": 2026,
+  "sources": [
+    "PR_TASKREG + PR_TASKREGLN",
+    "PR_TASKREG_ARC + PR_TASKREGLN_ARC",
+    "PR_TASKCODE"
+  ],
+  "period_filter": "PR_TASKREG.PhyYear = '2026' and PR_TASKREG_ARC.PhyYear = '2026'",
+  "count": 104,
+  "task_descriptions": [
+    "(AL) PERSONNEL ANNUAL LEAVE",
+    "(AL) PERSONNEL SICK LEAVE",
+    "(PI) CIRCLE SPRAYING",
+    "(PI) CONSTRUCT OF DRAIN",
+    "(PI) COVER CROP WEEDING/SPRAYING",
+    "(PI) IMMATURE - MECHANICAL FELLING AND STACKING",
+    "(PI) IMMATURE - PANCANG TITIK TANAM",
+    "(PI) IMMATURE - ROAD & BRIDGES - CONSTRUCT OF ROADS",
+    "(PI) LALANG CONTROL",
+    "(PI) MANURING COVER CROP",
+    "(PI) MANURING LEAF SAMPLING",
+    "(PI) MANURING MULCHING PALM",
+    "(PI) MANURING PALM",
+    "(PI) MISCELLANEOUS",
+    "(PI) NOXIOUS GROWTH CONTROL",
+    "(PI) NOXIOUS SPRAYING",
+    "(PI) PEST & DISEASE - BARN OWL BOXES",
+    "(PI) PEST & DISEASE - FIRE PATROL",
+    "(PI) PEST & DISEASE - LEAF PESTS",
+    "(PI) PEST & DISEASE - MAMMALIAN CONTROL",
+    "(PI) PEST & DISEASE - PLANTING BENEFICIAL PLANT",
+    "(PI) PEST & DISEASE - RAT / WILD BOAR CONTROL",
+    "(PI) PLANTING - SURVEY / BLOCKING",
+    "(PI) PLANTING COVER CROP",
+    "(PI) PLANTING PALMS",
+    "(PI) PURFICATION OF COVER CROP",
+    "(PI) ROAD & BRIDGES -  UPKEEP FOOT BRIDGES",
+    "(PI) ROAD & BRIDGES - BLOCKBOARD AND ROADSIGN",
+    "(PI) ROAD & BRIDGES - CONSTRUCT OF CONCRETE CULVERT",
+    "(PI) ROAD & BRIDGES - MAINTENANCE BRIDGES / CULVERT",
+    "(PI) ROAD & BRIDGES - ROAD GRADING",
+    "(PI) SANITATION / ABLATION",
+    "(PI) SELECTIVE SPRAYING",
+    "(PI) SUPPLING - LABOUR",
+    "(PI) UPKEEP DRAINS",
+    "(PI) WATER CONSERVATION - TRENCHES",
+    "(PM) BARN OWL BOXES",
+    "(PM) BBC CENSUS",
+    "(PM) CIRCLE RAKING",
+    "(PM) CIRCLE SPRAYING",
+    "(PM) DRIVER",
+    "(PM) FIRE PATROL",
+    "(PM) HARVESTING LABOUR",
+    "(PM) HARVESTING LABOUR (PUBLIC HOLIDAY)",
+    "(PM) HARVESTING LABOUR - HARVESTING",
+    "(PM) HARVESTING LABOUR - LOOSE FRUIT COLLECTION",
+    "(PM) HARVESTING SUPERVISION",
+    "(PM) HELPER",
+    "(PM) LALANG CONTROL",
+    "(PM) LEAF ANALSIS",
+    "(PM) LOADING",
+    "(PM) Manual Weeding - woody growth control",
+    "(PM) MANURING - LABOUR",
+    "(PM) MANURING - MATERIAL",
+    "(PM) PALM CENSUS",
+    "(PM) PATH SPRAYING",
+    "(PM) PLANTING BENEFICIAL PLANTS",
+    "(PM) PRUNING",
+    "(PM) RAT CONTROL",
+    "(PM) SELECTIVE SPRAYING",
+    "(PM) SUPPLYING",
+    "(PM) UPKEEP OF BOUNDARY",
+    "(PM) UPKEEP OF DRAINS",
+    "(PM) UPKEEP OF ROAD AND BRIDGES",
+    "(PM) UPKEEP SUPERVISION",
+    "(PN) MAIN NURSERY - BAG FILLING",
+    "(PN) MAIN NURSERY - CULLING",
+    "(PN) MAIN NURSERY - MANURING - FERTILIZER",
+    "(PN) MAIN NURSERY - MISCELLANEOUS",
+    "(PN) MAIN NURSERY - PEST AND DISEASES",
+    "(PN) MAIN NURSERY - SUPERVISION",
+    "(PN) MAIN NURSERY - TRANSPLANTING",
+    "(PN) MAIN NURSERY - UPKEEP OF ROAD",
+    "(PN) MAIN NURSERY - WATERING",
+    "(PN) MAIN NURSERY - WEEDING",
+    "(PN) MAIN NURSERY – CENSUS",
+    "(PN) MAIN NURSERY 2 - MISCELLANEOUS",
+    "(PN) MAIN NURSERY 2 - WATERING",
+    "(PN) MAIN NURSERY 3 - WATERING",
+    "(PN) PRE - NURSERY - BAG FILLING",
+    "(PN) PRE - NURSERY - MANURING -  FERTILZER",
+    "(PN) PRE - NURSERY - PEST & DISEASE",
+    "(PN) PRE - NURSERY - PLANTING SEED",
+    "(PN) PRE - NURSERY - WATERING",
+    "(PN) PRE - NURSERY - WEEDING",
+    "(PN) PRE - NURSERY 3 - MISCELLANEOUS",
+    "(PN) PRE - NURSERY 3 - WATERING",
+    "(PN) PRE - NURSEYRY - MISCELLANEOUS",
+    "BUNCH COUNTER",
+    "HARVESTING TOOLS",
+    "KELOMPOK TANI ADILA LESTARI",
+    "KELOMPOK TANI SAWIT JAYA",
+    "KOPERASI BENTAIAN MANDIRI BERSATU",
+    "Labour Harvesting - Minggu PH",
+    "Labour Transport - Minggu PH",
+    "Labour Upkeep - Minggu PH",
+    "PERSONNEL - SALARIES & WAGES - LOCAL",
+    "PM0306IJL",
+    "PM0307IJL",
+    "RAWAT GUEST HOUSE",
+    "SUNDRY EXPENSES",
+    "TPH",
+    "UPKEEP OF BUILDINGS",
+    "WORKSHOP CONTROL ACCOUNT"
+  ],
+  "details": [
+    {
+      "TaskDesc": "(AL) PERSONNEL ANNUAL LEAVE",
+      "task_code_count": 10,
+      "trx_count": 7694
+    },
+    {
+      "TaskDesc": "(AL) PERSONNEL SICK LEAVE",
+      "task_code_count": 10,
+      "trx_count": 5438
+    },
+    {
+      "TaskDesc": "(PI) CIRCLE SPRAYING",
+      "task_code_count": 5,
+      "trx_count": 4053
+    },
+    {
+      "TaskDesc": "(PI) CONSTRUCT OF DRAIN",
+      "task_code_count": 1,
+      "trx_count": 16
+    },
+    {
+      "TaskDesc": "(PI) COVER CROP WEEDING/SPRAYING",
+      "task_code_count": 4,
+      "trx_count": 1059
+    },
+    {
+      "TaskDesc": "(PI) IMMATURE - MECHANICAL FELLING AND STACKING",
+      "task_code_count": 3,
+      "trx_count": 221
+    },
+    {
+      "TaskDesc": "(PI) IMMATURE - PANCANG TITIK TANAM",
+      "task_code_count": 4,
+      "trx_count": 432
+    },
+    {
+      "TaskDesc": "(PI) IMMATURE - ROAD & BRIDGES - CONSTRUCT OF ROADS",
+      "task_code_count": 1,
+      "trx_count": 11
+    },
+    {
+      "TaskDesc": "(PI) LALANG CONTROL",
+      "task_code_count": 1,
+      "trx_count": 1
+    },
+    {
+      "TaskDesc": "(PI) MANURING COVER CROP",
+      "task_code_count": 2,
+      "trx_count": 8
+    },
+    {
+      "TaskDesc": "(PI) MANURING LEAF SAMPLING",
+      "task_code_count": 1,
+      "trx_count": 1
+    },
+    {
+      "TaskDesc": "(PI) MANURING MULCHING PALM",
+      "task_code_count": 3,
+      "trx_count": 109
+    },
+    {
+      "TaskDesc": "(PI) MANURING PALM",
+      "task_code_count": 4,
+      "trx_count": 733
+    },
+    {
+      "TaskDesc": "(PI) MISCELLANEOUS",
+      "task_code_count": 2,
+      "trx_count": 797
+    },
+    {
+      "TaskDesc": "(PI) NOXIOUS GROWTH CONTROL",
+      "task_code_count": 2,
+      "trx_count": 99
+    },
+    {
+      "TaskDesc": "(PI) NOXIOUS SPRAYING",
+      "task_code_count": 1,
+      "trx_count": 1
+    },
+    {
+      "TaskDesc": "(PI) PEST & DISEASE - BARN OWL BOXES",
+      "task_code_count": 2,
+      "trx_count": 6
+    },
+    {
+      "TaskDesc": "(PI) PEST & DISEASE - FIRE PATROL",
+      "task_code_count": 2,
+      "trx_count": 164
+    },
+    {
+      "TaskDesc": "(PI) PEST & DISEASE - LEAF PESTS",
+      "task_code_count": 2,
+      "trx_count": 1126
+    },
+    {
+      "TaskDesc": "(PI) PEST & DISEASE - MAMMALIAN CONTROL",
+      "task_code_count": 1,
+      "trx_count": 2
+    },
+    {
+      "TaskDesc": "(PI) PEST & DISEASE - PLANTING BENEFICIAL PLANT",
+      "task_code_count": 2,
+      "trx_count": 215
+    },
+    {
+      "TaskDesc": "(PI) PEST & DISEASE - RAT / WILD BOAR CONTROL",
+      "task_code_count": 5,
+      "trx_count": 1211
+    },
+    {
+      "TaskDesc": "(PI) PLANTING - SURVEY / BLOCKING",
+      "task_code_count": 1,
+      "trx_count": 1
+    },
+    {
+      "TaskDesc": "(PI) PLANTING COVER CROP",
+      "task_code_count": 5,
+      "trx_count": 1098
+    },
+    {
+      "TaskDesc": "(PI) PLANTING PALMS",
+      "task_code_count": 4,
+      "trx_count": 202
+    },
+    {
+      "TaskDesc": "(PI) PURFICATION OF COVER CROP",
+      "task_code_count": 1,
+      "trx_count": 250
+    },
+    {
+      "TaskDesc": "(PI) ROAD & BRIDGES -  UPKEEP FOOT BRIDGES",
+      "task_code_count": 3,
+      "trx_count": 41
+    },
+    {
+      "TaskDesc": "(PI) ROAD & BRIDGES - BLOCKBOARD AND ROADSIGN",
+      "task_code_count": 1,
+      "trx_count": 3
+    },
+    {
+      "TaskDesc": "(PI) ROAD & BRIDGES - CONSTRUCT OF CONCRETE CULVERT",
+      "task_code_count": 1,
+      "trx_count": 252
+    },
+    {
+      "TaskDesc": "(PI) ROAD & BRIDGES - MAINTENANCE BRIDGES / CULVERT",
+      "task_code_count": 2,
+      "trx_count": 42
+    },
+    {
+      "TaskDesc": "(PI) ROAD & BRIDGES - ROAD GRADING",
+      "task_code_count": 4,
+      "trx_count": 51
+    },
+    {
+      "TaskDesc": "(PI) SANITATION / ABLATION",
+      "task_code_count": 3,
+      "trx_count": 2976
+    },
+    {
+      "TaskDesc": "(PI) SELECTIVE SPRAYING",
+      "task_code_count": 6,
+      "trx_count": 1940
+    },
+    {
+      "TaskDesc": "(PI) SUPPLING - LABOUR",
+      "task_code_count": 2,
+      "trx_count": 14
+    },
+    {
+      "TaskDesc": "(PI) UPKEEP DRAINS",
+      "task_code_count": 4,
+      "trx_count": 275
+    },
+    {
+      "TaskDesc": "(PI) WATER CONSERVATION - TRENCHES",
+      "task_code_count": 1,
+      "trx_count": 11
+    },
+    {
+      "TaskDesc": "(PM) BARN OWL BOXES",
+      "task_code_count": 9,
+      "trx_count": 213
+    },
+    {
+      "TaskDesc": "(PM) BBC CENSUS",
+      "task_code_count": 10,
+      "trx_count": 753
+    },
+    {
+      "TaskDesc": "(PM) CIRCLE RAKING",
+      "task_code_count": 8,
+      "trx_count": 2552
+    },
+    {
+      "TaskDesc": "(PM) CIRCLE SPRAYING",
+      "task_code_count": 10,
+      "trx_count": 3425
+    },
+    {
+      "TaskDesc": "(PM) DRIVER",
+      "task_code_count": 10,
+      "trx_count": 12281
+    },
+    {
+      "TaskDesc": "(PM) FIRE PATROL",
+      "task_code_count": 4,
+      "trx_count": 252
+    },
+    {
+      "TaskDesc": "(PM) HARVESTING LABOUR",
+      "task_code_count": 11,
+      "trx_count": 46640
+    },
+    {
+      "TaskDesc": "(PM) HARVESTING LABOUR (PUBLIC HOLIDAY)",
+      "task_code_count": 1,
+      "trx_count": 2
+    },
+    {
+      "TaskDesc": "(PM) HARVESTING LABOUR - HARVESTING",
+      "task_code_count": 2,
+      "trx_count": 3
+    },
+    {
+      "TaskDesc": "(PM) HARVESTING LABOUR - LOOSE FRUIT COLLECTION",
+      "task_code_count": 6,
+      "trx_count": 2201
+    },
+    {
+      "TaskDesc": "(PM) HARVESTING SUPERVISION",
+      "task_code_count": 10,
+      "trx_count": 2241
+    },
+    {
+      "TaskDesc": "(PM) HELPER",
+      "task_code_count": 10,
+      "trx_count": 10330
+    },
+    {
+      "TaskDesc": "(PM) LALANG CONTROL",
+      "task_code_count": 6,
+      "trx_count": 90
+    },
+    {
+      "TaskDesc": "(PM) LEAF ANALSIS",
+      "task_code_count": 6,
+      "trx_count": 164
+    },
+    {
+      "TaskDesc": "(PM) LOADING",
+      "task_code_count": 7,
+      "trx_count": 1543
+    },
+    {
+      "TaskDesc": "(PM) Manual Weeding - woody growth control",
+      "task_code_count": 1,
+      "trx_count": 3
+    },
+    {
+      "TaskDesc": "(PM) MANURING - LABOUR",
+      "task_code_count": 10,
+      "trx_count": 3042
+    },
+    {
+      "TaskDesc": "(PM) MANURING - MATERIAL",
+      "task_code_count": 9,
+      "trx_count": 509
+    },
+    {
+      "TaskDesc": "(PM) PALM CENSUS",
+      "task_code_count": 9,
+      "trx_count": 1063
+    },
+    {
+      "TaskDesc": "(PM) PATH SPRAYING",
+      "task_code_count": 7,
+      "trx_count": 362
+    },
+    {
+      "TaskDesc": "(PM) PLANTING BENEFICIAL PLANTS",
+      "task_code_count": 2,
+      "trx_count": 64
+    },
+    {
+      "TaskDesc": "(PM) PRUNING",
+      "task_code_count": 3,
+      "trx_count": 205
+    },
+    {
+      "TaskDesc": "(PM) RAT CONTROL",
+      "task_code_count": 3,
+      "trx_count": 34
+    },
+    {
+      "TaskDesc": "(PM) SELECTIVE SPRAYING",
+      "task_code_count": 10,
+      "trx_count": 8372
+    },
+    {
+      "TaskDesc": "(PM) SUPPLYING",
+      "task_code_count": 4,
+      "trx_count": 70
+    },
+    {
+      "TaskDesc": "(PM) UPKEEP OF BOUNDARY",
+      "task_code_count": 8,
+      "trx_count": 580
+    },
+    {
+      "TaskDesc": "(PM) UPKEEP OF DRAINS",
+      "task_code_count": 9,
+      "trx_count": 1228
+    },
+    {
+      "TaskDesc": "(PM) UPKEEP OF ROAD AND BRIDGES",
+      "task_code_count": 10,
+      "trx_count": 6379
+    },
+    {
+      "TaskDesc": "(PM) UPKEEP SUPERVISION",
+      "task_code_count": 10,
+      "trx_count": 2598
+    },
+    {
+      "TaskDesc": "(PN) MAIN NURSERY - BAG FILLING",
+      "task_code_count": 1,
+      "trx_count": 6
+    },
+    {
+      "TaskDesc": "(PN) MAIN NURSERY - CULLING",
+      "task_code_count": 1,
+      "trx_count": 25
+    },
+    {
+      "TaskDesc": "(PN) MAIN NURSERY - MANURING - FERTILIZER",
+      "task_code_count": 1,
+      "trx_count": 125
+    },
+    {
+      "TaskDesc": "(PN) MAIN NURSERY - MISCELLANEOUS",
+      "task_code_count": 1,
+      "trx_count": 194
+    },
+    {
+      "TaskDesc": "(PN) MAIN NURSERY - PEST AND DISEASES",
+      "task_code_count": 1,
+      "trx_count": 307
+    },
+    {
+      "TaskDesc": "(PN) MAIN NURSERY - SUPERVISION",
+      "task_code_count": 1,
+      "trx_count": 140
+    },
+    {
+      "TaskDesc": "(PN) MAIN NURSERY - TRANSPLANTING",
+      "task_code_count": 1,
+      "trx_count": 527
+    },
+    {
+      "TaskDesc": "(PN) MAIN NURSERY - UPKEEP OF ROAD",
+      "task_code_count": 1,
+      "trx_count": 6
+    },
+    {
+      "TaskDesc": "(PN) MAIN NURSERY - WATERING",
+      "task_code_count": 1,
+      "trx_count": 316
+    },
+    {
+      "TaskDesc": "(PN) MAIN NURSERY - WEEDING",
+      "task_code_count": 1,
+      "trx_count": 424
+    },
+    {
+      "TaskDesc": "(PN) MAIN NURSERY – CENSUS",
+      "task_code_count": 1,
+      "trx_count": 3
+    },
+    {
+      "TaskDesc": "(PN) MAIN NURSERY 2 - MISCELLANEOUS",
+      "task_code_count": 1,
+      "trx_count": 6
+    },
+    {
+      "TaskDesc": "(PN) MAIN NURSERY 2 - WATERING",
+      "task_code_count": 1,
+      "trx_count": 2
+    },
+    {
+      "TaskDesc": "(PN) MAIN NURSERY 3 - WATERING",
+      "task_code_count": 1,
+      "trx_count": 2
+    },
+    {
+      "TaskDesc": "(PN) PRE - NURSERY - BAG FILLING",
+      "task_code_count": 1,
+      "trx_count": 96
+    },
+    {
+      "TaskDesc": "(PN) PRE - NURSERY - MANURING -  FERTILZER",
+      "task_code_count": 1,
+      "trx_count": 2
+    },
+    {
+      "TaskDesc": "(PN) PRE - NURSERY - PEST & DISEASE",
+      "task_code_count": 1,
+      "trx_count": 1
+    },
+    {
+      "TaskDesc": "(PN) PRE - NURSERY - PLANTING SEED",
+      "task_code_count": 1,
+      "trx_count": 60
+    },
+    {
+      "TaskDesc": "(PN) PRE - NURSERY - WATERING",
+      "task_code_count": 1,
+      "trx_count": 19
+    },
+    {
+      "TaskDesc": "(PN) PRE - NURSERY - WEEDING",
+      "task_code_count": 1,
+      "trx_count": 53
+    },
+    {
+      "TaskDesc": "(PN) PRE - NURSERY 3 - MISCELLANEOUS",
+      "task_code_count": 1,
+      "trx_count": 1
+    },
+    {
+      "TaskDesc": "(PN) PRE - NURSERY 3 - WATERING",
+      "task_code_count": 1,
+      "trx_count": 3
+    },
+    {
+      "TaskDesc": "(PN) PRE - NURSEYRY - MISCELLANEOUS",
+      "task_code_count": 1,
+      "trx_count": 263
+    },
+    {
+      "TaskDesc": "BUNCH COUNTER",
+      "task_code_count": 10,
+      "trx_count": 3313
+    },
+    {
+      "TaskDesc": "HARVESTING TOOLS",
+      "task_code_count": 1,
+      "trx_count": 1
+    },
+    {
+      "TaskDesc": "KELOMPOK TANI ADILA LESTARI",
+      "task_code_count": 1,
+      "trx_count": 168
+    },
+    {
+      "TaskDesc": "KELOMPOK TANI SAWIT JAYA",
+      "task_code_count": 1,
+      "trx_count": 216
+    },
+    {
+      "TaskDesc": "KOPERASI BENTAIAN MANDIRI BERSATU",
+      "task_code_count": 1,
+      "trx_count": 67
+    },
+    {
+      "TaskDesc": "Labour Harvesting - Minggu PH",
+      "task_code_count": 10,
+      "trx_count": 14059
+    },
+    {
+      "TaskDesc": "Labour Transport - Minggu PH",
+      "task_code_count": 10,
+      "trx_count": 3411
+    },
+    {
+      "TaskDesc": "Labour Upkeep - Minggu PH",
+      "task_code_count": 10,
+      "trx_count": 16953
+    },
+    {
+      "TaskDesc": "PERSONNEL - SALARIES & WAGES - LOCAL",
+      "task_code_count": 10,
+      "trx_count": 2966
+    },
+    {
+      "TaskDesc": "PM0306IJL",
+      "task_code_count": 1,
+      "trx_count": 2
+    },
+    {
+      "TaskDesc": "PM0307IJL",
+      "task_code_count": 1,
+      "trx_count": 4
+    },
+    {
+      "TaskDesc": "RAWAT GUEST HOUSE",
+      "task_code_count": 2,
+      "trx_count": 276
+    },
+    {
+      "TaskDesc": "SUNDRY EXPENSES",
+      "task_code_count": 8,
+      "trx_count": 1064
+    },
+    {
+      "TaskDesc": "TPH",
+      "task_code_count": 9,
+      "trx_count": 3508
+    },
+    {
+      "TaskDesc": "UPKEEP OF BUILDINGS",
+      "task_code_count": 10,
+      "trx_count": 4381
+    },
+    {
+      "TaskDesc": "WORKSHOP CONTROL ACCOUNT",
+      "task_code_count": 2,
+      "trx_count": 2999
+    }
+  ]
+}

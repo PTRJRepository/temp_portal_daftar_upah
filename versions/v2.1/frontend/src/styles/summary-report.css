@@ -1,0 +1,756 @@
+/**
+ * Professional Summary Report Styles
+ * Clean, formal financial report styling
+ */
+
+/* ===== SUMMARY REPORT PAGE ===== */
+.summary-report-page {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    background: #f8f9fa;
+    font-family: 'Segoe UI', 'Arial', sans-serif;
+}
+
+/* Header Bar */
+.summary-report-header {
+    height: 56px;
+    background: linear-gradient(135deg, #1a365d 0%, #2d4a6f 100%);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.summary-report-header .header-title {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.summary-report-header .header-title h1 {
+    color: #ffffff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: 0.5px;
+}
+
+.summary-report-header .header-title .subtitle {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.75rem;
+    margin: 0;
+}
+
+.summary-report-header .btn-back {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.summary-report-header .btn-back:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Toolbar / Filter Bar */
+.summary-report-toolbar {
+    background: #ffffff;
+    border-bottom: 1px solid #dee2e6;
+    padding: 0.75rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.summary-report-toolbar .filter-group {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.summary-report-toolbar .filter-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.summary-report-toolbar .filter-item label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #495057;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.summary-report-toolbar .filter-item select,
+.summary-report-toolbar .filter-item input {
+    padding: 0.4rem 0.6rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    background: #ffffff;
+    min-width: 140px;
+}
+
+.summary-report-toolbar .filter-item select:focus,
+.summary-report-toolbar .filter-item input:focus {
+    border-color: #1a365d;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(26, 54, 93, 0.1);
+}
+
+.summary-report-toolbar .action-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.summary-report-toolbar .btn-action {
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.summary-report-toolbar .btn-refresh {
+    background: #e9ecef;
+    border: 1px solid #ced4da;
+    color: #495057;
+}
+
+.summary-report-toolbar .btn-refresh:hover {
+    background: #dee2e6;
+}
+
+.summary-report-toolbar .btn-export {
+    background: #1a365d;
+    border: 1px solid #1a365d;
+    color: #ffffff;
+}
+
+.summary-report-toolbar .btn-export:hover {
+    background: #2d4a6f;
+}
+
+.summary-report-toolbar .btn-export:disabled,
+.summary-report-toolbar .btn-refresh:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Info Badge */
+.summary-report-toolbar .info-badge {
+    background: #e9ecef;
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    color: #495057;
+    font-weight: 500;
+}
+
+/* Error Bar */
+.summary-report-error {
+    padding: 0.6rem 1.5rem;
+    background: #fff3cd;
+    border-bottom: 1px solid #ffc107;
+    color: #856404;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Grid Container */
+.summary-report-grid-container {
+    flex: 1;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    padding: 1rem;
+}
+
+/* ===== PROFESSIONAL AG GRID THEME ===== */
+.summary-report-grid-container .ag-theme-alpine {
+    --ag-header-background-color: #1a365d;
+    --ag-header-foreground-color: #ffffff;
+    --ag-header-cell-hover-background-color: #2d4a6f;
+    --ag-row-hover-color: #f8f9fa;
+    --ag-selected-row-background-color: #e3f2fd;
+    --ag-odd-row-background-color: #ffffff;
+    --ag-row-border-color: #e9ecef;
+    --ag-border-color: #dee2e6;
+    --ag-font-family: 'Segoe UI', 'Arial', sans-serif;
+    --ag-font-size: 12px;
+    --ag-cell-horizontal-padding: 12px;
+
+    height: 100%;
+    width: 100%;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Header Styling */
+.summary-report-grid-container .ag-header {
+    background: linear-gradient(180deg, #1a365d 0%, #234567 100%);
+    border-bottom: 2px solid #0d1f3c;
+}
+
+.summary-report-grid-container .ag-header-cell {
+    border-right: 1px solid rgba(255, 255, 255, 0.15);
+    color: #ffffff !important;
+}
+
+.summary-report-grid-container .ag-header-cell:last-child {
+    border-right: none;
+}
+
+.summary-report-grid-container .ag-header-cell-label {
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: #ffffff !important;
+}
+
+.summary-report-grid-container .ag-header-cell-text {
+    color: #ffffff !important;
+}
+
+/* Header Group */
+.summary-report-grid-container .ag-header-group-cell {
+    background: #0d1f3c;
+    border-right: 1px solid rgba(255, 255, 255, 0.15);
+    font-weight: 700;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #ffffff !important;
+}
+
+/* Fix white gap on merged/grouped header cells */
+.summary-report-grid-container .ag-header-row {
+    border-bottom: none;
+}
+
+.summary-report-grid-container .ag-header-group-cell-with-group {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Ensure no gaps between header group and children */
+.summary-report-grid-container .ag-header-cell-comp-wrapper {
+    height: 100%;
+}
+
+/* Remove extra padding/margin that creates gaps */
+.summary-report-grid-container .ag-header-viewport,
+.summary-report-grid-container .ag-header-container {
+    background: #1a365d;
+}
+
+/* Fix borders on header rows to eliminate white lines */
+.summary-report-grid-container .ag-header-row-column-group {
+    background: #0d1f3c;
+    border-bottom: none;
+}
+
+.summary-report-grid-container .ag-header-row-column {
+    background: linear-gradient(180deg, #1a365d 0%, #234567 100%);
+    border-bottom: none;
+}
+
+/* Remove gap between pinned left and center viewport */
+.summary-report-grid-container .ag-pinned-left-header,
+.summary-report-grid-container .ag-header-viewport {
+    border-right: none;
+}
+
+/* Subtle separator between pinned and scrollable area */
+.summary-report-grid-container .ag-pinned-left-cols-container {
+    border-right: 2px solid #0d1f3c;
+}
+
+.summary-report-grid-container .ag-header-group-cell-label {
+    color: #ffffff !important;
+}
+
+.summary-report-grid-container .ag-header-group-text {
+    color: #ffffff !important;
+}
+
+/* ===== FIX FOR SPANNING HEADER CELLS (columns without children) ===== */
+/* These cells span both header rows - remove any internal border/line */
+
+/* Remove border on header cells that span rows (no group parent) */
+.summary-report-grid-container .ag-header-cell-resize::after {
+    background-color: transparent !important;
+}
+
+/* Ensure spanning cells in pinned and viewport have consistent background */
+.summary-report-grid-container .ag-header-row-column-group .ag-header-cell {
+    background: #0d1f3c;
+    border-bottom: none !important;
+}
+
+/* For cells that span (ag-header-span), ensure solid background */
+.summary-report-grid-container .ag-header-span {
+    background: linear-gradient(180deg, #1a365d 0%, #234567 100%) !important;
+    border-bottom: none !important;
+}
+
+/* Remove any border/separator between rows in header container */
+.summary-report-grid-container .ag-header-container,
+.summary-report-grid-container .ag-pinned-left-header {
+    border-bottom: none !important;
+}
+
+/* Spanning (empty group) cells should have solid background like the column row */
+.summary-report-grid-container .ag-header-row-column-group .ag-header-group-cell:not(.ag-header-group-cell-with-group) {
+    background: linear-gradient(180deg, #1a365d 0%, #234567 100%) !important;
+    border-bottom: none !important;
+}
+
+/* Override any AG Grid border styles on header group cells without children */
+.summary-report-grid-container .ag-header-group-cell-no-group {
+    background: linear-gradient(180deg, #1a365d 0%, #234567 100%) !important;
+    border-bottom: none !important;
+}
+
+/* Row Styling */
+.summary-report-grid-container .ag-row {
+    border-bottom: 1px solid #e9ecef;
+}
+
+.summary-report-grid-container .ag-row-odd {
+    background-color: #f8f9fa;
+}
+
+.summary-report-grid-container .ag-row-even {
+    background-color: #ffffff;
+}
+
+.summary-report-grid-container .ag-row:hover {
+    background-color: #e8f4fd !important;
+}
+
+/* Cell Styling */
+.summary-report-grid-container .ag-cell {
+    font-size: 12px;
+    color: #212529;
+    border-right: 1px solid #f0f0f0;
+    /* Text wrapping */
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    line-height: 1.3 !important;
+}
+
+.summary-report-grid-container .ag-cell:last-child {
+    border-right: none;
+}
+
+/* Header cell text wrapping */
+.summary-report-grid-container .ag-header-cell-label {
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    line-height: 1.2 !important;
+}
+
+.summary-report-grid-container .ag-header-group-text {
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+}
+
+/* Allow rows to auto-height for wrapped content */
+.summary-report-grid-container .ag-row {
+    min-height: auto !important;
+}
+
+/* Pinned Columns */
+.summary-report-grid-container .ag-pinned-left-cols-container .ag-cell {
+    background-color: #f8fafc;
+    font-weight: 500;
+    border-right: 1px solid #e2e8f0;
+}
+
+.summary-report-grid-container .ag-pinned-left-header {
+    background: linear-gradient(180deg, #0d1f3c 0%, #1a365d 100%);
+    border-right: 2px solid #0a1628;
+}
+
+/* Grand Total Row (Pinned Bottom) - NO HOVER EFFECT */
+.summary-report-grid-container .ag-floating-bottom {
+    /* Override AG Grid CSS variables for this container */
+    --ag-row-hover-color: transparent !important;
+    --ag-selected-row-background-color: transparent !important;
+    --ag-range-selection-background-color: transparent !important;
+
+    background: linear-gradient(180deg, #1a365d 0%, #0d1f3c 100%) !important;
+    border-top: 2px solid #0d1f3c;
+}
+
+.summary-report-grid-container .ag-floating-bottom .ag-row {
+    background: transparent !important;
+    border-bottom: none;
+}
+
+/* Disable hover on pinned bottom rows */
+.summary-report-grid-container .ag-floating-bottom .ag-row:hover {
+    background: transparent !important;
+}
+
+.summary-report-grid-container .ag-floating-bottom .ag-row:hover .ag-cell {
+    background: transparent !important;
+    color: #ffffff !important;
+}
+
+.summary-report-grid-container .ag-floating-bottom .ag-cell {
+    color: #ffffff !important;
+    font-weight: 700;
+    font-size: 12px;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    background: transparent !important;
+}
+
+/* Pinned left cells in floating bottom */
+.summary-report-grid-container .ag-floating-bottom .ag-pinned-left-cols-container .ag-cell {
+    background: transparent !important;
+    color: #ffffff !important;
+}
+
+.summary-report-grid-container .ag-floating-bottom .ag-pinned-left-cols-container .ag-row:hover .ag-cell {
+    background: transparent !important;
+    color: #ffffff !important;
+}
+
+/* Override cell-total in pinned bottom to not have light background */
+.summary-report-grid-container .ag-floating-bottom .cell-total {
+    background: transparent !important;
+    color: #ffffff !important;
+}
+
+.summary-report-grid-container .ag-floating-bottom .cell-important {
+    color: #ffffff !important;
+}
+
+/* Override cell-currency in pinned bottom */
+.summary-report-grid-container .ag-floating-bottom .cell-currency {
+    color: #ffffff !important;
+}
+
+/* Override cell-number in pinned bottom */
+.summary-report-grid-container .ag-floating-bottom .cell-number {
+    color: #ffffff !important;
+}
+
+/* All cells in floating bottom must have white text on hover */
+.summary-report-grid-container .ag-floating-bottom .ag-row:hover .cell-total,
+.summary-report-grid-container .ag-floating-bottom .ag-row:hover .cell-currency,
+.summary-report-grid-container .ag-floating-bottom .ag-row:hover .cell-number,
+.summary-report-grid-container .ag-floating-bottom .ag-row:hover .cell-important {
+    color: #ffffff !important;
+    background: transparent !important;
+}
+
+/* SUPER SPECIFIC: Override ALL possible hover states in floating bottom */
+.summary-report-grid-container .ag-theme-alpine .ag-floating-bottom .ag-row,
+.summary-report-grid-container .ag-theme-alpine .ag-floating-bottom .ag-row:hover,
+.summary-report-grid-container .ag-theme-alpine .ag-floating-bottom .ag-row:focus,
+.summary-report-grid-container .ag-theme-alpine .ag-floating-bottom .ag-row.ag-row-hover {
+    background-color: transparent !important;
+    background: transparent !important;
+}
+
+.summary-report-grid-container .ag-theme-alpine .ag-floating-bottom .ag-row .ag-cell,
+.summary-report-grid-container .ag-theme-alpine .ag-floating-bottom .ag-row:hover .ag-cell,
+.summary-report-grid-container .ag-theme-alpine .ag-floating-bottom .ag-row:focus .ag-cell,
+.summary-report-grid-container .ag-theme-alpine .ag-floating-bottom .ag-row.ag-row-hover .ag-cell {
+    color: #ffffff !important;
+    background-color: transparent !important;
+    background: transparent !important;
+}
+
+/* Override cell-total background specifically for floating bottom - highest priority */
+.summary-report-grid-container .ag-theme-alpine .ag-floating-bottom .ag-cell.cell-total,
+.summary-report-grid-container .ag-theme-alpine .ag-floating-bottom .ag-row:hover .ag-cell.cell-total,
+.summary-report-grid-container .ag-theme-alpine .ag-floating-bottom .ag-row.ag-row-hover .ag-cell.cell-total {
+    color: #ffffff !important;
+    background-color: transparent !important;
+    background: transparent !important;
+}
+
+/* Override cell-currency.cell-total combined class */
+.summary-report-grid-container .ag-theme-alpine .ag-floating-bottom .cell-currency.cell-total,
+.summary-report-grid-container .ag-theme-alpine .ag-floating-bottom .ag-row:hover .cell-currency.cell-total {
+    color: #ffffff !important;
+    background-color: transparent !important;
+    background: transparent !important;
+}
+
+/* Center Aligned Cells */
+.summary-report-grid-container .cell-center {
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Center header text as well */
+.summary-report-grid-container .cell-center .ag-cell-wrapper {
+    justify-content: center;
+    align-items: center;
+}
+
+/* More specific selector for centering cell content */
+.summary-report-grid-container .ag-center-cols-container .ag-cell.cell-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+/* Number Cells - Right Aligned */
+.summary-report-grid-container .cell-number {
+    text-align: right;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-weight: 500;
+}
+
+.summary-report-grid-container .cell-currency {
+    text-align: right;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-weight: 500;
+}
+
+/* Important Value Cells (for regular rows only) */
+.summary-report-grid-container .cell-important {
+    font-weight: 700;
+    color: #0d47a1;
+}
+
+/* Total cell in regular rows - blue highlight */
+.summary-report-grid-container .ag-row:not(.ag-row-pinned-bottom) .cell-total {
+    font-weight: 700;
+    background-color: #e3f2fd !important;
+    color: #0d47a1;
+}
+
+/* Scrollbars */
+.summary-report-grid-container .ag-body-horizontal-scroll-viewport,
+.summary-report-grid-container .ag-body-vertical-scroll-viewport {
+    scrollbar-width: thin;
+    scrollbar-color: #adb5bd #e9ecef;
+}
+
+.summary-report-grid-container .ag-body-horizontal-scroll-viewport::-webkit-scrollbar,
+.summary-report-grid-container .ag-body-vertical-scroll-viewport::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.summary-report-grid-container .ag-body-horizontal-scroll-viewport::-webkit-scrollbar-track,
+.summary-report-grid-container .ag-body-vertical-scroll-viewport::-webkit-scrollbar-track {
+    background: #e9ecef;
+}
+
+.summary-report-grid-container .ag-body-horizontal-scroll-viewport::-webkit-scrollbar-thumb,
+.summary-report-grid-container .ag-body-vertical-scroll-viewport::-webkit-scrollbar-thumb {
+    background: #adb5bd;
+    border-radius: 4px;
+}
+
+/* Loading Overlay */
+.summary-report-loading {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+.summary-report-loading .loading-content {
+    text-align: center;
+}
+
+.summary-report-loading .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #e9ecef;
+    border-top-color: #1a365d;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+.summary-report-loading .loading-text {
+    color: #495057;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ===== SELECTION STATUS BAR ===== */
+.summary-selection-status-bar {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 0.5rem 1rem;
+    background: linear-gradient(180deg, #e8f4fd 0%, #d5ecfb 100%);
+    border-top: 1px solid #b8daef;
+    border-bottom: 1px solid #b8daef;
+    font-family: 'Segoe UI', 'Arial', sans-serif;
+    font-size: 0.85rem;
+    color: #1a365d;
+    min-height: 32px;
+}
+
+.summary-selection-status-bar .status-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.summary-selection-status-bar .status-label {
+    font-weight: 500;
+    color: #4a5568;
+}
+
+.summary-selection-status-bar .status-value {
+    font-weight: 700;
+    font-family: 'Consolas', 'Monaco', monospace;
+    color: #1a365d;
+}
+
+.summary-selection-status-bar .status-sum {
+    color: #0d47a1;
+    font-size: 0.95rem;
+    background: #ffffff;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Print Styles */
+@media print {
+    @page {
+        size: A4 landscape;
+        margin: 8mm 8mm 8mm 8mm; /* Consistent margins to prevent cutoff */
+    }
+
+    body {
+        overflow: visible !important;
+    }
+
+    .summary-report-header,
+    .summary-report-toolbar,
+    .summary-selection-status-bar {
+        display: none !important;
+    }
+
+    /* Show print-only elements */
+    .print-show-only,
+    .print-show {
+        display: block !important;
+    }
+
+    /* For table cells */
+    th.print-show-only,
+    td.print-show-only,
+    th.print-show,
+    td.print-show {
+        display: table-cell !important;
+    }
+
+    .summary-report-grid-container {
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: none !important;
+        min-width: auto !important;
+        overflow: visible !important;
+    }
+
+    .summary-report-grid-container .ag-theme-alpine {
+        border: 2px solid #000 !important;
+        box-shadow: none !important;
+        width: fit-content !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        overflow: visible !important;
+    }
+
+    /* Fix AG Grid cells - No ellipsis on numeric data */
+    .summary-report-grid-container .ag-cell,
+    .summary-report-grid-container .ag-cell-value {
+        overflow: visible !important;
+        text-overflow: clip !important;
+        white-space: nowrap !important;
+    }
+
+    /* Fix AG Grid headers */
+    .summary-report-grid-container .ag-header {
+        overflow: visible !important;
+    }
+
+    .summary-report-grid-container .ag-header-cell {
+        overflow: visible !important;
+    }
+}
+
+/* ===== SUBTOTAL ROW STYLING ===== */
+.summary-report-grid-container .cell-subtotal {
+    background-color: #e8f0fe !important;
+    font-weight: 700 !important;
+    color: #1a365d !important;
+}
+
+/* Subtotal row styling */
+.summary-report-grid-container .ag-row.subtotal-row {
+    background-color: #e8f0fe !important;
+    font-weight: 700 !important;
+    border-top: 2px solid #1a365d !important;
+    border-bottom: 2px solid #1a365d !important;
+}
+
+.summary-report-grid-container .ag-row.subtotal-row .ag-cell {
+    background-color: #e8f0fe !important;
+    font-weight: 700 !important;
+    color: #1a365d !important;
+}
+
+/* Total row (grand total) */
+.summary-report-grid-container .ag-row.total-row {
+    background-color: #1a365d !important;
+}
+
+.summary-report-grid-container .ag-row.total-row .ag-cell {
+    color: #ffffff !important;
+    font-weight: 800 !important;
+    background-color: transparent !important;
+}

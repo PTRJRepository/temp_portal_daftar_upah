@@ -1,0 +1,1556 @@
+/* Shared report print foundation. Keep screen impact limited to metadata badges. */
+
+.report-print-meta-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.45rem;
+  margin: 0.75rem auto 0;
+}
+
+.report-source-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.5rem;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.report-print-note {
+  max-width: 920px;
+  margin: 0.5rem auto 0;
+  color: #475569;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.report-watermark {
+  display: none;
+}
+
+.report-print-header {
+  display: none !important;
+}
+
+.analysis-print-insights {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0 1.5rem;
+}
+
+.analysis-print-insight-card {
+  min-width: 0;
+  padding: 0.85rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+.analysis-print-insight-label {
+  color: #64748b;
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.analysis-print-insight-value {
+  margin-top: 0.35rem;
+  color: #0f172a;
+  font-family: "Roboto Mono", monospace;
+  font-size: 1rem;
+  font-weight: 900;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.analysis-print-insight-note {
+  margin-top: 0.25rem;
+  color: #475569;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.analysis-print-insight-note.strong {
+  color: #0f172a;
+  font-weight: 900;
+}
+
+.analysis-grouped-table .analysis-group-row td {
+  background: #e2e8f0;
+  color: #0f172a;
+  font-weight: 900;
+}
+
+.analysis-group-title,
+.analysis-gang-code,
+.analysis-gang-desc,
+.analysis-group-note {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.analysis-group-title {
+  font-size: 0.78rem;
+  line-height: 1.15;
+}
+
+.analysis-group-note,
+.analysis-gang-desc {
+  margin-top: 0.15rem;
+  color: #64748b;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.analysis-gang-code {
+  color: #0f172a;
+  font-size: 0.78rem;
+  font-weight: 900;
+  line-height: 1.12;
+}
+
+.analysis-insight-cell {
+  color: #334155;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.summary-detail-screen-wrapper {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.summary-detail-screen-table {
+  min-width: 1180px;
+}
+
+.summary-detail-screen-table .summary-compare-cell {
+  min-width: 150px;
+  background: #fff7ed;
+  border-left: 2px solid #fdba74 !important;
+  font-family: "Roboto Mono", monospace;
+  font-weight: 800;
+  white-space: nowrap !important;
+  vertical-align: middle;
+}
+
+.summary-detail-screen-table .th-group-compare {
+  min-width: 150px;
+  white-space: nowrap !important;
+}
+
+.summary-detail-screen-table .summary-compare-value {
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.summary-detail-screen-table .summary-compare-diff {
+  margin-top: 2px;
+  font-size: 0.68rem;
+  line-height: 1.1;
+}
+
+@page {
+  size: A4 landscape;
+  margin: 8mm;
+}
+
+@page report-landscape {
+  size: A4 landscape;
+  margin: 8mm;
+}
+
+@page report-thr {
+  size: A4 portrait;
+  margin: 8mm;
+}
+
+@page report-impact {
+  size: A4 landscape;
+  margin: 0;
+}
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 8mm;
+  }
+
+  @page report-thr {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  .thr-print-document {
+    page: report-thr;
+  }
+
+  .wsp-document,
+  .sw-document,
+  .phc-container,
+  .cost-hk-report,
+  .gang-report-content,
+  .mill-report-container,
+  .summary-report-grid-container,
+  .comparison-report-container {
+    position: relative !important;
+    isolation: isolate !important;
+    page: report-landscape;
+    background: rgba(255, 255, 255, 0.88) !important;
+  }
+
+  .thr-print-document {
+    page: report-thr !important;
+  }
+
+  .report-watermark {
+    display: block !important;
+    position: fixed !important;
+    inset: -18mm !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+    user-select: none !important;
+    z-index: 1 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .report-watermark ~ * {
+    position: relative !important;
+    z-index: 2 !important;
+  }
+
+  .report-watermark__pattern {
+    display: grid !important;
+    grid-template-columns: repeat(7, 1fr) !important;
+    grid-auto-rows: 32mm !important;
+    gap: 8mm 10mm !important;
+    width: calc(100% + 36mm) !important;
+    height: calc(100% + 36mm) !important;
+    align-content: center !important;
+    align-items: center !important;
+    justify-content: center !important;
+    justify-items: center !important;
+    transform: rotate(-28deg) !important;
+    transform-origin: center !important;
+  }
+
+  .report-watermark__tile {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    opacity: 0.075 !important;
+    filter: grayscale(1) contrast(1.15) !important;
+  }
+
+  .report-watermark__image {
+    width: 18mm !important;
+    max-width: none !important;
+    height: auto !important;
+    object-fit: contain !important;
+  }
+
+  .report-print-meta-grid {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 3pt !important;
+    margin: 5pt auto 7pt !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .report-source-badge {
+    min-height: auto !important;
+    padding: 2pt 4pt !important;
+    border: 0.75pt solid #000 !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 7pt !important;
+    font-weight: 700 !important;
+    line-height: 1.15 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .report-print-note {
+    max-width: 100% !important;
+    margin: 3pt auto 7pt !important;
+    color: #000 !important;
+    font-size: 7pt !important;
+    line-height: 1.25 !important;
+    text-align: center !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .wsp-table-wrapper,
+  .phc-table-container,
+  .cost-hk-table-wrapper {
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
+  }
+
+  .wsp-table,
+  .phc-table,
+  .cost-hk-table {
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+
+  .wsp-table thead,
+  .phc-table thead,
+  .cost-hk-table thead {
+    display: table-header-group !important;
+  }
+
+  .wsp-table thead tr.report-screen-header,
+  .wsp-table thead tr.wsp-header-master.report-screen-header,
+  .wsp-table thead tr.wsp-header-sub.report-screen-header {
+    display: none !important;
+    visibility: collapse !important;
+    height: 0 !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .wsp-table thead tr.report-screen-header > th,
+  .wsp-table thead tr.report-screen-header > td {
+    display: none !important;
+    visibility: collapse !important;
+    height: 0 !important;
+    max-height: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+  }
+
+  .wsp-table thead tr.report-print-header,
+  .wsp-table thead tr.wsp-header-master.report-print-header,
+  .wsp-table thead tr.wsp-header-sub.report-print-header {
+    display: table-row !important;
+    visibility: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .wsp-table thead tr.report-print-header > th,
+  .wsp-table thead tr.report-print-header > td {
+    display: table-cell !important;
+    visibility: visible !important;
+  }
+
+  .wsp-table tfoot,
+  .phc-table tfoot,
+  .cost-hk-table tfoot {
+    display: table-footer-group !important;
+  }
+
+  .wsp-table tr,
+  .phc-table tr,
+  .cost-hk-table tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .wsp-table thead tr.no-print,
+  .wsp-table thead tr.wsp-header-master.no-print,
+  .wsp-table thead tr.wsp-header-sub.no-print {
+    display: none !important;
+    visibility: collapse !important;
+  }
+
+  .wsp-table thead tr.print-only,
+  .wsp-table thead tr.wsp-header-master.print-only,
+  .wsp-table thead tr.wsp-header-sub.print-only {
+    display: table-row !important;
+    visibility: visible !important;
+  }
+
+  .wsp-table thead th.no-print,
+  .wsp-table thead td.no-print {
+    display: none !important;
+    visibility: collapse !important;
+  }
+
+  .wsp-table th,
+  .wsp-table td,
+  .phc-table th,
+  .phc-table td,
+  .cost-hk-table th,
+  .cost-hk-table td {
+    overflow-wrap: break-word !important;
+    word-break: normal !important;
+  }
+
+  #wsp-report-content.wsp-document {
+    min-width: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  #wsp-report-content .wsp-report-header {
+    display: grid !important;
+    grid-template-columns: 24mm minmax(0, 1fr) 48mm !important;
+    gap: 4mm !important;
+    align-items: center !important;
+    margin: 0 0 4pt 0 !important;
+    padding: 0 0 4pt 0 !important;
+    border-bottom: 2pt solid #000 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  #wsp-report-content .wsp-logo {
+    width: 22mm !important;
+    max-width: 22mm !important;
+    height: auto !important;
+    margin: 0 !important;
+  }
+
+  #wsp-report-content .wsp-company-name {
+    color: #000 !important;
+    font-size: 13pt !important;
+    line-height: 1.05 !important;
+    margin: 0 !important;
+    letter-spacing: 0 !important;
+  }
+
+  #wsp-report-content .wsp-report-title {
+    color: #000 !important;
+    font-size: 9pt !important;
+    line-height: 1.1 !important;
+    margin: 2pt 0 0 0 !important;
+    letter-spacing: 0.2pt !important;
+  }
+
+  #wsp-report-content .wsp-meta-section {
+    gap: 1pt !important;
+    padding: 3pt !important;
+    border: 0.75pt solid #000 !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+  }
+
+  #wsp-report-content .wsp-meta-row {
+    gap: 2pt !important;
+    color: #000 !important;
+    font-size: 6.6pt !important;
+    line-height: 1.1 !important;
+  }
+
+  #wsp-report-content .wsp-meta-value {
+    color: #000 !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  #wsp-report-content .report-print-meta-grid {
+    margin: 3pt auto 4pt !important;
+    gap: 2pt !important;
+  }
+
+  #wsp-report-content .report-source-badge {
+    font-size: 6.2pt !important;
+    padding: 1.2pt 3pt !important;
+  }
+
+  #wsp-report-content .report-print-note {
+    margin: 2pt auto 4pt !important;
+    font-size: 6.4pt !important;
+    line-height: 1.12 !important;
+  }
+
+  #wsp-report-content .wsp-kpi-grid.comparison-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 4pt !important;
+    margin: 4pt 0 5pt 0 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  #wsp-report-content .wsp-kpi-card {
+    min-height: 0 !important;
+    padding: 4pt !important;
+    border: 0.8pt solid #000 !important;
+    border-left: 2pt solid #000 !important;
+    box-shadow: none !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  #wsp-report-content .wsp-kpi-label {
+    font-size: 6.4pt !important;
+    line-height: 1.05 !important;
+    margin-bottom: 2pt !important;
+    color: #000 !important;
+  }
+
+  #wsp-report-content .wsp-kpi-compare-row {
+    gap: 2pt !important;
+  }
+
+  #wsp-report-content .wsp-kpi-trend-box {
+    padding: 2pt !important;
+    border: 0.65pt solid #000 !important;
+  }
+
+  #wsp-report-content .wsp-kpi-trend-box .trend-label {
+    font-size: 5.6pt !important;
+    line-height: 1.05 !important;
+    margin-bottom: 1pt !important;
+  }
+
+  #wsp-report-content .wsp-kpi-trend-box .trend-value {
+    font-size: 6.6pt !important;
+    line-height: 1.05 !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  #wsp-report-content .wsp-kpi-diff {
+    font-size: 5.8pt !important;
+    line-height: 1.05 !important;
+    margin-top: 2pt !important;
+    padding-top: 2pt !important;
+  }
+
+  #wsp-report-content .analysis-print-insights {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 3pt !important;
+    margin: 4pt 0 5pt !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  #wsp-report-content .analysis-print-insight-card {
+    min-width: 0 !important;
+    padding: 3pt !important;
+    border: 0.75pt solid #000 !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+  }
+
+  #wsp-report-content .analysis-print-insight-label {
+    color: #000 !important;
+    font-size: 5.8pt !important;
+    font-weight: 900 !important;
+    line-height: 1.05 !important;
+  }
+
+  #wsp-report-content .analysis-print-insight-value {
+    margin-top: 1.5pt !important;
+    color: #000 !important;
+    font-size: 7.2pt !important;
+    font-weight: 900 !important;
+    line-height: 1.08 !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  #wsp-report-content .analysis-print-insight-note {
+    margin-top: 1.2pt !important;
+    color: #000 !important;
+    font-size: 5.8pt !important;
+    font-weight: 700 !important;
+    line-height: 1.08 !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  #wsp-report-content .analysis-section {
+    margin: 5pt 0 7pt !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+
+  #wsp-report-content .analysis-section-title {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 3pt !important;
+    margin: 0 0 3pt !important;
+    padding: 2.5pt 3pt !important;
+    border-left: 2pt solid #000 !important;
+    border-bottom: 0.75pt solid #000 !important;
+    background: #f3f4f6 !important;
+    color: #000 !important;
+    font-size: 7pt !important;
+    line-height: 1.05 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #wsp-report-content .wsp-table-wrapper {
+    width: 100% !important;
+    margin: 0 0 6pt !important;
+    border: 1pt solid #000 !important;
+    overflow: visible !important;
+  }
+
+  #wsp-report-content .wsp-table {
+    width: 100% !important;
+    table-layout: fixed !important;
+    border-collapse: collapse !important;
+    font-size: 6.8pt !important;
+  }
+
+  #wsp-report-content .wsp-table th,
+  #wsp-report-content .wsp-table td {
+    padding: 2pt 1.3pt !important;
+    border: 0.65pt solid #000 !important;
+    color: #000 !important;
+    background: #fff !important;
+    font-size: 6.7pt !important;
+    line-height: 1.08 !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+    word-break: normal !important;
+    vertical-align: middle !important;
+  }
+
+  #wsp-report-content .wsp-table thead tr.wsp-header-master th {
+    padding: 2.2pt 1.3pt !important;
+    background: #fff !important;
+    color: #000 !important;
+    border: 0.85pt solid #000 !important;
+    border-bottom: 1.4pt solid #000 !important;
+    font-size: 6.7pt !important;
+    font-weight: 900 !important;
+    line-height: 1.05 !important;
+    letter-spacing: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #wsp-report-content .wsp-table thead tr.wsp-header-sub th {
+    padding: 2pt 1.2pt !important;
+    background: #fff !important;
+    color: #000 !important;
+    border: 0.75pt solid #000 !important;
+    font-size: 6.3pt !important;
+    font-weight: 900 !important;
+    line-height: 1.05 !important;
+    letter-spacing: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #wsp-report-content .wsp-table td.text-right,
+  #wsp-report-content .wsp-table td.text-left,
+  #wsp-report-content .wsp-table tfoot td:first-child {
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  #wsp-report-content .wsp-table tfoot tr.wsp-grand-total td {
+    background: #111 !important;
+    color: #fff !important;
+    font-size: 6.5pt !important;
+    font-weight: 900 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #wsp-report-content .analysis-grouped-table .analysis-group-row td {
+    background: #e5e7eb !important;
+    color: #000 !important;
+    font-weight: 900 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #wsp-report-content .analysis-group-title,
+  #wsp-report-content .analysis-gang-code,
+  #wsp-report-content .analysis-gang-desc,
+  #wsp-report-content .analysis-group-note {
+    display: block !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  #wsp-report-content .analysis-gang-code {
+    font-size: 6.8pt !important;
+    font-weight: 900 !important;
+    line-height: 1.05 !important;
+  }
+
+  #wsp-report-content .analysis-gang-desc,
+  #wsp-report-content .analysis-group-note,
+  #wsp-report-content .analysis-insight-cell {
+    font-size: 5.8pt !important;
+    line-height: 1.05 !important;
+  }
+
+  #wsp-report-content .analysis-print-top-premi-wrapper {
+    margin-top: 0 !important;
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+
+  #wsp-report-content .analysis-print-appendix-title {
+    margin: 0 0 3pt !important;
+    padding: 2.5pt 3pt !important;
+    border: 0.8pt solid #000 !important;
+    background: #f3f4f6 !important;
+    color: #000 !important;
+    font-size: 7pt !important;
+    font-weight: 900 !important;
+    line-height: 1.05 !important;
+    text-align: center !important;
+    text-transform: uppercase !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #wsp-report-content .analysis-print-top-premi-table {
+    width: 100% !important;
+    table-layout: fixed !important;
+    border-collapse: collapse !important;
+    font-size: 6.2pt !important;
+  }
+
+  #wsp-report-content .analysis-print-top-premi-table th,
+  #wsp-report-content .analysis-print-top-premi-table td {
+    padding: 1.8pt 1pt !important;
+    border: 0.6pt solid #000 !important;
+    color: #000 !important;
+    background: #fff !important;
+    font-size: 6.1pt !important;
+    line-height: 1.05 !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+    word-break: normal !important;
+    vertical-align: middle !important;
+  }
+
+  #wsp-report-content .analysis-print-top-premi-table th:first-child,
+  #wsp-report-content .analysis-print-top-premi-table td:first-child {
+    width: 13% !important;
+    text-align: left !important;
+    font-weight: 900 !important;
+  }
+
+  #wsp-report-content .analysis-print-top-premi-table th:last-child,
+  #wsp-report-content .analysis-print-top-premi-table td:last-child {
+    width: 10% !important;
+  }
+
+  #wsp-report-content .analysis-print-top-premi-table thead th {
+    background: #111 !important;
+    color: #fff !important;
+    font-size: 5.8pt !important;
+    font-weight: 900 !important;
+    text-align: center !important;
+    text-transform: uppercase !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #wsp-report-content .analysis-print-top-premi-table tfoot td {
+    background: #111 !important;
+    color: #fff !important;
+    font-weight: 900 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Summary print uses two independent report documents: main report, then appendix. */
+  #summary-report-content.wsp-document,
+  #summary-premi-appendix-content.wsp-document {
+    display: block !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+  }
+
+  /* PRINT: Main report page - ends with signature */
+  #summary-report-content.wsp-document {
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+
+  /* PRINT: Lampiran - SEPARATE page, starts fresh */
+  #summary-premi-appendix-content.wsp-document {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+
+  #summary-report-content *,
+  #summary-report-content *::before,
+  #summary-report-content *::after,
+  #summary-premi-appendix-content *,
+  #summary-premi-appendix-content *::before,
+  #summary-premi-appendix-content *::after {
+    box-sizing: border-box !important;
+  }
+
+  #summary-report-content .wsp-letterhead {
+    display: grid !important;
+    grid-template-columns: 22mm minmax(0, 1fr) !important;
+    grid-template-rows: repeat(5, auto) !important;
+    align-items: center !important;
+    column-gap: 4mm !important;
+    row-gap: 1pt !important;
+    text-align: left !important;
+    margin: 0 0 4pt 0 !important;
+    padding: 0 0 4pt 0 !important;
+    border-bottom: 2pt solid #000 !important;
+    width: 100% !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Lampiran letterhead - same grid layout */
+  #summary-premi-appendix-content .wsp-letterhead {
+    display: grid !important;
+    grid-template-columns: 22mm minmax(0, 1fr) !important;
+    grid-template-rows: repeat(4, auto) !important;
+    align-items: center !important;
+    column-gap: 4mm !important;
+    row-gap: 1pt !important;
+    text-align: left !important;
+    margin: 0 0 4pt 0 !important;
+    padding: 0 0 4pt 0 !important;
+    border-bottom: 2pt solid #000 !important;
+    width: 100% !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  #summary-report-content .wsp-logo {
+    grid-column: 1 !important;
+    grid-row: 1 / span 5 !important;
+    width: 20mm !important;
+    max-width: 20mm !important;
+    height: auto !important;
+    align-self: center !important;
+    justify-self: center !important;
+    margin: 0 !important;
+    display: block !important;
+  }
+
+  /* Lampiran logo */
+  #summary-premi-appendix-content .wsp-logo {
+    grid-column: 1 !important;
+    grid-row: 1 / span 4 !important;
+    width: 20mm !important;
+    max-width: 20mm !important;
+    height: auto !important;
+    align-self: center !important;
+    justify-self: center !important;
+    margin: 0 !important;
+    display: block !important;
+  }
+
+  #summary-report-content .wsp-company-name,
+  #summary-report-content .wsp-report-title,
+  #summary-report-content .wsp-report-period,
+  #summary-report-content .report-print-meta-grid,
+  #summary-report-content .report-print-note,
+  #summary-premi-appendix-content .wsp-company-name,
+  #summary-premi-appendix-content .wsp-report-title,
+  #summary-premi-appendix-content .wsp-report-period {
+    grid-column: 2 !important;
+    text-align: left !important;
+    justify-content: flex-start !important;
+    justify-self: stretch !important;
+    width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  #summary-report-content .wsp-company-name {
+    font-size: 13pt !important;
+    line-height: 1.05 !important;
+    margin: 0 !important;
+    letter-spacing: 0 !important;
+    color: #000 !important;
+  }
+
+  /* Lampiran company name - larger for title */
+  #summary-premi-appendix-content .wsp-company-name {
+    font-size: 13pt !important;
+    line-height: 1.05 !important;
+    margin: 0 !important;
+    letter-spacing: 0 !important;
+    color: #000 !important;
+  }
+
+  #summary-report-content .wsp-report-title {
+    font-size: 10pt !important;
+    line-height: 1.05 !important;
+    margin: 1pt 0 0 0 !important;
+    letter-spacing: 0.2pt !important;
+    color: #000 !important;
+  }
+
+  /* Lampiran title - LAMPIRAN REPORT II */
+  #summary-premi-appendix-content .wsp-report-title {
+    font-size: 10pt !important;
+    line-height: 1.05 !important;
+    margin: 1pt 0 0 0 !important;
+    letter-spacing: 0.2pt !important;
+    color: #000 !important;
+  }
+
+  #summary-report-content .wsp-report-period {
+    display: block !important;
+    font-size: 7.4pt !important;
+    line-height: 1.08 !important;
+    margin: 1pt 0 0 0 !important;
+    padding: 0 !important;
+    color: #000 !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+  }
+
+  #summary-report-content .report-print-meta-grid {
+    gap: 2pt !important;
+    margin: 2pt 0 0 0 !important;
+  }
+
+  #summary-report-content .report-source-badge {
+    font-size: 6.2pt !important;
+    padding: 1pt 2.5pt !important;
+  }
+
+  #summary-report-content .report-print-note {
+    font-size: 6.2pt !important;
+    line-height: 1.12 !important;
+    margin: 1pt 0 0 0 !important;
+  }
+
+  #summary-report-content .wsp-kpi-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 3pt !important;
+    margin: 4pt 0 5pt 0 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  #summary-report-content .wsp-kpi-card {
+    min-height: 0 !important;
+    padding: 3pt !important;
+    border: 0.75pt solid #000 !important;
+    border-left: 2pt solid #000 !important;
+    box-shadow: none !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  #summary-report-content .wsp-kpi-label {
+    font-size: 5.8pt !important;
+    line-height: 1.05 !important;
+    margin-bottom: 1pt !important;
+    color: #000 !important;
+  }
+
+  #summary-report-content .wsp-kpi-value {
+    font-size: 8.4pt !important;
+    line-height: 1.05 !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  /* Lampiran table in separate content div */
+  #summary-premi-appendix-content .summary-premi-appendix-table {
+    width: 100% !important;
+    table-layout: fixed !important;
+    border-collapse: collapse !important;
+    border: 0 !important;
+    margin: 0 !important;
+    font-size: 8pt !important;
+  }
+
+  #summary-premi-appendix-content .summary-premi-appendix-table .summary-col-no {
+    width: 5% !important;
+  }
+
+  #summary-premi-appendix-content .summary-premi-appendix-table .summary-col-gang {
+    width: 25% !important;
+  }
+
+  #summary-premi-appendix-content .summary-premi-appendix-table .summary-col-premi {
+    width: 16% !important;
+  }
+
+  #summary-premi-appendix-content .summary-premi-appendix-table .summary-col-premi-detail {
+    width: 54% !important;
+  }
+
+  #summary-premi-appendix-content .summary-premi-appendix-table th,
+  #summary-premi-appendix-content .summary-premi-appendix-table td,
+  #summary-premi-appendix-content .summary-premi-appendix-table td:first-child,
+  #summary-premi-appendix-content .summary-premi-appendix-table tfoot td:first-child {
+    text-align: center !important;
+    vertical-align: middle !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+    word-break: normal !important;
+    padding: 2pt 1.6pt !important;
+    line-height: 1.12 !important;
+    border: 0.7pt solid #000 !important;
+    color: #000 !important;
+  }
+
+  #summary-premi-appendix-content .summary-premi-appendix-table thead th {
+    font-size: 7.4pt !important;
+    font-weight: 900 !important;
+    line-height: 1.08 !important;
+    padding: 2pt 1.2pt !important;
+    background: #f3f4f6 !important;
+    color: #000 !important;
+    letter-spacing: 0 !important;
+    text-transform: uppercase !important;
+  }
+
+  #summary-premi-appendix-content .summary-premi-appendix-table tbody td,
+  #summary-premi-appendix-content .summary-premi-appendix-table tfoot td {
+    font-size: 8pt !important;
+    font-weight: 700 !important;
+  }
+
+  #summary-premi-appendix-content .summary-premi-appendix-table .summary-premi-breakdown-cell {
+    text-align: left !important;
+    font-size: 6.8pt !important;
+    font-weight: 650 !important;
+    line-height: 1.1 !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  #summary-premi-appendix-content .summary-premi-appendix-table tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    page-break-after: auto !important;
+  }
+
+  #summary-premi-appendix-content .summary-premi-appendix-table .summary-print-code,
+  #summary-premi-appendix-content .summary-premi-appendix-table .summary-print-desc {
+    text-align: center !important;
+    display: block !important;
+    width: 100% !important;
+  }
+
+  #summary-premi-appendix-content .summary-premi-appendix-table .summary-print-code {
+    font-size: 6.8pt !important;
+    line-height: 1.05 !important;
+    font-weight: 600 !important;
+    margin-top: 0.7pt !important;
+    color: #111 !important;
+  }
+
+  #summary-premi-appendix-content .summary-premi-appendix-table .summary-print-desc {
+    font-size: 8pt !important;
+    line-height: 1.08 !important;
+    font-weight: 900 !important;
+    color: #000 !important;
+  }
+
+  /* Division subtotal row styling */
+  #summary-premi-appendix-content .summary-premi-appendix-table .summary-print-division-row td {
+    background: #f8fafc !important;
+    font-weight: 700 !important;
+    border-bottom: 1.5pt solid #000 !important;
+  }
+
+  /* Total cell styling */
+  #summary-premi-appendix-content .summary-premi-appendix-table .summary-premi-total-cell {
+    font-weight: 900 !important;
+    font-size: 9pt !important;
+    color: #0f172a !important;
+    background: #cbd5e1 !important;
+    text-align: right !important;
+  }
+
+  /* Group row styling - dark background */
+  #summary-premi-appendix-content .summary-premi-appendix-table .summary-print-group-row td {
+    background: #334155 !important;
+    color: #ffffff !important;
+    font-size: 8.8pt !important;
+    font-weight: 900 !important;
+    line-height: 1.2 !important;
+    padding: 2.5pt 4pt !important;
+    border: none !important;
+    text-align: left !important;
+    text-transform: uppercase !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Gang row styling - white background */
+  #summary-premi-appendix-content .summary-premi-appendix-table .summary-print-gang-row td {
+    background: #ffffff !important;
+    font-weight: 500 !important;
+    border-bottom: 0.5pt solid #cbd5e1 !important;
+  }
+
+  /* Division subtotal row styling - gray background, bold */
+  #summary-premi-appendix-content .summary-premi-appendix-table .summary-print-division-subtotal-row td {
+    background: #e2e8f0 !important;
+    font-weight: 900 !important;
+    border-top: 1.5pt solid #000 !important;
+    border-bottom: 1.5pt solid #000 !important;
+  }
+
+  #summary-premi-appendix-content .summary-premi-appendix-table .summary-division-subtotal-label {
+    text-align: left !important;
+    padding-left: 6pt !important;
+  }
+
+  #summary-premi-appendix-content .summary-premi-appendix-table .summary-subtotal-label-text {
+    font-size: 7pt !important;
+    font-weight: 900 !important;
+    color: #0f172a !important;
+    text-transform: uppercase !important;
+  }
+
+  #summary-premi-appendix-content .summary-premi-appendix-table tfoot td {
+    background: #111 !important;
+    color: #fff !important;
+    font-weight: 900 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Clean up - remove old duplicate styles under #summary-report-content */
+
+  .sticky-col,
+  .th-sticky-col,
+  .phc-th-sticky,
+  .phc-td-sticky {
+    position: static !important;
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+    z-index: auto !important;
+    box-shadow: none !important;
+  }
+
+  .wsp-bottom-section {
+    display: block !important;
+  }
+
+  .wsp-bottom-section > * {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: none !important;
+    margin-bottom: 8pt !important;
+  }
+
+  #impact-report-content.impact-print-document {
+    page: report-impact !important;
+    width: 281mm !important;
+    min-width: 0 !important;
+    max-width: 281mm !important;
+    margin: 8mm auto !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+  }
+
+  #impact-report-content *,
+  #impact-report-content *::before,
+  #impact-report-content *::after {
+    box-sizing: border-box !important;
+  }
+
+  #impact-report-content .wsp-letterhead {
+    display: grid !important;
+    grid-template-columns: 26mm minmax(0, 1fr) !important;
+    grid-template-rows: repeat(5, auto) !important;
+    align-items: center !important;
+    column-gap: 5mm !important;
+    row-gap: 1pt !important;
+    text-align: left !important;
+    margin: 0 0 5pt 0 !important;
+    padding: 0 0 5pt 0 !important;
+    border-bottom: 2pt solid #000 !important;
+    width: 100% !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  #impact-report-content .wsp-letterhead .wsp-logo {
+    grid-column: 1 !important;
+    grid-row: 1 / span 5 !important;
+    width: 24mm !important;
+    max-width: 24mm !important;
+    height: auto !important;
+    align-self: center !important;
+    justify-self: center !important;
+    margin: 0 !important;
+    display: block !important;
+  }
+
+  #impact-report-content .wsp-letterhead .wsp-company-name,
+  #impact-report-content .wsp-letterhead .wsp-report-title,
+  #impact-report-content .wsp-letterhead .wsp-report-period,
+  #impact-report-content .wsp-letterhead .report-print-meta-grid,
+  #impact-report-content .wsp-letterhead .report-print-note {
+    grid-column: 2 !important;
+    text-align: left !important;
+    justify-content: flex-start !important;
+    justify-self: stretch !important;
+    width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  #impact-report-content .wsp-letterhead .wsp-company-name {
+    font-size: 14pt !important;
+    line-height: 1.05 !important;
+    margin: 0 !important;
+  }
+
+  #impact-report-content .wsp-letterhead .wsp-report-title {
+    font-size: 12pt !important;
+    line-height: 1.05 !important;
+    margin: 1pt 0 0 0 !important;
+    letter-spacing: 0.3pt !important;
+  }
+
+  #impact-report-content .wsp-letterhead .wsp-report-period {
+    display: block !important;
+    font-size: 8pt !important;
+    line-height: 1.1 !important;
+    margin: 1pt 0 0 0 !important;
+    padding: 0 !important;
+    color: #000 !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+  }
+
+  #impact-report-content .wsp-letterhead .report-print-meta-grid {
+    gap: 2pt !important;
+    margin: 2pt 0 0 0 !important;
+  }
+
+  #impact-report-content .wsp-letterhead .report-source-badge {
+    font-size: 6.4pt !important;
+    padding: 1.2pt 3pt !important;
+  }
+
+  #impact-report-content .wsp-letterhead .report-print-note {
+    font-size: 6.4pt !important;
+    line-height: 1.15 !important;
+    margin: 1.5pt 0 0 0 !important;
+  }
+
+  #impact-report-content .impact-main-table-wrapper {
+    border: 1.4pt solid #000 !important;
+    margin: 5pt 0 7pt 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    width: 100% !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+
+  #impact-report-content .impact-main-table {
+    width: 100% !important;
+    table-layout: fixed !important;
+    border-collapse: collapse !important;
+    border: 0 !important;
+    margin: 0 !important;
+    font-size: 6.3pt !important;
+  }
+
+  #impact-report-content .impact-main-table .impact-col-estate {
+    width: 15% !important;
+  }
+
+  #impact-report-content .impact-main-table .impact-col-luas {
+    width: 7% !important;
+  }
+
+  #impact-report-content .impact-main-table .impact-col-worker {
+    width: 6% !important;
+  }
+
+  #impact-report-content .impact-main-table .impact-col-money {
+    width: 8.5% !important;
+  }
+
+  #impact-report-content .impact-main-table .impact-col-tbs {
+    width: 7% !important;
+  }
+
+  #impact-report-content .impact-main-table .impact-col-percent {
+    width: 13.5% !important;
+  }
+
+  #impact-report-content .impact-main-table th,
+  #impact-report-content .impact-main-table td {
+    text-align: center !important;
+    vertical-align: middle !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+    word-break: normal !important;
+    padding: 1.5pt 0.8pt !important;
+    line-height: 1.05 !important;
+    border: 0.65pt solid #000 !important;
+    color: #000 !important;
+    background: #fff !important;
+    min-width: 0 !important;
+  }
+
+  #impact-report-content .impact-main-table thead th {
+    font-size: 6pt !important;
+    font-weight: 900 !important;
+    line-height: 1.05 !important;
+    padding: 1.7pt 0.8pt !important;
+    background: #fff !important;
+    color: #000 !important;
+    border: 0.75pt solid #000 !important;
+    letter-spacing: 0 !important;
+    text-transform: uppercase !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #impact-report-content .impact-main-table thead tr.wsp-header-master th {
+    font-size: 6.1pt !important;
+    font-weight: 900 !important;
+    background: #fff !important;
+    color: #000 !important;
+    border: 0.85pt solid #000 !important;
+    border-bottom: 1.4pt solid #000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #impact-report-content .impact-main-table tbody td,
+  #impact-report-content .impact-main-table tfoot td {
+    font-size: 6.2pt !important;
+    font-weight: 700 !important;
+  }
+
+  #impact-report-content .impact-main-table tbody td:not(:first-child),
+  #impact-report-content .impact-main-table tfoot td:not(:first-child) {
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+    font-family: Arial, sans-serif !important;
+  }
+
+  #impact-report-content .impact-main-table td:first-child,
+  #impact-report-content .impact-main-table th:first-child,
+  #impact-report-content .impact-main-table tfoot td:first-child {
+    text-align: center !important;
+    padding-left: 1pt !important;
+  }
+
+  #impact-report-content .impact-main-table .div-code {
+    font-size: 6.7pt !important;
+    font-weight: 900 !important;
+    line-height: 1.05 !important;
+    text-align: center !important;
+    color: #000 !important;
+  }
+
+  #impact-report-content .impact-main-table tfoot tr.wsp-grand-total td {
+    background: #111 !important;
+    color: #fff !important;
+    font-weight: 900 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #impact-report-content .impact-main-table tfoot td.text-diff-pos,
+  #impact-report-content .impact-main-table tfoot td.text-diff-neg,
+  #impact-report-content .impact-main-table tfoot td.text-neutral {
+    color: #fff !important;
+  }
+
+  #impact-report-content .trend-indicator {
+    display: none !important;
+  }
+
+  #impact-report-content .impact-bottom-section {
+    display: grid !important;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.35fr) !important;
+    gap: 5pt !important;
+    align-items: start !important;
+    margin-top: 0 !important;
+    break-before: auto !important;
+    page-break-before: auto !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  #impact-report-content .impact-bottom-section > * {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: none !important;
+    margin: 0 !important;
+  }
+
+  #impact-report-content .impact-side-table-wrapper {
+    border: 1.4pt solid #000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  #impact-report-content .impact-print-section-title {
+    padding: 2.5pt 3pt !important;
+    background: #111 !important;
+    color: #fff !important;
+    font-size: 7pt !important;
+    font-weight: 900 !important;
+    line-height: 1 !important;
+    text-align: center !important;
+    letter-spacing: 0.4pt !important;
+    text-transform: uppercase !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #impact-report-content .impact-side-table {
+    width: 100% !important;
+    table-layout: fixed !important;
+    border-collapse: collapse !important;
+    border: 0 !important;
+    margin: 0 !important;
+    font-size: 7.2pt !important;
+  }
+
+  #impact-report-content .impact-side-table .impact-col-side-estate {
+    width: 42% !important;
+  }
+
+  #impact-report-content .impact-side-table .impact-col-side-money,
+  #impact-report-content .impact-side-table .impact-col-side-total {
+    width: 29% !important;
+  }
+
+  #impact-report-content .impact-side-table .impact-col-finance-desc {
+    width: 43% !important;
+  }
+
+  #impact-report-content .impact-side-table .impact-col-finance-hk {
+    width: 14% !important;
+  }
+
+  #impact-report-content .impact-side-table .impact-col-finance-money {
+    width: 21.5% !important;
+  }
+
+  #impact-report-content .impact-side-table .impact-col-summary-desc {
+    width: 68% !important;
+  }
+
+  #impact-report-content .impact-side-table .impact-col-summary-value {
+    width: 32% !important;
+  }
+
+  #impact-report-content .impact-side-table th,
+  #impact-report-content .impact-side-table td {
+    text-align: center !important;
+    vertical-align: middle !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+    word-break: normal !important;
+    padding: 2pt 1.5pt !important;
+    line-height: 1.08 !important;
+    border: 0.65pt solid #000 !important;
+    color: #000 !important;
+    background: #fff !important;
+    min-width: 0 !important;
+  }
+
+  #impact-report-content .impact-side-table thead th {
+    font-size: 6.9pt !important;
+    font-weight: 900 !important;
+    background: #fff !important;
+    color: #000 !important;
+    border: 0.75pt solid #000 !important;
+    text-transform: uppercase !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #impact-report-content .impact-side-table tbody td,
+  #impact-report-content .impact-side-table tfoot td {
+    font-size: 7.1pt !important;
+    font-weight: 700 !important;
+  }
+
+  #impact-report-content .impact-side-table td.text-left {
+    text-align: left !important;
+  }
+
+  #impact-report-content .impact-side-table td.text-right {
+    text-align: right !important;
+    white-space: nowrap !important;
+    font-family: Arial, sans-serif !important;
+  }
+
+  #impact-report-content .impact-side-table tfoot tr.wsp-grand-total td {
+    background: #111 !important;
+    color: #fff !important;
+    font-weight: 900 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #impact-report-content .impact-financial-table {
+    border-bottom: 0 !important;
+  }
+
+  #impact-report-content .impact-summary-table {
+    border-top: 0 !important;
+  }
+
+  #impact-report-content .impact-summary-table tr[style*="background"] td,
+  #impact-report-content .impact-summary-table tr[style*="background"] td.text-diff-pos,
+  #impact-report-content .impact-summary-table tr[style*="background"] td.text-diff-neg {
+    color: #fff !important;
+    background: #111 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #impact-report-content .impact-print-signature {
+    margin-top: 8pt !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  #impact-report-content .wsp-footer {
+    margin-top: 8pt !important;
+    padding-top: 4pt !important;
+    border-top: 0.75pt solid #000 !important;
+    font-size: 6.6pt !important;
+    color: #000 !important;
+  }
+}

@@ -1,0 +1,285 @@
+/**
+ * Wages Verification Section Styles
+ * Compact verification widget for employee detail pages
+ */
+
+/* Container */
+.wvs-container {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin: 1rem 0;
+    overflow: hidden;
+}
+
+.wvs-container.match {
+    border-left: 4px solid #10b981;
+}
+
+.wvs-container.minor_diff {
+    border-left: 4px solid #f59e0b;
+}
+
+.wvs-container.major_diff {
+    border-left: 4px solid #ef4444;
+}
+
+.wvs-container.no_wages {
+    border-left: 4px solid #6b7280;
+}
+
+/* Loading & Error */
+.wvs-loading,
+.wvs-error {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    color: #64748b;
+    font-size: 0.875rem;
+}
+
+.wvs-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #e2e8f0;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: wvs-spin 1s linear infinite;
+}
+
+@keyframes wvs-spin {
+    to { transform: rotate(360deg); }
+}
+
+.wvs-error-icon {
+    color: #ef4444;
+}
+
+/* Header */
+.wvs-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: #f8fafc;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.wvs-header:hover {
+    background: #f1f5f9;
+}
+
+.wvs-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 0.875rem;
+}
+
+.wvs-icon {
+    font-size: 1rem;
+}
+
+.wvs-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.wvs-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.wvs-expand-btn {
+    width: 20px;
+    height: 20px;
+    border: none;
+    background: #e2e8f0;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.625rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    transition: all 0.15s;
+}
+
+.wvs-expand-btn:hover {
+    background: #cbd5e1;
+    color: #1e293b;
+}
+
+/* Quick Summary */
+.wvs-quick-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    border-top: 1px solid #e2e8f0;
+    background: white;
+}
+
+.wvs-summary-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.wvs-label {
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+.wvs-value {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.wvs-summary-item.wvs-diff .wvs-value {
+    color: #ef4444;
+}
+
+/* Detail Section */
+.wvs-detail {
+    padding: 1rem;
+    border-top: 1px solid #e2e8f0;
+    background: #fafafa;
+}
+
+.wvs-detail-section {
+    margin-bottom: 1rem;
+}
+
+.wvs-detail-section:last-child {
+    margin-bottom: 0;
+}
+
+.wvs-detail-section h4 {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0 0 0.5rem 0;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.wvs-detail-grid {
+    display: grid;
+    gap: 0.25rem;
+}
+
+.wvs-detail-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8125rem;
+    padding: 0.25rem 0;
+}
+
+.wvs-detail-row span:first-child {
+    color: #64748b;
+}
+
+.wvs-detail-row span:last-child {
+    font-weight: 500;
+    color: #1e293b;
+}
+
+.wvs-detail-row.wvs-total {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+.wvs-detail-row.wvs-total span:last-child {
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.wvs-neg {
+    color: #ef4444 !important;
+}
+
+.wvs-dim {
+    color: #94a3b8 !important;
+    font-size: 0.75rem !important;
+}
+
+.wvs-no-data {
+    color: #94a3b8;
+    font-style: italic;
+    font-size: 0.8125rem;
+    margin: 0;
+}
+
+/* Analysis Section */
+.wvs-analysis {
+    background: #f0f9ff;
+    padding: 0.75rem;
+    border-radius: 6px;
+}
+
+.wvs-comparison-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+}
+
+.wvs-comparison-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8125rem;
+}
+
+.wvs-comp-label {
+    color: #64748b;
+}
+
+.wvs-comp-value {
+    font-weight: 500;
+}
+
+.wvs-comp-value.match {
+    color: #10b981;
+}
+
+.wvs-comp-value.diff {
+    color: #ef4444;
+}
+
+/* Print Styles */
+@media print {
+    .wvs-expand-btn {
+        display: none;
+    }
+    
+    .wvs-detail {
+        display: block !important;
+        background: white;
+    }
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .wvs-quick-summary {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .wvs-comparison-grid {
+        grid-template-columns: 1fr;
+    }
+}

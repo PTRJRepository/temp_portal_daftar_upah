@@ -1,0 +1,347 @@
+/**
+ * Wages Summary Rebinmas Page Styles
+ * Professional Excel-like styling with navy blue theme
+ */
+
+/* Main Container */
+.wages-summary-page {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background: #f0f2f5;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Header */
+.wages-summary-header {
+    background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);
+    color: white;
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.wages-summary-header .header-title {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.wages-summary-header h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.wages-summary-header .subtitle {
+    margin: 4px 0 0 0;
+    font-size: 0.9rem;
+    opacity: 0.85;
+}
+
+.wages-summary-header .btn-back {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.wages-summary-header .btn-back:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Toolbar */
+.wages-summary-toolbar {
+    background: white;
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.wages-summary-toolbar .filter-group {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.wages-summary-toolbar .filter-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wages-summary-toolbar .filter-item label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #4a5568;
+}
+
+.wages-summary-toolbar .filter-item input,
+.wages-summary-toolbar .filter-item select {
+    padding: 8px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    background: #f8fafc;
+    color: #2d3748;
+}
+
+.wages-summary-toolbar .filter-item input:focus,
+.wages-summary-toolbar .filter-item select:focus {
+    outline: none;
+    border-color: #3182ce;
+    box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+}
+
+.wages-summary-toolbar .action-group {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.wages-summary-toolbar .info-badge {
+    background: #e6fffa;
+    color: #234e52;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.wages-summary-toolbar .btn-action {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.wages-summary-toolbar .btn-refresh {
+    background: #edf2f7;
+    color: #4a5568;
+}
+
+.wages-summary-toolbar .btn-refresh:hover:not(:disabled) {
+    background: #e2e8f0;
+}
+
+.wages-summary-toolbar .btn-export {
+    background: #38a169;
+    color: white;
+}
+
+.wages-summary-toolbar .btn-export:hover:not(:disabled) {
+    background: #2f855a;
+}
+
+.wages-summary-toolbar .btn-action:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Error Message */
+.wages-summary-error {
+    background: #fed7d7;
+    color: #c53030;
+    padding: 12px 24px;
+    font-size: 0.9rem;
+}
+
+/* Grid Container */
+.wages-summary-grid-container {
+    flex: 1;
+    padding: 16px 24px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* AG Grid Theme Overrides */
+.wages-summary-grid-container .ag-theme-alpine {
+    --ag-header-background-color: #1a365d;
+    --ag-header-foreground-color: #ffffff;
+    --ag-header-height: 40px;
+    --ag-row-height: 32px;
+    --ag-font-size: 13px;
+    --ag-border-color: #e2e8f0;
+    --ag-odd-row-background-color: #f8fafc;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.wages-summary-grid-container .ag-theme-alpine .ag-header-cell {
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    /* Text wrapping */
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    line-height: 1.2 !important;
+}
+
+.wages-summary-grid-container .ag-theme-alpine .ag-header-group-cell {
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    background: #2c5282 !important;
+    /* Text wrapping */
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+}
+
+/* Cell Styles */
+.wages-summary-grid-container .ag-cell {
+    /* Text wrapping */
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    line-height: 1.3 !important;
+}
+
+.wages-summary-grid-container .cell-description {
+    font-weight: 500;
+    color: #1a365d;
+}
+
+.wages-summary-grid-container .cell-number {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.wages-summary-grid-container .cell-currency {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.wages-summary-grid-container .cell-important {
+    font-weight: 600;
+    color: #2b6cb0;
+}
+
+.wages-summary-grid-container .cell-negative {
+    color: #c53030 !important;
+}
+
+/* Subtotal Row Styling */
+.wages-summary-grid-container .row-subtotal {
+    background-color: #fff3cd !important;
+    font-weight: 600;
+}
+
+.wages-summary-grid-container .row-subtotal .ag-cell {
+    background-color: #fff3cd !important;
+    font-weight: 600;
+    color: #664d03;
+}
+
+.wages-summary-grid-container .cell-subtotal {
+    background-color: #fff3cd !important;
+    font-weight: 600;
+    color: #664d03;
+}
+
+/* Grand Total Row Styling */
+.wages-summary-grid-container .row-grand-total {
+    background-color: #1a365d !important;
+    font-weight: 700;
+}
+
+.wages-summary-grid-container .row-grand-total .ag-cell {
+    background-color: #1a365d !important;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.wages-summary-grid-container .cell-grand-total {
+    background-color: #1a365d !important;
+    font-weight: 700;
+    color: #ffffff !important;
+}
+
+/* Pinned Bottom Row */
+.wages-summary-grid-container .ag-theme-alpine .ag-floating-bottom {
+    background: #1a365d;
+}
+
+.wages-summary-grid-container .ag-theme-alpine .ag-floating-bottom .ag-row {
+    background: #1a365d !important;
+}
+
+.wages-summary-grid-container .ag-theme-alpine .ag-floating-bottom .ag-cell {
+    background: #1a365d !important;
+    color: #ffffff !important;
+    font-weight: 700;
+}
+
+/* Loading Overlay */
+.wages-summary-loading {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.wages-summary-loading .loading-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.wages-summary-loading .loading-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid #e2e8f0;
+    border-top-color: #3182ce;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.wages-summary-loading .loading-text {
+    font-size: 1rem;
+    color: #4a5568;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .wages-summary-header {
+        flex-direction: column;
+        gap: 12px;
+        padding: 12px 16px;
+    }
+
+    .wages-summary-toolbar {
+        flex-direction: column;
+        gap: 12px;
+        padding: 12px 16px;
+    }
+
+    .wages-summary-grid-container {
+        padding: 12px;
+    }
+}

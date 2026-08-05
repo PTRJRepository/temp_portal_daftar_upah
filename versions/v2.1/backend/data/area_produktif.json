@@ -1,0 +1,87 @@
+[
+    {
+        "divisi": "AB1",
+        "description": "Air Ruak B1",
+        "luas_hektar": 1210.10
+    },
+    {
+        "divisi": "AB2",
+        "description": "Air Ruak B2",
+        "luas_hektar": 1056.13
+    },
+    {
+        "divisi": "ARA",
+        "description": "Air Ruak RA",
+        "luas_hektar": 1158.20
+    },
+    {
+        "divisi": "ARC",
+        "description": "Air Ruak RC",
+        "luas_hektar": 1824.94
+    },
+    {
+        "divisi": "DME",
+        "description": "KEBUN DME",
+        "luas_hektar": 1518.88
+    },
+    {
+        "divisi": "IJL",
+        "description": "KEBUN IJL",
+        "luas_hektar": 0.00
+    },
+    {
+        "divisi": "INF",
+        "description": "INFRASTRUKTUR",
+        "luas_hektar": 0.00
+    },
+    {
+        "divisi": "MILL",
+        "description": "MILL PKS",
+        "luas_hektar": 0.00
+    },
+    {
+        "divisi": "NRS",
+        "description": "NURSERY",
+        "luas_hektar": 0.00
+    },
+    {
+        "divisi": "P1A",
+        "description": "Parit Gunung 1A",
+        "luas_hektar": 1188.85
+    },
+    {
+        "divisi": "P1B",
+        "description": "Parit Gunung 1B",
+        "luas_hektar": 61.83
+    },
+    {
+        "divisi": "P2A",
+        "description": "Parit Gunung 2A",
+        "luas_hektar": 1491.97
+    },
+    {
+        "divisi": "P2B",
+        "description": "Parit Gunung 2B",
+        "luas_hektar": 982.11
+    },
+    {
+        "divisi": "PGE",
+        "description": "Parit Gunung Estate",
+        "luas_hektar": 0.00
+    },
+    {
+        "divisi": "WKS",
+        "description": "WORKSHOP",
+        "luas_hektar": 0.00
+    },
+    {
+        "divisi": "WKS_AR",
+        "description": "WORKSHOP AIR RUAK",
+        "luas_hektar": 0.00
+    },
+    {
+        "divisi": "WKS_PG",
+        "description": "WORKSHOP PARIT GUNUNG",
+        "luas_hektar": 0.00
+    }
+]

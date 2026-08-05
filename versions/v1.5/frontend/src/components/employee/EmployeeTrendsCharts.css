@@ -1,0 +1,322 @@
+/* EmployeeTrendsCharts Styles */
+
+.employee-trends-charts {
+    margin: 20px 0;
+}
+
+.employee-trends-charts.loading,
+.employee-trends-charts.error,
+.employee-trends-charts.empty {
+    text-align: center;
+    padding: 40px;
+    background: #f9fafb;
+    border-radius: 8px;
+    color: #6b7280;
+}
+
+.employee-trends-charts .spinner {
+    width: 30px;
+    height: 30px;
+    border: 3px solid #e5e7eb;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    margin: 0 auto 15px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Header */
+.trends-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.trends-header h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0;
+    color: #1f2937;
+}
+
+.trends-tabs {
+    display: flex;
+    gap: 5px;
+    background: #f3f4f6;
+    padding: 4px;
+    border-radius: 8px;
+}
+
+.tab-btn {
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    color: #6b7280;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+    color: #374151;
+}
+
+.tab-btn.active {
+    background: #fff;
+    color: #3b82f6;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Stats Grid */
+.trends-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 15px;
+    text-align: center;
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.8rem;
+    color: #6b7280;
+    margin-bottom: 5px;
+}
+
+.stat-value {
+    display: block;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+/* Chart Section */
+.chart-section {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+/* Simple Bar Chart */
+.simple-bar-chart {
+    width: 100%;
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.chart-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.chart-legend {
+    display: flex;
+    gap: 15px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.85rem;
+    color: #6b7280;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+}
+
+.chart-bars {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    height: 200px;
+    padding: 0 10px;
+    margin-bottom: 10px;
+}
+
+.bar-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    max-width: 60px;
+}
+
+.bar-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.bar {
+    width: 80%;
+    min-height: 4px;
+    border-radius: 4px 4px 0 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.bar:hover {
+    opacity: 0.8;
+    transform: scaleY(1.02);
+}
+
+.bar-value {
+    position: absolute;
+    top: -20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #1f2937;
+    white-space: nowrap;
+}
+
+.bar-label {
+    margin-top: 8px;
+    font-size: 0.7rem;
+    color: #6b7280;
+    text-align: center;
+    transform: rotate(-45deg);
+    transform-origin: center top;
+    white-space: nowrap;
+}
+
+.chart-footer {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 10px;
+    font-size: 0.75rem;
+    color: #9ca3af;
+}
+
+/* Trend Bar Chart (Horizontal) */
+.trend-bar-chart {
+    width: 100%;
+}
+
+.trend-bars-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.trend-bar-item {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.trend-period-label {
+    min-width: 60px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #374151;
+    text-align: right;
+}
+
+.trend-bars {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.trend-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.trend-bar-label {
+    min-width: 30px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #6b7280;
+}
+
+.trend-bar-wrapper {
+    flex: 1;
+    height: 20px;
+    background: #f3f4f6;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.trend-bar {
+    height: 100%;
+    min-width: 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    transition: width 0.3s ease;
+}
+
+.trend-bar:hover {
+    opacity: 0.9;
+}
+
+.trend-bar-value {
+    padding-left: 8px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #1f2937;
+    white-space: nowrap;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .trends-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .trends-tabs {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .tab-btn {
+        white-space: nowrap;
+    }
+
+    .trends-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .chart-bars {
+        height: 150px;
+    }
+
+    .bar-label {
+        font-size: 0.6rem;
+    }
+}

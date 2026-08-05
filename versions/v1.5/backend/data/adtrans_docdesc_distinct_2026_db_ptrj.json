@@ -1,0 +1,410 @@
+{
+  "generated_at": "2026-04-26T18:27:09.715Z",
+  "source_database": "db_ptrj",
+  "year": 2026,
+  "sources": [
+    "PR_ADTRANS",
+    "PR_ADTRANS_ARC"
+  ],
+  "period_filter": "PhyYear = 2026",
+  "count": 65,
+  "doc_descriptions": [
+    "Premi Ritase",
+    "AUTO SPSI",
+    "KOREKSI",
+    "KOREKSI BERONDOL",
+    "KOREKSI BRONDOL",
+    "KOREKSI PANEN",
+    "Koreksi Pemanen",
+    "KOREKSI PREMI",
+    "Potongan",
+    "Potongan Alat",
+    "Potongan Alat Panen",
+    "Potongan Beras",
+    "Potongan BPJS",
+    "POTONGAN HUTANG",
+    "POTONGAN LAIN",
+    "POTONGAN PPH",
+    "POTONGAN PPH 21",
+    "POTONGAN PPH021",
+    "POTONGAN PPH21",
+    "POTONGAN PREMI",
+    "POTONGAN SPSI",
+    "PPH 21",
+    "PPH21",
+    "PREMI ANGKUT",
+    "PREMI ANGKUT BATU",
+    "PREMI ANGKUT BIBIT",
+    "PREMI ANGKUT KOMPOS",
+    "PREMI ANGKUT LATERIT",
+    "PREMI ANGKUT MATERIAL",
+    "PREMI ANGKUT PC",
+    "PREMI ANGKUT PUPUK",
+    "PREMI ANGKUT PURU",
+    "PREMI ANGKUT TBK",
+    "PREMI ANGKUT TBS",
+    "PREMI BRONDOL",
+    "PREMI CIRCLE RAKING",
+    "PREMI GENSET",
+    "PREMI INSENTIF",
+    "PREMI INSENTIF PANEN",
+    "PREMI INSENTIVE PANEN",
+    "PREMI JAGA",
+    "Premi Jaga  CUci Unit",
+    "Premi Jaga Cuci Unit",
+    "PREMI JAGA GENSET",
+    "Premi Jaga Tanggung Jawab",
+    "PREMI KINERJA",
+    "PREMI LAIN PENGEMBALIAN TIKET",
+    "PREMI PPH",
+    "PREMI PPH 21",
+    "PREMI PRUNING",
+    "Premi Pupuk",
+    "Premi Raking",
+    "Premi Reking",
+    "PREMI RITASE",
+    "Premi TBS\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t BULAN :\tJAN'26\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t DIVISI\tTANGGAL\t1\t2\t3\t4\t5\t6\t7\t8\t9\t10\t11\t12\t13\t14\t15\t16\t17\t18",
+    "PREMI TBS",
+    "PREMI TIKET",
+    "SPSI",
+    "Tunjangan Beras",
+    "TUNJANGAN JABATAN",
+    "TUNJANGAN JAGA GENSET",
+    "Tunjangan Lembur",
+    "TUNJANGAN MASA KERJA",
+    "TUNJANGAN MASA KERJA",
+    "TUNJANGAN PREMI"
+  ],
+  "details": [
+    {
+      "DocDesc": "",
+      "trx_count": 2,
+      "employee_count": 2
+    },
+    {
+      "DocDesc": " Premi Ritase",
+      "trx_count": 1,
+      "employee_count": 1
+    },
+    {
+      "DocDesc": "AUTO SPSI",
+      "trx_count": 1,
+      "employee_count": 1
+    },
+    {
+      "DocDesc": "KOREKSI",
+      "trx_count": 49,
+      "employee_count": 49
+    },
+    {
+      "DocDesc": "KOREKSI BERONDOL",
+      "trx_count": 25,
+      "employee_count": 25
+    },
+    {
+      "DocDesc": "KOREKSI BRONDOL",
+      "trx_count": 90,
+      "employee_count": 90
+    },
+    {
+      "DocDesc": "KOREKSI PANEN",
+      "trx_count": 380,
+      "employee_count": 239
+    },
+    {
+      "DocDesc": "Koreksi Pemanen",
+      "trx_count": 124,
+      "employee_count": 94
+    },
+    {
+      "DocDesc": "KOREKSI PREMI",
+      "trx_count": 2,
+      "employee_count": 2
+    },
+    {
+      "DocDesc": "Potongan",
+      "trx_count": 1,
+      "employee_count": 1
+    },
+    {
+      "DocDesc": "Potongan Alat",
+      "trx_count": 1,
+      "employee_count": 1
+    },
+    {
+      "DocDesc": "Potongan Alat Panen",
+      "trx_count": 4,
+      "employee_count": 4
+    },
+    {
+      "DocDesc": "Potongan Beras",
+      "trx_count": 1,
+      "employee_count": 1
+    },
+    {
+      "DocDesc": "Potongan BPJS",
+      "trx_count": 4,
+      "employee_count": 2
+    },
+    {
+      "DocDesc": "POTONGAN HUTANG",
+      "trx_count": 1,
+      "employee_count": 1
+    },
+    {
+      "DocDesc": "POTONGAN LAIN",
+      "trx_count": 7,
+      "employee_count": 7
+    },
+    {
+      "DocDesc": "POTONGAN PPH",
+      "trx_count": 32,
+      "employee_count": 32
+    },
+    {
+      "DocDesc": "POTONGAN PPH 21",
+      "trx_count": 1149,
+      "employee_count": 901
+    },
+    {
+      "DocDesc": "POTONGAN PPH021",
+      "trx_count": 1,
+      "employee_count": 1
+    },
+    {
+      "DocDesc": "POTONGAN PPH21",
+      "trx_count": 850,
+      "employee_count": 723
+    },
+    {
+      "DocDesc": "POTONGAN PREMI",
+      "trx_count": 9,
+      "employee_count": 9
+    },
+    {
+      "DocDesc": "POTONGAN SPSI",
+      "trx_count": 5221,
+      "employee_count": 1539
+    },
+    {
+      "DocDesc": "PPH 21",
+      "trx_count": 28,
+      "employee_count": 28
+    },
+    {
+      "DocDesc": "PPH21",
+      "trx_count": 29,
+      "employee_count": 20
+    },
+    {
+      "DocDesc": "PREMI ANGKUT",
+      "trx_count": 109,
+      "employee_count": 49
+    },
+    {
+      "DocDesc": "PREMI ANGKUT BATU",
+      "trx_count": 4,
+      "employee_count": 4
+    },
+    {
+      "DocDesc": "PREMI ANGKUT BIBIT",
+      "trx_count": 7,
+      "employee_count": 7
+    },
+    {
+      "DocDesc": "PREMI ANGKUT KOMPOS",
+      "trx_count": 2,
+      "employee_count": 2
+    },
+    {
+      "DocDesc": "PREMI ANGKUT LATERIT",
+      "trx_count": 4,
+      "employee_count": 4
+    },
+    {
+      "DocDesc": "PREMI ANGKUT MATERIAL",
+      "trx_count": 55,
+      "employee_count": 35
+    },
+    {
+      "DocDesc": "PREMI ANGKUT PC",
+      "trx_count": 83,
+      "employee_count": 54
+    },
+    {
+      "DocDesc": "PREMI ANGKUT PUPUK",
+      "trx_count": 20,
+      "employee_count": 15
+    },
+    {
+      "DocDesc": "PREMI ANGKUT PURU",
+      "trx_count": 9,
+      "employee_count": 9
+    },
+    {
+      "DocDesc": "PREMI ANGKUT TBK",
+      "trx_count": 69,
+      "employee_count": 49
+    },
+    {
+      "DocDesc": "PREMI ANGKUT TBS",
+      "trx_count": 359,
+      "employee_count": 128
+    },
+    {
+      "DocDesc": "PREMI BRONDOL",
+      "trx_count": 58,
+      "employee_count": 50
+    },
+    {
+      "DocDesc": "PREMI CIRCLE RAKING",
+      "trx_count": 85,
+      "employee_count": 84
+    },
+    {
+      "DocDesc": "PREMI GENSET",
+      "trx_count": 1,
+      "employee_count": 1
+    },
+    {
+      "DocDesc": "PREMI INSENTIF",
+      "trx_count": 2,
+      "employee_count": 2
+    },
+    {
+      "DocDesc": "PREMI INSENTIF PANEN",
+      "trx_count": 374,
+      "employee_count": 235
+    },
+    {
+      "DocDesc": "PREMI INSENTIVE PANEN",
+      "trx_count": 4,
+      "employee_count": 4
+    },
+    {
+      "DocDesc": "PREMI JAGA",
+      "trx_count": 2,
+      "employee_count": 2
+    },
+    {
+      "DocDesc": "Premi Jaga  CUci Unit",
+      "trx_count": 2,
+      "employee_count": 2
+    },
+    {
+      "DocDesc": "Premi Jaga Cuci Unit",
+      "trx_count": 5,
+      "employee_count": 2
+    },
+    {
+      "DocDesc": "PREMI JAGA GENSET",
+      "trx_count": 14,
+      "employee_count": 6
+    },
+    {
+      "DocDesc": "Premi Jaga Tanggung Jawab",
+      "trx_count": 3,
+      "employee_count": 1
+    },
+    {
+      "DocDesc": "PREMI KINERJA",
+      "trx_count": 191,
+      "employee_count": 64
+    },
+    {
+      "DocDesc": "PREMI LAIN PENGEMBALIAN TIKET",
+      "trx_count": 2,
+      "employee_count": 2
+    },
+    {
+      "DocDesc": "PREMI PPH",
+      "trx_count": 987,
+      "employee_count": 942
+    },
+    {
+      "DocDesc": "PREMI PPH 21",
+      "trx_count": 94,
+      "employee_count": 93
+    },
+    {
+      "DocDesc": "PREMI PRUNING",
+      "trx_count": 1546,
+      "employee_count": 564
+    },
+    {
+      "DocDesc": "Premi Pupuk",
+      "trx_count": 98,
+      "employee_count": 50
+    },
+    {
+      "DocDesc": "Premi Raking",
+      "trx_count": 390,
+      "employee_count": 233
+    },
+    {
+      "DocDesc": "Premi Reking",
+      "trx_count": 63,
+      "employee_count": 63
+    },
+    {
+      "DocDesc": "PREMI RITASE",
+      "trx_count": 213,
+      "employee_count": 94
+    },
+    {
+      "DocDesc": "Premi TBS\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t BULAN :\tJAN'26\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t DIVISI\tTANGGAL\t1\t2\t3\t4\t5\t6\t7\t8\t9\t10\t11\t12\t13\t14\t15\t16\t17\t18\t",
+      "trx_count": 1,
+      "employee_count": 1
+    },
+    {
+      "DocDesc": "PREMI TBS",
+      "trx_count": 1292,
+      "employee_count": 592
+    },
+    {
+      "DocDesc": "PREMI TIKET",
+      "trx_count": 32,
+      "employee_count": 22
+    },
+    {
+      "DocDesc": "SPSI",
+      "trx_count": 5,
+      "employee_count": 2
+    },
+    {
+      "DocDesc": "Tunjangan Beras",
+      "trx_count": 54,
+      "employee_count": 54
+    },
+    {
+      "DocDesc": "TUNJANGAN JABATAN",
+      "trx_count": 834,
+      "employee_count": 280
+    },
+    {
+      "DocDesc": "TUNJANGAN JAGA GENSET",
+      "trx_count": 1,
+      "employee_count": 1
+    },
+    {
+      "DocDesc": "Tunjangan Lembur",
+      "trx_count": 10,
+      "employee_count": 10
+    },
+    {
+      "DocDesc": "TUNJANGAN MASA KERJA\t\t",
+      "trx_count": 1,
+      "employee_count": 1
+    },
+    {
+      "DocDesc": "TUNJANGAN MASA KERJA",
+      "trx_count": 4901,
+      "employee_count": 1501
+    },
+    {
+      "DocDesc": "TUNJANGAN PREMI",
+      "trx_count": 22,
+      "employee_count": 14
+    }
+  ]
+}

@@ -1,0 +1,316 @@
+/* ComponentMetadataTestPage Styles */
+
+.component-metadata-test-page {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Header */
+.test-header {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.test-header h1 {
+  font-size: 1.75rem;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+.test-header p {
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+/* Filters */
+.test-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-group label {
+  font-weight: 500;
+  color: #374151;
+  font-size: 0.9rem;
+}
+
+.filter-group select {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  min-width: 120px;
+}
+
+.filter-info {
+  margin-left: auto;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+/* Actions */
+.test-actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.btn-primary {
+  background: #3b82f6;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.btn-secondary {
+  background: #6b7280;
+  color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #4b5563;
+}
+
+.btn-back {
+  background: #f3f4f6;
+  color: #374151;
+  margin-bottom: 16px;
+}
+
+.btn-back:hover {
+  background: #e5e7eb;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Error Message */
+.error-message {
+  padding: 12px 16px;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  color: #991b1b;
+  margin-bottom: 16px;
+}
+
+/* Test Section */
+.test-section {
+  margin-top: 24px;
+}
+
+.test-section h2 {
+  font-size: 1.25rem;
+  color: #1f2937;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Registry Info */
+.registry-info {
+  display: flex;
+  gap: 24px;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.info-item {
+  display: flex;
+  gap: 8px;
+}
+
+.info-label {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.info-value {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.info-value.healthy {
+  color: #059669;
+}
+
+.info-value.error {
+  color: #dc2626;
+}
+
+/* Components List */
+.components-list {
+  margin-top: 16px;
+}
+
+.components-list h3 {
+  font-size: 1rem;
+  color: #374151;
+  margin-bottom: 12px;
+}
+
+.component-card {
+  padding: 12px 16px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.component-card h4 {
+  font-size: 0.95rem;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+.component-details {
+  display: flex;
+  gap: 16px;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.detail-item {
+  display: inline-block;
+}
+
+/* Payroll Summary */
+.payroll-summary {
+  display: flex;
+  gap: 24px;
+  padding: 16px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.summary-item {
+  display: flex;
+  gap: 8px;
+}
+
+.summary-label {
+  color: #047857;
+  font-weight: 500;
+}
+
+.summary-value {
+  color: #065f46;
+  font-weight: 600;
+}
+
+/* Employee List */
+.employee-list h3 {
+  font-size: 1rem;
+  color: #374151;
+  margin-bottom: 12px;
+}
+
+.employee-card {
+  padding: 16px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  transition: all 0.2s ease;
+}
+
+.employee-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+}
+
+.employee-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.employee-header strong {
+  color: #1f2937;
+  font-size: 0.95rem;
+}
+
+.employee-nik {
+  font-family: 'Courier New', monospace;
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+.employee-preview {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #059669;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.click-hint {
+  color: #3b82f6;
+  font-size: 0.8rem;
+}
+
+/* Employee Components */
+.employee-subtitle {
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin-bottom: 16px;
+}
+
+.component-section {
+  margin-top: 24px;
+  padding: 20px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.component-section h3 {
+  font-size: 1rem;
+  color: #1f2937;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #d1d5db;
+}
+
+/* No Data */
+.no-data {
+  padding: 40px;
+  text-align: center;
+  color: #9ca3af;
+  font-style: italic;
+}

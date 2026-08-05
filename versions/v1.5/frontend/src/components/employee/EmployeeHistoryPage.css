@@ -1,0 +1,190 @@
+/* EmployeeHistoryPage Styles */
+
+.employee-history-page {
+    min-height: 100vh;
+    background: #f9fafb;
+}
+
+/* Header */
+.history-page-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px;
+    background: #fff;
+    border-bottom: 1px solid #e5e7eb;
+    flex-wrap: wrap;
+}
+
+.back-btn {
+    padding: 10px 20px;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    color: #374151;
+    transition: all 0.2s ease;
+}
+
+.back-btn:hover {
+    background: #e5e7eb;
+}
+
+.period-info {
+    flex: 1;
+}
+
+.period-info h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin: 0 0 5px 0;
+    color: #1f2937;
+}
+
+.emp-code {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin: 0 0 10px 0;
+}
+
+.period-badges {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.period-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.period-badge.period-current {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.period-badge.period-historical {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.period-badge.period-future {
+    background: #e0e7ff;
+    color: #4338ca;
+}
+
+.period-display {
+    display: inline-block;
+    padding: 4px 12px;
+    background: #f3f4f6;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+/* Tabs */
+.history-tabs {
+    display: flex;
+    gap: 5px;
+    padding: 15px 20px 0;
+    background: #fff;
+    border-bottom: 1px solid #e5e7eb;
+    overflow-x: auto;
+}
+
+.history-tab {
+    padding: 10px 20px;
+    border: none;
+    background: transparent;
+    color: #6b7280;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 8px 8px 0 0;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.history-tab:hover {
+    color: #374151;
+    background: #f9fafb;
+}
+
+.history-tab.active {
+    color: #3b82f6;
+    background: #eff6ff;
+    border-bottom: 2px solid #3b82f6;
+}
+
+/* Tab Content */
+.history-tab-content {
+    padding: 20px;
+}
+
+.tab-pane {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Historical Notice */
+.historical-notice {
+    background: #fffbeb;
+    border: 1px solid #fcd34d;
+    border-radius: 8px;
+    padding: 15px 20px;
+    margin-bottom: 20px;
+}
+
+.historical-notice p {
+    margin: 0;
+    color: #92400e;
+}
+
+.historical-notice p:first-child {
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .history-page-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .back-btn {
+        width: 100%;
+    }
+
+    .period-info {
+        width: 100%;
+    }
+
+    .history-tabs {
+        padding: 10px;
+    }
+
+    .history-tab {
+        padding: 8px 12px;
+        font-size: 0.8rem;
+    }
+
+    .history-tab-content {
+        padding: 10px;
+    }
+}

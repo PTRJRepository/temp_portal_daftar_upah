@@ -1,0 +1,474 @@
+{
+  "period": {
+    "month": 3,
+    "year": 2026,
+    "label": "Maret 2026"
+  },
+  "generated_at": "2026-04-23T15:27:24.619Z",
+  "source": {
+    "mode": "history",
+    "database": "extend_db_ptrj",
+    "table": "dbo.payroll_history_header + dbo.payroll_history_detail",
+    "rule": "effective_rate = jabatan_rate (jika > 0), fallback jabatan_jumlah / kehadiran(hari_kerja|jumlah_hk)"
+  },
+  "summary": {
+    "rows_scanned": 919,
+    "valid_rows": 919,
+    "total_roles": 14,
+    "total_role_groups": 8,
+    "history_rows": 919,
+    "division_failures": 0
+  },
+  "division_failures": [],
+  "roles": [
+    {
+      "jabatan": "(PM) DRIVER",
+      "rate_tunjangan_jabatan": 3500,
+      "sample_count": 18,
+      "support_pct": 100,
+      "candidate_rates": [
+        {
+          "rate": 3500,
+          "count": 18,
+          "pct": 100
+        }
+      ]
+    },
+    {
+      "jabatan": "(PM) HARVESTING SUPERVISION",
+      "rate_tunjangan_jabatan": 3500,
+      "sample_count": 1,
+      "support_pct": 100,
+      "candidate_rates": [
+        {
+          "rate": 3500,
+          "count": 1,
+          "pct": 100
+        }
+      ]
+    },
+    {
+      "jabatan": "(PM) HELPER",
+      "rate_tunjangan_jabatan": 2500,
+      "sample_count": 13,
+      "support_pct": 100,
+      "candidate_rates": [
+        {
+          "rate": 2500,
+          "count": 13,
+          "pct": 100
+        }
+      ]
+    },
+    {
+      "jabatan": "BUNCH COUNTER",
+      "rate_tunjangan_jabatan": 2500,
+      "sample_count": 4,
+      "support_pct": 100,
+      "candidate_rates": [
+        {
+          "rate": 2500,
+          "count": 4,
+          "pct": 100
+        }
+      ]
+    },
+    {
+      "jabatan": "helper",
+      "rate_tunjangan_jabatan": 2500,
+      "sample_count": 186,
+      "support_pct": 96.24,
+      "candidate_rates": [
+        {
+          "rate": 2500,
+          "count": 179,
+          "pct": 96.24
+        },
+        {
+          "rate": 2631.58,
+          "count": 4,
+          "pct": 2.15
+        },
+        {
+          "rate": 3500,
+          "count": 2,
+          "pct": 1.08
+        },
+        {
+          "rate": 2250,
+          "count": 1,
+          "pct": 0.54
+        }
+      ]
+    },
+    {
+      "jabatan": "karyawan",
+      "rate_tunjangan_jabatan": 2500,
+      "sample_count": 90,
+      "support_pct": 100,
+      "candidate_rates": [
+        {
+          "rate": 2500,
+          "count": 90,
+          "pct": 100
+        }
+      ]
+    },
+    {
+      "jabatan": "Karyawan Nursery",
+      "rate_tunjangan_jabatan": 3500,
+      "sample_count": 2,
+      "support_pct": 100,
+      "candidate_rates": [
+        {
+          "rate": 3500,
+          "count": 2,
+          "pct": 100
+        }
+      ]
+    },
+    {
+      "jabatan": "Karyawan Panen",
+      "rate_tunjangan_jabatan": 2500,
+      "sample_count": 34,
+      "support_pct": 55.88,
+      "candidate_rates": [
+        {
+          "rate": 2500,
+          "count": 19,
+          "pct": 55.88
+        },
+        {
+          "rate": 3500,
+          "count": 15,
+          "pct": 44.12
+        }
+      ]
+    },
+    {
+      "jabatan": "karyawan perawatan",
+      "rate_tunjangan_jabatan": 3500,
+      "sample_count": 14,
+      "support_pct": 50,
+      "candidate_rates": [
+        {
+          "rate": 3500,
+          "count": 7,
+          "pct": 50
+        },
+        {
+          "rate": 2500,
+          "count": 7,
+          "pct": 50
+        }
+      ]
+    },
+    {
+      "jabatan": "kerani buah",
+      "rate_tunjangan_jabatan": 2500,
+      "sample_count": 104,
+      "support_pct": 86.54,
+      "candidate_rates": [
+        {
+          "rate": 2500,
+          "count": 90,
+          "pct": 86.54
+        },
+        {
+          "rate": 3269.23,
+          "count": 4,
+          "pct": 3.85
+        },
+        {
+          "rate": 2777.78,
+          "count": 4,
+          "pct": 3.85
+        },
+        {
+          "rate": 2763.16,
+          "count": 4,
+          "pct": 3.85
+        },
+        {
+          "rate": 2647.06,
+          "count": 2,
+          "pct": 1.92
+        }
+      ]
+    },
+    {
+      "jabatan": "kerani kantor",
+      "rate_tunjangan_jabatan": 2500,
+      "sample_count": 42,
+      "support_pct": 92.86,
+      "candidate_rates": [
+        {
+          "rate": 2500,
+          "count": 39,
+          "pct": 92.86
+        },
+        {
+          "rate": 3500,
+          "count": 3,
+          "pct": 7.14
+        }
+      ]
+    },
+    {
+      "jabatan": "mandor panen",
+      "rate_tunjangan_jabatan": 3500,
+      "sample_count": 58,
+      "support_pct": 93.1,
+      "candidate_rates": [
+        {
+          "rate": 3500,
+          "count": 54,
+          "pct": 93.1
+        },
+        {
+          "rate": 3666.67,
+          "count": 4,
+          "pct": 6.9
+        }
+      ]
+    },
+    {
+      "jabatan": "mandor perawatan",
+      "rate_tunjangan_jabatan": 3500,
+      "sample_count": 60,
+      "support_pct": 93.33,
+      "candidate_rates": [
+        {
+          "rate": 3500,
+          "count": 56,
+          "pct": 93.33
+        },
+        {
+          "rate": 3684.21,
+          "count": 4,
+          "pct": 6.67
+        }
+      ]
+    },
+    {
+      "jabatan": "operator",
+      "rate_tunjangan_jabatan": 3500,
+      "sample_count": 293,
+      "support_pct": 91.13,
+      "candidate_rates": [
+        {
+          "rate": 3500,
+          "count": 267,
+          "pct": 91.13
+        },
+        {
+          "rate": 2500,
+          "count": 24,
+          "pct": 8.19
+        },
+        {
+          "rate": 3325,
+          "count": 2,
+          "pct": 0.68
+        }
+      ]
+    }
+  ],
+  "role_groups": [
+    {
+      "role_group": "bunch counter",
+      "rate_tunjangan_jabatan": 2500,
+      "sample_count": 4,
+      "support_pct": 100,
+      "candidate_rates": [
+        {
+          "rate": 2500,
+          "count": 4,
+          "pct": 100
+        }
+      ]
+    },
+    {
+      "role_group": "driver",
+      "rate_tunjangan_jabatan": 3500,
+      "sample_count": 18,
+      "support_pct": 100,
+      "candidate_rates": [
+        {
+          "rate": 3500,
+          "count": 18,
+          "pct": 100
+        }
+      ]
+    },
+    {
+      "role_group": "harvesting supervision",
+      "rate_tunjangan_jabatan": 3500,
+      "sample_count": 1,
+      "support_pct": 100,
+      "candidate_rates": [
+        {
+          "rate": 3500,
+          "count": 1,
+          "pct": 100
+        }
+      ]
+    },
+    {
+      "role_group": "helper",
+      "rate_tunjangan_jabatan": 2500,
+      "sample_count": 199,
+      "support_pct": 96.48,
+      "candidate_rates": [
+        {
+          "rate": 2500,
+          "count": 192,
+          "pct": 96.48
+        },
+        {
+          "rate": 2631.58,
+          "count": 4,
+          "pct": 2.01
+        },
+        {
+          "rate": 3500,
+          "count": 2,
+          "pct": 1.01
+        },
+        {
+          "rate": 2250,
+          "count": 1,
+          "pct": 0.5
+        }
+      ]
+    },
+    {
+      "role_group": "karyawan",
+      "rate_tunjangan_jabatan": 2500,
+      "sample_count": 140,
+      "support_pct": 82.86,
+      "candidate_rates": [
+        {
+          "rate": 2500,
+          "count": 116,
+          "pct": 82.86
+        },
+        {
+          "rate": 3500,
+          "count": 24,
+          "pct": 17.14
+        }
+      ]
+    },
+    {
+      "role_group": "kerani",
+      "rate_tunjangan_jabatan": 2500,
+      "sample_count": 146,
+      "support_pct": 88.36,
+      "candidate_rates": [
+        {
+          "rate": 2500,
+          "count": 129,
+          "pct": 88.36
+        },
+        {
+          "rate": 3269.23,
+          "count": 4,
+          "pct": 2.74
+        },
+        {
+          "rate": 2777.78,
+          "count": 4,
+          "pct": 2.74
+        },
+        {
+          "rate": 2763.16,
+          "count": 4,
+          "pct": 2.74
+        },
+        {
+          "rate": 3500,
+          "count": 3,
+          "pct": 2.05
+        },
+        {
+          "rate": 2647.06,
+          "count": 2,
+          "pct": 1.37
+        }
+      ]
+    },
+    {
+      "role_group": "mandor",
+      "rate_tunjangan_jabatan": 3500,
+      "sample_count": 118,
+      "support_pct": 93.22,
+      "candidate_rates": [
+        {
+          "rate": 3500,
+          "count": 110,
+          "pct": 93.22
+        },
+        {
+          "rate": 3684.21,
+          "count": 4,
+          "pct": 3.39
+        },
+        {
+          "rate": 3666.67,
+          "count": 4,
+          "pct": 3.39
+        }
+      ]
+    },
+    {
+      "role_group": "operator",
+      "rate_tunjangan_jabatan": 3500,
+      "sample_count": 293,
+      "support_pct": 91.13,
+      "candidate_rates": [
+        {
+          "rate": 3500,
+          "count": 267,
+          "pct": 91.13
+        },
+        {
+          "rate": 2500,
+          "count": 24,
+          "pct": 8.19
+        },
+        {
+          "rate": 3325,
+          "count": 2,
+          "pct": 0.68
+        }
+      ]
+    }
+  ],
+  "rate_by_role_group": {
+    "bunch counter": 2500,
+    "driver": 3500,
+    "harvesting supervision": 3500,
+    "helper": 2500,
+    "karyawan": 2500,
+    "kerani": 2500,
+    "mandor": 3500,
+    "operator": 3500
+  },
+  "rate_by_jabatan": {
+    "(PM) DRIVER": 3500,
+    "(PM) HARVESTING SUPERVISION": 3500,
+    "(PM) HELPER": 2500,
+    "BUNCH COUNTER": 2500,
+    "helper": 2500,
+    "karyawan": 2500,
+    "Karyawan Nursery": 3500,
+    "Karyawan Panen": 2500,
+    "karyawan perawatan": 3500,
+    "kerani buah": 2500,
+    "kerani kantor": 2500,
+    "mandor panen": 3500,
+    "mandor perawatan": 3500,
+    "operator": 3500
+  }
+}
