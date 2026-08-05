@@ -29,14 +29,25 @@ Putusan target daftar upah ada di 4 tempat: 2 di `routes-config.json` + 2 di `ro
 | **3001** | Proxy gateway (proxy-gateway-portal, Express+Next) | RUNNING |
 | 8001 | SQL Gateway db_api (Bun/MSSQL proxy) | RUNNING |
 | **8002** | **Root app `backend/src` (PUBLISHED via proxy)** | RUNNING |
-| 8005 | v1.5 release (dev only, snapshot usang) | RUNNING |
+| **8005** | **Dev-unified `backend/src` (kode+build working tree terbaru, TANPA proxy)** | RUNNING |
 | 8007 | v2.1 release | down |
 | 5175 | Vite dev (root frontend) | RUNNING |
 | 5176 | Monitoring absen / attendance API | RUNNING |
 | 5177 | Monitoring beras | — |
 | 5178 | Google Drive file gateway | — |
 
-**Yang dipublished = :8002** (proxy arahkan kesana, sesuai putusan 2026-08-05). Root :8002 serve frontend `frontend/dist` fresh built. 8005 = dev/lama; snapshot v1.5 frontend usang (5 file styles hilang, build `versions.ps1 build` gagal krn `print-optimization.css` resolve).
+**Yang dipublished = :8002** (proxy arahkan kesana, sesuai putusan 2026-08-05). Root :8002 serve frontend `frontend/dist` fresh built.
+**8005 = dev-unified** (2026-08-05): backend `backend/src` jalan di PORT=8005, serve frontend dist **base `/`** langsung (bukan `/upah/`) — akses `http://localhost:8005/` tanpa proxy. Build base-`/` via PowerShell `$env:VITE_BASE_PATH='/'` (JANGAN lewat Git Bash — env `/` di-mangle jadi `/Program Files/Git/`). Kode & build = working tree terbaru (tonase upah kotor + CEO exec board). Snapshot v1.5 terpisah, usang.
+
+## Executive Payroll Board (CEO) — 2026-08-05
+
+- `frontend/src/pages/ExecutivePayrollPage.jsx` + `DivisionDetailCard.jsx` = board presentasi CEO.
+- **Basis data: upah KOTOR + HANYA gang PANEN (suffix H) + fokus COST/TON.** Backend `dashboardService` (getPayrollTrend/getDivisionBreakdown/getGangBreakdown/getDivisionEfficiency/getProductivityTrend/getWageSpikes) semua filter `harvestGangSql(gang_code)` + `total_upah_kotor` + `cost_per_ton`/`total_tonase`.
+- Struktur board: ReportLauncher chips → Hero KPI 5 kartu (sparkline + delta badge semantik + cross-link) → InsightStrip (wage spike alert clickable) → Tren 12-bln (Bar upah kotor + Line cost/ton dual axis) → Divisi stacked/donut/overtime/premi → Comparison → Gang section → drill-down.
+- **Drill-down L0→L5:** overview → alert → divisi (klik bar) → gang → karyawan → modal uraian gaji lengkap (backend `getDivisionDetailData` bawa `breakdown` lengkap).
+- **URL query = single source of truth (shareable):** `?month&year&division&emp`. Deep-link `?division=X` buka divisi, `?emp=CODE` buka modal karyawan. Back bersihkan param; back browser = mundur drill.
+- Tonase analysis page (`TonaseAnalysisReportPage.jsx`) juga basis upah kotor (`total_upah_kotor`, `upah_kotor_per_hk`, `upah_kotor_per_ton`).
+- **CATATAN DATA:** `total_tonase` dari `daftar_upah_aggregation_history` — bila 0, Cost/Ton tampil `-` (board tetap jalan). Isi sumber tonase untuk aktifkan metrik per-ton.
 
 ## Versions system (`versions/`)
 
