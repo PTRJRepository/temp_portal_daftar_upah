@@ -80,7 +80,7 @@ const Spark = ({ data, dataKey, color }) => (
 );
 
 // Hero KPI card
-const HeroKpiCard = ({ label, value, pct, invert, sparkData, sparkKey, color, hero, compact }) => {
+const HeroKpiCard = ({ label, value, pct, invert, sparkData, sparkKey, color, hero, compact, link, onLink }) => {
     const [hover, setHover] = React.useState(false);
     return (
         <div
@@ -91,7 +91,14 @@ const HeroKpiCard = ({ label, value, pct, invert, sparkData, sparkKey, color, he
             <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums', color: C.text, marginBottom: 8 }}>
                 {compact ? formatCompactIDR(value) : value}
             </div>
-            {pct !== null && pct !== undefined && <DeltaBadge pct={pct} invert={invert} />}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                {pct !== null && pct !== undefined && <DeltaBadge pct={pct} invert={invert} />}
+                {link && (
+                    <button onClick={() => onLink && onLink(link)} style={{ border: 'none', background: 'none', color: C.upah, fontSize: 12, fontWeight: 700, cursor: 'pointer', padding: 0 }}>
+                        Lihat detail →
+                    </button>
+                )}
+            </div>
             {sparkData && sparkKey && <div style={{ marginTop: 10 }}><Spark data={sparkData} dataKey={sparkKey} color={color} /></div>}
         </div>
     );
@@ -432,6 +439,12 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
     // Use useCallback to prevent infinite re-renders
     const fetchDivisionDetails = useCallback(async (divisionCode) => {
         setSelectedDivision(divisionCode);
+        // Sync division -> URL (deep-linkable)
+        const next = new URLSearchParams(searchParams);
+        next.set('division', divisionCode);
+        next.set('month', String(month));
+        next.set('year', String(year));
+        setSearchParams(next, { replace: true });
         setDivisionDetailsLoading(true);
         setDivisionDetails(null);
         setEmployeeData([]);
@@ -474,6 +487,7 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
         } finally {
             setDivisionDetailsLoading(false);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [token, month, year]);
 
     // Handle bar click
@@ -482,6 +496,17 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
             fetchDivisionDetails(data.name);
         }
     };
+
+    // Deep-link: buka division langsung dari URL (?division=X)
+    const urlDivision = searchParams.get('division');
+    const deepLinkDone = useRef(false);
+    useEffect(() => {
+        if (!deepLinkDone.current && urlDivision && token) {
+            deepLinkDone.current = true;
+            setSelectedFilterDivision(urlDivision); // memicu fetchDivisionDetails via effect
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [urlDivision, token]);
 
     // Load Gang Comparison Charts Data
     useEffect(() => {
@@ -691,7 +716,14 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
                     division={selectedFilterDivision}
                     data={divisionDetails}
                     loading={divisionDetailsLoading}
-                    onBack={() => setSelectedFilterDivision('ALL')}
+                    initialEmp={searchParams.get('emp')}
+                    onBack={() => {
+                        setSelectedFilterDivision('ALL');
+                        const next = new URLSearchParams(searchParams);
+                        next.delete('division');
+                        next.delete('emp');
+                        setSearchParams(next, { replace: true });
+                    }}
                 />
             ) : (
                 <div className="executive-payroll-page" style={{ padding: '2rem', backgroundColor: '#f8fafc', minHeight: '100vh', fontFamily: 'Inter, sans-serif' }}>
@@ -1115,11 +1147,11 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
                                 <div style={{ marginBottom: '1.5rem' }}>
                                     <div style={SECTION_TITLE}>Kinerja Utama — Gang Panen (Upah Kotor)</div>
                                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 20 }}>
-                                        <HeroKpiCard label="Total Upah Kotor" value={kpi.curr_wage} pct={wageChange} invert sparkData={sparkTrends} sparkKey="total_wage" color={C.upah} compact />
-                                        <HeroKpiCard label="Cost / Ton" value={costPerTon !== null ? costPerTon : null} pct={costPerTonChange} invert sparkData={sparkTrends} sparkKey="cost_per_ton" color={C.costTon} hero compact />
-                                        <HeroKpiCard label="Tonase" value={`${formatNumber(currentTrend.total_tonase || 0)} t`} pct={tonaseChange} sparkData={sparkTrends} sparkKey="total_tonase" color={C.premi} />
-                                        <HeroKpiCard label="Headcount Panen" value={formatNumber(kpi.curr_headcount)} pct={headChange} sparkData={sparkTrends} sparkKey="total_headcount" color={C.upahAccent} />
-                                        <HeroKpiCard label="Premi Share" value={`${premiShare.toFixed(1)}%`} pct={premiShareChange} invert sparkData={premiShareSpark} sparkKey="premiShareVal" color={C.lembur} />
+                                        <HeroKpiCard label="Total Upah Kotor" value={kpi.curr_wage} pct={wageChange} invert sparkData={sparkTrends} sparkKey="total_wage" color={C.upah} compact link={`/reports/summary?month=${month}&year=${year}`} onLink={navigate} />
+                                        <HeroKpiCard label="Cost / Ton" value={costPerTon !== null ? costPerTon : null} pct={costPerTonChange} invert sparkData={sparkTrends} sparkKey="cost_per_ton" color={C.costTon} hero compact link={`/reports/tonase-analysis?month=${month}&year=${year}`} onLink={navigate} />
+                                        <HeroKpiCard label="Tonase" value={`${formatNumber(currentTrend.total_tonase || 0)} t`} pct={tonaseChange} sparkData={sparkTrends} sparkKey="total_tonase" color={C.premi} link={`/reports/tonase-analysis?month=${month}&year=${year}`} onLink={navigate} />
+                                        <HeroKpiCard label="Headcount Panen" value={formatNumber(kpi.curr_headcount)} pct={headChange} sparkData={sparkTrends} sparkKey="total_headcount" color={C.upahAccent} link={`/reports/wages-rebinmas?month=${month}&year=${year}`} onLink={navigate} />
+                                        <HeroKpiCard label="Premi Share" value={`${premiShare.toFixed(1)}%`} pct={premiShareChange} invert sparkData={premiShareSpark} sparkKey="premiShareVal" color={C.lembur} link={`/reports/productivity?month=${month}&year=${year}`} onLink={navigate} />
                                     </div>
                                 </div>
                             )}

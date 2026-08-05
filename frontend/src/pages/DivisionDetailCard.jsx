@@ -10,11 +10,22 @@ const formatCurrency = (val) => {
 };
 
 
-export default function DivisionDetailCard({ division, data, loading, onBack }) {
+export default function DivisionDetailCard({ division, data, loading, onBack, initialEmp }) {
     const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'employees'
     const [employeeFilters, setEmployeeFilters] = useState({ minNetWage: 0, minOvertime: 0, minPremi: 0, search: '' });
     const [filteredEmployees, setFilteredEmployees] = useState([]);
     const [selectedEmp, setSelectedEmp] = useState(null); // drill-down uraian gaji
+
+    // Deep-link: buka modal karyawan langsung dari URL (?emp=CODE)
+    useEffect(() => {
+        if (initialEmp && data?.employees?.length) {
+            const found = data.employees.find(e => e.emp_code === initialEmp || e.nik === initialEmp || e.new_nik === initialEmp);
+            if (found) {
+                setActiveTab('employees');
+                setSelectedEmp(found);
+            }
+        }
+    }, [initialEmp, data?.employees]);
 
     // Initialize filtered employees when data changes
     useEffect(() => {
