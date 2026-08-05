@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useAuth } from '../context/AuthContext';
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-    BarChart, Bar, Cell, PieChart, Pie, Legend, LineChart, Line
+    BarChart, Bar, Cell, PieChart, Pie, Legend, LineChart, Line, ComposedChart, LabelList
 } from 'recharts';
 import { Printer } from 'lucide-react';
 import LoadingScreen from '../components/common/LoadingScreen';
@@ -31,10 +31,102 @@ const formatCurrency = (val) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
 };
 
+// Ringkas IDR: >=1e9 -> "Rp 1,24 M", >=1e6 -> "Rp 124 jt"
+const formatCompactIDR = (val) => {
+    if (val === null || val === undefined) return '-';
+    const n = Number(val);
+    if (Math.abs(n) >= 1e9) return `Rp ${(n / 1e9).toLocaleString('id-ID', { maximumFractionDigits: 2 })} M`;
+    if (Math.abs(n) >= 1e6) return `Rp ${(n / 1e6).toLocaleString('id-ID', { maximumFractionDigits: 0 })} jt`;
+    return `Rp ${n.toLocaleString('id-ID')}`;
+};
 
 const formatNumber = (val) => {
     if (val === null || val === undefined) return '-';
     return new Intl.NumberFormat('id-ID').format(val);
+};
+
+// ===== CEO BOARD VISUAL SYSTEM =====
+const C = {
+    upah: '#0F4C81', upahAccent: '#3E7CB1', premi: '#1B9E77', lembur: '#E8871A',
+    potongan: '#C0392B', costTon: '#6D28D9', warn: '#D97706', warnBg: '#FEF3C7',
+    text: '#0F172A', text2: '#475569', muted: '#64748B', border: '#E2E8F0',
+    surface: '#FFFFFF', pageBg: '#F1F5F9'
+};
+const SHADOW = '0 1px 2px rgba(15,23,42,.06), 0 4px 12px rgba(15,23,42,.06)';
+const SHADOW_HOVER = '0 8px 24px rgba(15,23,42,.12)';
+const CARD = { background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 24, boxShadow: SHADOW };
+const SECTION_TITLE = { fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: C.text2, borderLeft: `3px solid ${C.upah}`, paddingLeft: 12, marginBottom: 16 };
+
+// Delta badge: invert=true => kenaikan BURUK (cost/ton, lembur)
+const DeltaBadge = ({ pct, invert = false }) => {
+    const bad = (pct >= 0) === invert;
+    const color = bad ? C.potongan : C.premi;
+    const bg = bad ? '#FDECEA' : '#E6F6F1';
+    return (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 999, fontSize: 12, fontWeight: 700, color, background: bg }}>
+            {pct >= 0 ? '▲' : '▼'} {Math.abs(pct).toFixed(1)}% vs bln lalu
+        </span>
+    );
+};
+
+// Sparkline mini dari trends
+const Spark = ({ data, dataKey, color }) => (
+    <ResponsiveContainer width="100%" height={42}>
+        <AreaChart data={data} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
+            <Area type="monotone" dataKey={dataKey} stroke={color} strokeWidth={1.5} fill={color} fillOpacity={0.12} isAnimationActive={false} />
+        </AreaChart>
+    </ResponsiveContainer>
+);
+
+// Hero KPI card
+const HeroKpiCard = ({ label, value, pct, invert, sparkData, sparkKey, color, hero, compact }) => {
+    const [hover, setHover] = React.useState(false);
+    return (
+        <div
+            onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
+            style={{ ...CARD, padding: 20, borderTop: `3px solid ${color}`, transform: hover ? 'translateY(-2px)' : 'none', boxShadow: hover ? SHADOW_HOVER : SHADOW, transition: 'box-shadow .2s, transform .2s', ...(hero ? { border: `1.5px solid ${color}` } : {}) }}
+        >
+            <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: C.muted, marginBottom: 6 }}>{label}</div>
+            <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums', color: C.text, marginBottom: 8 }}>
+                {compact ? formatCompactIDR(value) : value}
+            </div>
+            {pct !== null && pct !== undefined && <DeltaBadge pct={pct} invert={invert} />}
+            {sparkData && sparkKey && <div style={{ marginTop: 10 }}><Spark data={sparkData} dataKey={sparkKey} color={color} /></div>}
+        </div>
+    );
+};
+
+// Insight strip: alert wage spikes + tren cost/ton
+const InsightStrip = ({ spikes, costChange, onSpikeClick }) => {
+    const items = [];
+    if (Array.isArray(spikes)) {
+        spikes.slice(0, 3).forEach(s => {
+            const pct = s.increasePercent ?? s.increase_percent ?? s.percentage ?? s.percent;
+            const code = s.gang_code ?? s.gangCode ?? s.id ?? s.name;
+            const cause = s.dominant_component ?? s.component;
+            items.push({ key: code, text: `${code} Cost/HK naik ${Number(pct || 0).toFixed(1)}%${cause ? ` — ${cause}` : ''}`, ref: code });
+        });
+    }
+    if (costChange !== null && Math.abs(costChange) > 10) {
+        items.unshift({ key: 'cost', text: `Cost/Ton ${costChange >= 0 ? 'naik' : 'turun'} ${Math.abs(costChange).toFixed(1)}% vs bulan lalu`, ref: null });
+    }
+    if (items.length === 0) {
+        return (
+            <div style={{ padding: '10px 16px', borderRadius: 10, background: '#E6F6F1', border: `1px solid ${C.premi}`, color: C.premi, fontSize: 13, fontWeight: 600 }}>
+                ✓ Tidak ada anomali signifikan bulan ini
+            </div>
+        );
+    }
+    return (
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            {items.map(it => (
+                <button key={it.key} onClick={() => it.ref && onSpikeClick && onSpikeClick(it.ref)}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 10, background: C.warnBg, border: `1px solid ${C.warn}`, color: '#92400E', fontSize: 13, fontWeight: 600, cursor: it.ref ? 'pointer' : 'default' }}>
+                    ⚠ {it.text}
+                </button>
+            ))}
+        </div>
+    );
 };
 
 export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear }) {
@@ -499,6 +591,12 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
     const prevTrend = trends[trends.length - 2] || {};
     const costPerTon = currentTrend.cost_per_ton ?? null;
     const costPerTonChange = costPerTon !== null && prevTrend.cost_per_ton ? calcChange(costPerTon, prevTrend.cost_per_ton) : 0;
+    const tonaseChange = calcChange(currentTrend.total_tonase || 0, prevTrend.total_tonase || 0);
+    const premiShare = currentTrend.total_wage > 0 ? ((currentTrend.total_premi || 0) / currentTrend.total_wage) * 100 : 0;
+    const prevPremiShare = prevTrend.total_wage > 0 ? ((prevTrend.total_premi || 0) / prevTrend.total_wage) * 100 : 0;
+    const premiShareChange = premiShare - prevPremiShare;
+    const sparkTrends = trends.slice(-12);
+    const premiShareSpark = sparkTrends.map(t => ({ ...t, premiShareVal: t.total_wage > 0 ? ((t.total_premi || 0) / t.total_wage) * 100 : 0 }));
     const reportPeriodLabel = new Date(year, month - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
     const printGeneratedAt = new Date().toLocaleString('id-ID', {
         day: '2-digit',
@@ -971,65 +1069,44 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
                     ) : (
                         <>
 
-                            {/* KPI Cards */}
+                            {/* HERO KPI ROW */}
                             {kpi && (
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-                                    <KPICard
-                                        title="Total Upah Kotor (Panen)"
-                                        value={formatCurrency(kpi.curr_wage)}
-                                        subValue={`${wageChange >= 0 ? '+' : ''}${wageChange.toFixed(1)}% vs last month`}
-                                        trend={wageChange >= 0 ? 'up' : 'down'}
-                                        color={wageChange > 5 ? 'red' : 'blue'}
-                                    />
-                                    <KPICard
-                                        title="Cost / Ton"
-                                        value={costPerTon !== null ? formatCurrency(costPerTon) : '-'}
-                                        subValue={`${costPerTonChange >= 0 ? '+' : ''}${costPerTonChange.toFixed(1)}% vs last month · ${formatNumber(currentTrend.total_tonase || 0)} ton`}
-                                        trend={costPerTonChange >= 0 ? 'up' : 'down'}
-                                        color={costPerTonChange > 5 ? 'red' : 'green'}
-                                    />
-                                    <KPICard
-                                        title="Total Overtime"
-                                        value={formatCurrency(kpi.curr_ot)}
-                                        subValue={`${otChange >= 0 ? '+' : ''}${otChange.toFixed(1)}% vs last month`}
-                                        trend={otChange >= 0 ? 'up' : 'down'}
-                                        color={otChange > 0 ? 'orange' : 'green'}
-                                    />
-                                    <KPICard
-                                        title="Headcount Panen"
-                                        value={formatNumber(kpi.curr_headcount)}
-                                        subValue={`${headChange >= 0 ? '+' : ''}${headChange.toFixed(1)}% vs last month`}
-                                        trend={headChange >= 0 ? 'up' : 'down'}
-                                        color="gray"
-                                    />
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <div style={SECTION_TITLE}>Kinerja Utama — Gang Panen (Upah Kotor)</div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 20 }}>
+                                        <HeroKpiCard label="Total Upah Kotor" value={kpi.curr_wage} pct={wageChange} invert sparkData={sparkTrends} sparkKey="total_wage" color={C.upah} compact />
+                                        <HeroKpiCard label="Cost / Ton" value={costPerTon !== null ? costPerTon : null} pct={costPerTonChange} invert sparkData={sparkTrends} sparkKey="cost_per_ton" color={C.costTon} hero compact />
+                                        <HeroKpiCard label="Tonase" value={`${formatNumber(currentTrend.total_tonase || 0)} t`} pct={tonaseChange} sparkData={sparkTrends} sparkKey="total_tonase" color={C.premi} />
+                                        <HeroKpiCard label="Headcount Panen" value={formatNumber(kpi.curr_headcount)} pct={headChange} sparkData={sparkTrends} sparkKey="total_headcount" color={C.upahAccent} />
+                                        <HeroKpiCard label="Premi Share" value={`${premiShare.toFixed(1)}%`} pct={premiShareChange} invert sparkData={premiShareSpark} sparkKey="premiShareVal" color={C.lembur} />
+                                    </div>
                                 </div>
                             )}
 
+                            {/* INSIGHT STRIP */}
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <InsightStrip spikes={wageSpikes} costChange={costPerTonChange} onSpikeClick={(code) => fetchDivisionDetails(code)} />
+                            </div>
+
                             {/* Main Trend Chart */}
-                            <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', marginBottom: '2rem' }}>
-                                <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#334155', marginBottom: '1.5rem' }}>Tren 12 Bulan Upah Kotor &amp; Cost/Ton (Gang Panen)</h3>
-                                <div style={{ height: '350px', width: '100%', minHeight: '200px' }}>
+                            <div style={{ ...CARD, marginBottom: '1.5rem' }}>
+                                <div style={SECTION_TITLE}>Tren 12 Bulan — Upah Kotor &amp; Cost/Ton</div>
+                                <div style={{ height: '380px', width: '100%', minHeight: '200px' }}>
                                     <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
-                                        <AreaChart data={trends} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                                            <defs>
-                                                <linearGradient id="colorWage" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
-                                                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                                                </linearGradient>
-                                                <linearGradient id="colorOt" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.8} />
-                                                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
-                                                </linearGradient>
-                                            </defs>
-                                            <XAxis dataKey="period" />
-                                            <YAxis tickFormatter={(val) => `${val / 1000000}M`} />
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                            <Tooltip formatter={(val) => formatCurrency(val)} />
+                                        <ComposedChart data={trends} margin={{ top: 10, right: 40, left: 0, bottom: 0 }}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={C.border} />
+                                            <XAxis dataKey="period" tick={{ fontSize: 11, fill: C.muted }} />
+                                            <YAxis yAxisId="left" tickFormatter={(val) => `${(val / 1000000).toFixed(0)}jt`} tick={{ fontSize: 11, fill: C.muted }} />
+                                            <YAxis yAxisId="right" orientation="right" tickFormatter={(val) => `${(val / 1000).toFixed(0)}k`} tick={{ fontSize: 11, fill: C.costTon }} />
+                                            <Tooltip
+                                                formatter={(val, name) => [formatCurrency(val), name]}
+                                                contentStyle={{ borderRadius: 10, border: `1px solid ${C.border}`, boxShadow: SHADOW_HOVER, fontSize: 13 }}
+                                                labelStyle={{ fontWeight: 700, color: C.text }}
+                                            />
                                             <Legend />
-                                            <Area type="monotone" dataKey="total_wage" name="Upah Kotor" stroke="#3b82f6" fillOpacity={1} fill="url(#colorWage)" />
-                                            <Area type="monotone" dataKey="total_ot" name="Overtime" stroke="#f59e0b" fillOpacity={1} fill="url(#colorOt)" />
-                                            <Line type="monotone" dataKey="cost_per_ton" name="Cost/Ton" stroke="#10b981" strokeWidth={3} dot={{ r: 3 }} />
-                                        </AreaChart>
+                                            <Bar yAxisId="left" dataKey="total_wage" name="Upah Kotor" fill={C.upah} radius={[4, 4, 0, 0]} barSize={26} />
+                                            <Line yAxisId="right" type="monotone" dataKey="cost_per_ton" name="Cost/Ton" stroke={C.costTon} strokeWidth={2.5} dot={{ r: 3 }} />
+                                        </ComposedChart>
                                     </ResponsiveContainer>
                                 </div>
                             </div>
