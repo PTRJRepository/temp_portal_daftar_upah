@@ -12,7 +12,7 @@ const formatCurrency = (val) => {
 
 export default function DivisionDetailCard({ division, data, loading, onBack, initialEmp }) {
     const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'employees'
-    const [employeeFilters, setEmployeeFilters] = useState({ minNetWage: 0, minOvertime: 0, minPremi: 0, search: '' });
+    const [employeeFilters, setEmployeeFilters] = useState({ minNetWage: 0, maxNetWage: 0, minOvertime: 0, minPremi: 0, search: '' });
     const [filteredEmployees, setFilteredEmployees] = useState([]);
     const [selectedEmp, setSelectedEmp] = useState(null); // drill-down uraian gaji
 
@@ -39,7 +39,8 @@ export default function DivisionDetailCard({ division, data, loading, onBack, in
         if (!data?.employees) return;
         const filtered = data.employees.filter(emp =>
             (emp.name.toLowerCase().includes(employeeFilters.search.toLowerCase()) || (emp.new_nik || emp.nik).includes(employeeFilters.search)) &&
-            emp.upah_bersih >= employeeFilters.minNetWage &&
+            emp.upah_bersih >= (employeeFilters.minNetWage || 0) &&
+            (!employeeFilters.maxNetWage || emp.upah_bersih <= employeeFilters.maxNetWage) &&
             emp.lembur >= employeeFilters.minOvertime &&
             emp.premi >= employeeFilters.minPremi
         );
@@ -252,16 +253,26 @@ export default function DivisionDetailCard({ division, data, loading, onBack, in
                             />
                         </div>
                         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                            {/* Min Wages Inputs */}
-                            <div style={{ display: 'flex', flexDirection: 'column', width: '150px' }}>
-                                <label style={{ fontSize: '0.85rem', fontWeight: '600', color: '#64748b', marginBottom: '0.5rem' }}>Min Net Wage</label>
-                                <input
-                                    type="number"
-                                    placeholder="0"
-                                    value={employeeFilters.minNetWage}
-                                    onChange={(e) => setEmployeeFilters(prev => ({ ...prev, minNetWage: Number(e.target.value) }))}
-                                    style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1' }}
-                                />
+                            {/* Net Wage Range */}
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <label style={{ fontSize: '0.85rem', fontWeight: '600', color: '#64748b', marginBottom: '0.5rem' }}>Upah Bersih (min – max)</label>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                    <input
+                                        type="number"
+                                        placeholder="Min"
+                                        value={employeeFilters.minNetWage || ''}
+                                        onChange={(e) => setEmployeeFilters(prev => ({ ...prev, minNetWage: Number(e.target.value) || 0 }))}
+                                        style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', width: '110px' }}
+                                    />
+                                    <span style={{ color: '#94a3b8', fontWeight: 700 }}>–</span>
+                                    <input
+                                        type="number"
+                                        placeholder="Max"
+                                        value={employeeFilters.maxNetWage || ''}
+                                        onChange={(e) => setEmployeeFilters(prev => ({ ...prev, maxNetWage: Number(e.target.value) || 0 }))}
+                                        style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', width: '110px' }}
+                                    />
+                                </div>
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', width: '150px' }}>
                                 <label style={{ fontSize: '0.85rem', fontWeight: '600', color: '#64748b', marginBottom: '0.5rem' }}>Min Overtime</label>
@@ -363,6 +374,9 @@ export default function DivisionDetailCard({ division, data, loading, onBack, in
                         <div style={{ padding: '1.5rem' }}>
                             {(() => {
                                 const b = selectedEmp.breakdown || {};
+                                const premiItems = selectedEmp.premi_items || [];
+                                const totalPremiItems = premiItems.reduce((s, x) => s + x.amount, 0);
+                                const premiPalette = ['#1B9E77', '#34A853', '#7BC47F', '#A7D7A9', '#0E7490', '#3E7CB1'];
                                 const Row = ({ label, value, bold, color }) => (
                                     <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid #f1f5f9', fontWeight: bold ? '700' : '400', color: color || '#334155' }}>
                                         <span>{label}</span><span>{formatCurrency(value)}</span>
@@ -379,6 +393,26 @@ export default function DivisionDetailCard({ division, data, loading, onBack, in
                                         <Row label="Total Premi" value={b.total_premi} />
                                         <Row label="Pendapatan Lainnya" value={b.pendapatan_lainnya} />
                                         <Row label="Jumlah Upah Kotor" value={b.jumlah_upah_kotor} bold color="#1d4ed8" />
+                                        {premiItems.length > 0 && (
+                                            <>
+                                                <div style={{ fontSize: '0.8rem', fontWeight: '700', color: '#1B9E77', textTransform: 'uppercase', margin: '1rem 0 0.5rem' }}>Uraian Premi</div>
+                                                {premiItems.map((p, i) => {
+                                                    const share = totalPremiItems > 0 ? (p.amount / totalPremiItems) * 100 : 0;
+                                                    const col = premiPalette[i % premiPalette.length];
+                                                    return (
+                                                        <div key={p.key} style={{ marginBottom: '0.6rem' }}>
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: 3 }}>
+                                                                <span style={{ color: '#334155', fontWeight: 600 }}>{p.label}</span>
+                                                                <span style={{ fontWeight: 700, color: '#166534', fontVariantNumeric: 'tabular-nums' }}>{formatCurrency(p.amount)} <span style={{ color: '#94a3b8', fontWeight: 400 }}>({share.toFixed(0)}%)</span></span>
+                                                            </div>
+                                                            <div style={{ height: 6, background: '#f1f5f9', borderRadius: 999, overflow: 'hidden' }}>
+                                                                <div style={{ height: '100%', width: `${share}%`, background: col, borderRadius: 999, transition: 'width .4s' }} />
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </>
+                                        )}
                                         <div style={{ fontSize: '0.8rem', fontWeight: '700', color: '#ef4444', textTransform: 'uppercase', margin: '1rem 0 0.5rem' }}>Potongan</div>
                                         <Row label="Koreksi" value={b.pot_koreksi} />
                                         <Row label="ASTEK Pekerja" value={b.pot_astek_pekerja} />

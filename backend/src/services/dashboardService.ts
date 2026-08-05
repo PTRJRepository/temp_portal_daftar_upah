@@ -923,7 +923,19 @@ export class DashboardService {
                 jumlah_upah_kotor: emp.jumlah_upah_kotor || 0,
                 total_potongan: emp.total_potongan || 0,
                 upah_bersih: emp.upah_bersih || 0
-            }
+            },
+            // Uraian tiap premi (per jenis, digabung per normalized_key)
+            premi_items: (() => {
+                const map = new Map();
+                for (const d of (emp.premi_details || [])) {
+                    const key = d.normalized_key || d.doc_desc || 'LAINNYA';
+                    const label = d.task_desc || d.doc_desc || key;
+                    const cur = map.get(key) || { key, label, amount: 0 };
+                    cur.amount += Number(d.amount) || 0;
+                    map.set(key, cur);
+                }
+                return [...map.values()].filter(x => x.amount > 0).sort((a, b) => b.amount - a.amount);
+            })()
         }));
 
         // 3. Aggregate Overtime by Task Type
