@@ -886,23 +886,44 @@ export class DashboardService {
             };
         }
 
-        // 2. Process Employee List for Frontend
-        // Map to a simplified structure for the grid
+        // 2. Process Employee List for Frontend — uraian gaji lengkap (sesuai kolom custom payroll table)
         const employeeList = employees.map((emp: any) => ({
             nik: emp.nik,
+            emp_code: emp.emp_code,
             name: emp.nama,
             gang: emp.gang_code,
             role: emp.jabatan_estate || 'N/A',
             // Financials
             hk: emp.jumlah_hk || 0,
-            gaji_pokok: emp.gaji_pokok || 0,
-            tunjangan: emp.total_tunjangan || 0, // Using total_tunjangan from payroll calculation
+            gaji_pokok: emp.gaji_pokok_aktual || emp.gaji_pokok || 0,
+            tunjangan: emp.total_tunjangan || 0,
             premi: emp.total_premi || 0,
             lembur: emp.lembur_jumlah || 0,
-            potongan: emp.total_potongan_bersih || 0, // Using clean deduction total
+            potongan: emp.total_potongan_bersih || 0,
             upah_bersih: emp.upah_bersih || 0,
-            // Overtime hours for filter
-            lembur_jam: emp.lembur_jam || 0
+            lembur_jam: emp.lembur_jam || 0,
+            // Uraian lengkap untuk drill-down karyawan
+            breakdown: {
+                gaji_pokok_aktual: emp.gaji_pokok_aktual || 0,
+                beras_jumlah: emp.beras_jumlah || 0,
+                jabatan_jumlah: emp.jabatan_jumlah || 0,
+                masa_kerja_jumlah: emp.masa_kerja_jumlah || 0,
+                lembur_jumlah: emp.lembur_jumlah || 0,
+                total_tunjangan: emp.total_tunjangan || 0,
+                total_premi: emp.total_premi || 0,
+                pot_koreksi: emp.pot_koreksi || 0,
+                pendapatan_lainnya: emp.pendapatan_lainnya || 0,
+                pot_astek_pekerja: emp.pot_astek_pekerja || 0,
+                pot_bpjs_kesehatan_pekerja: emp.pot_bpjs_kesehatan_pekerja || 0,
+                pot_bpjs_pensiun_pekerja: emp.pot_bpjs_pensiun_pekerja || 0,
+                pot_spsi: emp.pot_spsi || 0,
+                pot_pph21: emp.pot_pph21 || 0,
+                pot_premi_pph: emp.pot_premi_pph || 0,
+                upah_kotor: emp.upah_kotor || 0,
+                jumlah_upah_kotor: emp.jumlah_upah_kotor || 0,
+                total_potongan: emp.total_potongan || 0,
+                upah_bersih: emp.upah_bersih || 0
+            }
         }));
 
         // 3. Aggregate Overtime by Task Type

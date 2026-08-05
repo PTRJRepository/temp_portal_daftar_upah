@@ -14,6 +14,7 @@ export default function DivisionDetailCard({ division, data, loading, onBack }) 
     const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'employees'
     const [employeeFilters, setEmployeeFilters] = useState({ minNetWage: 0, minOvertime: 0, minPremi: 0, search: '' });
     const [filteredEmployees, setFilteredEmployees] = useState([]);
+    const [selectedEmp, setSelectedEmp] = useState(null); // drill-down uraian gaji
 
     // Initialize filtered employees when data changes
     useEffect(() => {
@@ -287,14 +288,21 @@ export default function DivisionDetailCard({ division, data, loading, onBack }) 
                                     <th style={{ padding: '12px', textAlign: 'right', borderBottom: '2px solid #cbd5e1', color: '#475569' }}>Basic Pay</th>
                                     <th style={{ padding: '12px', textAlign: 'right', borderBottom: '2px solid #cbd5e1', color: '#475569' }}>Overtime</th>
                                     <th style={{ padding: '12px', textAlign: 'right', borderBottom: '2px solid #cbd5e1', color: '#475569' }}>Premi</th>
-                                    <th style={{ padding: '12px', textAlign: 'right', borderBottom: '2px solid #cbd5e1', color: '#475569' }}>Deductions</th>
+                                    <th style={{ padding: '12px', textAlign: 'right', borderBottom: '2px solid #cbd5e1', color: '#475569' }}>Upah Kotor</th>
                                     <th style={{ padding: '12px', textAlign: 'right', borderBottom: '2px solid #cbd5e1', color: '#475569' }}>Net Wage</th>
+                                    <th style={{ padding: '12px', textAlign: 'center', borderBottom: '2px solid #cbd5e1', color: '#475569' }}>Uraian</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {filteredEmployees.length > 0 ? (
                                     filteredEmployees.map((emp, idx) => (
-                                        <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', backgroundColor: idx % 2 === 0 ? 'white' : '#f8fafc' }}>
+                                        <tr key={idx}
+                                            onClick={() => setSelectedEmp(emp)}
+                                            title="Klik untuk lihat uraian gaji"
+                                            style={{ borderBottom: '1px solid #e2e8f0', backgroundColor: idx % 2 === 0 ? 'white' : '#f8fafc', cursor: 'pointer' }}
+                                            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#eff6ff'}
+                                            onMouseOut={(e) => e.currentTarget.style.backgroundColor = idx % 2 === 0 ? 'white' : '#f8fafc'}
+                                        >
                                             <td style={{ padding: '12px', fontFamily: 'monospace', color: '#64748b' }}>{emp.new_nik || emp.nik}</td>
                                             <td style={{ padding: '12px', fontWeight: '600', color: '#334155' }}>{emp.name}</td>
                                             <td style={{ padding: '12px', color: '#64748b' }}>{emp.gang}</td>
@@ -307,13 +315,16 @@ export default function DivisionDetailCard({ division, data, loading, onBack }) 
                                             <td style={{ padding: '12px', textAlign: 'right', color: emp.premi > 0 ? '#10b981' : 'inherit', fontWeight: emp.premi > 0 ? '600' : 'normal' }}>
                                                 {formatCurrency(emp.premi)}
                                             </td>
-                                            <td style={{ padding: '12px', textAlign: 'right', color: '#ef4444' }}>{formatCurrency(emp.potongan)}</td>
+                                            <td style={{ padding: '12px', textAlign: 'right', fontWeight: '600', color: '#1d4ed8' }}>{formatCurrency(emp.breakdown?.jumlah_upah_kotor ?? emp.breakdown?.upah_kotor ?? 0)}</td>
                                             <td style={{ padding: '12px', textAlign: 'right', fontWeight: '700', color: '#1e293b' }}>{formatCurrency(emp.upah_bersih)}</td>
+                                            <td style={{ padding: '12px', textAlign: 'center' }}>
+                                                <span style={{ color: '#3b82f6', fontWeight: '700', fontSize: '1rem' }}>→</span>
+                                            </td>
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan="10" style={{ padding: '3rem', textAlign: 'center', color: '#94a3b8' }}>
+                                        <td colSpan="11" style={{ padding: '3rem', textAlign: 'center', color: '#94a3b8' }}>
                                             No employees found matching the current filters.
                                         </td>
                                     </tr>
@@ -323,6 +334,56 @@ export default function DivisionDetailCard({ division, data, loading, onBack }) 
                     </div>
                     <div style={{ marginTop: '1rem', color: '#64748b', fontSize: '0.9rem', textAlign: 'right' }}>
                         Showing {filteredEmployees.length} of {data.employees?.length || 0} employees
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Uraian Gaji Karyawan */}
+            {selectedEmp && (
+                <div onClick={() => setSelectedEmp(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
+                    <div onClick={(e) => e.stopPropagation()} style={{ background: 'white', borderRadius: '16px', width: '100%', maxWidth: '560px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 50px rgba(0,0,0,0.3)' }}>
+                        <div style={{ padding: '1.5rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, background: 'white' }}>
+                            <div>
+                                <div style={{ fontSize: '1.25rem', fontWeight: '800', color: '#1e293b' }}>{selectedEmp.name}</div>
+                                <div style={{ fontSize: '0.85rem', color: '#64748b' }}>{selectedEmp.new_nik || selectedEmp.nik} · {selectedEmp.gang} · {selectedEmp.role}</div>
+                            </div>
+                            <button onClick={() => setSelectedEmp(null)} style={{ border: 'none', background: '#f1f5f9', borderRadius: '8px', width: '32px', height: '32px', cursor: 'pointer', fontSize: '1rem', color: '#64748b' }}>✕</button>
+                        </div>
+                        <div style={{ padding: '1.5rem' }}>
+                            {(() => {
+                                const b = selectedEmp.breakdown || {};
+                                const Row = ({ label, value, bold, color }) => (
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid #f1f5f9', fontWeight: bold ? '700' : '400', color: color || '#334155' }}>
+                                        <span>{label}</span><span>{formatCurrency(value)}</span>
+                                    </div>
+                                );
+                                return (
+                                    <>
+                                        <div style={{ fontSize: '0.8rem', fontWeight: '700', color: '#10b981', textTransform: 'uppercase', margin: '0.5rem 0' }}>Pendapatan</div>
+                                        <Row label="Gaji Pokok Aktual" value={b.gaji_pokok_aktual} />
+                                        <Row label="Tunjangan Beras" value={b.beras_jumlah} />
+                                        <Row label="Tunjangan Jabatan" value={b.jabatan_jumlah} />
+                                        <Row label="Tunjangan Masa Kerja" value={b.masa_kerja_jumlah} />
+                                        <Row label="Lembur" value={b.lembur_jumlah} />
+                                        <Row label="Total Premi" value={b.total_premi} />
+                                        <Row label="Pendapatan Lainnya" value={b.pendapatan_lainnya} />
+                                        <Row label="Jumlah Upah Kotor" value={b.jumlah_upah_kotor} bold color="#1d4ed8" />
+                                        <div style={{ fontSize: '0.8rem', fontWeight: '700', color: '#ef4444', textTransform: 'uppercase', margin: '1rem 0 0.5rem' }}>Potongan</div>
+                                        <Row label="Koreksi" value={b.pot_koreksi} />
+                                        <Row label="ASTEK Pekerja" value={b.pot_astek_pekerja} />
+                                        <Row label="BPJS Kesehatan Pekerja" value={b.pot_bpjs_kesehatan_pekerja} />
+                                        <Row label="BPJS Pensiun Pekerja" value={b.pot_bpjs_pensiun_pekerja} />
+                                        <Row label="SPSI" value={b.pot_spsi} />
+                                        <Row label="PPh21" value={b.pot_pph21} />
+                                        <Row label="Total Potongan" value={b.total_potongan} bold color="#ef4444" />
+                                        <div style={{ marginTop: '1rem', padding: '1rem', background: '#f0fdf4', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <span style={{ fontWeight: '800', color: '#166534' }}>Upah Bersih</span>
+                                            <span style={{ fontWeight: '800', fontSize: '1.3rem', color: '#166534' }}>{formatCurrency(b.upah_bersih)}</span>
+                                        </div>
+                                    </>
+                                );
+                            })()}
+                        </div>
                     </div>
                 </div>
             )}
