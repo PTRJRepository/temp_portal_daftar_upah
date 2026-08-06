@@ -31,7 +31,13 @@ export const reportsRoutes = new Elysia({ prefix: "/reports" })
         const user = await getUserFromHeader(headers);
         return { currentUser: user };
     })
-    .onBeforeHandle(({ currentUser, set }) => {
+    .onBeforeHandle(({ currentUser, set, request }) => {
+        // SPA deep-link (GET halaman HTML, mis. /reports/executive) dibiarkan lolos ke frontend
+        // fallback; API calls (Accept: application/json / dsb) tetap wajib auth.
+        const accept = (request.headers.get("accept") || "");
+        if (request.method === "GET" && accept.includes("text/html")) {
+            return; // lanjut ke SPA fallback
+        }
         if (!currentUser) {
             set.status = 401;
             return { message: "Unauthorized" };
@@ -134,4 +140,28 @@ export const reportsRoutes = new Elysia({ prefix: "/reports" })
             set.status = 500;
             return { error: error.message || "Failed to generate Daftar Upah Excel" };
         }
+    })
+    // SPA deep-link fallback: GET /reports/<route> (tanpa ekstensi file) → index.html.
+    // Hanya untuk navigasi halaman (Accept: text/html); endpoint API spesifik sudah terdaftar di atas.
+    .get("/*", ({ params, set, request }) => {
+        const accept = (request.headers.get("accept") || "");
+        const path = params["*"] || "";
+        if (accept.includes("text/html") && !path.includes(".")) {
+            set.headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+            return Bun.file("../frontend/dist/index.html");
+        }
+        set.status = 404;
+        return { message: "Not Found" };
+    })
+    // Single-segmen SPA route: /reports/<page> (wildcard di atas hanya match multi-segmen).
+    // Param dinamai job_id karena route /reports/status/:job_id sudah ada — Elysia menolak nama param beda di lokasi sama.
+    .get("/:job_id", ({ params, set, request }) => {
+        const accept = (request.headers.get("accept") || "");
+        const page = params.job_id || "";
+        if (accept.includes("text/html") && !page.includes(".")) {
+            set.headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+            return Bun.file("../frontend/dist/index.html");
+        }
+        set.status = 404;
+        return { message: "Not Found" };
     });
