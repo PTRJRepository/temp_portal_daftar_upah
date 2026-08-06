@@ -1094,6 +1094,12 @@ function AppInner() {
         return
       }
 
+      // 2b. DEV MODE: sudah login tapi masih di /login → masuk ke app root
+      if (isAuthenticated && isLoginPath && !inProdMode) {
+        navigate('/', { replace: true })
+        return
+      }
+
       // 2. KERANI Role Redirect
       // Kerani can ONLY access: /operational, /employee/detail, /payslip-print, /hr-info, /report-pajak, /employee-directory, /pendapatan-tidak-tetap
       if (isAuthenticated && isKeraniUser) {

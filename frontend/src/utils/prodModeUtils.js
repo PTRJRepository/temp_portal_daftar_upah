@@ -21,8 +21,14 @@ export const PROD_STORAGE_KEYS = {
  * Check if running in production mode (port 3001 or production build)
  */
 export const isProdMode = () => {
-    // Check if running in production build OR accessed via port 3001
-    return import.meta.env.PROD || window.location.port === '3001' || import.meta.env.NODE_ENV === 'production'
+    // Prod (gateway) mode HANYA bila diakses lewat proxy gateway: port 3001, ATAU path diawali /upah.
+    // Direct-serve production build (mis. backend :8005/:8002 serve dist di root) BUKAN prod mode —
+    // harus pakai login internal, bukan redirect ke gateway /login (menyebabkan redirect loop).
+    if (typeof window !== 'undefined') {
+        if (window.location.port === '3001') return true
+        if (window.location.pathname.startsWith('/upah')) return true
+    }
+    return false
 }
 
 /**
