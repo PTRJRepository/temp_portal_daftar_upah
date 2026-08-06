@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import App from './App'
 import './styles/theme.css'
 import './styles/animations.css'
+import './styles/sawit-report-theme.css'
 import './utils/httpSetup'
 import 'ag-grid-enterprise'
 

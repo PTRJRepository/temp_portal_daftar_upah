@@ -1,0 +1,249 @@
+/* =====================================================================
+   Sawit Finance — global report theme override
+   Restyles the shared wsp-*/report-* classes used across all report pages
+   into the palm-green "sawit finance" visual system. Load once globally.
+   ===================================================================== */
+
+:root {
+  --sw-leaf-dark: #14532D;
+  --sw-leaf-mid: #1E7A45;
+  --sw-leaf-light: #4CBB6B;
+  --sw-upah: #1E7A45;
+  --sw-upah-accent: #3E9E63;
+  --sw-premi: #2E9E6B;
+  --sw-lembur: #D98A1F;
+  --sw-potongan: #C8463C;
+  --sw-cost-ton: #6C4FC4;
+  --sw-text: #12241A;
+  --sw-text2: #46584C;
+  --sw-muted: #7C8B80;
+  --sw-border: #DFE8E0;
+  --sw-surface: #FFFFFF;
+  --sw-surface2: #F6FAF5;
+  --sw-page-bg: #EDF3EC;
+  --sw-grid: #E4ECE2;
+  --sw-shadow: 0 1px 2px rgba(18,36,26,.05), 0 6px 18px rgba(18,36,26,.08);
+  --sw-shadow-hover: 0 14px 34px rgba(18,36,26,.16);
+}
+
+/* ---------- Page canvas ---------- */
+.wsp-container,
+.tonase-report-page,
+.wages-summary-page,
+.report-page,
+.summary-report-page,
+.analysis-report-page,
+.productivity-report-page,
+.payroll-analysis-page,
+.impact-report-page {
+  background: var(--sw-page-bg) !important;
+  font-family: 'Inter', system-ui, sans-serif;
+  color: var(--sw-text);
+}
+
+/* ---------- Top web header -> green hero band ---------- */
+.report-header-web {
+  background: linear-gradient(115deg, var(--sw-leaf-dark) 0%, var(--sw-leaf-mid) 55%, var(--sw-leaf-light) 100%) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 0 0 18px 18px;
+  padding: 1.4rem 1.8rem 1.6rem !important;
+  box-shadow: var(--sw-shadow);
+  position: relative;
+  overflow: hidden;
+}
+.report-header-web::after {
+  content: '';
+  position: absolute;
+  right: -30px; top: -40px;
+  width: 220px; height: 220px;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.14), transparent 60%);
+  pointer-events: none;
+}
+.report-header-web h1,
+.report-header-web h2,
+.report-header-web .tonase-toolbar-title h1 {
+  color: #fff !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em;
+}
+.report-header-web p,
+.report-header-web .report-header-info p {
+  color: rgba(255,255,255,.85) !important;
+}
+
+/* Title block layout */
+.tonase-toolbar-title,
+.report-header-info {
+  gap: 12px;
+}
+
+/* Back button on hero -> glassy */
+.report-header-web .wsp-btn,
+.report-header-web .tonase-back-btn,
+.wsp-btn.tonase-back-btn {
+  background: rgba(255,255,255,.16) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,.28) !important;
+  border-radius: 10px;
+  font-weight: 600;
+}
+.report-header-web .wsp-btn:hover,
+.report-header-web .tonase-back-btn:hover {
+  background: rgba(255,255,255,.26) !important;
+}
+
+/* ---------- Filter badges / selects on hero ---------- */
+.report-filter-badge,
+.report-header-web select,
+.tonase-detail-select {
+  background: rgba(255,255,255,.14) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,.28) !important;
+  border-radius: 10px !important;
+  font-weight: 600;
+}
+.report-filter-badge option,
+.report-header-web select option {
+  color: var(--sw-text);
+  background: #fff;
+}
+
+/* ---------- Primary / secondary buttons ---------- */
+.wsp-btn-primary,
+.report-header-actions .wsp-btn-primary {
+  background: linear-gradient(135deg, var(--sw-leaf-mid), var(--sw-upah-accent)) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 10px;
+  font-weight: 700;
+  box-shadow: 0 6px 16px rgba(30,122,69,.28);
+}
+.wsp-btn-secondary,
+.report-header-actions .wsp-btn-secondary {
+  background: #fff !important;
+  color: var(--sw-leaf-mid) !important;
+  border: 1px solid var(--sw-border) !important;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+/* ---------- Cards / document panels ---------- */
+.wsp-document,
+.tonase-document,
+.wsp-section,
+.tonase-section,
+.wsp-card,
+.tonase-kpi-card,
+.wsp-panel {
+  background: var(--sw-surface) !important;
+  border: 1px solid var(--sw-border) !important;
+  border-radius: 16px !important;
+  box-shadow: var(--sw-shadow) !important;
+}
+
+/* Section headers -> sawit eyebrow */
+.tonase-section-header h3,
+.wsp-section-header h3,
+.tonase-subsection-title {
+  color: var(--sw-leaf-mid) !important;
+  font-weight: 700 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.8rem !important;
+  border-left: 3px solid var(--sw-leaf-mid);
+  padding-left: 12px;
+}
+.tonase-section-header span,
+.wsp-section-header span {
+  color: var(--sw-muted) !important;
+}
+
+/* ---------- KPI cards ---------- */
+.tonase-kpi-card {
+  border-top: 3px solid var(--sw-leaf-mid) !important;
+  border-radius: 14px !important;
+}
+.tonase-kpi-label { color: var(--sw-muted) !important; text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.72rem !important; font-weight: 700 !important; }
+.tonase-kpi-value { color: var(--sw-text) !important; font-weight: 800 !important; font-variant-numeric: tabular-nums; }
+.tonase-kpi-note { color: var(--sw-text2) !important; }
+
+/* ---------- Tables ---------- */
+.wsp-table,
+.tonase-detail-table,
+.division-breakdown-table,
+.premium-breakdown-table,
+.tonase-summary-table,
+.tonase-detail-mode-table {
+  border-collapse: separate !important;
+  border-spacing: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--sw-border) !important;
+}
+.wsp-table thead th,
+.tonase-detail-table thead th,
+.division-breakdown-table thead th,
+.premium-breakdown-table thead th,
+.tonase-summary-table thead th,
+.tonase-detail-mode-table thead th {
+  background: var(--sw-surface2) !important;
+  color: var(--sw-leaf-mid) !important;
+  font-weight: 700 !important;
+  text-transform: uppercase;
+  font-size: 0.72rem !important;
+  letter-spacing: 0.06em;
+  border-bottom: 2px solid var(--sw-border) !important;
+}
+.wsp-table tbody tr,
+.tonase-detail-table tbody tr,
+.division-breakdown-table tbody tr,
+.premium-breakdown-table tbody tr {
+  border-bottom: 1px solid var(--sw-grid) !important;
+}
+.wsp-table tbody tr:hover,
+.tonase-detail-table tbody tr:hover,
+.tonase-clickable-row:hover {
+  background: #F0F7F0 !important;
+}
+.tonase-selected-row {
+  background: #E4F4EB !important;
+  box-shadow: inset 3px 0 0 var(--sw-leaf-mid);
+}
+
+/* ---------- Mode tabs ---------- */
+.tonase-mode-tabs button {
+  background: var(--sw-surface2) !important;
+  color: var(--sw-text2) !important;
+  border: 1px solid var(--sw-border) !important;
+  border-radius: 999px;
+  font-weight: 600;
+}
+.tonase-mode-tabs button.active {
+  background: var(--sw-leaf-mid) !important;
+  color: #fff !important;
+  border-color: var(--sw-leaf-mid) !important;
+}
+
+/* ---------- Warning strip ---------- */
+.tonase-warning-strip {
+  background: var(--sw-warn-bg, #FBF1DE) !important;
+  border: 1px solid #EDD9B4 !important;
+  color: var(--sw-lembur) !important;
+  border-radius: 12px !important;
+}
+
+/* ---------- Active scope badge ---------- */
+.tonase-active-scope {
+  background: var(--sw-surface2) !important;
+  border: 1px solid var(--sw-border) !important;
+  border-radius: 12px !important;
+  color: var(--sw-text2) !important;
+}
+.tonase-active-scope strong { color: var(--sw-leaf-mid) !important; }
+
+/* ---------- Footer ---------- */
+.wsp-footer {
+  color: var(--sw-muted) !important;
+  border-top: 1px solid var(--sw-border) !important;
+}
