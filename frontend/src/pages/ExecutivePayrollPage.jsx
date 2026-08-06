@@ -46,26 +46,27 @@ const formatNumber = (val) => {
     return new Intl.NumberFormat('id-ID').format(val);
 };
 
-// ===== CEO BOARD VISUAL SYSTEM =====
+// ===== CEO BOARD VISUAL SYSTEM — SAWIT FINANCE (light, elegan, hijau daun) =====
 const C = {
-    upah: '#0F4C81', upahAccent: '#3E7CB1', premi: '#1B9E77', lembur: '#E8871A',
-    potongan: '#C0392B', costTon: '#6D28D9', warn: '#D97706', warnBg: '#FEF3C7',
-    text: '#0F172A', text2: '#475569', muted: '#64748B', border: '#E2E8F0',
-    surface: '#FFFFFF', pageBg: '#F1F5F9'
+    upah: '#1E7A45', upahAccent: '#3E9E63', premi: '#2E9E6B', lembur: '#D98A1F',
+    potongan: '#C8463C', costTon: '#6C4FC4', warn: '#D98A1F', warnBg: '#FBF1DE',
+    text: '#12241A', text2: '#46584C', muted: '#7C8B80', border: '#DFE8E0',
+    surface: '#FFFFFF', surface2: '#F6FAF5', pageBg: '#EDF3EC', gridLine: '#E4ECE2',
+    leafDark: '#14532D', leafMid: '#1E7A45', leafLight: '#4CBB6B', cream: '#F7F9F4'
 };
-const SHADOW = '0 1px 2px rgba(15,23,42,.06), 0 4px 12px rgba(15,23,42,.06)';
-const SHADOW_HOVER = '0 8px 24px rgba(15,23,42,.12)';
-const CARD = { background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 24, boxShadow: SHADOW };
-const SECTION_TITLE = { fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: C.text2, borderLeft: `3px solid ${C.upah}`, paddingLeft: 12, marginBottom: 16 };
+const SHADOW = '0 1px 2px rgba(18,36,26,.05), 0 6px 18px rgba(18,36,26,.08)';
+const SHADOW_HOVER = '0 14px 34px rgba(18,36,26,.16)';
+const CARD = { background: C.surface, borderRadius: 16, border: `1px solid ${C.border}`, padding: 24, boxShadow: SHADOW };
+const SECTION_TITLE = { fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: C.leafMid, borderLeft: `3px solid ${C.leafMid}`, paddingLeft: 12, marginBottom: 16 };
 
 // Delta badge: invert=true => kenaikan BURUK (cost/ton, lembur)
 const DeltaBadge = ({ pct, invert = false }) => {
     const bad = (pct >= 0) === invert;
     const color = bad ? C.potongan : C.premi;
-    const bg = bad ? '#FDECEA' : '#E6F6F1';
+    const bg = bad ? '#FBE9E6' : '#E4F4EB';
     return (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 999, fontSize: 12, fontWeight: 700, color, background: bg }}>
-            {pct >= 0 ? '▲' : '▼'} {Math.abs(pct).toFixed(1)}% vs bln lalu
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 999, fontSize: 11.5, fontWeight: 700, color, background: bg, border: `1px solid ${bad ? '#F0CFC9' : '#C4E6D2'}` }}>
+            {pct >= 0 ? '▲' : '▼'} {Math.abs(pct).toFixed(1)}%
         </span>
     );
 };
@@ -79,16 +80,22 @@ const Spark = ({ data, dataKey, color }) => (
     </ResponsiveContainer>
 );
 
-// Hero KPI card
+// Hero KPI card — terminal pro: glow aksen kiri, angka besar tabular
 const HeroKpiCard = ({ label, value, pct, invert, sparkData, sparkKey, color, hero, compact, link, onLink }) => {
     const [hover, setHover] = React.useState(false);
     return (
         <div
             onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
-            style={{ ...CARD, padding: 20, borderTop: `3px solid ${color}`, transform: hover ? 'translateY(-2px)' : 'none', boxShadow: hover ? SHADOW_HOVER : SHADOW, transition: 'box-shadow .2s, transform .2s', ...(hero ? { border: `1.5px solid ${color}` } : {}) }}
+            style={{
+                ...CARD, padding: '18px 20px', position: 'relative', overflow: 'hidden',
+                transform: hover ? 'translateY(-2px)' : 'none', boxShadow: hover ? SHADOW_HOVER : SHADOW,
+                transition: 'box-shadow .2s, transform .2s',
+                ...(hero ? { border: `1px solid ${color}55`, boxShadow: `${SHADOW}, 0 0 24px ${color}22` } : {})
+            }}
         >
-            <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: C.muted, marginBottom: 6 }}>{label}</div>
-            <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums', color: C.text, marginBottom: 8 }}>
+            <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: color, borderRadius: '4px 0 0 4px' }} />
+            <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: C.muted, marginBottom: 8 }}>{label}</div>
+            <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums', color: C.text, marginBottom: 8, lineHeight: 1 }}>
                 {compact ? formatCompactIDR(value) : value}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
@@ -99,17 +106,17 @@ const HeroKpiCard = ({ label, value, pct, invert, sparkData, sparkKey, color, he
                     </button>
                 )}
             </div>
-            {sparkData && sparkKey && <div style={{ marginTop: 10 }}><Spark data={sparkData} dataKey={sparkKey} color={color} /></div>}
+            {sparkData && sparkKey && <div style={{ marginTop: 12 }}><Spark data={sparkData} dataKey={sparkKey} color={color} /></div>}
         </div>
     );
 };
 
 // Report launcher — navigasi ke report spoke, bawa month/year
 const REPORT_LINKS = [
-    { key: 'tonase', label: 'Cost per Ton', route: '/reports/tonase-analysis' },
-    { key: 'summary', label: 'Ringkasan', route: '/reports/summary' },
-    { key: 'wages', label: 'Upah Rebinmas', route: '/reports/wages-rebinmas' },
-    { key: 'productivity', label: 'Produktivitas', route: '/reports/productivity' },
+    { key: 'tonase', label: 'Cost per Ton', route: '/tonase-analysis' },
+    { key: 'summary', label: 'Ringkasan', route: '/summary' },
+    { key: 'wages', label: 'Upah Rebinmas', route: '/wages-rebinmas' },
+    { key: 'productivity', label: 'Produktivitas', route: '/productivity' },
     { key: 'gang', label: 'Perbandingan Gang', route: '/gang-comparison-report' },
 ];
 const ReportLauncher = ({ month, year, onNavigate }) => (
@@ -142,7 +149,7 @@ const InsightStrip = ({ spikes, costChange, onSpikeClick }) => {
     }
     if (items.length === 0) {
         return (
-            <div style={{ padding: '10px 16px', borderRadius: 10, background: '#E6F6F1', border: `1px solid ${C.premi}`, color: C.premi, fontSize: 13, fontWeight: 600 }}>
+            <div style={{ padding: '10px 16px', borderRadius: 10, background: '#E4F4EB', border: `1px solid #C4E6D2`, color: C.premi, fontSize: 13, fontWeight: 600 }}>
                 ✓ Tidak ada anomali signifikan bulan ini
             </div>
         );
@@ -151,7 +158,7 @@ const InsightStrip = ({ spikes, costChange, onSpikeClick }) => {
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             {items.map(it => (
                 <button key={it.key} onClick={() => it.ref && onSpikeClick && onSpikeClick(it.ref)}
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 10, background: C.warnBg, border: `1px solid ${C.warn}`, color: '#92400E', fontSize: 13, fontWeight: 600, cursor: it.ref ? 'pointer' : 'default' }}>
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 10, background: C.warnBg, border: `1px solid #EDD9B4`, color: C.lembur, fontSize: 13, fontWeight: 600, cursor: it.ref ? 'pointer' : 'default' }}>
                     ⚠ {it.text}
                 </button>
             ))}
@@ -726,14 +733,19 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
                     }}
                 />
             ) : (
-                <div className="executive-payroll-page" style={{ padding: '2rem', backgroundColor: '#f8fafc', minHeight: '100vh', fontFamily: 'Inter, sans-serif' }}>
-                    {/* Header */}
-                    <div className="executive-page-header no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                        <div>
-                            <h1 style={{ fontSize: '1.8rem', fontWeight: '800', color: '#1e293b', margin: 0 }}>Daftar Upah Analysis Keseluruhan</h1>
-                            <p style={{ color: '#64748b', marginTop: '0.25rem' }}>Overview of financial and operational metrics</p>
-                        </div>
-                        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                <div className="executive-payroll-page" style={{ background: C.pageBg, minHeight: '100vh', fontFamily: 'Inter, sans-serif' }}>
+                    {/* HERO HEADER — gradasi sawit + motif daun */}
+                    <div className="executive-page-header no-print" style={{ position: 'relative', overflow: 'hidden', background: `linear-gradient(115deg, ${C.leafDark} 0%, ${C.leafMid} 55%, ${C.leafLight} 100%)`, padding: '2rem 2.5rem 4.6rem', color: '#fff', marginBottom: 0 }}>
+                        {/* motif daun */}
+                        <svg style={{ position: 'absolute', right: -20, top: -30, opacity: 0.14 }} width="340" height="340" viewBox="0 0 100 100" fill="none"><path d="M50 0 C60 25 75 40 100 50 C75 60 60 75 50 100 C40 75 25 60 0 50 C25 40 40 25 50 0 Z" fill="#fff"/></svg>
+                        <svg style={{ position: 'absolute', right: 130, bottom: -50, opacity: 0.10 }} width="220" height="220" viewBox="0 0 100 100" fill="none"><path d="M50 0 C60 25 75 40 100 50 C75 60 60 75 50 100 C40 75 25 60 0 50 C25 40 40 25 50 0 Z" fill="#fff"/></svg>
+                        <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+                            <div>
+                                <div style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', opacity: 0.85, marginBottom: 6 }}>Perkebunan Sawit · Executive</div>
+                                <h1 style={{ fontSize: '2rem', fontWeight: '800', color: '#fff', margin: 0, letterSpacing: '-0.02em' }}>Daftar Upah Analysis</h1>
+                                <p style={{ color: 'rgba(255,255,255,0.85)', marginTop: '0.4rem', fontSize: '0.92rem' }}>Kinerja biaya panen · upah kotor · cost per ton — {reportPeriodLabel}</p>
+                            </div>
+                            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
                             {/* Cost/HK Report Button */}
                             <button
                                 onClick={() => setShowCostHKReport(!showCostHKReport)}
@@ -901,8 +913,12 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
                                     </select>
                                 </>
                             )}
+                            </div>
                         </div>
                     </div>
+
+                    {/* CONTENT WRAPPER — overlap hero */}
+                    <div style={{ maxWidth: 1320, margin: '0 auto', padding: '0 2.5rem 3rem', marginTop: '-3rem', position: 'relative' }}>
 
                     {!showCostHKReport && (
                         <section id="executive-print-report" className="executive-print-report print-only">
@@ -1147,11 +1163,11 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
                                 <div style={{ marginBottom: '1.5rem' }}>
                                     <div style={SECTION_TITLE}>Kinerja Utama — Gang Panen (Upah Kotor)</div>
                                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 20 }}>
-                                        <HeroKpiCard label="Total Upah Kotor" value={kpi.curr_wage} pct={wageChange} invert sparkData={sparkTrends} sparkKey="total_wage" color={C.upah} compact link={`/reports/summary?month=${month}&year=${year}`} onLink={navigate} />
-                                        <HeroKpiCard label="Cost / Ton" value={costPerTon !== null ? costPerTon : null} pct={costPerTonChange} invert sparkData={sparkTrends} sparkKey="cost_per_ton" color={C.costTon} hero compact link={`/reports/tonase-analysis?month=${month}&year=${year}`} onLink={navigate} />
-                                        <HeroKpiCard label="Tonase" value={`${formatNumber(currentTrend.total_tonase || 0)} t`} pct={tonaseChange} sparkData={sparkTrends} sparkKey="total_tonase" color={C.premi} link={`/reports/tonase-analysis?month=${month}&year=${year}`} onLink={navigate} />
-                                        <HeroKpiCard label="Headcount Panen" value={formatNumber(kpi.curr_headcount)} pct={headChange} sparkData={sparkTrends} sparkKey="total_headcount" color={C.upahAccent} link={`/reports/wages-rebinmas?month=${month}&year=${year}`} onLink={navigate} />
-                                        <HeroKpiCard label="Premi Share" value={`${premiShare.toFixed(1)}%`} pct={premiShareChange} invert sparkData={premiShareSpark} sparkKey="premiShareVal" color={C.lembur} link={`/reports/productivity?month=${month}&year=${year}`} onLink={navigate} />
+                                        <HeroKpiCard label="Total Upah Kotor" value={kpi.curr_wage} pct={wageChange} invert sparkData={sparkTrends} sparkKey="total_wage" color={C.upah} compact link={`/summary?month=${month}&year=${year}`} onLink={navigate} />
+                                        <HeroKpiCard label="Cost / Ton" value={costPerTon !== null ? costPerTon : null} pct={costPerTonChange} invert sparkData={sparkTrends} sparkKey="cost_per_ton" color={C.costTon} hero compact link={`/tonase-analysis?month=${month}&year=${year}`} onLink={navigate} />
+                                        <HeroKpiCard label="Tonase" value={`${formatNumber(currentTrend.total_tonase || 0)} t`} pct={tonaseChange} sparkData={sparkTrends} sparkKey="total_tonase" color={C.premi} link={`/tonase-analysis?month=${month}&year=${year}`} onLink={navigate} />
+                                        <HeroKpiCard label="Headcount Panen" value={formatNumber(kpi.curr_headcount)} pct={headChange} sparkData={sparkTrends} sparkKey="total_headcount" color={C.upahAccent} link={`/wages-rebinmas?month=${month}&year=${year}`} onLink={navigate} />
+                                        <HeroKpiCard label="Premi Share" value={`${premiShare.toFixed(1)}%`} pct={premiShareChange} invert sparkData={premiShareSpark} sparkKey="premiShareVal" color={C.lembur} link={`/productivity?month=${month}&year=${year}`} onLink={navigate} />
                                     </div>
                                 </div>
                             )}
@@ -1614,6 +1630,7 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
                         </>
                     )}
                     </div>
+                </div>
                 </div>
             )}
         </>
