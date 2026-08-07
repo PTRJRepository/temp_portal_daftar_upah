@@ -32,9 +32,9 @@ export const chartPalette = [
  * judul display besar, meta sebagai teks. Tanpa gradient/motif/glass.
  * Props: title, subtitle, period (string), actions (ReactNode), eyebrow (small over-label)
  */
-export function ReportHero({ title, subtitle, period, eyebrow = 'Portal Estate · Daftar Upah', actions }) {
+export function ReportHero({ title, subtitle, period, eyebrow = 'Portal Estate · Daftar Upah', actions, className }) {
     return (
-        <div style={{ background: C.cream, borderBottom: `1px solid ${C.border}`, padding: '1.75rem 2.4rem 1.6rem', color: C.text }}>
+        <div className={className} style={{ background: C.cream, borderBottom: `1px solid ${C.border}`, padding: '1.75rem 2.4rem 1.6rem', color: C.text }}>
             <div style={{ maxWidth: 1320, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '1.25rem', flexWrap: 'wrap' }}>
                 <div style={{ minWidth: 0 }}>
                     {eyebrow && (
@@ -79,8 +79,9 @@ export function DeltaBadge({ pct, invert = false }) {
     );
 }
 
-/** StatCard — ledger cell: flat, hairline, angka mono tabular, tick semantik tipis. */
-export function StatCard({ label, value, note, color = C.upah, pct, invert }) {
+/** StatCard — ledger cell: flat, hairline, angka mono tabular, tick semantik tipis.
+ *  Prop opsional: badge (pill kecil di samping label), sparkline (ReactNode di kanan kartu). */
+export function StatCard({ label, value, note, color = C.upah, pct, invert, badge, sparkline }) {
     const [hover, setHover] = React.useState(false);
     return (
         <div
@@ -88,11 +89,21 @@ export function StatCard({ label, value, note, color = C.upah, pct, invert }) {
             style={{ ...CARD, padding: '16px 18px', borderColor: hover ? C.leafLight : C.border, transition: 'border-color .15s' }}
         >
             <div style={{ width: 24, height: 2, background: color, marginBottom: 10 }} />
-            <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: C.muted, marginBottom: 6 }}>{label}</div>
-            <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums', color: C.text, lineHeight: 1.05, marginBottom: 6, fontFamily: 'var(--font-mono)' }}>{value}</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                {pct !== undefined && <DeltaBadge pct={pct} invert={invert} />}
-                {note && <span style={{ fontSize: 11.5, color: C.text2 }}>{note}</span>}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: C.muted }}>{label}</div>
+                {badge && (
+                    <span style={{ fontSize: 9, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: C.premi, background: '#E3EFEC', border: '1px solid #BFD8D3', borderRadius: 999, padding: '1px 7px' }}>{badge}</span>
+                )}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 10 }}>
+                <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums', color: C.text, lineHeight: 1.05, marginBottom: 6, fontFamily: 'var(--font-mono)' }}>{value}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                        {pct !== undefined && <DeltaBadge pct={pct} invert={invert} />}
+                        {note && <span style={{ fontSize: 11.5, color: C.text2 }}>{note}</span>}
+                    </div>
+                </div>
+                {sparkline && <div style={{ width: 88, height: 36, flexShrink: 0 }}>{sparkline}</div>}
             </div>
         </div>
     );
@@ -252,6 +263,26 @@ export function EmptyState({ title = 'Data belum tersedia', message, actionLabel
                     {actionLabel}
                 </button>
             )}
+        </div>
+    );
+}
+
+/** Skeleton — blok loading pulse halus. Prop: height (px). */
+export function Skeleton({ height = 120 }) {
+    return (
+        <div style={{ height, borderRadius: 10, background: C.surface2, border: `1px solid ${C.border}`, animation: 'elPulse 1.4s ease-in-out infinite' }}>
+            <style>{`@keyframes elPulse{0%,100%{opacity:.55}50%{opacity:1}}`}</style>
+        </div>
+    );
+}
+
+/** SectionHeader — judul section konsisten: SECTION_TITLE + meta kecil + garis. */
+export function SectionHeader({ title, meta }) {
+    return (
+        <div style={{ marginBottom: '0.9rem', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ ...SECTION_TITLE, marginBottom: 0 }}>{title}</span>
+            {meta && <span style={{ fontSize: 11, color: C.muted }}>{meta}</span>}
+            <span style={{ flex: 1, height: 1, background: C.border }} />
         </div>
     );
 }
