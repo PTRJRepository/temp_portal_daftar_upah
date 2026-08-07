@@ -1,57 +1,47 @@
 /* ============================================
-   Modern Dashboard Styles
-   Premium UI with Animated Mesh Gradient & Glassmorphism
+   Modern Dashboard Styles — Estate Ledger
+   Flat ledger surface; tanpa mesh gradient & glassmorphism.
+   Class names preserved for MonthPicker / DivisionTabs / GangCardGrid dll.
    ============================================ */
 
-/* Google Fonts - Inter for modern typography */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+/* Google Fonts loaded in index.html <link> (Sora/Inter/Roboto Mono) */
 
 /* ============================================
-   Extended Color Palette
+   Extended Color Palette (alias ke tokens.css)
    ============================================ */
 :root {
-    /* Emerald Greens */
-    --emerald-50: #ecfdf5;
-    --emerald-100: #d1fae5;
-    --emerald-200: #a7f3d0;
-    --emerald-300: #6ee7b7;
-    --emerald-400: #34d399;
-    --emerald-500: #10b981;
-    --emerald-600: #059669;
-    --emerald-700: #047857;
-    --emerald-800: #065f46;
-    --emerald-900: #064e3b;
+    /* Estate semantic aliases — konsumen lama emerald/teal/gold */
+    --emerald-50: var(--color-accent-soft);
+    --emerald-100: #D9E8DD;
+    --emerald-200: #C4DBC8;
+    --emerald-300: #9CC3A6;
+    --emerald-400: var(--color-leaf-light);
+    --emerald-500: var(--color-leaf-mid);
+    --emerald-600: var(--color-leaf-mid);
+    --emerald-700: var(--color-leaf-dark);
+    --emerald-800: var(--color-leaf-dark);
+    --emerald-900: var(--color-ink);
 
-    /* Deep Teal */
-    --teal-50: #f0fdfa;
-    --teal-100: #ccfbf1;
-    --teal-200: #99f6e4;
-    --teal-300: #5eead4;
-    --teal-400: #2dd4bf;
-    --teal-500: #14b8a6;
-    --teal-600: #0d9488;
-    --teal-700: #0f766e;
-    --teal-800: #115e59;
-    --teal-900: #134e4a;
+    --teal-50: #E4EFEC;
+    --teal-100: #CFE3DE;
+    --teal-400: #2A8A80;
+    --teal-500: #0F766E;
 
-    /* Gold Accents */
-    --gold-400: #facc15;
-    --gold-500: #eab308;
-    --gold-600: #ca8a04;
+    --gold-400: #D9A441;
+    --gold-500: var(--color-warn);
+    --gold-600: #9A4A0F;
 
-    /* Modern Dashboard */
-    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    --font-display: 'Plus Jakarta Sans', 'Inter', sans-serif;
+    --font-sans: var(--font-body);
 
-    /* Glassmorphism */
-    --glass-bg: rgba(255, 255, 255, 0.85);
-    --glass-border: rgba(255, 255, 255, 0.5);
-    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    --glass-blur: 12px;
+    /* Flat surface aliases (glass dihilangkan) */
+    --glass-bg: var(--color-surface);
+    --glass-border: var(--color-rule);
+    --glass-shadow: var(--shadow);
+    --glass-blur: 0px;
 }
 
 /* ============================================
-   Animated Mesh Gradient Background
+   Page background — paper datar (animasi mesh dimatikan)
    ============================================ */
 .modern-dashboard-bg {
     position: fixed;
@@ -59,68 +49,24 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background:
-        radial-gradient(ellipse at 20% 30%, rgba(16, 185, 129, 0.25) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 20%, rgba(20, 184, 166, 0.2) 0%, transparent 45%),
-        radial-gradient(ellipse at 40% 80%, rgba(6, 78, 59, 0.15) 0%, transparent 50%),
-        radial-gradient(ellipse at 90% 80%, rgba(16, 185, 129, 0.15) 0%, transparent 40%),
-        linear-gradient(135deg, #f0fdf4 0%, #ffffff 50%, #f0fdfa 100%);
-    background-size: 200% 200%;
-    animation: meshGradientMove 20s ease-in-out infinite;
+    background: var(--color-pagebg);
     z-index: -1;
 }
 
-@keyframes meshGradientMove {
-
-    0%,
-    100% {
-        background-position: 0% 0%;
-    }
-
-    25% {
-        background-position: 50% 25%;
-    }
-
-    50% {
-        background-position: 100% 50%;
-    }
-
-    75% {
-        background-position: 50% 75%;
-    }
-}
-
-/* Overlay for additional depth */
-.modern-dashboard-bg::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background:
-        radial-gradient(circle at 30% 70%, rgba(52, 211, 153, 0.1) 0%, transparent 40%),
-        radial-gradient(circle at 70% 30%, rgba(45, 212, 191, 0.08) 0%, transparent 35%);
-    animation: meshGradientMove 25s ease-in-out infinite reverse;
-}
-
 /* ============================================
-   Glassmorphism Card Container
+   Card Container — flat ledger card
    ============================================ */
 .glass-card {
-    background: var(--glass-bg);
-    backdrop-filter: blur(var(--glass-blur));
-    -webkit-backdrop-filter: blur(var(--glass-blur));
-    border-radius: 24px;
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--glass-shadow);
+    background: var(--color-surface);
+    border-radius: 10px;
+    border: 1px solid var(--color-rule);
+    box-shadow: var(--shadow);
     padding: 2.5rem;
-    transition: all 0.3s ease;
+    transition: border-color 0.15s ease;
 }
 
 .glass-card:hover {
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
-    transform: translateY(-2px);
+    border-color: var(--color-leaf-light);
 }
 
 .glass-card-header {
@@ -132,7 +78,7 @@
     font-family: var(--font-display);
     font-size: 1.75rem;
     font-weight: 700;
-    color: var(--emerald-900);
+    color: var(--color-ink);
     margin: 0 0 0.5rem 0;
     display: flex;
     align-items: center;
@@ -141,7 +87,7 @@
 }
 
 .glass-card-subtitle {
-    color: var(--neutral-500);
+    color: var(--color-muted);
     font-size: 0.95rem;
     margin: 0;
 }
@@ -158,22 +104,21 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: white;
-    border: 2px solid var(--neutral-200);
-    border-radius: 12px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-rule);
+    border-radius: 8px;
     padding: 0.75rem 1rem;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: border-color 0.15s ease;
 }
 
 .month-picker-display:hover {
-    border-color: var(--emerald-400);
-    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+    border-color: var(--color-leaf-light);
 }
 
 .month-picker-display.active {
-    border-color: var(--emerald-500);
-    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15);
+    border-color: var(--color-leaf-mid);
+    box-shadow: 0 0 0 3px var(--color-accent-soft);
 }
 
 .month-picker-arrow {
@@ -183,8 +128,8 @@
     align-items: center;
     justify-content: center;
     border-radius: 8px;
-    background: var(--neutral-50);
-    color: var(--neutral-600);
+    background: var(--color-surface-2);
+    color: var(--color-ink-2);
     font-size: 1.1rem;
     font-weight: 600;
     cursor: pointer;
@@ -193,27 +138,27 @@
 }
 
 .month-picker-arrow:hover {
-    background: var(--emerald-100);
-    color: var(--emerald-700);
+    background: var(--color-accent-soft);
+    color: var(--color-leaf-dark);
 }
 
 .month-picker-arrow:active {
-    transform: scale(0.95);
+    transform: scale(0.97);
 }
 
 .month-picker-current {
     font-family: var(--font-display);
     font-size: 1.25rem;
     font-weight: 700;
-    color: var(--neutral-800);
+    color: var(--color-ink);
     cursor: pointer;
     padding: 0.5rem 1rem;
     border-radius: 8px;
-    transition: background 0.2s;
+    transition: background 0.15s;
 }
 
 .month-picker-current:hover {
-    background: var(--neutral-50);
+    background: var(--color-surface-2);
 }
 
 /* Month Grid Dropdown */
@@ -222,10 +167,10 @@
     top: calc(100% + 8px);
     left: 0;
     right: 0;
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-    border: 1px solid var(--neutral-200);
+    background: var(--color-surface);
+    border-radius: 10px;
+    box-shadow: var(--shadow-hover);
+    border: 1px solid var(--color-rule);
     padding: 1rem;
     z-index: 100;
     animation: dropdownSlide 0.2s ease;
@@ -234,7 +179,7 @@
 @keyframes dropdownSlide {
     from {
         opacity: 0;
-        transform: translateY(-8px);
+        transform: translateY(-6px);
     }
 
     to {
@@ -249,14 +194,14 @@
     justify-content: space-between;
     margin-bottom: 1rem;
     padding-bottom: 0.75rem;
-    border-bottom: 1px solid var(--neutral-100);
+    border-bottom: 1px solid var(--color-rule);
 }
 
 .month-picker-year {
     font-family: var(--font-display);
     font-size: 1.1rem;
     font-weight: 700;
-    color: var(--neutral-800);
+    color: var(--color-ink);
 }
 
 .month-grid {
@@ -271,7 +216,7 @@
     border-radius: 8px;
     font-size: 0.875rem;
     font-weight: 500;
-    color: var(--neutral-700);
+    color: var(--color-ink-2);
     cursor: pointer;
     transition: all 0.15s ease;
     border: none;
@@ -279,18 +224,18 @@
 }
 
 .month-grid-item:hover {
-    background: var(--emerald-50);
-    color: var(--emerald-700);
+    background: var(--color-accent-soft);
+    color: var(--color-leaf-dark);
 }
 
 .month-grid-item.selected {
-    background: var(--emerald-500);
-    color: white;
+    background: var(--color-leaf-mid);
+    color: #fff;
     font-weight: 600;
 }
 
 .month-grid-item.current {
-    border: 2px solid var(--emerald-300);
+    border: 1px solid var(--color-leaf-light);
 }
 
 /* ============================================
@@ -298,37 +243,38 @@
    ============================================ */
 .division-tabs {
     display: flex;
-    gap: 0.5rem;
-    padding: 0.375rem;
-    background: var(--neutral-100);
-    border-radius: 12px;
+    gap: 0.375rem;
+    padding: 0.3rem;
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-rule);
+    border-radius: 10px;
     flex-wrap: wrap;
 }
 
 .division-tab {
     flex: 1;
     min-width: 70px;
-    padding: 0.75rem 1rem;
+    padding: 0.65rem 1rem;
     border: none;
-    border-radius: 10px;
+    border-radius: 8px;
     font-family: var(--font-sans);
     font-size: 0.875rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
     background: transparent;
-    color: var(--neutral-500);
+    color: var(--color-muted);
 }
 
 .division-tab:hover:not(.active) {
-    background: rgba(255, 255, 255, 0.5);
-    color: var(--neutral-700);
+    background: var(--color-surface);
+    color: var(--color-ink);
 }
 
 .division-tab.active {
-    background: var(--emerald-500);
-    color: white;
-    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    background: var(--color-leaf-mid);
+    color: #fff;
+    box-shadow: none;
 }
 
 /* ============================================
@@ -344,7 +290,7 @@
     left: 1rem;
     top: 50%;
     transform: translateY(-50%);
-    color: var(--neutral-400);
+    color: var(--color-muted);
     font-size: 1rem;
     pointer-events: none;
 }
@@ -352,23 +298,24 @@
 .gang-search-input {
     width: 100%;
     padding: 0.875rem 1rem 0.875rem 2.75rem;
-    border: 2px solid var(--neutral-200);
-    border-radius: 12px;
+    border: 1px solid var(--color-rule);
+    border-radius: 8px;
     font-size: 0.95rem;
     font-family: var(--font-sans);
-    transition: all 0.2s ease;
+    transition: border-color 0.15s ease;
     box-sizing: border-box;
-    background: white;
+    background: var(--color-surface);
+    color: var(--color-ink);
 }
 
 .gang-search-input:focus {
     outline: none;
-    border-color: var(--emerald-400);
-    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+    border-color: var(--color-leaf-mid);
+    box-shadow: 0 0 0 3px var(--color-accent-soft);
 }
 
 .gang-search-input::placeholder {
-    color: var(--neutral-400);
+    color: var(--color-muted);
 }
 
 .gang-card-grid {
@@ -386,41 +333,39 @@
 }
 
 .gang-card-grid::-webkit-scrollbar-track {
-    background: var(--neutral-100);
+    background: var(--color-surface-2);
     border-radius: 3px;
 }
 
 .gang-card-grid::-webkit-scrollbar-thumb {
-    background: var(--neutral-300);
+    background: var(--color-rule);
     border-radius: 3px;
 }
 
 .gang-card-grid::-webkit-scrollbar-thumb:hover {
-    background: var(--neutral-400);
+    background: var(--color-muted);
 }
 
 .gang-card {
     position: relative;
     padding: 1rem;
-    background: white;
-    border: 2px solid var(--neutral-200);
-    border-radius: 12px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-rule);
+    border-radius: 10px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: border-color 0.15s ease, background 0.15s ease;
     text-align: center;
 }
 
 .gang-card:hover {
-    border-color: var(--emerald-300);
-    background: var(--emerald-50);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-color: var(--color-leaf-light);
+    background: var(--color-surface-2);
 }
 
 .gang-card.selected {
-    border-color: var(--emerald-500);
-    background: var(--emerald-50);
-    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15);
+    border-color: var(--color-leaf-mid);
+    background: var(--color-accent-soft);
+    box-shadow: 0 0 0 3px var(--color-accent-soft);
 }
 
 .gang-card.selected::after {
@@ -430,8 +375,8 @@
     right: 0.5rem;
     width: 20px;
     height: 20px;
-    background: var(--emerald-500);
-    color: white;
+    background: var(--color-leaf-mid);
+    color: #fff;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -444,13 +389,13 @@
     font-family: var(--font-display);
     font-size: 1.1rem;
     font-weight: 700;
-    color: var(--neutral-800);
+    color: var(--color-ink);
     margin-bottom: 0.25rem;
 }
 
 .gang-card-desc {
     font-size: 0.75rem;
-    color: var(--neutral-500);
+    color: var(--color-muted);
     line-height: 1.3;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -460,68 +405,51 @@
 
 /* All Gangs Special Card */
 .gang-card.all-gangs {
-    background: linear-gradient(135deg, var(--emerald-50) 0%, var(--teal-50) 100%);
-    border-color: var(--emerald-300);
+    background: var(--color-accent-soft);
+    border-color: var(--color-leaf-light);
     grid-column: 1 / -1;
 }
 
 .gang-card.all-gangs .gang-card-code {
-    color: var(--emerald-700);
+    color: var(--color-leaf-dark);
 }
 
 .gang-card.all-gangs.selected {
-    background: linear-gradient(135deg, var(--emerald-100) 0%, var(--teal-100) 100%);
+    background: #D9E8DD;
 }
 
 /* ============================================
-   Generate Report Button
+   Generate Report Button — flat leaf, tanpa animasi gradient
    ============================================ */
 .btn-generate {
     width: 100%;
-    padding: 1rem 1.5rem;
+    padding: 0.9rem 1.5rem;
     font-family: var(--font-display);
     font-size: 1rem;
     font-weight: 700;
     border: none;
-    border-radius: 14px;
+    border-radius: 8px;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: background 0.15s ease;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 0.75rem;
-    background: linear-gradient(135deg, var(--emerald-500) 0%, var(--teal-500) 50%, var(--gold-500) 100%);
-    background-size: 200% 200%;
-    color: white;
-    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);
-    animation: gradientShift 5s ease infinite;
-}
-
-@keyframes gradientShift {
-
-    0%,
-    100% {
-        background-position: 0% 50%;
-    }
-
-    50% {
-        background-position: 100% 50%;
-    }
+    background: var(--color-leaf-mid);
+    color: #fff;
 }
 
 .btn-generate:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+    background: var(--color-leaf-dark);
 }
 
 .btn-generate:active:not(:disabled) {
-    transform: translateY(0);
+    transform: translateY(1px);
 }
 
 .btn-generate:disabled {
-    opacity: 0.6;
+    opacity: 0.55;
     cursor: not-allowed;
-    animation: none;
 }
 
 .btn-generate-icon {
@@ -541,7 +469,7 @@
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
     animation: shimmer 1.5s infinite;
 }
 
@@ -560,7 +488,7 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: var(--neutral-500);
+    color: var(--color-muted);
     margin-bottom: 0.75rem;
     display: flex;
     align-items: center;
@@ -577,14 +505,14 @@
 .financial-overview {
     margin-top: 2rem;
     padding-top: 2rem;
-    border-top: 1px solid var(--neutral-200);
+    border-top: 1px solid var(--color-rule);
 }
 
 .financial-overview-title {
     font-family: var(--font-display);
     font-size: 1.25rem;
     font-weight: 700;
-    color: var(--neutral-800);
+    color: var(--color-ink);
     margin-bottom: 1.5rem;
     display: flex;
     align-items: center;
@@ -598,22 +526,21 @@
 }
 
 .report-card {
-    background: white;
-    border: 1px solid var(--neutral-200);
-    border-radius: 16px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-rule);
+    border-radius: 10px;
     padding: 1.25rem;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: border-color 0.15s ease;
 }
 
 .report-card:hover {
-    border-color: var(--emerald-300);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    border-color: var(--color-leaf-light);
 }
 
 .report-card.expanded {
-    border-color: var(--emerald-400);
-    background: var(--emerald-50);
+    border-color: var(--color-leaf-mid);
+    background: var(--color-accent-soft);
 }
 
 .report-card-header {
@@ -631,9 +558,9 @@
 .report-card-icon {
     width: 40px;
     height: 40px;
-    background: var(--emerald-100);
-    color: var(--emerald-600);
-    border-radius: 10px;
+    background: var(--color-accent-soft);
+    color: var(--color-leaf-mid);
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -642,12 +569,12 @@
 
 .report-card-label {
     font-weight: 600;
-    color: var(--neutral-800);
+    color: var(--color-ink);
     font-size: 0.95rem;
 }
 
 .report-card-expand {
-    color: var(--neutral-400);
+    color: var(--color-muted);
     font-size: 0.9rem;
     transition: transform 0.2s;
 }
@@ -659,7 +586,7 @@
 .report-card-content {
     margin-top: 1.25rem;
     padding-top: 1.25rem;
-    border-top: 1px solid var(--neutral-200);
+    border-top: 1px solid var(--color-rule);
     display: grid;
     gap: 0.75rem;
 }
@@ -672,22 +599,23 @@
 
 .report-stat-label {
     font-size: 0.875rem;
-    color: var(--neutral-600);
+    color: var(--color-ink-2);
 }
 
 .report-stat-value {
-    font-family: var(--font-display);
+    font-family: var(--font-mono);
     font-size: 1.1rem;
     font-weight: 700;
-    color: var(--neutral-900);
+    color: var(--color-ink);
+    font-variant-numeric: tabular-nums;
 }
 
 .report-stat-value.positive {
-    color: var(--emerald-600);
+    color: var(--color-leaf-mid);
 }
 
 .report-stat-value.negative {
-    color: #dc2626;
+    color: var(--color-danger);
 }
 
 /* ============================================
@@ -699,15 +627,14 @@
     left: 0;
     right: 0;
     height: 3px;
-    background: var(--neutral-200);
+    background: var(--color-rule);
     z-index: 9999;
     overflow: hidden;
 }
 
 .loading-bar-progress {
     height: 100%;
-    background: linear-gradient(90deg, var(--emerald-400), var(--teal-400), var(--emerald-400));
-    background-size: 200% 100%;
+    background: var(--color-leaf-mid);
     animation: loadingProgress 1.5s ease-in-out infinite;
     transform-origin: left;
 }
@@ -715,17 +642,14 @@
 @keyframes loadingProgress {
     0% {
         transform: scaleX(0);
-        background-position: 0% 0;
     }
 
     50% {
         transform: scaleX(0.7);
-        background-position: 100% 0;
     }
 
     100% {
         transform: scaleX(1);
-        background-position: 200% 0;
     }
 }
 
@@ -735,7 +659,6 @@
 @media (max-width: 640px) {
     .glass-card {
         padding: 1.5rem;
-        border-radius: 20px;
     }
 
     .glass-card-title {
@@ -743,7 +666,7 @@
     }
 
     .division-tabs {
-        gap: 0.375rem;
+        gap: 0.3rem;
     }
 
     .division-tab {
@@ -766,7 +689,7 @@
 .empty-state {
     text-align: center;
     padding: 2rem 1rem;
-    color: var(--neutral-500);
+    color: var(--color-muted);
 }
 
 .empty-state-icon {

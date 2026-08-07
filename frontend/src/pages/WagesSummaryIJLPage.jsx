@@ -5,8 +5,9 @@
  */
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { MetricInfo, EmptyState } from '../components/report/reportTheme';
 import { fetchAllDivisionsTotals, fetchAvailablePeriods, fetchComparisonSummary, fetchVirtualDivisions, updateSPSI, updateDivisionCell } from '../services/summaryReportService';
 import { generatePDF } from '../utils/pdfGenerator';
 import ImpactReportPage from './ImpactReportPage';
@@ -534,7 +535,13 @@ export default function WagesSummaryIJLPage({ onBack, initialMonth, initialYear 
     };
 
     return (
-        <div className="wsp-container">
+        <div className="wsp-container" style={{ backgroundColor: '#EDF3EC', minHeight: '100vh' }}>
+            {/* Web header */}
+            <div className="no-print" style={{ marginBottom: 16 }}>
+                <h1 style={{ display: 'inline-flex', alignItems: 'center', gap: 8, margin: 0, fontSize: '1.6rem', fontWeight: 800, color: '#14532D' }}>Wages Summary (IJL) <MetricInfo metricKey="upah_bersih" /></h1>
+                <p style={{ color: '#46584C', margin: '4px 0 8px', fontSize: '0.9rem' }}>Laporan rincian upah PT. Impian Jaya Lestari (IJL).</p>
+                <button onClick={() => navigate(`/cost-per-ton-story?month=${month || ''}&year=${year || ''}`)} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: '#1E7A45', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>Cost/Ton Story →</button>
+            </div>
             {/* Action Bar */}
             <div className="wsp-action-bar no-print">
                 <div className="left-section">

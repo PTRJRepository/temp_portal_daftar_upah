@@ -175,15 +175,8 @@ export default function LoadingScreen({
 
   return (
     <div className="loading-screen-overlay">
-      {/* Animated background */}
+      {/* Page background */}
       <div className="loading-screen-bg" />
-
-      {/* Decorative ring */}
-      <div className="loading-ring-container">
-        <svg viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r="45" fill="none" stroke="#f59e0b" strokeWidth="0.5" />
-        </svg>
-      </div>
 
       {/* Main content card */}
       <div className="loading-screen-content">
@@ -199,7 +192,7 @@ export default function LoadingScreen({
             }}
           />
           <div className="loading-company-name">PT Rebinmas Jaya</div>
-          <div className="loading-app-name">Payroll Intelligence System</div>
+          <div className="loading-app-name">Portal Estate · Daftar Upah</div>
         </div>
 
         {/* Progress Section */}

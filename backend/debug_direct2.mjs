@@ -1,0 +1,10 @@
+import { Database } from "./src/db/client.ts";
+const db = Database.getExtendedInstance();
+await db.query("DELETE FROM dbo.daftar_upah_aggregation_history WHERE period_month=7 AND period_year=2026 AND division_code='AB1' AND gang_code='ZZX'");
+console.log("del ok");
+await db.query("INSERT INTO dbo.daftar_upah_aggregation_history (period_month, period_year, division_code, gang_code, gang_description, total_employees, total_hk, total_hari_kerja, total_cuti_tahunan, total_cuti_sakit, total_cuti_minggu, total_cuti_nasional, total_upah_dasar, total_upah_pokok, total_gaji_pokok, total_beras, total_jabatan, total_masa_kerja, total_lembur, total_tunjangan, total_premi_brondol, total_premi_prunning, total_premi_insentif, total_premi_kinerja, total_premi, total_potongan, total_pph21, total_bpjs_pekerja, total_bpjs_majikan, total_spsi, total_upah_kotor, total_upah_bersih, total_ffb_weight, total_weight_tbs, dynamic_premi_data, informasi_tambahan, total_koreksi, created_at, updated_at, source_endpoint) VALUES (7,2026,'AB1','ZZX','Test',10,100,100, 1,1,1,1, 1000,1000,1000, 100,100,100,100,100, 10,10,10,10,40, 100,10,10,10,5, 1000,900,0,0, '[]','test',0, GETDATE(), GETDATE(), 'test')");
+console.log("insert ok");
+const rows = await db.query("SELECT COUNT(*) as c FROM dbo.daftar_upah_aggregation_history WHERE gang_code='ZZX'");
+console.log("cnt " + rows[0].c);
+await db.query("DELETE FROM dbo.daftar_upah_aggregation_history WHERE gang_code='ZZX'");
+console.log("cleanup ok");

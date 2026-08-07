@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     PieChart, Pie, Cell, Legend
 } from 'recharts';
+import WageDistributionChart, { grossOf } from '../components/dashboard/WageDistributionChart';
 
 const formatCurrency = (val) => {
     if (val === null || val === undefined) return '-';
@@ -15,6 +16,16 @@ export default function DivisionDetailCard({ division, data, loading, onBack, in
     const [employeeFilters, setEmployeeFilters] = useState({ minNetWage: 0, maxNetWage: 0, minOvertime: 0, minPremi: 0, search: '' });
     const [filteredEmployees, setFilteredEmployees] = useState([]);
     const [selectedEmp, setSelectedEmp] = useState(null); // drill-down uraian gaji
+    const [rangeFilter, setRangeFilter] = useState(null); // { idx, min, max, label } dari chart distribusi
+
+    // Karyawan yang dirender: hasil filter toolbar + filter range dari chart (upah kotor)
+    const displayEmployees = useMemo(() => {
+        if (!rangeFilter) return filteredEmployees;
+        return filteredEmployees.filter(emp => {
+            const v = grossOf(emp);
+            return v >= rangeFilter.min && v < rangeFilter.max;
+        });
+    }, [filteredEmployees, rangeFilter]);
 
     // Deep-link: buka modal karyawan langsung dari URL (?emp=CODE)
     useEffect(() => {
@@ -297,6 +308,15 @@ export default function DivisionDetailCard({ division, data, loading, onBack, in
                         </div>
                     </div>
 
+                    {/* Distribusi upah kotor: line chart frekuensi, klik dot = filter range */}
+                    <div style={{ marginBottom: '1.5rem' }}>
+                        <WageDistributionChart
+                            employees={filteredEmployees}
+                            activeRange={rangeFilter}
+                            onRangeSelect={setRangeFilter}
+                        />
+                    </div>
+
                     {/* Data Grid */}
                     <div style={{ overflowX: 'auto', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
@@ -316,8 +336,8 @@ export default function DivisionDetailCard({ division, data, loading, onBack, in
                                 </tr>
                             </thead>
                             <tbody>
-                                {filteredEmployees.length > 0 ? (
-                                    filteredEmployees.map((emp, idx) => (
+                                {displayEmployees.length > 0 ? (
+                                    displayEmployees.map((emp, idx) => (
                                         <tr key={idx}
                                             onClick={() => setSelectedEmp(emp)}
                                             title="Klik untuk lihat uraian gaji"
@@ -355,7 +375,7 @@ export default function DivisionDetailCard({ division, data, loading, onBack, in
                         </table>
                     </div>
                     <div style={{ marginTop: '1rem', color: '#64748b', fontSize: '0.9rem', textAlign: 'right' }}>
-                        Showing {filteredEmployees.length} of {data.employees?.length || 0} employees
+                        Showing {displayEmployees.length} of {data.employees?.length || 0} employees{rangeFilter ? ` (range ${rangeFilter.label})` : ''}
                     </div>
                 </div>
             )}

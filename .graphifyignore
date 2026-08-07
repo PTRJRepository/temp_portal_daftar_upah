@@ -1,0 +1,10 @@
+# Graphify scope — backend/src + frontend/src ONLY (lihat AGENTS_CONTEXT.md)
+# Whitelist: ignore semua kecuali backend/src dan frontend/src.
+# `versions/*`, Additional_services/, context_portal/, outputs/, docs/, dll TIDAK masuk graph.
+/*
+!/backend/
+/backend/*
+!/backend/src/
+!/frontend/
+/frontend/*
+!/frontend/src/

@@ -1,19 +1,50 @@
 import { Elysia, t } from "elysia";
 import { dashboardService } from "../services/dashboardService";
+import { historyDatabaseService } from "../services/historyDatabaseService";
+import { Database } from "../db/client";
 
 export const dashboardRoutes = new Elysia({ prefix: "/payroll/dashboard" })
+    .get("/wage-distribution", async ({ query, set }) => {
+        // Sebaran upah kotor karyawan dari history snapshot terbaru (extend_db_ptrj)
+        // + tonase per divisi (division_tonase) agar frontend bisa hitung cost/ton
+        try {
+            const month = parseInt(query.month);
+            const year = parseInt(query.year);
+            const divisionCode = query.division_code || 'ALL';
+            const rows = await historyDatabaseService.getWageDistribution(month, year, divisionCode);
+            // tonase map: division_code -> tonase (ton) from division_tonase for this period
+            const db = Database.getExtendedInstance();
+            const tonRows = await db.query<{ division_code: string; tonase: number }>(`
+                SELECT RTRIM(division_code) AS division_code, ISNULL(tonase, 0) AS tonase
+                FROM dbo.division_tonase WHERE period_month = ? AND period_year = ?
+            `, [month, year]);
+            const tonase = {};
+            for (const r of tonRows) tonase[r.division_code.trim()] = Number(r.tonase) || 0;
+            return { success: true, data: rows, tonase, meta: { count: rows.length, month, year, division_code: divisionCode } };
+        } catch (e: any) {
+            set.status = 500;
+            return { success: false, error: e.message };
+        }
+    }, {
+        query: t.Object({
+            month: t.String(),
+            year: t.String(),
+            division_code: t.Optional(t.String())
+        })
+    })
     .get("/executive-summary", async ({ query, set }) => {
         try {
             const month = query.month ? parseInt(query.month) : new Date().getMonth() + 1;
             const year = query.year ? parseInt(query.year) : new Date().getFullYear();
+            const scope = ['panen','maintenance','transport','all'].includes(query.scope) ? query.scope : 'panen';
 
-            const trends = await dashboardService.getPayrollTrend(month, year);
-            const breakdown = await dashboardService.getDivisionBreakdown(month, year);
-            const gangBreakdown = await dashboardService.getGangBreakdown(month, year);
-            const efficiency = await dashboardService.getDivisionEfficiency(month, year);
+            const trends = await dashboardService.getPayrollTrend(month, year, scope);
+            const breakdown = await dashboardService.getDivisionBreakdown(month, year, scope);
+            const gangBreakdown = await dashboardService.getGangBreakdown(month, year, 15, scope);
+            const efficiency = await dashboardService.getDivisionEfficiency(month, year, scope);
 
-            const productivityTrend = await dashboardService.getProductivityTrend(month, year);
-            const wageSpikes = await dashboardService.getWageSpikes(month, year);
+            const productivityTrend = await dashboardService.getProductivityTrend(month, year, scope);
+            const wageSpikes = await dashboardService.getWageSpikes(month, year, scope);
 
             // KPI calculation (Current vs Previous Month in the trend series)
             const current = trends[trends.length - 1] || {};
@@ -37,7 +68,8 @@ export const dashboardRoutes = new Elysia({ prefix: "/payroll/dashboard" })
                     efficiency,
                     productivityTrend,
                     wageSpikes,
-                    kpi
+                    kpi,
+                    gangScope: scope
                 }
             };
         } catch (e: any) {
@@ -50,7 +82,29 @@ export const dashboardRoutes = new Elysia({ prefix: "/payroll/dashboard" })
     }, {
         query: t.Object({
             month: t.String(),
-            year: t.String()
+            year: t.String(),
+            scope: t.Optional(t.Union([t.Literal('panen'), t.Literal('maintenance'), t.Literal('transport'), t.Literal('all')]))
+        })
+    })
+    .get('/division-cost-trend', async ({ query, set }) => {
+        try {
+            const month = query.month ? parseInt(query.month) : new Date().getMonth() + 1;
+            const year = query.year ? parseInt(query.year) : new Date().getFullYear();
+            const span = query.span ? Math.min(Math.max(parseInt(query.span) || 8, 2), 24) : 8;
+            const gangTypes = query.gang_types ? String(query.gang_types).split(',').map(s => s.trim()).filter(Boolean) : ['harvesting'];
+
+            const series = await dashboardService.getDivisionCostTrend(month, year, span, gangTypes);
+            return { success: true, data: { series, span, endMonth: month, endYear: year } };
+        } catch (e: any) {
+            set.status = 500;
+            return { success: false, error: e.message };
+        }
+    }, {
+        query: t.Object({
+            month: t.Optional(t.String()),
+            year: t.Optional(t.String()),
+            span: t.Optional(t.String()),
+            gang_types: t.Optional(t.String())
         })
     })
     .get('/latest-period', async ({ set }) => {
@@ -220,7 +274,9 @@ export const dashboardRoutes = new Elysia({ prefix: "/payroll/dashboard" })
             const month = parseInt(query.month);
             const year = parseInt(query.year);
             const divisionCode = query.division_code;
-            const data = await dashboardService.getGangComparison(month, year, divisionCode);
+            // Tanpa param scope: perilaku lama (semua gang). scope=panen: hanya gang suffix 'H'.
+            const scope = ['panen','maintenance','transport','all'].includes(query.scope) ? query.scope : undefined;
+            const data = await dashboardService.getGangComparison(month, year, divisionCode, scope);
             return { success: true, data };
         } catch (e: any) {
             set.status = 500;
@@ -230,7 +286,8 @@ export const dashboardRoutes = new Elysia({ prefix: "/payroll/dashboard" })
         query: t.Object({
             month: t.String(),
             year: t.String(),
-            division_code: t.Optional(t.String())
+            division_code: t.Optional(t.String()),
+            scope: t.Optional(t.String())
         })
     })
     .get('/top-bottom-gangs', async ({ query, set }) => {
@@ -238,7 +295,9 @@ export const dashboardRoutes = new Elysia({ prefix: "/payroll/dashboard" })
             const month = parseInt(query.month);
             const year = parseInt(query.year);
             const divisionCode = query.division_code;
-            const data = await dashboardService.getTopBottomGangs(month, year, divisionCode);
+            // Tanpa param scope: perilaku lama (semua gang). scope=panen: hanya gang suffix 'H'.
+            const scope = ['panen','maintenance','transport','all'].includes(query.scope) ? query.scope : undefined;
+            const data = await dashboardService.getTopBottomGangs(month, year, divisionCode, scope);
             return { success: true, data };
         } catch (e: any) {
             set.status = 500;
@@ -248,7 +307,8 @@ export const dashboardRoutes = new Elysia({ prefix: "/payroll/dashboard" })
         query: t.Object({
             month: t.String(),
             year: t.String(),
-            division_code: t.Optional(t.String())
+            division_code: t.Optional(t.String()),
+            scope: t.Optional(t.String())
         })
     })
 
@@ -281,9 +341,11 @@ export const dashboardRoutes = new Elysia({ prefix: "/payroll/dashboard" })
         const month = parseInt(query.month);
         const year = parseInt(query.year);
         const divisionCode = query.division_code;
+        // Tanpa param scope: perilaku lama (semua gang). scope=panen: hanya gang suffix 'H'.
+        const scope = ['panen','maintenance','transport','all'].includes(query.scope) ? query.scope : undefined;
 
         try {
-            const data = await dashboardService.getAllGangsTrend(month, year, divisionCode);
+            const data = await dashboardService.getAllGangsTrend(month, year, divisionCode, scope);
             return {
                 success: true,
                 data
@@ -298,7 +360,8 @@ export const dashboardRoutes = new Elysia({ prefix: "/payroll/dashboard" })
         query: t.Object({
             month: t.String(),
             year: t.String(),
-            division_code: t.Optional(t.String())
+            division_code: t.Optional(t.String()),
+            scope: t.Optional(t.String())
         })
     })
 

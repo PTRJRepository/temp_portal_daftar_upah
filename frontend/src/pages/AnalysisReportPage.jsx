@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { fetchAnalysisReport, fetchAvailablePeriods } from '../services/summaryReportService';
 import { generatePDF } from '../utils/pdfGenerator';
@@ -7,6 +8,7 @@ import AggregationSeederModal from '../components/AggregationSeederModal';
 import PrintSignature from '../components/common/PrintSignature';
 import ReportPrintMetadata from '../components/common/ReportPrintMetadata';
 import ReportWatermark from '../components/common/ReportWatermark';
+import { MetricInfo, EmptyState } from '../components/report/reportTheme';
 import { initPrintMode } from '../utils/printOptimizer';
 import { getSourceModeLabel } from '../utils/reportPresentationLabels';
 import { printReport } from '../utils/printPageSetup';
@@ -39,6 +41,7 @@ const getAnalysisRowLabel = (row) => row?.gang_label || row?.gang_code || row?.d
 
 export default function AnalysisReportPage({ onBack, initialMonth, initialYear }) {
     const { token, user } = useAuth();
+    const navigate = useNavigate();
     const [month, setMonth] = useState(initialMonth || new Date().getMonth() + 1);
     const [year, setYear] = useState(initialYear || new Date().getFullYear());
     const [filterType, setFilterType] = useState('all');
@@ -175,19 +178,20 @@ export default function AnalysisReportPage({ onBack, initialMonth, initialYear }
     const periodLabel = reportData ? `${getMonthName(reportData.previous_period?.month)} ${reportData.previous_period?.year} vs ${getMonthName(reportData.current_period?.month)} ${reportData.current_period?.year}` : '';
 
     return (
-        <div className="wsp-container" style={{ padding: '1.5rem', backgroundColor: '#f8fafc' }}>
+        <div className="wsp-container" style={{ padding: '1.5rem', backgroundColor: '#EDF3EC' }}>
             {/* Header / Action Bar */}
             <div className="report-header-web no-print">
                 <div className="report-header-info">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <button 
-                            onClick={onBack} 
-                            className="wsp-btn" 
+                        <button
+                            onClick={onBack}
+                            className="wsp-btn"
                             style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', cursor: 'pointer' }}
                         >
                             &larr; Kembali
                         </button>
-                        <h1>Analysis & Progress Report</h1>
+                        <h1 style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>Analysis & Progress Report <MetricInfo metricKey="total_premi" /></h1>
+                        <button onClick={() => navigate(`/cost-per-ton-story?month=${month}&year=${year}`)} style={{ marginLeft: 'auto', padding: '7px 14px', borderRadius: 8, border: 'none', background: '#1E7A45', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>Cost/Ton Story →</button>
                     </div>
                     <p style={{ marginLeft: '4.5rem' }}>Laporan perbandingan biaya premi dan lembur antar periode.</p>
                     

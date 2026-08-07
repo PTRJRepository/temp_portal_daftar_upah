@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { X, TrendingUp, Users, DollarSign, Calendar } from 'lucide-react';
+import { X, TrendingUp, Users, DollarSign } from 'lucide-react';
 import {
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
     AreaChart, Area
 } from 'recharts';
+import { C, SHADOW, CARD } from '../report/reportTheme';
+import { dashJson } from '../../utils/dashboardApi';
 
 const formatCurrency = (val) => {
     if (val === null || val === undefined) return '-';
@@ -27,11 +29,7 @@ export default function GangDetailModal({ isOpen, onClose, gangCode, month, year
         setLoading(true);
         setError(null);
         try {
-            const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8002';
-            const res = await fetch(`${apiUrl}/payroll/dashboard/gang-history?gang_code=${gangCode}&month=${month}&year=${year}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const json = await res.json();
+            const json = await dashJson(`/gang-history?gang_code=${gangCode}&month=${month}&year=${year}`, { token });
             if (json.success) {
                 // Format months for display
                 const formatted = json.data.map(d => ({
@@ -43,7 +41,7 @@ export default function GangDetailModal({ isOpen, onClose, gangCode, month, year
                 }));
                 setHistoryData(formatted);
             } else {
-                setError(json.message || 'Failed to fetch history');
+                setError(json.message || 'Gagal memuat riwayat gang');
             }
         } catch (e) {
             setError(e.message);
@@ -56,6 +54,18 @@ export default function GangDetailModal({ isOpen, onClose, gangCode, month, year
 
     const currentMonthData = historyData.length > 0 ? historyData[historyData.length - 1] : null;
 
+    const kpiTile = (icon, label, value, color) => (
+        <div style={{ padding: '1rem', backgroundColor: C.surface2, borderRadius: '10px', border: `1px solid ${C.border}` }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color }}>
+                {icon}
+                <span style={{ fontSize: '0.72rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</span>
+            </div>
+            <div style={{ fontSize: '1.4rem', fontWeight: '700', color: C.text, fontVariantNumeric: 'tabular-nums', fontFamily: 'Roboto Mono, monospace' }}>
+                {value}
+            </div>
+        </div>
+    );
+
     return (
         <div style={{
             position: 'fixed',
@@ -63,7 +73,7 @@ export default function GangDetailModal({ isOpen, onClose, gangCode, month, year
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backgroundColor: 'rgba(21, 33, 26, 0.45)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -71,31 +81,32 @@ export default function GangDetailModal({ isOpen, onClose, gangCode, month, year
             padding: '1rem'
         }} onClick={onClose}>
             <div style={{
-                backgroundColor: 'white',
-                borderRadius: '16px',
+                backgroundColor: C.surface,
+                borderRadius: '10px',
+                border: `1px solid ${C.border}`,
                 width: '100%',
                 maxWidth: '900px',
                 maxHeight: '90vh',
                 overflowY: 'auto',
-                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+                boxShadow: SHADOW,
                 position: 'relative'
             }} onClick={e => e.stopPropagation()}>
 
                 {/* Header */}
                 <div style={{
                     padding: '1.5rem',
-                    borderBottom: '1px solid #e2e8f0',
+                    borderBottom: `1px solid ${C.border}`,
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     position: 'sticky',
                     top: 0,
-                    backgroundColor: 'white',
+                    backgroundColor: C.surface,
                     zIndex: 10
                 }}>
                     <div>
-                        <div style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: '600' }}>Gang Detail Analysis</div>
-                        <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#1e293b', margin: 0 }}>
+                        <div style={{ fontSize: '0.72rem', color: C.muted, fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Analisis Detail Gang</div>
+                        <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: C.text, margin: 0, fontFamily: 'var(--font-display)' }}>
                             {gangCode}
                         </h2>
                     </div>
@@ -103,26 +114,26 @@ export default function GangDetailModal({ isOpen, onClose, gangCode, month, year
                         onClick={onClose}
                         style={{
                             padding: '8px',
-                            borderRadius: '50%',
-                            border: 'none',
-                            backgroundColor: '#f1f5f9',
+                            borderRadius: '8px',
+                            border: `1px solid ${C.border}`,
+                            backgroundColor: C.surface2,
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center'
                         }}
                     >
-                        <X size={20} color="#64748b" />
+                        <X size={20} color={C.muted} />
                     </button>
                 </div>
 
                 <div style={{ padding: '1.5rem' }}>
                     {loading ? (
-                        <div style={{ padding: '4rem', textAlign: 'center', color: '#64748b' }}>
-                            Loading gang history...
+                        <div style={{ padding: '4rem', textAlign: 'center', color: C.muted }}>
+                            Memuat riwayat gang...
                         </div>
                     ) : error ? (
-                        <div style={{ padding: '2rem', textAlign: 'center', color: '#ef4444' }}>
+                        <div style={{ padding: '2rem', textAlign: 'center', color: C.potongan }}>
                             Error: {error}
                         </div>
                     ) : (
@@ -135,88 +146,50 @@ export default function GangDetailModal({ isOpen, onClose, gangCode, month, year
                                     gap: '1rem',
                                     marginBottom: '2rem'
                                 }}>
-                                    <div style={{ padding: '1rem', backgroundColor: '#eff6ff', borderRadius: '12px' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color: '#3b82f6' }}>
-                                            <Users size={18} />
-                                            <span style={{ fontSize: '0.875rem', fontWeight: '600' }}>Headcount</span>
-                                        </div>
-                                        <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1e293b' }}>
-                                            {currentMonthData.headcount}
-                                        </div>
-                                    </div>
-                                    <div style={{ padding: '1rem', backgroundColor: '#f0fdf4', borderRadius: '12px' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color: '#10b981' }}>
-                                            <DollarSign size={18} />
-                                            <span style={{ fontSize: '0.875rem', fontWeight: '600' }}>Total Wage</span>
-                                        </div>
-                                        <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1e293b' }}>
-                                            {formatCurrency(currentMonthData.total_wage)}
-                                        </div>
-                                    </div>
-                                    <div style={{ padding: '1rem', backgroundColor: '#fff7ed', borderRadius: '12px' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color: '#f97316' }}>
-                                            <TrendingUp size={18} />
-                                            <span style={{ fontSize: '0.875rem', fontWeight: '600' }}>Cost / HK</span>
-                                        </div>
-                                        <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1e293b' }}>
-                                            {formatCurrency(currentMonthData.cost_per_hk)}
-                                        </div>
-                                    </div>
-                                    <div style={{ padding: '1rem', backgroundColor: '#faf5ff', borderRadius: '12px' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color: '#a855f7' }}>
-                                            <TrendingUp size={18} />
-                                            <span style={{ fontSize: '0.875rem', fontWeight: '600' }}>Productivity (Premi/HK)</span>
-                                        </div>
-                                        <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1e293b' }}>
-                                            {formatCurrency(currentMonthData.sub_productivity)}
-                                        </div>
-                                    </div>
+                                    {kpiTile(<Users size={18} />, 'Headcount', currentMonthData.headcount, C.upah)}
+                                    {kpiTile(<DollarSign size={18} />, 'Total Wage', formatCurrency(currentMonthData.total_wage), C.premi)}
+                                    {kpiTile(<TrendingUp size={18} />, 'Cost / HK', formatCurrency(currentMonthData.cost_per_hk), C.costTon)}
+                                    {kpiTile(<TrendingUp size={18} />, 'Productivity (Premi/HK)', formatCurrency(currentMonthData.sub_productivity), C.lembur)}
                                 </div>
                             )}
 
                             {/* Charts */}
                             <div style={{ display: 'grid', gap: '2rem' }}>
                                 {/* Cost Trend */}
-                                <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '1rem', border: '1px solid #e2e8f0' }}>
-                                    <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#334155', marginBottom: '1rem' }}>
-                                        6-Month Cost per HK Trend
+                                <div style={{ backgroundColor: C.surface, borderRadius: '10px', padding: '1rem', border: `1px solid ${C.border}` }}>
+                                    <h3 style={{ fontSize: '0.78rem', fontWeight: '700', color: C.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem' }}>
+                                        Tren Cost per HK (6 Bulan)
                                     </h3>
                                     <div style={{ height: '300px' }}>
                                         <ResponsiveContainer width="100%" height="100%">
                                             <AreaChart data={historyData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                                                <defs>
-                                                    <linearGradient id="colorCost" x1="0" y1="0" x2="0" y2="1">
-                                                        <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.8} />
-                                                        <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
-                                                    </linearGradient>
-                                                </defs>
-                                                <XAxis dataKey="period" />
-                                                <YAxis tickFormatter={(val) => `${(val / 1000).toFixed(0)}k`} />
-                                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                                <XAxis dataKey="period" tick={{ fill: C.muted, fontSize: 11 }} />
+                                                <YAxis tick={{ fill: C.muted, fontSize: 11 }} tickFormatter={(val) => `${(val / 1000).toFixed(0)}k`} />
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={C.gridLine} />
                                                 <Tooltip formatter={(val) => formatCurrency(val)} />
-                                                <Area type="monotone" dataKey="cost_per_hk" stroke="#f59e0b" fillOpacity={1} fill="url(#colorCost)" name="Cost/HK" />
+                                                <Area type="monotone" dataKey="cost_per_hk" stroke={C.costTon} strokeWidth={2} fill={C.costTon} fillOpacity={0.12} name="Cost/HK" />
                                             </AreaChart>
                                         </ResponsiveContainer>
                                     </div>
                                 </div>
 
                                 {/* Wage vs Overtime */}
-                                <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '1rem', border: '1px solid #e2e8f0' }}>
-                                    <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#334155', marginBottom: '1rem' }}>
-                                        Input (Wage) vs Output (Premi) Correlation
+                                <div style={{ backgroundColor: C.surface, borderRadius: '10px', padding: '1rem', border: `1px solid ${C.border}` }}>
+                                    <h3 style={{ fontSize: '0.78rem', fontWeight: '700', color: C.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem' }}>
+                                        Korelasi Input (Upah) vs Output (Premi)
                                     </h3>
                                     <div style={{ height: '300px' }}>
                                         <ResponsiveContainer width="100%" height="100%">
                                             <LineChart data={historyData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                                <XAxis dataKey="period" />
-                                                <YAxis yAxisId="left" tickFormatter={(val) => `${(val / 1000000).toFixed(0)}jt`} />
-                                                <YAxis yAxisId="right" orientation="right" tickFormatter={(val) => `${(val / 1000000).toFixed(1)}jt`} />
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={C.gridLine} />
+                                                <XAxis dataKey="period" tick={{ fill: C.muted, fontSize: 11 }} />
+                                                <YAxis yAxisId="left" tick={{ fill: C.muted, fontSize: 11 }} tickFormatter={(val) => `${(val / 1000000).toFixed(0)}jt`} />
+                                                <YAxis yAxisId="right" orientation="right" tick={{ fill: C.muted, fontSize: 11 }} tickFormatter={(val) => `${(val / 1000000).toFixed(1)}jt`} />
                                                 <Tooltip formatter={(val) => formatCurrency(val)} />
                                                 <Legend />
-                                                <Line yAxisId="left" type="monotone" dataKey="total_wage" stroke="#3b82f6" name="Total Wage (Input)" strokeWidth={2} />
-                                                <Line yAxisId="right" type="monotone" dataKey="total_premi" stroke="#10b981" name="Total Premi (Output)" strokeWidth={2} />
-                                                <Line yAxisId="left" type="monotone" dataKey="total_ot" stroke="#f97316" name="Overtime" strokeWidth={2} strokeDasharray="3 3" />
+                                                <Line yAxisId="left" type="monotone" dataKey="total_wage" stroke={C.upah} name="Total Wage (Input)" strokeWidth={2} />
+                                                <Line yAxisId="right" type="monotone" dataKey="total_premi" stroke={C.premi} name="Total Premi (Output)" strokeWidth={2} />
+                                                <Line yAxisId="left" type="monotone" dataKey="total_ot" stroke={C.lembur} name="Overtime" strokeWidth={2} strokeDasharray="3 3" />
                                             </LineChart>
                                         </ResponsiveContainer>
                                     </div>

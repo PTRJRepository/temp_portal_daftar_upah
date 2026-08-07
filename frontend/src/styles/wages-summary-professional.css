@@ -72,7 +72,7 @@
 }
 
 .summary-premi-appendix-table th {
-    background: linear-gradient(180deg, #1e293b 0%, #334155 100%);
+    background: linear-gradient(180deg, #14532D 0%, #1E7A45 100%);
     color: #ffffff;
     font-weight: 700;
     text-align: center;
@@ -88,7 +88,7 @@
 
 /* Group header row */
 .summary-premi-appendix-table .summary-print-group-row td {
-    background: #334155 !important;
+    background: #1E7A45 !important;
     color: #ffffff !important;
     font-weight: 800;
     font-size: 0.9rem;
@@ -106,8 +106,8 @@
 .summary-premi-appendix-table .summary-print-division-subtotal-row td {
     background: #e2e8f0;
     font-weight: 800;
-    border-top: 2px solid #0f172a;
-    border-bottom: 2px solid #0f172a;
+    border-top: 2px solid #0d2418;
+    border-bottom: 2px solid #0d2418;
 }
 
 .summary-premi-appendix-table .summary-division-subtotal-label {
@@ -116,14 +116,14 @@
 
 .summary-premi-appendix-table .summary-subtotal-label-text {
     font-weight: 800;
-    color: #0f172a;
+    color: #0d2418;
     text-transform: uppercase;
 }
 
 .summary-premi-appendix-table .summary-premi-total-cell {
     font-weight: 900;
     font-size: 1rem;
-    color: #0f172a;
+    color: #0d2418;
     background: #cbd5e1 !important;
     text-align: right;
 }
@@ -136,7 +136,7 @@
 
 /* Grand total row */
 .summary-premi-appendix-table tfoot td {
-    background: #0f172a;
+    background: #0d2418;
     color: #ffffff;
     font-weight: 900;
     font-size: 1rem;
@@ -192,7 +192,7 @@
     border: 1px solid #94a3b8;
     border-radius: 4px;
     background: #fff;
-    color: #1e293b;
+    color: #14532D;
     cursor: pointer;
     transition: all 0.2s ease;
     display: inline-flex;
@@ -203,18 +203,18 @@
 .wsp-btn:hover {
     background: #f1f5f9;
     border-color: #64748b;
-    color: #0f172a;
+    color: #0d2418;
 }
 
 .wsp-btn-primary {
-    background: #0f172a;
-    border-color: #0f172a;
+    background: #0d2418;
+    border-color: #0d2418;
     color: #fff;
 }
 
 .wsp-btn-primary:hover {
-    background: #1e293b;
-    border-color: #1e293b;
+    background: #14532D;
+    border-color: #14532D;
     color: #fff;
 }
 
@@ -225,7 +225,7 @@
     border: 1px solid #94a3b8;
     border-radius: 4px;
     background-color: #fff;
-    color: #0f172a;
+    color: #0d2418;
     cursor: pointer;
     appearance: none;
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23334155' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
@@ -236,7 +236,7 @@
 
 .wsp-select:focus {
     outline: none;
-    border-color: #0f172a;
+    border-color: #0d2418;
     box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.1);
 }
 
@@ -280,7 +280,7 @@
     gap: 2rem;
     margin-bottom: 2.5rem;
     padding-bottom: 1.5rem;
-    border-bottom: 2px solid #0f172a;
+    border-bottom: 2px solid #0d2418;
     position: relative;
 }
 
@@ -306,7 +306,7 @@
     font-family: 'Playfair Display', serif;
     font-size: 1.85rem;
     font-weight: 800;
-    color: #0f172a;
+    color: #0d2418;
     letter-spacing: -0.01em;
     margin: 0;
 }
@@ -346,7 +346,7 @@
 
 .wsp-meta-value {
     font-weight: 700;
-    color: #0f172a;
+    color: #0d2418;
     text-align: right;
 }
 
@@ -357,7 +357,7 @@
     align-items: center;
     margin-bottom: 2.5rem;
     padding-bottom: 1.5rem;
-    border-bottom: 2px solid #0f172a;
+    border-bottom: 2px solid #0d2418;
     position: relative;
 }
 
@@ -403,7 +403,7 @@
     font-family: 'Roboto Mono', monospace;
     font-size: 1.5rem;
     font-weight: 700;
-    color: #0f172a;
+    color: #0d2418;
     line-height: 1.2;
 }
 
@@ -413,7 +413,7 @@
 }
 
 .wsp-kpi-card.highlight .wsp-kpi-value {
-    color: #0f172a;
+    color: #0d2418;
 }
 
 /* Comparison KPI styles - Enhanced */
@@ -426,7 +426,7 @@
 .wsp-kpi-card.comparison-card {
     background: #ffffff;
     border: 1px solid #cbd5e1;
-    border-left: 4px solid var(--kpi-accent, #0f172a);
+    border-left: 4px solid var(--kpi-accent, #0d2418);
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
     border-radius: 4px;
     min-width: 0;
@@ -461,7 +461,7 @@
     font-family: 'Roboto Mono', monospace;
     font-size: clamp(1.05rem, 1.35vw, 1.35rem);
     font-weight: 850;
-    color: #0f172a;
+    color: #0d2418;
     line-height: 1.15;
     min-width: 0;
     overflow-wrap: anywhere;
@@ -489,7 +489,7 @@
 }
 
 .wsp-kpi-previous-line strong {
-    color: #334155;
+    color: #1E7A45;
     font-family: 'Roboto Mono', monospace;
     font-size: 0.72rem;
     font-weight: 800;
@@ -588,7 +588,7 @@
     font-family: 'Roboto Mono', monospace;
     font-size: clamp(0.74rem, 1vw, 0.92rem);
     font-weight: 700;
-    color: #1e293b;
+    color: #14532D;
     line-height: 1.15;
     min-width: 0;
     overflow-wrap: anywhere;
@@ -676,7 +676,7 @@
     font-family: 'Roboto Mono', monospace;
     font-size: 1.05rem;
     font-weight: 800;
-    color: #0f172a;
+    color: #0d2418;
     line-height: 1.15;
     overflow-wrap: anywhere;
 }
@@ -700,7 +700,7 @@
 
 .wsp-mini-kpi-meta strong {
     flex: 0 0 auto;
-    color: #0f172a;
+    color: #0d2418;
     font-family: 'Roboto Mono', monospace;
 }
 
@@ -779,13 +779,13 @@
     width: 100%;
     border-collapse: collapse;
     font-size: 0.8rem;
-    color: #1e293b;
+    color: #14532D;
 }
 
 /* HEADERS - Professional & Aesthetic */
 .wsp-table thead th {
     background-color: #f8fafc;
-    color: #1e293b;
+    color: #14532D;
     font-weight: 700;
     text-align: center;
     padding: 0.6rem 0.5rem;
@@ -804,7 +804,7 @@
     text-transform: uppercase;
     font-size: 0.78rem;
     letter-spacing: 0.04em;
-    background: linear-gradient(180deg, #1e293b 0%, #334155 100%);
+    background: linear-gradient(180deg, #14532D 0%, #1E7A45 100%);
     color: #ffffff;
     border: 1px solid #475569;
     border-right: 1.5px solid #64748b;
@@ -826,7 +826,7 @@
     font-size: 0.68rem;
     padding: 0.5rem 0.45rem;
     font-weight: 700;
-    color: #334155;
+    color: #1E7A45;
     letter-spacing: 0.02em;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
@@ -836,7 +836,7 @@
 .wsp-table td {
     padding: 0.4rem 0.45rem;
     border: 1px solid #e2e8f0;
-    color: #334155;
+    color: #1E7A45;
     vertical-align: middle;
     white-space: normal !important;
     word-wrap: break-word !important;
@@ -897,7 +897,7 @@
 .wsp-table thead tr .th-sticky-col {
     background-color: #f1f5f9;
     z-index: 11;
-    color: #0f172a;
+    color: #0d2418;
 }
 
 .wsp-table tbody tr:nth-child(odd) .sticky-col {
@@ -918,7 +918,7 @@
 .th-group-workers {
     background-color: #f1f5f9 !important;
     border-right: 1px solid #cbd5e1 !important;
-    color: #334155 !important;
+    color: #1E7A45 !important;
 }
 
 .th-group-uraian {
@@ -1050,7 +1050,7 @@
 .th-group-manpower {
     background-color: #f1f5f9 !important;
     border-right: 1px solid #cbd5e1 !important;
-    color: #334155 !important;
+    color: #1E7A45 !important;
 }
 
 .th-group-deductions {
@@ -1087,7 +1087,7 @@
 .div-code {
     display: block;
     font-weight: 700;
-    color: #0f172a;
+    color: #0d2418;
     margin-bottom: 2px;
 }
 
@@ -1147,7 +1147,7 @@
 }
 
 .val-positive {
-    color: #0f172a;
+    color: #0d2418;
     font-weight: 600;
 }
 
@@ -1166,7 +1166,7 @@
     border: 1px solid #cbd5e1;
     border-radius: 4px;
     background-color: #fff;
-    color: #1e293b;
+    color: #14532D;
     transition: all 0.2s ease;
 }
 
@@ -1193,11 +1193,11 @@
    FOOTER / GRAND TOTAL
    ============================================= */
 .wsp-table tfoot tr.wsp-grand-total td {
-    background-color: #0f172a;
+    background-color: #0d2418;
     color: #fff;
     font-weight: 700;
     padding: 0.5rem 0.55rem;
-    border: 1px solid #0f172a;
+    border: 1px solid #0d2418;
     font-size: 0.75rem;
     white-space: normal !important;
     word-wrap: break-word !important;
@@ -1206,7 +1206,7 @@
 }
 
 .wsp-table tfoot tr.wsp-grand-total td.sticky-col {
-    background-color: #0f172a;
+    background-color: #0d2418;
     box-shadow: 2px 0 5px -2px rgba(0, 0, 0, 0.3);
 }
 
@@ -1215,7 +1215,7 @@
    ============================================= */
 .wsp-table tr.estate-header td {
     background-color: #e2e8f0;
-    color: #0f172a;
+    color: #0d2418;
     font-weight: 800;
     text-transform: uppercase;
     padding: 0.5rem 0.6rem;
@@ -1231,7 +1231,7 @@
 .wsp-table tr.subtotal td {
     background-color: #f8fafc;
     font-weight: 700;
-    color: #1e293b;
+    color: #14532D;
     border-top: 1px solid #cbd5e1;
     font-size: 0.7rem;
     padding: 0.45rem 0.5rem;
@@ -1310,16 +1310,16 @@
     border: 1px solid #cbd5e1;
     border-radius: 4px;
     background-color: #fff;
-    color: #0f172a;
+    color: #0d2418;
     transition: all 0.2s ease;
 }
 
 .wsp-input-edit:focus {
     outline: none;
-    border-color: #2563eb;
+    border-color: #1E7A45;
     box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
     background-color: #eff6ff;
-    color: #0f172a;
+    color: #0d2418;
 }
 
 .wsp-input-edit:hover {
@@ -2029,7 +2029,7 @@
     font-size: 0.7rem !important;
     font-weight: 800 !important;
     text-align: right !important;
-    background-color: #1e293b !important;
+    background-color: #14532D !important;
     color: #fff !important;
     border: 1px solid #000 !important;
 }

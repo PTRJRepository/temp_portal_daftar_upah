@@ -6,16 +6,19 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { usePeriodInfo } from '../hooks/useCurrentPeriod';
 import { getGangHistoryForPeriod, getCurrentPeriod, fetchPayrollHistory, formatMonthName, formatCurrency } from '../services/historyService';
 import MonthPicker from '../components/common/MonthPicker';
 import LoadingScreen from '../components/common/LoadingScreen';
 import { CurrentPeriodBadge } from '../components/common/CurrentPeriodBadge';
+import { MetricInfo, EmptyState } from '../components/report/reportTheme';
 import './GangHistoricalReportPage.css';
 
 export default function GangHistoricalReportPage({ division, gangCode: initialGangCode, onBack }) {
     const { token } = useAuth();
+    const navigate = useNavigate();
     const [selectedGang, setSelectedGang] = useState(initialGangCode || 'ALL');
     const [selectedPeriod, setSelectedPeriod] = useState({ month: 1, year: new Date().getFullYear() });
 
@@ -105,8 +108,9 @@ export default function GangHistoricalReportPage({ division, gangCode: initialGa
             <div className="page-header">
                 <button className="back-btn" onClick={onBack}>← Kembali</button>
                 <div className="header-info">
-                    <h1>Daftar Upah - Historical Report</h1>
+                    <h1 style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>Daftar Upah - Historical Report <MetricInfo metricKey="upah_bersih" /></h1>
                     <p>Laporan gaji historis berdasarkan data yang telah disimpan</p>
+                    <button onClick={() => navigate('/cost-per-ton-story')} style={{ marginTop: 6, padding: '6px 12px', borderRadius: 8, border: 'none', background: '#1E7A45', color: '#fff', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Cost/Ton Story →</button>
                 </div>
             </div>
 

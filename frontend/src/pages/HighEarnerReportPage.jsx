@@ -11,6 +11,7 @@ import {
     REPORT_ROWS_FETCH_LIMIT,
 } from '../utils/payrollReportFilters';
 import { printReport } from '../utils/printPageSetup';
+import { MetricInfo, EmptyState } from '../components/report/reportTheme';
 import '../styles/wages-summary-professional.css'; // Reuse existing styles
 import '../styles/report-print-foundation.css';
 
@@ -175,6 +176,9 @@ const HighEarnerReportPage = () => {
                 <div className="left-section">
                     <button onClick={() => navigate(-1)} className="wsp-btn">
                         &larr; Kembali
+                    </button>
+                    <button onClick={() => navigate(`/cost-per-ton-story?month=${month}&year=${year}`)} className="wsp-btn" style={{ background: '#1E7A45', color: '#fff', border: 'none', fontWeight: 700 }}>
+                        Cost/Ton Story →
                     </button>
 
                     <div className="wsp-filter-group" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>

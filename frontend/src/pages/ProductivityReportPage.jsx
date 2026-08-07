@@ -1,16 +1,25 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { fetchAvailablePeriods } from '../services/summaryReportService';
 import { fetchGangComparison, fetchDivisionDetailData } from '../services/dashboardService';
 import ReportPrintMetadata from '../components/common/ReportPrintMetadata';
 import ReportWatermark from '../components/common/ReportWatermark';
+import { MetricInfo, EmptyState } from '../components/report/reportTheme';
 import { printReport } from '../utils/printPageSetup';
-import { ArrowLeft, Filter, Download, Printer, Users, BarChart3, TrendingUp, DollarSign, Search } from 'lucide-react';
+import { PresentSlide } from '../components/present/PresentSlide';
+import { PresentController } from '../components/present/PresentController';
+import { usePresentMode } from '../components/present/usePresentMode';
+import { ArrowLeft, Filter, Download, Printer, Users, BarChart3, TrendingUp, TrendingDown, DollarSign, Search } from 'lucide-react';
 import '../styles/wages-summary-professional.css';
 import '../styles/report-print-foundation.css';
 
 export default function ProductivityReportPage({ onBack, initialMonth, initialYear }) {
     const { token, user } = useAuth();
+    const navigate = useNavigate();
+
+    // Present mode deck (slide per section logis halaman)
+    const { presenting, activeIndex, enter, exit } = usePresentMode();
 
     // Filters
     const [month, setMonth] = useState(initialMonth || new Date().getMonth() + 1);
@@ -146,12 +155,22 @@ export default function ProductivityReportPage({ onBack, initialMonth, initialYe
     // Grand Totals
     const grandTotals = useMemo(() => {
         return divisionSummary.reduce((acc, div) => ({
-            wage: acc.total_wage + div.total_wage,
-            hk: acc.total_hk + div.total_hk,
-            production: acc.total_production + div.total_production,
+            wage: acc.wage + div.total_wage,
+            hk: acc.hk + div.total_hk,
+            production: acc.production + div.total_production,
             headcount: acc.headcount + div.headcount,
-            ot: acc.total_ot + div.total_ot
-        }), { total_wage: 0, total_hk: 0, total_production: 0, headcount: 0, total_ot: 0 });
+            ot: acc.ot + div.total_ot
+        }), { wage: 0, hk: 0, production: 0, headcount: 0, ot: 0 });
+    }, [divisionSummary]);
+
+    // Sorotan efisiensi antar divisi (dihitung dari data yang sudah di-fetch, tanpa fetch baru)
+    const divisionInsights = useMemo(() => {
+        const withRatio = divisionSummary.filter(d => d.total_production > 0);
+        if (!withRatio.length) return null;
+        const ratio = (d) => d.total_wage / d.total_production;
+        const best = withRatio.reduce((a, b) => (ratio(a) <= ratio(b) ? a : b));
+        const worst = withRatio.reduce((a, b) => (ratio(a) >= ratio(b) ? a : b));
+        return { best, worst, bestRatio: ratio(best), worstRatio: ratio(worst) };
     }, [divisionSummary]);
 
     // Filtered Detail Employees
@@ -187,7 +206,25 @@ export default function ProductivityReportPage({ onBack, initialMonth, initialYe
     const handlePrint = () => printReport({ orientation: 'landscape' });
 
     return (
-        <div className="wsp-container">
+        <div className="wsp-container" style={{ backgroundColor: '#EDF3EC', minHeight: '100vh' }}>
+            {/* Web header */}
+            <div className="no-print" style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+                <div>
+                    <h1 style={{ display: 'inline-flex', alignItems: 'center', gap: 8, margin: 0, fontSize: '1.6rem', fontWeight: 800, color: '#143D28' }}>Produktivitas <MetricInfo metricKey="upah_kotor_per_hk" /></h1>
+                    <p style={{ color: '#3D4A41', margin: '4px 0 0', fontSize: '0.9rem' }}>Tonase vs upah · efisiensi per gang/divisi.</p>
+                </div>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <button onClick={() => navigate(`/cost-per-ton-story?month=${month}&year=${year}`)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 8, border: 'none', background: '#1F6F43', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>Cost/Ton Story <ArrowRight size={14} /></button>
+                    <PresentController
+                        presenting={presenting}
+                        activeIndex={activeIndex}
+                        slideCount={5}
+                        onEnter={enter}
+                        onExit={exit}
+                        caption={`Produktivitas · ${getMonthName(month)} ${year} · ${estateType === 'all' ? 'Semua Estate' : estateType === 'ijl' ? 'IJL' : 'Rebinmas (Non-IJL)'}`}
+                    />
+                </div>
+            </div>
             {/* Toolbar */}
             <div className="wsp-action-bar no-print">
                 <div className="left-section">
@@ -225,6 +262,8 @@ export default function ProductivityReportPage({ onBack, initialMonth, initialYe
             {/* Document */}
             <div className={`wsp-document ${selectedDivision ? 'has-detail' : ''}`}>
                 <ReportWatermark />
+                {/* Slide 01: Konteks */}
+                <PresentSlide num="01" title="Konteks & Cakupan" subtitle="Periode, estate, dan dasar perhitungan laporan ini">
                 {/* Header */}
                 <header className="wsp-letterhead text-center border-b-2 border-slate-800 pb-4 mb-8">
                     <h1 className="wsp-company-name text-2xl font-bold uppercase">
@@ -245,7 +284,10 @@ export default function ProductivityReportPage({ onBack, initialMonth, initialYe
                         note="Ratio biaya dihitung dari produksi, HK, manpower, dan upah periode yang dipilih."
                     />
                 </header>
+                </PresentSlide>
 
+                {/* Slide 02: KPI utama (KPI band ledger yang sudah ada) */}
+                <PresentSlide num="02" title="Denyut Produktivitas Estate" subtitle="Tonase, upah, dan efisiensi biaya dalam satu pandangan">
                 {/* KPI Grid */}
                 <div className="wsp-kpi-grid mb-8" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
                     <div className="wsp-kpi-card">
@@ -271,6 +313,28 @@ export default function ProductivityReportPage({ onBack, initialMonth, initialYe
                         <div className="wsp-kpi-diff neutral">{formatNumber(grandTotals.hk, 1)} Total HK</div>
                     </div>
                 </div>
+                </PresentSlide>
+
+                {/* Slide 03: Perbandingan divisi + sorotan efisiensi */}
+                <PresentSlide num="03" title="Perbandingan Antar Divisi" subtitle="Setiap divisi diukur pada Rp per HK dan Rp per Kg">
+                {divisionInsights && (
+                    <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
+                        <div style={{ flex: '1 1 260px', background: '#FFFFFF', border: '1px solid #E0DED2', borderLeft: '4px solid #1F6F43', borderRadius: 10, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <TrendingUp size={16} color="#1F6F43" />
+                            <div>
+                                <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#6E7A70' }}>Paling Efisien</div>
+                                <div style={{ fontSize: 14, fontWeight: 700, color: '#15211A' }}>Divisi {divisionInsights.best.division_code} · Rp {formatNumber(divisionInsights.bestRatio, 2)}/Kg</div>
+                            </div>
+                        </div>
+                        <div style={{ flex: '1 1 260px', background: '#FFFFFF', border: '1px solid #E0DED2', borderLeft: '4px solid #B3392E', borderRadius: 10, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <TrendingDown size={16} color="#B3392E" />
+                            <div>
+                                <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#6E7A70' }}>Perlu Perhatian</div>
+                                <div style={{ fontSize: 14, fontWeight: 700, color: '#15211A' }}>Divisi {divisionInsights.worst.division_code} · Rp {formatNumber(divisionInsights.worstRatio, 2)}/Kg</div>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Summary Table */}
                 <div className="wsp-table-wrapper mb-8">
@@ -328,9 +392,11 @@ export default function ProductivityReportPage({ onBack, initialMonth, initialYe
                         </tfoot>
                     </table>
                 </div>
+                </PresentSlide>
 
-                {/* Drill-down Detail Section */}
-                {selectedDivision && (
+                {/* Slide 04: Drill-down karyawan */}
+                <PresentSlide num="04" title="Menelusur Sampai Karyawan" subtitle="Rincian lembur dan upah per orang pada divisi terpilih">
+                {selectedDivision ? (
                     <div className="wsp-detail-section mt-12 pt-8 border-t-2 border-slate-200">
                         <div className="flex justify-between items-end mb-6 no-print">
                             <div>
@@ -448,8 +514,15 @@ export default function ProductivityReportPage({ onBack, initialMonth, initialYe
                             </div>
                         )}
                     </div>
+                ) : (
+                    <div className="no-print" style={{ padding: '20px 24px', border: '1px dashed #E0DED2', borderRadius: 10, background: '#F7F5EF', color: '#6E7A70', fontSize: 14 }}>
+                        Pilih salah satu divisi pada tabel perbandingan untuk membuka rincian karyawan di sini.
+                    </div>
                 )}
+                </PresentSlide>
 
+                {/* Slide 05: Penutup */}
+                <PresentSlide num="05" title="Catatan & Penutup" subtitle="Cara angka dihitung dan keterangan cetak">
                 {/* Legend / Footer Notes */}
                 <footer className="wsp-footer mt-12 text-[10px] text-slate-400 italic flex justify-between">
                     <div>
@@ -461,6 +534,7 @@ export default function ProductivityReportPage({ onBack, initialMonth, initialYe
                         Oleh: {user?.username || 'System Admin'}
                     </div>
                 </footer>
+                </PresentSlide>
             </div>
 
             {/* Custom Print Style */}
@@ -480,7 +554,7 @@ export default function ProductivityReportPage({ onBack, initialMonth, initialYe
                     .text-blue-800 { color: #1e40af !important; }
                 }
                 .only-print { display: none; }
-                .row-selected { background-color: #f1f5f9; border-left: 4px solid #3b82f6; }
+                .row-selected { background-color: #f1f5f9; border-left: 4px solid #1F6F43; }
                 .row-hover:hover { background-color: #f8fafc; }
             `}} />
         </div>

@@ -1,0 +1,42 @@
+/* ===== Present Mode - panggung gelap sinematik ===== */
+/* Normal mode: PresentSlide tampil sebagai section flat Estate Ledger */
+.present-slide { scroll-margin-top: 84px; margin-bottom: 2.6rem; }
+.present-slide-header { display: flex; align-items: center; gap: 16px; margin: 0 0 20px; padding: 12px 18px; background: var(--surface, #F7F5EF); border: 1px solid var(--border, #E0DED2); border-left: 4px solid #1F6F43; border-radius: 10px; }
+.present-slide-num { font-family: 'Roboto Mono', monospace; font-weight: 800; font-size: 1.5rem; color: #1F6F43; letter-spacing: -0.02em; }
+.present-slide-header h2 { margin: 0; font-size: 1.35rem; font-weight: 800; color: var(--ink, #15211A); letter-spacing: -0.01em; }
+.present-slide-header p { margin: 3px 0 0; font-size: 0.86rem; color: var(--muted, #6E7A70); }
+.present-slide-kicker { margin-left: auto; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted, #6E7A70); }
+
+/* ===== Panggung gelap (hanya saat html.present-mode) ===== */
+html.present-mode, html.present-mode body { background: #0C1410 !important; }
+/* Sembunyikan chrome layout DashboardLayout: sidebar (div[data-sidebar]),
+   backdrop mobile, dan topbar (div.no-print anak langsung .dashboard-layout-main) */
+html.present-mode .dashboard-layout-root [data-sidebar],
+html.present-mode .dashboard-layout-root > .no-print,
+html.present-mode .dashboard-layout-main > .no-print { display: none !important; }
+html.present-mode .dashboard-layout-main { margin: 0 !important; padding: 0 !important; width: 100% !important; }
+html.present-mode .dashboard-layout-content { max-width: none !important; padding: 0 !important; height: 100vh; overflow-y: auto; scroll-snap-type: y mandatory; scroll-behavior: smooth; }
+/* Slide panggung */
+html.present-mode .present-slide { min-height: 100vh; scroll-snap-align: start; scroll-snap-stop: always; display: flex; flex-direction: column; justify-content: center; padding: 4vh 6vw; margin: 0; box-sizing: border-box; }
+html.present-mode .present-slide-header { background: transparent; border: none; border-left: 4px solid #4CAF7D; border-radius: 0; padding: 0 0 0 20px; margin-bottom: 3vh; }
+html.present-mode .present-slide-num { color: #4CAF7D; font-size: clamp(1.4rem, 2vw, 2rem); }
+html.present-mode .present-slide-header h2 { color: #F3F1E8; font-size: clamp(1.8rem, 3.2vw, 3rem); }
+html.present-mode .present-slide-header p { color: #93A596; font-size: clamp(0.9rem, 1.2vw, 1.1rem); }
+html.present-mode .present-slide-kicker { color: #93A596; }
+/* Kartu ber-inline-style terang sengaja dibiarkan terang: kartu paper "mengapung"
+   di atas panggung gelap. Hanya teks langsung di body slide yang disesuaikan. */
+html.present-mode .present-slide-body { color: #E8E6DC; }
+/* Keterbacaan chart recharts di latar gelap: CSS fill mengalahkan presentation attribute */
+html.present-mode .recharts-cartesian-axis-tick text { fill: #93A596; }
+html.present-mode .recharts-cartesian-grid line { stroke: #223528; }
+html.present-mode .recharts-tooltip-wrapper { filter: drop-shadow(0 4px 14px rgba(0,0,0,.5)); }
+/* Jump nav slide hanya untuk mode normal */
+html.present-mode .slide-nav { display: none !important; }
+/* HUD (dirender PresentController via portal; hanya ada saat present mode) */
+html.present-mode .present-hud { position: fixed; inset: 0 0 auto 0; z-index: 9999; pointer-events: none; }
+html.present-mode .present-hud-progress { height: 3px; background: #223528; }
+html.present-mode .present-hud-progress > div { height: 100%; background: #4CAF7D; transition: width .3s ease; }
+html.present-mode .present-hud-caption { position: fixed; left: 0; right: 0; bottom: 0; z-index: 9999; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 10px 22px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #93A596; background: linear-gradient(transparent, rgba(12,20,16,.9)); pointer-events: none; font-family: 'Roboto Mono', monospace; }
+html.present-mode .present-exit-hint { position: fixed; top: 14px; right: 18px; z-index: 9999; color: #93A596; font-size: 11.5px; letter-spacing: 0.1em; text-transform: uppercase; pointer-events: none; }
+/* Print: present HUD tidak pernah ikut cetak */
+@media print{ .present-hud, .present-hud-caption, .present-exit-hint { display: none !important; } }

@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useReport } from '../context/ReportContext';
 import summaryReportService from '../services/summaryReportService';
 import MonthSelector from '../components/common/MonthSelector';
 import ReportToolbar from '../components/common/ReportToolbar';
 import LoadingScreen from '../components/common/LoadingScreen';
+import { MetricInfo, EmptyState } from '../components/report/reportTheme';
 
 const DetailedSalaryAnalysisPage = ({ onBack, initialMonth, initialYear, initialDivision }) => {
     const { token } = useAuth();
+    const navigate = useNavigate();
     const [month, setMonth] = useState(initialMonth || new Date().getMonth() + 1);
     const [year, setYear] = useState(initialYear || new Date().getFullYear());
 
@@ -131,13 +134,14 @@ const DetailedSalaryAnalysisPage = ({ onBack, initialMonth, initialYear, initial
     );
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', backgroundColor: '#f8fafc' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', backgroundColor: '#EDF3EC' }}>
             <div className="no-print">
                 <ReportToolbar
                     title="Analisis Upah Bersih & Lembur"
                     onBack={onBack}
                     actions={
                         <>
+                            <button onClick={() => navigate(`/cost-per-ton-story?month=${month || ''}&year=${year || ''}`)} style={{ padding: '0.375rem 0.875rem', borderRadius: '0.375rem', border: 'none', background: '#1E7A45', color: '#fff', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}>Cost/Ton Story →</button>
                             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                                 <select
                                     value={division}

@@ -1,9 +1,11 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
+import './styles/tokens.css'
 import './styles/theme.css'
 import './styles/animations.css'
 import './styles/sawit-report-theme.css'
+import './styles/present.css'
 import './utils/httpSetup'
 import 'ag-grid-enterprise'
 

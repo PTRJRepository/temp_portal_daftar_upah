@@ -1,8 +1,8 @@
 {
   "mcpServers": {
     "graphify": {
-      "command": "C:/Python314/python.exe",
-      "args": ["-m", "graphify.serve", "D:/Server/Services/Daftar Upah Portal/portal-daftar-upah-services/graphify-out/graph.json"]
+      "command": "C:/Users/nbgmf/pipx/venvs/graphifyy/Scripts/python.exe",
+      "args": ["-m", "graphify.serve", "D:/Gawean Rebinmas/PORTAL_ESTATE/V 2 (begin versioning)/graphify-out/graph.json"]
     }
   }
 }

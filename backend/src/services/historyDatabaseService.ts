@@ -2237,6 +2237,155 @@ export class HistoryDatabaseService {
             throw e;
         }
     }
+
+    /**
+     * Distribusi upah kotor per bucket untuk chart sebaran karyawan.
+     * Sumber: payroll_history_detail (snapshot terbaru per division+gang pada periode).
+     * Mengembalikan daftar karyawan ringkas (bukan agregat) agar frontend bisa bucket fleksibel
+     * + drilldown. field = 'jumlah_upah_kotor' | 'upah_bersih'.
+     */
+    public async getWageDistribution(
+        periodMonth: number,
+        periodYear: number,
+        divisionCode?: string
+    ): Promise<{ emp_code: string; nik: string; emp_name: string; gang_code: string; division_code: string; upah_kotor: number; upah_bersih: number }[]> {
+        const db = this.getPayrollDatabase();
+
+        // Snapshot terbaru per (division_code, gang_code) pada periode — pola sama seperti getHistoricalPayrollDataAsExtractorFormat
+        let masterSql = `
+            SELECT h.id, h.division_code
+            FROM dbo.payroll_history_header h
+            WHERE h.period_month = ? AND h.period_year = ?
+              AND ISNULL(h.snapshot_version, 0) = (
+                  SELECT ISNULL(MAX(h2.snapshot_version), 0)
+                  FROM dbo.payroll_history_header h2
+                  WHERE h2.period_month = h.period_month
+                    AND h2.period_year = h.period_year
+                    AND h2.division_code = h.division_code
+                    AND h2.gang_code = h.gang_code
+              )
+        `;
+        const params: any[] = [periodMonth, periodYear];
+
+        if (divisionCode && divisionCode !== 'ALL') {
+            try {
+                const divList = gangService.getAllDivisionAliases(divisionCode);
+                if (divList.length > 0) {
+                    masterSql += ` AND h.division_code IN (${divList.map(() => '?').join(',')})`;
+                    params.push(...divList);
+                }
+            } catch (e) {
+                logError(CATEGORY, "getWageDistribution division filter error:", e);
+            }
+        }
+
+        const masters = await db.query<{ id: number; division_code: string }>(masterSql, params);
+        if (masters.length === 0) return [];
+
+        const divByMaster = new Map(masters.map(m => [m.id, m.division_code]));
+        const ids = masters.map(m => m.id);
+        const chunks: number[][] = [];
+        for (let i = 0; i < ids.length; i += 500) chunks.push(ids.slice(i, i + 500));
+
+        const out: any[] = [];
+        for (const chunk of chunks) {
+            const ph = chunk.map(() => '?').join(',');
+            const rows = await db.query<any>(`
+                SELECT d.emp_code, d.nik, d.emp_name, d.gang_code, d.master_id,
+                       ISNULL(d.jumlah_upah_kotor, 0) AS upah_kotor,
+                       ISNULL(d.upah_bersih, 0) AS upah_bersih,
+                       ISNULL(d.gaji_pokok, 0) AS gaji_pokok,
+                       ISNULL(d.gaji_pokok_aktual, 0) AS gaji_pokok_aktual,
+                       ISNULL(d.gaji_pokok_ideal, 0) AS gaji_pokok_ideal,
+                       ISNULL(d.upah_dasar, 0) AS upah_dasar,
+                       ISNULL(d.lembur_jam, 0) AS lembur_jam,
+                       ISNULL(d.lembur_rate, 0) AS lembur_rate,
+                       ISNULL(d.lembur_jumlah, 0) AS lembur_jumlah,
+                       ISNULL(d.total_premi, 0) AS total_premi,
+                       ISNULL(d.total_tunjangan, 0) AS total_tunjangan,
+                       ISNULL(d.beras_rate, 0) AS beras_rate,
+                       ISNULL(d.beras_jumlah, 0) AS beras_jumlah,
+                       ISNULL(d.jabatan_rate, 0) AS jabatan_rate,
+                       ISNULL(d.jabatan_jumlah, 0) AS jabatan_jumlah,
+                       ISNULL(d.masa_kerja_tahun, 0) AS masa_kerja_tahun,
+                       ISNULL(d.masa_kerja_rate, 0) AS masa_kerja_rate,
+                       ISNULL(d.masa_kerja_jumlah, 0) AS masa_kerja_jumlah,
+                       ISNULL(d.premi_brondol, 0) AS premi_brondol,
+                       ISNULL(d.premi_brondol_total, 0) AS premi_brondol_total,
+                       ISNULL(d.premi_pph, 0) AS premi_pph,
+                       ISNULL(d.total_potongan, 0) AS total_potongan,
+                       ISNULL(d.total_potongan_bersih, 0) AS total_potongan_bersih,
+                       ISNULL(d.pot_koreksi, 0) AS pot_koreksi,
+                       ISNULL(d.pot_spsi, 0) AS pot_spsi,
+                       ISNULL(d.pot_pph21, 0) AS pot_pph21,
+                       ISNULL(d.pot_astek_pekerja, 0) AS pot_astek_pekerja,
+                       ISNULL(d.pot_bpjs_kesehatan_pekerja, 0) AS pot_bpjs_kesehatan_pekerja,
+                       ISNULL(d.pot_bpjs_pensiun_pekerja, 0) AS pot_bpjs_pensiun_pekerja,
+                       ISNULL(d.jumlah_hk, 0) AS jumlah_hk,
+                       ISNULL(d.hari_kerja, 0) AS hari_kerja,
+                       ISNULL(d.total_jam_kerja, 0) AS total_jam_kerja,
+                       ISNULL(d.upah_kotor_pajak, 0) AS upah_kotor_pajak,
+                       ISNULL(d.penghasilan_bruto, 0) AS penghasilan_bruto,
+                       ISNULL(d.pph21_ter, 0) AS pph21_ter,
+                       ISNULL(d.tarif_pajak_ter, 0) AS tarif_pajak_ter,
+                       d.status_ptkp, d.kategori_ter, d.jabatan
+                FROM dbo.payroll_history_detail d
+                WHERE d.master_id IN (${ph})
+            `, chunk);
+            for (const r of rows) {
+                const row: any = {
+                    emp_code: r.emp_code,
+                    nik: r.nik,
+                    emp_name: r.emp_name,
+                    gang_code: r.gang_code,
+                    division_code: divByMaster.get(r.master_id) || '',
+                    status_ptkp: r.status_ptkp,
+                    kategori_ter: r.kategori_ter,
+                    jabatan_estate: r.jabatan,
+                    upah_kotor: Number(r.upah_kotor) || 0,
+                    jumlah_upah_kotor: Number(r.upah_kotor) || 0,
+                    upah_bersih: Number(r.upah_bersih) || 0,
+                    upah_kotor_pajak: Number(r.upah_kotor_pajak) || 0,
+                    penghasilan_bruto: Number(r.penghasilan_bruto) || 0,
+                    pph21_ter: Number(r.pph21_ter) || 0,
+                    tarif_pajak_ter: Number(r.tarif_pajak_ter) || 0,
+                    upah_dasar: Number(r.upah_dasar) || 0,
+                    gaji_pokok: Number(r.gaji_pokok) || 0,
+                    gaji_pokok_aktual: Number(r.gaji_pokok_aktual) || 0,
+                    gaji_pokok_ideal: Number(r.gaji_pokok_ideal) || 0,
+                    lembur_jam: Number(r.lembur_jam) || 0,
+                    lembur_rate: Number(r.lembur_rate) || 0,
+                    lembur_jumlah: Number(r.lembur_jumlah) || 0,
+                    total_premi: Number(r.total_premi) || 0,
+                    total_tunjangan: Number(r.total_tunjangan) || 0,
+                    beras_rate: Number(r.beras_rate) || 0,
+                    beras_jumlah: Number(r.beras_jumlah) || 0,
+                    jabatan_rate: Number(r.jabatan_rate) || 0,
+                    jabatan_jumlah: Number(r.jabatan_jumlah) || 0,
+                    masa_kerja_tahun: Number(r.masa_kerja_tahun) || 0,
+                    masa_kerja_rate: Number(r.masa_kerja_rate) || 0,
+                    masa_kerja_jumlah: Number(r.masa_kerja_jumlah) || 0,
+                    premi_brondol: Number(r.premi_brondol) || 0,
+                    premi_brondol_total: Number(r.premi_brondol_total) || 0,
+                    premi_pph: Number(r.premi_pph) || 0,
+                    total_potongan: Number(r.total_potongan) || 0,
+                    total_potongan_bersih: Number(r.total_potongan_bersih) || 0,
+                    pot_koreksi: Number(r.pot_koreksi) || 0,
+                    pot_spsi: Number(r.pot_spsi) || 0,
+                    pot_pph21: Number(r.pot_pph21) || 0,
+                    pot_astek_pekerja: Number(r.pot_astek_pekerja) || 0,
+                    pot_bpjs_kesehatan_pekerja: Number(r.pot_bpjs_kesehatan_pekerja) || 0,
+                    pot_bpjs_pensiun_pekerja: Number(r.pot_bpjs_pensiun_pekerja) || 0,
+                    jumlah_hk: Number(r.jumlah_hk) || 0,
+                    hari_kerja: Number(r.hari_kerja) || 0,
+                    kehadiran: Number(r.hari_kerja) || 0,
+                    total_jam_kerja: Number(r.total_jam_kerja) || 0
+                };
+                out.push(row);
+            }
+        }
+        return out;
+    }
 }
 
 export const historyDatabaseService = HistoryDatabaseService.getInstance();

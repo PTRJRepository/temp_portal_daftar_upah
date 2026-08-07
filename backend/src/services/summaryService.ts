@@ -22,6 +22,7 @@ export interface DivisionSummary {
     total_employees: number;
     total_hk: number;
     total_upah_bersih: number;
+    total_upah_kotor?: number;
     total_pph21: number;
     total_spsi: number;
     total_lembur: number;
@@ -186,6 +187,7 @@ export class SummaryService {
                     ISNULL(h.total_employees, 0) as total_employees,
                     ISNULL(h.total_hk, 0) as total_hk,
                     ISNULL(h.total_upah_bersih, 0) as total_upah_bersih,
+                    ISNULL(h.total_upah_kotor, 0) as total_upah_kotor,
                     ISNULL(h.total_pph21, 0) as total_pph21,
                     ISNULL(h.total_spsi, 0) as total_spsi,
                     ISNULL(h.total_lembur, 0) as total_lembur,
@@ -210,6 +212,7 @@ export class SummaryService {
                 total_employees,
                 total_hk,
                 total_upah_bersih,
+                total_upah_kotor,
                 total_pph21,
                 total_spsi,
                 total_lembur,
@@ -235,7 +238,7 @@ export class SummaryService {
         // Type for aggregation bucket
         type AggBucket = {
             total_premi: number; total_employees: number; total_hk: number;
-            total_upah_bersih: number; total_pph21: number; total_spsi: number;
+            total_upah_bersih: number; total_upah_kotor: number; total_pph21: number; total_spsi: number;
             total_lembur: number; gang_codes: Set<string>;
             total_premi_brondol: number; total_premi_prunning: number;
             total_premi_insentif: number; total_premi_kinerja: number;
@@ -244,7 +247,7 @@ export class SummaryService {
 
         const createEmptyBucket = (): AggBucket => ({
             total_premi: 0, total_employees: 0, total_hk: 0,
-            total_upah_bersih: 0, total_pph21: 0, total_spsi: 0,
+            total_upah_bersih: 0, total_upah_kotor: 0, total_pph21: 0, total_spsi: 0,
             total_lembur: 0, gang_codes: new Set(),
             total_premi_brondol: 0, total_premi_prunning: 0,
             total_premi_insentif: 0, total_premi_kinerja: 0,
@@ -256,6 +259,7 @@ export class SummaryService {
             bucket.total_employees += parseInt(row.total_employees || 0);
             bucket.total_hk += parseFloat(row.total_hk || 0);
             bucket.total_upah_bersih += parseFloat(row.total_upah_bersih || 0);
+            bucket.total_upah_kotor += parseFloat(row.total_upah_kotor || 0);
             bucket.total_pph21 += parseFloat(row.total_pph21 || 0);
             bucket.total_spsi += parseFloat(row.total_spsi || 0);
             bucket.total_lembur += parseFloat(row.total_lembur || 0);
@@ -627,6 +631,7 @@ export class SummaryService {
                 total_employees: row.total_employees,
                 total_hk: row.total_hk,
                 total_upah_bersih: upah,
+                total_upah_kotor: row.total_upah_kotor,
                 total_pph21: row.total_pph21,
                 total_spsi: row.total_spsi,
                 total_lembur: totalLembur,
@@ -636,8 +641,8 @@ export class SummaryService {
                 total_premi_insentif: row.total_premi_insentif,
                 total_premi_kinerja: row.total_premi_kinerja,
                 total_koreksi: row.total_koreksi,
-                total_ffb_weight: row.total_ffb_weight || tonaseFromMill[div] || 0,
-                total_weight_tbs: row.total_weight_tbs || row.total_ffb_weight || tonaseFromMill[div] || 0,
+                total_ffb_weight: tonaseFromMill[div] || 0,
+                total_weight_tbs: tonaseFromMill[div] || 0,
                 informasi_tambahan: '',
                 thumb_print: thumbValue,
                 total_manual: upah,
@@ -891,7 +896,7 @@ export class SummaryService {
             const currGaji = curr.total_upah_bersih;
             // IMPORTANT: Previous month's gaji comes from THUMBPRINT JSON, not database
             const prevGaji = prevThumbprintData[divCode] || 0;
-            const prevTbsWeight = Number(prev.total_ffb_weight || prev.total_weight_tbs || 0) || prevTonaseFromMill[divCode] || 0;
+            const prevTbsWeight = prevTonaseFromMill[divCode] || 0;
             const selisih = currGaji - prevGaji;
             const trend = selisih > 0 ? "NAIK" : (selisih < 0 ? "TURUN" : "TETAP");
 
@@ -1246,6 +1251,7 @@ export class SummaryService {
         const prevHistoryFallback = await this.getImpactPayrollHistoryFallback(prevMonth, prevYear);
         const prevTonaseFromHistory = await this.getImpactTonaseHistoryFallback(prevMonth, prevYear);
         const prevTonaseFromComparisonSource = await this.fetchTonaseFromMill(prevMonth, prevYear);
+        const curTonaseFromMill = await this.fetchTonaseFromMill(month, year);
 
         const prevLookup = new Map(previousData.map(d => [d.division_code, d]));
         const mainRows = [];
@@ -1267,11 +1273,10 @@ export class SummaryService {
             const insPrev = Math.max(dynamicInsPrev, prev.total_premi_insentif || 0, prevFallback.total_premi_insentif || 0);
             const workersPrev = prev.total_employees || prevFallback.total_employees || 0;
             const hkPrev = prev.total_hk || prevFallback.total_hk || 0;
-            const tbsPrev = Number(prev.total_ffb_weight || prev.total_weight_tbs || 0)
-                || prevTonaseFromHistory[div]
+            const tbsPrev = prevTonaseFromHistory[div]
                 || prevTonaseFromComparisonSource[div]
                 || 0;
-            const tbsCurr = Number(curr.total_ffb_weight || curr.total_weight_tbs || 0);
+            const tbsCurr = curTonaseFromMill[div] || 0;
 
             // IMPORTANT: Previous month's gaji comes from THUMBPRINT JSON, not database
             const gajiPrev = prevThumbprintData[div] || 0;
@@ -1976,51 +1981,27 @@ ORDER BY division_code, gang_code`;
      * Divisions without matching data will not have an entry (will be 0).
      */
     private async fetchTonaseFromMill(month: number, year: number): Promise<Record<string, number>> {
+        // Read authoritative per-division tonase from division_tonase (mill supplier, PTRJ01-09 internal).
+        // Replaces the old WM_TICKET PTRJ% scan which included IJL/plasma and double-counted via supplier-name matching.
         const result: Record<string, number> = {};
         try {
-            // Query all PTRJ FFB records grouped by supplier for this month/year
-            const rows = await this.millDb.query<{ CustomerCode: string; SupplierName: string; total_weight: string }>(`
-                SELECT 
-                    T.[CustomerCode],
-                    S.[Name] AS SupplierName,
-                    SUM(CAST(T.[NetWeight] AS DECIMAL(18,2))) / 1000.0 AS total_weight
-                FROM [dbo].[WM_TICKET] T
-                LEFT JOIN [dbo].[PU_SUPPLIER] S ON T.[CustomerCode] = S.[SupplierCode]
-                WHERE T.[CustomerCode] LIKE 'PTRJ%'
-                  AND MONTH(T.[DateReceived]) = ?
-                  AND YEAR(T.[DateReceived]) = ?
-                  AND T.[ProductCode] = 'FFB'
-                GROUP BY T.[CustomerCode], S.[Name]
+            const rows = await this.extendDb.query<{ division_code: string; tonase: number }>(`
+                SELECT LTRIM(RTRIM(division_code)) AS division_code, SUM(tonase) AS tonase
+                FROM dbo.division_tonase
+                WHERE period_month = ? AND period_year = ?
+                GROUP BY LTRIM(RTRIM(division_code))
             `, [month, year]);
 
-            debug(CATEGORY, `Fetched ${rows.length} tonase records from db_ptrj_mill (server_3)`);
-
-            // Division codes to match against supplier names/customer codes
-            const divisionCodes = ['P1A', 'P1B', 'P2A', 'P2B', 'AB1', 'AB2', 'ARC', 'DME', 'ARA', 'IJL', 'INF', 'NRS', 'WKS_PG', 'WKS_AR'];
-
-            for (const divCode of divisionCodes) {
-                let divTonase = 0;
-                for (const row of rows) {
-                    const supplierName = (row.SupplierName || '').toUpperCase();
-                    const customerCode = (row.CustomerCode || '').toUpperCase();
-                    const weight = parseFloat(row.total_weight) || 0;
-
-                    // Match by checking if division code appears in supplier name or customer code
-                    if (supplierName.includes(divCode) || customerCode.includes(divCode)) {
-                        divTonase += weight;
-                    }
-                }
-                if (divTonase > 0) {
-                    result[divCode] = divTonase;
-                    debug(CATEGORY, `Tonase ${divCode}: ${divTonase.toFixed(2)} tons`);
+            for (const row of rows || []) {
+                const div = String(row.division_code || '').trim().toUpperCase();
+                const ton = Number(row.tonase) || 0;
+                if (div && ton > 0) {
+                    result[div] = ton;
+                    debug(CATEGORY, `Tonase ${div}: ${ton.toFixed(2)} tons (division_tonase)`);
                 }
             }
         } catch (error: any) {
-            if (error.message?.includes('Invalid object name') || error.message?.includes('does not exist')) {
-                warn(CATEGORY, `WM_TICKET/PU_SUPPLIER table not found in db_ptrj_mill, tonase will be 0`);
-            } else {
-                logError(CATEGORY, `Failed to fetch tonase from mill:`, error.message);
-            }
+            logError(CATEGORY, `Failed to fetch tonase from division_tonase:`, error.message);
         }
         return result;
     }

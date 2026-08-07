@@ -1,43 +1,50 @@
 import React from 'react';
+import { AlertTriangle, BarChart3 } from 'lucide-react';
 
-// ===== Sawit Finance — shared theme tokens (light, elegant, palm green) =====
+// ===== Estate Ledger — shared theme tokens (SSOT mirror dari tokens.css) =====
+// Keys preserved for backward compat across 25+ page files.
+// Spec: docs/superpowers/specs/2026-08-07-estate-ledger-redesign-design.md
 export const C = {
-    upah: '#1E7A45', upahAccent: '#3E9E63', premi: '#2E9E6B', lembur: '#D98A1F',
-    potongan: '#C8463C', costTon: '#6C4FC4', warn: '#D98A1F', warnBg: '#FBF1DE',
-    text: '#12241A', text2: '#46584C', muted: '#7C8B80', border: '#DFE8E0',
-    surface: '#FFFFFF', surface2: '#F6FAF5', pageBg: '#EDF3EC', gridLine: '#E4ECE2',
-    leafDark: '#14532D', leafMid: '#1E7A45', leafLight: '#4CBB6B', cream: '#F7F9F4'
+    upah: '#1F6F43', upahAccent: '#3D8B62', premi: '#0F766E', lembur: '#B45309',
+    potongan: '#B3392E', costTon: '#7C5A2B', warn: '#B45309', warnBg: '#F7EBD9',
+    text: '#15211A', text2: '#3D4A41', muted: '#6E7A70', border: '#E0DED2',
+    surface: '#FFFFFF', surface2: '#F5F3EC', pageBg: '#F0EEE6', gridLine: '#E8E6DB',
+    leafDark: '#143D28', leafMid: '#1F6F43', leafLight: '#5E9C7B', cream: '#F7F5EF'
 };
-export const SHADOW = '0 1px 2px rgba(18,36,26,.05), 0 6px 18px rgba(18,36,26,.08)';
-export const SHADOW_HOVER = '0 14px 34px rgba(18,36,26,.16)';
-export const CARD = { background: C.surface, borderRadius: 16, border: `1px solid ${C.border}`, padding: 24, boxShadow: SHADOW };
-export const SECTION_TITLE = { fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: C.leafMid, borderLeft: `3px solid ${C.leafMid}`, paddingLeft: 12, marginBottom: 16 };
+export const SHADOW = '0 1px 2px rgba(21,33,26,.04), 0 4px 14px rgba(21,33,26,.06)';
+export const SHADOW_HOVER = '0 10px 28px rgba(21,33,26,.10)';
+export const CARD = { background: C.surface, borderRadius: 10, border: `1px solid ${C.border}`, padding: 24, boxShadow: SHADOW };
+export const SECTION_TITLE = { fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: C.muted, marginBottom: 16, fontFamily: 'var(--font-display)' };
 
-// Palm-leaf SVG motif (decorative, absolute-positioned inside hero)
-const LeafMotif = ({ size = 320, opacity = 0.14, style = {} }) => (
-    <svg style={{ position: 'absolute', pointerEvents: 'none', ...style }} width={size} height={size} viewBox="0 0 100 100" fill="none" aria-hidden="true">
-        <path d="M50 0 C60 25 75 40 100 50 C75 60 60 75 50 100 C40 75 25 60 0 50 C25 40 40 25 50 0 Z" fill="#fff" opacity={opacity} />
-    </svg>
-);
+/** Chart palette — estate semantic hues, shared across all recharts panels. */
+export const chartPalette = [
+    C.leafMid,    // primary series
+    C.leafLight,
+    C.premi,
+    C.lembur,
+    C.potongan,
+    C.costTon,
+];
 
 /**
- * ReportHero — consistent sawit-finance page header for every report.
+ * ReportHero — masthead datar ala ledger cetak: paper, hairline bawah,
+ * judul display besar, meta sebagai teks. Tanpa gradient/motif/glass.
  * Props: title, subtitle, period (string), actions (ReactNode), eyebrow (small over-label)
  */
-export function ReportHero({ title, subtitle, period, eyebrow = 'Perkebunan Sawit · Laporan', actions }) {
+export function ReportHero({ title, subtitle, period, eyebrow = 'Portal Estate · Daftar Upah', actions }) {
     return (
-        <div style={{ position: 'relative', overflow: 'hidden', background: `linear-gradient(115deg, ${C.leafDark} 0%, ${C.leafMid} 55%, ${C.leafLight} 100%)`, padding: '1.8rem 2.4rem 4.2rem', color: '#fff' }}>
-            <LeafMotif size={320} opacity={0.14} style={{ right: -20, top: -30 }} />
-            <LeafMotif size={200} opacity={0.10} style={{ right: 140, bottom: -60 }} />
-            <div style={{ position: 'relative', maxWidth: 1320, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
-                <div>
-                    <div style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', opacity: 0.85, marginBottom: 6 }}>{eyebrow}</div>
-                    <h1 style={{ margin: 0, fontSize: '1.8rem', fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.1 }}>{title}</h1>
-                    {subtitle && <p style={{ margin: '0.4rem 0 0', color: 'rgba(255,255,255,0.86)', fontSize: '0.9rem', maxWidth: 620 }}>{subtitle}</p>}
+        <div style={{ background: C.cream, borderBottom: `1px solid ${C.border}`, padding: '1.75rem 2.4rem 1.6rem', color: C.text }}>
+            <div style={{ maxWidth: 1320, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '1.25rem', flexWrap: 'wrap' }}>
+                <div style={{ minWidth: 0 }}>
+                    {eyebrow && (
+                        <div style={{ fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.muted, marginBottom: 8, fontFamily: 'var(--font-display)' }}>{eyebrow}</div>
+                    )}
+                    <h1 style={{ margin: 0, fontSize: 'clamp(1.5rem, 2.5vw, 2.1rem)', fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.1, fontFamily: 'var(--font-display)', color: C.text, overflowWrap: 'anywhere' }}>{title}</h1>
+                    {subtitle && <p style={{ margin: '0.45rem 0 0', color: C.text2, fontSize: '0.9rem', maxWidth: 620 }}>{subtitle}</p>}
                 </div>
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
                     {period && (
-                        <span style={{ background: 'rgba(255,255,255,0.16)', border: '1px solid rgba(255,255,255,0.24)', borderRadius: 999, padding: '6px 14px', fontSize: '0.82rem', fontWeight: 700 }}>
+                        <span style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: '6px 14px', fontSize: '0.82rem', fontWeight: 700, color: C.text, fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)' }}>
                             {period}
                         </span>
                     )}
@@ -48,45 +55,191 @@ export function ReportHero({ title, subtitle, period, eyebrow = 'Perkebunan Sawi
     );
 }
 
-/** PageBody — content wrapper that overlaps the hero, consistent max-width + spacing. */
+/** ReportBody — content wrapper, konsisten max-width + spacing (tanpa overlap hero). */
 export function ReportBody({ children }) {
     return (
         <div style={{ background: C.pageBg, minHeight: '100%', paddingBottom: '2.5rem' }}>
-            <div style={{ maxWidth: 1320, margin: '0 auto', padding: '0 2.4rem', marginTop: '-2.6rem', position: 'relative' }}>
+            <div style={{ maxWidth: 1320, margin: '0 auto', padding: '1.8rem 2.4rem 0' }}>
                 {children}
             </div>
         </div>
     );
 }
 
-/** DeltaBadge — semantic % change pill (invert=true → increase is bad). */
+/** DeltaBadge — perubahan % sebagai teks semantik (invert=true → kenaikan buruk). */
 export function DeltaBadge({ pct, invert = false }) {
     if (pct === null || pct === undefined || isNaN(pct)) return null;
     const bad = (pct >= 0) === invert;
-    const color = bad ? C.potongan : C.premi;
-    const bg = bad ? '#FBE9E6' : '#E4F4EB';
+    const color = bad ? C.potongan : C.upah;
     return (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 999, fontSize: 11.5, fontWeight: 700, color, background: bg, border: `1px solid ${bad ? '#F0CFC9' : '#C4E6D2'}` }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 700, color, fontVariantNumeric: 'tabular-nums' }}>
             {pct >= 0 ? '▲' : '▼'} {Math.abs(pct).toFixed(1)}%
         </span>
     );
 }
 
-/** StatCard — compact KPI tile for report pages. */
+/** StatCard — ledger cell: flat, hairline, angka mono tabular, tick semantik tipis. */
 export function StatCard({ label, value, note, color = C.upah, pct, invert }) {
     const [hover, setHover] = React.useState(false);
     return (
         <div
             onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
-            style={{ ...CARD, padding: '16px 18px', position: 'relative', overflow: 'hidden', transform: hover ? 'translateY(-2px)' : 'none', boxShadow: hover ? SHADOW_HOVER : SHADOW, transition: 'box-shadow .18s, transform .18s' }}
+            style={{ ...CARD, padding: '16px 18px', borderColor: hover ? C.leafLight : C.border, transition: 'border-color .15s' }}
         >
-            <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: color, borderRadius: '4px 0 0 4px' }} />
+            <div style={{ width: 24, height: 2, background: color, marginBottom: 10 }} />
             <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: C.muted, marginBottom: 6 }}>{label}</div>
-            <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums', color: C.text, lineHeight: 1.05, marginBottom: 6 }}>{value}</div>
+            <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums', color: C.text, lineHeight: 1.05, marginBottom: 6, fontFamily: 'var(--font-mono)' }}>{value}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 {pct !== undefined && <DeltaBadge pct={pct} invert={invert} />}
                 {note && <span style={{ fontSize: 11.5, color: C.text2 }}>{note}</span>}
             </div>
+        </div>
+    );
+}
+
+// ===== Interpretation system — "angka ini dari mana?" =====
+import { getMetric, SOURCE_TABLE, SCOPE } from './metricDefinitions';
+
+/**
+ * MetricInfo — badge "i" + tooltip menjelaskan definisi, rumus, sumber, cakupan.
+ * Dipakai di samping label KPI/judul chart. Hover = tooltip, klik = pin.
+ * Props: metricKey (key di METRICS) atau {label, formula, column, scope, caveat} manual.
+ */
+export function MetricInfo({ metricKey, def, size = 13 }) {
+    const d = def || getMetric(metricKey);
+    const [open, setOpen] = React.useState(false);
+    const wrapRef = React.useRef(null);
+
+    React.useEffect(() => {
+        if (!open) return;
+        const onDoc = (e) => { if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false); };
+        document.addEventListener('mousedown', onDoc);
+        return () => document.removeEventListener('mousedown', onDoc);
+    }, [open]);
+
+    return (
+        <span ref={wrapRef} style={{ position: 'relative', display: 'inline-flex', verticalAlign: 'middle' }}>
+            <button
+                type="button"
+                aria-label={`Info ${d.label}`}
+                onClick={() => setOpen(o => !o)}
+                onMouseEnter={() => setOpen(true)}
+                onMouseLeave={() => setOpen(false)}
+                style={{
+                    width: size + 4, height: size + 4, borderRadius: '50%', border: `1px solid ${C.border}`,
+                    background: C.surface2, color: C.leafMid, fontSize: size - 3, fontWeight: 800,
+                    cursor: 'help', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1, padding: 0
+                }}
+            >i</button>
+            {open && (
+                <div style={{
+                    position: 'absolute', zIndex: 50, top: 'calc(100% + 8px)', left: '50%', transform: 'translateX(-50%)',
+                    width: 280, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10,
+                    boxShadow: SHADOW_HOVER, padding: '14px 16px', textAlign: 'left', pointerEvents: 'auto'
+                }}>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: C.text, marginBottom: 6 }}>{d.label}</div>
+                    {d.scope && (
+                        <div style={{ display: 'inline-block', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: C.leafMid, background: '#E9F2EA', border: '1px solid #C4DBC8', borderRadius: 999, padding: '2px 8px', marginBottom: 8 }}>
+                            Cakupan: {d.scope.label}
+                        </div>
+                    )}
+                    {d.formula && <InfoRow k="Rumus" v={d.formula} mono />}
+                    {d.column && <InfoRow k="Kolom" v={d.column} mono />}
+                    <InfoRow k="Sumber" v={SOURCE_TABLE.AGG} mono small />
+                    {d.scope?.desc && <div style={{ fontSize: 11.5, color: C.text2, marginTop: 6, lineHeight: 1.45 }}>{d.scope.desc}</div>}
+                    {d.caveat && (
+                        <div style={{ display: 'flex', gap: 6, alignItems: 'flex-start', fontSize: 11.5, color: C.lembur, background: C.warnBg, border: '1px solid #E5CFA3', borderRadius: 8, padding: '6px 8px', marginTop: 8, lineHeight: 1.4 }}>
+                            <AlertTriangle size={12} style={{ flexShrink: 0, marginTop: 1 }} />
+                            <span>{d.caveat}</span>
+                        </div>
+                    )}
+                </div>
+            )}
+        </span>
+    );
+}
+const InfoRow = ({ k, v, mono, small }) => (
+    <div style={{ display: 'flex', gap: 8, marginTop: 4, fontSize: small ? 10.5 : 11.5 }}>
+        <span style={{ color: C.muted, fontWeight: 700, flexShrink: 0, minWidth: 44 }}>{k}</span>
+        <span style={{ color: C.text, fontFamily: mono ? 'ui-monospace, monospace' : 'inherit', wordBreak: 'break-word' }}>{v}</span>
+    </div>
+);
+
+/**
+ * ScopeToggle — pilih cakupan gang: Panen / Maintenance / Transport / Semua.
+ * Props: value ('panen'|'maintenance'|'transport'|'all'), onChange(key)
+ */
+export function ScopeToggle({ value = 'panen', onChange }) {
+    const opts = [SCOPE.PANEN, SCOPE.MAINTENANCE, SCOPE.TRANSPORT, SCOPE.ALL];
+    return (
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ display: 'inline-flex', background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 999, padding: 3 }}>
+                {opts.map(o => {
+                    const active = value === o.key;
+                    return (
+                        <button key={o.key} type="button" onClick={() => onChange && onChange(o.key)}
+                            title={o.desc}
+                            style={{
+                                padding: '5px 14px', borderRadius: 999, border: 'none', cursor: 'pointer',
+                                fontWeight: 700, fontSize: 12.5, transition: 'all .15s',
+                                background: active ? C.upah : 'transparent', color: active ? '#fff' : C.text2
+                            }}>
+                            {o.label}
+                        </button>
+                    );
+                })}
+            </div>
+            <MetricInfo def={{ label: 'Cakupan Gang', formula: null, column: null, scope: null, caveat: 'Suffix kode gang: H=panen, M=maintenance, T=transport. Toggle ini mengubah cakupan semua angka di halaman.' }} />
+        </div>
+    );
+}
+
+/**
+ * Breadcrumb — posisi drill-down L0→L5 (overview → divisi → gang → karyawan).
+ * Props: items = [{label, onClick?}] — item terakhir = aktif (non-clickable).
+ */
+export function Breadcrumb({ items = [] }) {
+    if (!items.length) return null;
+    return (
+        <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', fontSize: 13, marginBottom: 14 }}>
+            {items.map((it, i) => {
+                const last = i === items.length - 1;
+                return (
+                    <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                        {i > 0 && <span style={{ color: C.muted }}>›</span>}
+                        {last || !it.onClick ? (
+                            <span style={{ fontWeight: 700, color: C.text }}>{it.label}</span>
+                        ) : (
+                            <button type="button" onClick={it.onClick}
+                                style={{ border: 'none', background: 'none', color: C.upah, fontWeight: 600, cursor: 'pointer', padding: 0, fontSize: 13 }}>
+                                {it.label}
+                            </button>
+                        )}
+                    </span>
+                );
+            })}
+        </nav>
+    );
+}
+
+/**
+ * EmptyState — ganti "-" / grafik kosong dengan penjelasan + aksi.
+ * Props: title, message, actionLabel?, onAction?
+ */
+export function EmptyState({ title = 'Data belum tersedia', message, actionLabel, onAction }) {
+    return (
+        <div style={{ ...CARD, textAlign: 'center', padding: '40px 24px', borderStyle: 'dashed', background: C.surface2 }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10, color: C.muted, opacity: 0.7 }}>
+                <BarChart3 size={30} strokeWidth={1.5} />
+            </div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: C.text, marginBottom: 6 }}>{title}</div>
+            {message && <div style={{ fontSize: 13, color: C.text2, maxWidth: 420, margin: '0 auto', lineHeight: 1.5 }}>{message}</div>}
+            {actionLabel && onAction && (
+                <button type="button" onClick={onAction}
+                    style={{ marginTop: 14, padding: '8px 18px', borderRadius: 8, border: 'none', background: C.upah, color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+                    {actionLabel}
+                </button>
+            )}
         </div>
     );
 }

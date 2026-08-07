@@ -1,6 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { Printer } from 'lucide-react';
+import { C, SHADOW, CARD, SECTION_TITLE, EmptyState } from '../report/reportTheme';
+import { getGangType, isIJLGang, getGangTypeLabel, GANG_TYPE, getScopeLabel } from '../../utils/gangTypes';
 import '../../styles/gang-report-print.css';
 
 const formatCurrency = (val) => {
@@ -22,75 +25,27 @@ const formatBunches = (val) => {
     return val.toString();
 };
 
-// Get gang type from last character of gang code
-const getGangType = (gangCode) => {
-    if (!gangCode) return 'uncategorized';
-    const lastChar = gangCode.slice(-1).toUpperCase();
-    if (lastChar === 'H') return 'harvesting';
-    if (lastChar === 'T') return 'transport';
-    if (lastChar === 'M') return 'maintenance';
-    return 'uncategorized';
-};
-
-// Check if gang belongs to IJL division (Starts with L)
-const isIJLGang = (gangCode) => {
-    if (!gangCode) return false;
-    return gangCode.toUpperCase().startsWith('L');
-};
-
-// Get gang type label
-const getGangTypeLabel = (type) => {
-    const labels = {
-        harvesting: 'Panen (Harvesting)',
-        transport: 'Transport',
-        maintenance: 'Maintenance',
-        uncategorized: 'Lainnya'
-    };
-    return labels[type] || type;
-};
-
-// Get gang type color
-const getGangTypeColor = (type) => {
-    const colors = {
-        harvesting: '#16a34a',
-        transport: '#2563eb',
-        maintenance: '#d97706',
-        uncategorized: '#64748b'
-    };
-    return colors[type] || '#64748b';
-};
-
-// Helper to get month name
-const getMonthName = (monthNum) => {
-    const months = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-    return months[monthNum] || '';
-};
-
-// Color coding based on performance (cost/HK)
+// Color coding based on performance (cost/HK) — semantik Estate Ledger
 const getPerformanceColor = (value, allValues, metric) => {
-    if (metric !== 'cost_per_hk') return '#3b82f6'; // Default blue for other metrics
+    if (metric !== 'cost_per_hk') return C.upah; // aksen tunggal untuk metrik lain
 
-    if (!allValues || allValues.length === 0) return '#3b82f6';
+    if (!allValues || allValues.length === 0) return C.upah;
 
     const sorted = [...allValues].sort((a, b) => a - b);
     const p25 = sorted[Math.floor(sorted.length * 0.25)];
     const p75 = sorted[Math.floor(sorted.length * 0.75)];
 
-    if (value <= p25) return '#10b981'; // Green - Top performers (Low Cost/HK)
-    if (value >= p75) return '#ef4444'; // Red - Needs attention (High Cost/HK)
-    return '#f59e0b'; // Orange - Average
+    if (value <= p25) return C.upah;      // top performer (cost/HK rendah)
+    if (value >= p75) return C.potongan;  // perlu perhatian (cost/HK tinggi)
+    return C.lembur;                       // rata-rata
 };
 
-
-// ... existing helpers ...
-
-export default function GangComparisonChart({ data, loading, onGangClick, month, year }) {
+export default function GangComparisonChart({ data, loading, onGangClick, month, year, scope = 'panen' }) {
     const navigate = useNavigate(); // Hook for navigation
     const [sortBy, setSortBy] = useState('cost_per_hk');
 
     // ALL HOOKS MUST BE BEFORE ANY EARLY RETURNS (React rules of hooks)
-    // Enrich data with gang type and division info
+    // Enrich data with gang type and division info (heuristik dari utils/gangTypes, SSOT)
     const safeData = Array.isArray(data) ? data : [];
     const enrichedData = useMemo(() => {
         if (safeData.length === 0) return [];
@@ -119,30 +74,18 @@ export default function GangComparisonChart({ data, loading, onGangClick, month,
 
     if (loading) {
         return (
-            <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                minHeight: '400px',
-                backgroundColor: 'white',
-                borderRadius: '12px',
-                padding: '2rem'
-            }}>
-                <div style={{ color: '#64748b', fontSize: '1.1rem' }}>Loading gang comparison...</div>
+            <div style={{ ...CARD, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
+                <div style={{ color: C.muted, fontSize: '1rem' }}>Memuat perbandingan gang...</div>
             </div>
         );
     }
 
     if (safeData.length === 0) {
         return (
-            <div style={{
-                backgroundColor: 'white',
-                borderRadius: '12px',
-                padding: '2rem',
-                textAlign: 'center'
-            }}>
-                <div style={{ color: '#94a3b8', fontSize: '1.1rem' }}>No gang data available</div>
-            </div>
+            <EmptyState
+                title="Data gang belum tersedia"
+                message={`Tidak ada data gang untuk cakupan ${getScopeLabel(scope)} pada periode ini.`}
+            />
         );
     }
 
@@ -161,41 +104,39 @@ export default function GangComparisonChart({ data, loading, onGangClick, month,
     const metricConfig = getMetricConfig();
     const allMetricValues = safeData.map(d => d[sortBy]);
 
-    // Removed Report Data Logic (moved to page)
-
     const CustomTooltip = ({ active, payload }) => {
         if (active && payload && payload.length) {
             const gang = payload[0].payload;
             const gangType = getGangType(gang.gang_code);
-            const isHarvesting = gangType === 'harvesting';
-            
+            const isHarvesting = gangType === GANG_TYPE.HARVESTING;
+
             return (
                 <div style={{
-                    backgroundColor: 'white',
+                    backgroundColor: C.surface,
                     padding: '12px 16px',
-                    border: '1px solid #e2e8f0',
+                    border: `1px solid ${C.border}`,
                     borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    boxShadow: SHADOW
                 }}>
-                    <div style={{ fontWeight: '700', color: '#1e293b', marginBottom: '8px' }}>
+                    <div style={{ fontWeight: '700', color: C.text, marginBottom: '8px' }}>
                         {gang.gang_code}
                     </div>
-                    <div style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '8px' }}>
+                    <div style={{ fontSize: '0.9rem', color: C.muted, marginBottom: '8px' }}>
                         {gang.gang_name || gang.gang_description}
                     </div>
-                    <div style={{ fontSize: '0.9rem', color: '#334155' }}>
+                    <div style={{ fontSize: '0.9rem', color: C.text2 }}>
                         <div><strong>Cost/HK:</strong> {formatCurrency(gang.cost_per_hk)}</div>
                         <div><strong>Headcount:</strong> {gang.headcount} emp</div>
                         <div><strong>Total HK:</strong> {gang.total_hk.toLocaleString()}</div>
                         <div><strong>Total Wage:</strong> {formatCurrency(gang.total_wage)}</div>
                         <div><strong>Gang Type:</strong> {getGangTypeLabel(gangType)}</div>
                         {isHarvesting && gang.total_ffb_bunches > 0 && (
-                            <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #e2e8f0' }}>
-                                <div style={{ color: '#16a34a', fontWeight: '600' }}>
-                                    🌴 FFB Bunches: {formatNumber(gang.total_ffb_bunches)}
+                            <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: `1px solid ${C.border}` }}>
+                                <div style={{ color: C.upah, fontWeight: '600' }}>
+                                    FFB Bunches: {formatNumber(gang.total_ffb_bunches)}
                                 </div>
                                 {gang.harvester_count > 0 && (
-                                    <div style={{ color: '#64748b', fontSize: '0.85rem' }}>
+                                    <div style={{ color: C.muted, fontSize: '0.85rem' }}>
                                         Harvesters: {gang.harvester_count} emp
                                     </div>
                                 )}
@@ -209,59 +150,50 @@ export default function GangComparisonChart({ data, loading, onGangClick, month,
     };
 
     return (
-        <div style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '1.5rem',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-        }}>
+        <div style={CARD}>
             <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
-                alignItems: 'center',
+                alignItems: 'flex-start',
                 marginBottom: '1.5rem',
                 flexWrap: 'wrap',
                 gap: '1rem'
             }}>
                 <div>
-                    <h3 style={{
-                        fontSize: '1.2rem',
-                        fontWeight: '700',
-                        color: '#1e293b',
-                        margin: 0
-                    }}>
-                        📊 Gang Performance Comparison
+                    <h3 style={{ ...SECTION_TITLE, marginBottom: 6 }}>
+                        Perbandingan Kinerja Gang
                     </h3>
+                    <p style={{
+                        fontSize: '0.85rem',
+                        color: C.muted,
+                        margin: '0 0 8px 0'
+                    }}>
+                        {getScopeLabel(scope)} · diurutkan per <span style={{ fontWeight: '600', color: C.upah }}>{metricConfig.label}</span> · {data.length} gang
+                    </p>
                     <button
                         onClick={handleGenerateReport}
                         style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.4rem',
                             padding: '0.4rem 0.8rem',
-                            background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: '6px',
+                            background: C.surface,
+                            color: C.upah,
+                            border: `1px solid ${C.border}`,
+                            borderRadius: '8px',
                             fontSize: '0.8rem',
                             fontWeight: '600',
                             cursor: 'pointer',
-                            boxShadow: '0 2px 4px rgba(15, 23, 42, 0.2)',
-                            transition: 'all 0.2s ease'
+                            boxShadow: SHADOW
                         }}
-                        onMouseEnter={(e) => e.target.style.transform = 'translateY(-1px)'}
-                        onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
                     >
-                        🖨️ Generate Report
+                        <Printer size={14} strokeWidth={2.2} aria-hidden="true" />
+                        Generate Report
                     </button>
-                    <p style={{
-                        fontSize: '0.9rem',
-                        color: '#64748b',
-                        margin: '4px 0 0 0'
-                    }}>
-                        Comparing by <span style={{ fontWeight: '600', color: '#3b82f6' }}>{metricConfig.label}</span> | {data.length} gangs
-                    </p>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <label style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '600' }}>
+                    <label style={{ fontSize: '0.85rem', color: C.muted, fontWeight: '600' }}>
                         Sort by:
                     </label>
                     <select
@@ -269,12 +201,12 @@ export default function GangComparisonChart({ data, loading, onGangClick, month,
                         onChange={(e) => setSortBy(e.target.value)}
                         style={{
                             padding: '0.5rem 0.75rem',
-                            borderRadius: '6px',
-                            border: '1px solid #e2e8f0',
-                            backgroundColor: 'white',
-                            fontSize: '0.9rem',
+                            borderRadius: '8px',
+                            border: `1px solid ${C.border}`,
+                            backgroundColor: C.surface,
+                            fontSize: '0.85rem',
                             fontWeight: '600',
-                            color: '#334155',
+                            color: C.text2,
                             cursor: 'pointer',
                             outline: 'none'
                         }}
@@ -295,9 +227,10 @@ export default function GangComparisonChart({ data, loading, onGangClick, month,
                         layout="vertical"
                         margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
                     >
-                        <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                        <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke={C.gridLine} />
                         <XAxis
                             type="number"
+                            tick={{ fill: C.muted, fontSize: 11 }}
                             tickFormatter={(val) => {
                                 if (sortBy === 'headcount') return val;
                                 if (sortBy === 'total_ffb_bunches') return formatBunches(val);
@@ -308,7 +241,7 @@ export default function GangComparisonChart({ data, loading, onGangClick, month,
                             type="category"
                             dataKey="gang_code"
                             width={90}
-                            tick={{ fontSize: 12 }}
+                            tick={{ fontSize: 12, fill: C.text2 }}
                         />
                         <Tooltip content={<CustomTooltip />} />
                         <Bar
@@ -328,8 +261,6 @@ export default function GangComparisonChart({ data, loading, onGangClick, month,
                     </BarChart>
                 </ResponsiveContainer>
             </div>
-
-            {/* Modal Removed */}
         </div>
     );
 }

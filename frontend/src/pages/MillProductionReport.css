@@ -79,12 +79,12 @@
 }
 
 .refresh-button {
-    background-color: #4f46e5;
+    background-color: #1E7A45;
     box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
 }
 
 .refresh-button:hover:not(:disabled) {
-    background-color: #4338ca;
+    background-color: #14532D;
     transform: translateY(-1px);
 }
 
@@ -446,7 +446,7 @@
     height: 40px;
     border: 3px solid #e5e7eb;
     border-radius: 50%;
-    border-top-color: #4f46e5;
+    border-top-color: #1E7A45;
     animation: spin 1s ease-in-out infinite;
     margin-bottom: 16px;
 }

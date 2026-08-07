@@ -19,7 +19,7 @@ Putusan target daftar upah ada di 4 tempat: 2 di `routes-config.json` + 2 di `ro
 - `backend/` — Bun + Elysia API server. Entry `src/index.ts`. Serve API **dan** frontend dist (`../frontend/dist`) + SPA fallback. Prefix `/backend/upah` di-strip di `onBeforeHandle`/route group.
 - `frontend/` — React + Vite SPA. Production base `/upah/`. Build → `frontend/dist`.
 - `versions/` — system rilis snapshot per versi, self-contained, runnable langsung. Hub: `versions/versions.ps1`.
-- `graphify-out/` — knowledge graph (query via `/graphify` skill). Scope `backend/src` + `frontend/src` ONLY — `versions/*` TIDAK masuk graph.
+- `graphify-out/` — knowledge graph (query via `/graphify` skill). Scope `backend/src` + `frontend/src` ONLY — `versions/*` TIDAK masuk graph. Di-enforce via `.graphifyignore` (whitelist) di root — ubah file itu untuk ubah scope, lalu jalankan `graphify update .` (AST-only, no API cost).
 - `dokumentasi/` — dokumentasi proyek.
 
 ## Port map (PENTING)
@@ -73,3 +73,11 @@ Prefix route:
 - [ ] Tambah route/service baru
 - [ ] Ubah struktur folder besar
 - [ ] Pindah/rename gateway proxy
+
+## Frontend Design System (LOCKED — 2026-08-06)
+
+- `design.md` di project root = **single source of truth** desain app (genre modern-minimal, tema custom sawit, typography Sora/Inter/Roboto Mono, spacing/motion/CTA voice). Semua redesign page WAJIB baca dulu.
+- `frontend/src/styles/tokens.css` = token `--color-*/--font-*/--space-*` (diimport pertama di `main.jsx`, sebelum `theme.css`).
+- `reportTheme.jsx` `C` object = palette JS konsisten, dipakai 25+ page; jangan ubah keys tanpa cek semua file.
+- Shell `DashboardLayout.jsx` = sidebar dark green gradient + topbar paper light hairline.
+- `.hallmark/log.json` mencatat run Hallmark app ini; jangan hapus.

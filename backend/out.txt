@@ -1,0 +1,38 @@
+bun test v1.3.12 (700fc117)
+
+src\services\dashboardService.tonaseReport.test.ts:
+[HarvesterService] Staging DB disabled by default as requested
+114 |         };
+115 |         service.getHarvesterBunches = async () => new Map();
+116 | 
+117 |         const report = await service.getTonaseAnalysisReport(5, 2026);
+118 | 
+119 |         expect(sql).toContain("ROW_NUMBER() OVER");
+                          ^
+error: expect(received).toContain(expected)
+
+Expected to contain: "ROW_NUMBER() OVER"
+Received: "\n                SELECT period_month, period_year, LTRIM(RTRIM(division_code)) AS division_code, SUM(tonase) AS tonase\n                FROM dbo.division_tonase\n                GROUP BY period_month, period_year, LTRIM(RTRIM(division_code))\n            "
+
+      at <anonymous> (D:\Gawean Rebinmas\PORTAL_ESTATE\V 2 (begin versioning)\backend\src\services\dashboardService.tonaseReport.test.ts:119:21)
+(fail) DashboardService tonase analysis report > builds a 5-month harvest-gang report with upah bersih and premi efficiency metrics
+(pass) DashboardService tonase analysis report > marks per-HK and per-ton metrics unavailable when HK and tonase are zero [15.00ms]
+284 |         service.getGangProduction = async () => new Map();
+285 |         service.getHarvesterBunches = async () => new Map();
+286 | 
+287 |         const report = await service.getTonaseAnalysisReport(5, 2026);
+288 | 
+289 |         expect(report.trend[3].total_tonase).toBe(15);
+                                                   ^
+error: expect(received).toBe(expected)
+
+Expected: 15
+Received: 0
+
+      at <anonymous> (D:\Gawean Rebinmas\PORTAL_ESTATE\V 2 (begin versioning)\backend\src\services\dashboardService.tonaseReport.test.ts:289:46)
+(fail) DashboardService tonase analysis report > reads tonase from all latest aggregation rows while keeping HK and premium metrics harvest-only
+
+ 1 pass
+ 2 fail
+ 9 expect() calls
+Ran 3 tests across 1 file. [139.00ms]

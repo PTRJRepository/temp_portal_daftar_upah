@@ -1,0 +1,160 @@
+/* Hallmark · macrostructure: Long Document (scroll-story) · tone: editorial-infographic · anchor hue: sawit-green
+ * Cost/Ton Story - presentation page for financial manager. Hybrid scroll + drill.
+ */
+
+.cpts-page {
+    --c-upah: #1F6F43; --c-amber: #B45309; --c-red: #B3392E; --c-cost: #7C5A2B;
+    --c-tonase: #5E9C7B; --c-premium: #7C5A2B; --c-leaf: #1F6F43;
+    --c-ink: #12241A; --c-text2: #46584C; --c-muted: #7C8B80; --c-border: #DFE8E0;
+    --c-surface: #FFFFFF; --c-surface2: #F6FAF5; --c-pageBg: #EDF3EC;
+    --c-leafDark: #14532D; --c-leafMid: #1F6F43; --c-leafLight: #4CBB6B;
+    background: var(--c-pageBg);
+    color: var(--c-ink);
+    font-family: Inter, system-ui, sans-serif;
+    overflow-x: clip;
+}
+.cpts-page * { box-sizing: border-box; }
+
+.cpts-sticky-bar {
+    position: sticky; top: 0; z-index: 40;
+    background: rgba(237, 243, 236, 0.92);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--c-border);
+    padding: 10px 24px;
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    max-width: 1320px; margin: 0 auto;
+}
+.cpts-sticky-bar .title { font-weight: 800; font-size: 15px; color: var(--c-leafDark); letter-spacing: -0.01em; }
+.cpts-sticky-bar select {
+    padding: 6px 12px; border-radius: 8px; border: 1px solid var(--c-border);
+    background: var(--c-surface); font-weight: 600; font-size: 13px; color: var(--c-ink); cursor: pointer;
+}
+.cpts-act-nav { display: flex; gap: 6px; margin-left: auto; }
+.cpts-act-nav button {
+    border: none; background: transparent; color: var(--c-muted); font-size: 12px; font-weight: 700;
+    cursor: pointer; padding: 4px 8px; border-radius: 6px; transition: all .15s;
+}
+.cpts-act-nav button.active { background: var(--c-leafMid); color: #fff; }
+.cpts-act-nav button:hover { color: var(--c-leafDark); }
+
+.cpts-act {
+    max-width: 1320px; margin: 0 auto; padding: 56px 24px 32px;
+    opacity: 0; transform: translateY(24px);
+    transition: opacity .6s ease, transform .6s ease;
+}
+.cpts-act.in-view { opacity: 1; transform: translateY(0); }
+.cpts-act-eyebrow {
+    font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.16em;
+    color: var(--c-leafMid); margin-bottom: 8px;
+}
+.cpts-act-title { font-size: clamp(1.6rem, 3.5vw, 2.4rem); font-weight: 800; letter-spacing: -0.02em; color: var(--c-ink); margin: 0 0 8px; line-height: 1.1; }
+.cpts-act-lede { font-size: 1.05rem; color: var(--c-text2); max-width: 640px; line-height: 1.5; margin: 0 0 28px; }
+
+/* ACT 1 hero */
+.cpts-hero-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+.cpts-hero-card {
+    background: var(--c-surface); border: 1px solid var(--c-border); border-radius: 16px;
+    padding: 28px 24px; position: relative; overflow: hidden;
+    box-shadow: 0 1px 2px rgba(18,36,26,.05), 0 6px 18px rgba(18,36,26,.08);
+}
+.cpts-hero-card .accent { position: absolute; left: 0; top: 0; bottom: 0; width: 5px; }
+.cpts-hero-card .lbl { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em; color: var(--c-muted); margin-bottom: 12px; }
+.cpts-hero-card .big { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; line-height: 1; color: var(--c-ink); }
+.cpts-hero-card .sub { margin-top: 10px; font-size: 13px; color: var(--c-text2); }
+.cpts-hero-punch {
+    margin-top: 24px; padding: 18px 22px; border-radius: 14px;
+    background: var(--c-leafDark); color: #fff;
+    font-size: 1.15rem; font-weight: 700; line-height: 1.4;
+}
+
+/* ACT 2 treemap */
+.cpts-treemap-wrap { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: 16px; padding: 20px; height: 460px; }
+.cpts-legend { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--c-text2); margin-top: 12px; }
+.cpts-legend .bar { display: flex; width: 160px; height: 10px; border-radius: 5px; overflow: hidden; border: 1px solid var(--c-border); }
+.cpts-legend .bar i { flex: 1; }
+
+/* ACT 3 dekomposisi */
+.cpts-decomp-wrap { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: 16px; padding: 20px; height: 420px; }
+
+/* ACT 4 scatter */
+.cpts-scatter-wrap { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: 16px; padding: 20px; height: 460px; position: relative; }
+.cpts-quadrant-note { position: absolute; font-size: 11px; color: var(--c-muted); font-weight: 700; }
+
+/* ACT 5 anomali */
+.cpts-anomali-list { display: flex; flex-direction: column; gap: 10px; }
+.cpts-anomali-row {
+    display: grid; grid-template-columns: 40px 1fr auto auto; align-items: center; gap: 16px;
+    background: var(--c-surface); border: 1px solid var(--c-border); border-radius: 12px; padding: 14px 18px;
+    border-left: 4px solid var(--c-red);
+}
+.cpts-anomali-row.minor { border-left-color: var(--c-amber); }
+.cpts-anomali-rank { font-size: 20px; font-weight: 800; color: var(--c-muted); font-variant-numeric: tabular-nums; }
+.cpts-anomali-name { font-weight: 800; font-size: 16px; }
+.cpts-anomali-sub { font-size: 12px; color: var(--c-text2); }
+.cpts-anomali-delta { font-weight: 800; font-size: 18px; font-variant-numeric: tabular-nums; }
+.cpts-anomali-delta.bad { color: var(--c-red); }
+.cpts-anomali-delta.good { color: var(--c-upah); }
+
+.cpts-empty { text-align: center; padding: 40px; color: var(--c-muted); font-size: 14px; }
+.cpts-drill-panel {
+    background: var(--c-surface); border: 2px solid var(--c-leafMid); border-radius: 16px;
+    padding: 24px; margin-top: 28px; scroll-margin-top: 80px;
+}
+.cpts-drill-panel h3 { margin: 0 0 4px; font-size: 1.3rem; font-weight: 800; color: var(--c-leafDark); }
+.cpts-drill-panel .back { background: none; border: none; color: var(--c-leafMid); font-weight: 700; cursor: pointer; font-size: 13px; padding: 0; margin-bottom: 12px; }
+
+@media print {
+    .cpts-sticky-bar, .cpts-act-nav { display: none; }
+    .cpts-act { opacity: 1 !important; transform: none !important; page-break-after: always; padding: 20px; }
+    .cpts-page { background: #fff; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cpts-act { transition: opacity .15s; transform: none; }
+    .cpts-hero-card .big { animation: none !important; }
+}
+
+/* ===== Act 6 - cross-division cost/ton timeline (small-multiples) ===== */
+/* Hallmark · component: timeline-small-multiples · theme: sawit-finance */
+.cpts-move-summary { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+.cpts-move-pill { font-size: 12px; font-weight: 700; padding: 5px 14px; border-radius: 999px; border: 1px solid var(--c-border); }
+.cpts-move-pill.good { color: var(--c-upah); background: #E4F4EB; border-color: #C4E6D2; }
+.cpts-move-pill.bad { color: var(--c-red); background: #FBE9E8; border-color: #F2C9C6; }
+.cpts-move-pill.flat { color: var(--c-muted); background: var(--c-surface2); }
+
+.cpts-trend-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.cpts-trend-panel { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: 12px; padding: 14px; min-width: 0; }
+.cpts-trend-panel.tone-good { border-color: #C4E6D2; }
+.cpts-trend-panel.tone-bad { border-color: #F2C9C6; }
+.cpts-trend-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.cpts-trend-code { font-weight: 800; font-size: 13px; color: var(--c-ink); letter-spacing: -0.01em; }
+.cpts-trend-delta { font-size: 11px; font-weight: 700; }
+.cpts-trend-delta.good { color: var(--c-upah); }
+.cpts-trend-delta.bad { color: var(--c-red); }
+.cpts-trend-delta.flat { color: var(--c-muted); }
+
+@media (max-width: 900px) {
+  .cpts-trend-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cpts-act { padding: 28px 16px 24px; }
+  .cpts-sticky-bar { gap: 8px; padding: 8px 16px; }
+  .cpts-hero-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 540px) {
+  .cpts-trend-grid { grid-template-columns: 1fr; }
+  .cpts-anomali-row { grid-template-columns: 40px 1fr auto; }
+  .cpts-anomali-row .cpts-anomali-delta { grid-column: 3; }
+}
+.cpts-filter-pills { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+.cpts-filter-pills .lbl { font-size: 10px; color: var(--c-muted); font-weight: 700; }
+.cpts-filter-pills button,
+.cpts-filter-pills .cpts-pill { padding: 3px 9px; font-size: 10px; font-weight: 700; border-radius: 6px; border: 1px solid; cursor: pointer; transition: all .15s; }
+.cpts-gang-scatter-wrap { height: 320px; margin-top: 12px; }
+.cpts-act3-drill { margin-top: 16px; border: 1px solid var(--c-border); border-radius: 10px; padding: 14px 16px; background: var(--c-surface); }
+.cpts-act3-drill-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.cpts-act3-drill-head strong { font-size: 14px; }
+.cpts-act3-drill-head .meta { font-size: 12px; color: var(--c-muted); }
+.cpts-btn-ghost { margin-left: auto; border: 1px solid var(--c-border); background: transparent; border-radius: 6px; padding: 3px 10px; font-size: 11px; font-weight: 700; cursor: pointer; color: var(--c-muted); }
+.cpts-act3-drill table { width: 100%; margin-top: 10px; border-collapse: collapse; font-size: 12px; }
+.cpts-act3-drill th { text-align: left; color: var(--c-muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; padding: 4px 6px; }
+.cpts-act3-drill td { padding: 5px 6px; border-top: 1px solid var(--c-border); }
+

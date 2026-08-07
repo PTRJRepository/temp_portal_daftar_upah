@@ -517,3 +517,92 @@ body>#root>div {
     width: auto !important;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   HALLMARK REDESIGN APPEND (2026-08-06) — tokens.css is the source of
+   truth (imported BEFORE this file in main.jsx). Legacy slate vars
+   re-pointed to the locked sawit system so AG Grid + shared .card/.btn
+   utilities follow the green theme. Do not delete — design.md governs.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* AG Grid → sawit */
+:root {
+  --ag-font-family: var(--font-body);
+  --ag-header-background-color: var(--color-paper-2);
+  --ag-header-foreground-color: var(--color-ink-2);
+  --ag-border-color: var(--color-rule);
+  --ag-odd-row-background-color: var(--color-surface);
+  --ag-row-hover-color: var(--color-surface-2);
+  --ag-selected-row-background-color: oklch(94% 0.035 152 / 0.5);
+  --ag-range-selection-border-color: var(--color-leaf-mid);
+  --ag-range-selection-background-color: oklch(94% 0.035 152 / 0.35);
+}
+
+/* Shared component classes — legacy slate → locked green tokens */
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  color: var(--color-ink);
+}
+
+.btn-primary {
+  background: var(--color-accent);
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--color-accent-ink);
+  font-weight: 700;
+}
+
+.btn-primary:hover {
+  background: var(--color-leaf-dark);
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-md);
+  color: var(--color-ink);
+}
+
+.btn-secondary:hover {
+  border-color: var(--color-leaf-mid);
+  color: var(--color-leaf-mid);
+}
+
+.input-field {
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+}
+
+.input-field:focus {
+  border-color: var(--color-leaf-mid);
+  outline: 2px solid var(--color-focus);
+  outline-offset: 0;
+}
+
+.btn-primary:focus-visible,
+.btn-secondary:focus-visible,
+.input-field:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* Table refinements */
+table thead th {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--color-ink-2);
+}
+
+td.num,
+.stat-value,
+.cell-accounting {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}

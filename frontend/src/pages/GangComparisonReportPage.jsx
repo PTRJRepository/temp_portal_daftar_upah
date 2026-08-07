@@ -11,9 +11,12 @@ import {
     ResponsiveContainer,
     Cell
 } from 'recharts';
-import { Filter, BarChart3, TrendingUp, Info } from 'lucide-react';
+import { Printer, ArrowLeft } from 'lucide-react';
 import ReportWatermark from '../components/common/ReportWatermark';
 import { printReport } from '../utils/printPageSetup';
+import { C, SHADOW, CARD } from '../components/report/reportTheme';
+import { dashJson } from '../utils/dashboardApi';
+import { GANG_TYPE, getGangType, isIJLGang, getGangTypeLabel } from '../utils/gangTypes';
 import '../styles/gang-report-print.css';
 import '../styles/report-print-foundation.css';
 
@@ -35,39 +38,13 @@ const formatTon = (val) => {
     return new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val / 1000); // Convert kg to Ton
 };
 
-const getGangType = (gangCode) => {
-    if (!gangCode) return 'uncategorized';
-    const lastChar = gangCode.slice(-1).toUpperCase();
-    if (lastChar === 'H') return 'harvesting';
-    if (lastChar === 'T') return 'transport';
-    if (lastChar === 'M') return 'maintenance';
-    return 'uncategorized';
-};
-
-const isIJLGang = (gangCode) => {
-    if (!gangCode) return false;
-    return gangCode.toUpperCase().startsWith('L');
-};
-
-const getGangTypeLabel = (type) => {
-    const labels = {
-        harvesting: 'Panen (Harvesting)',
-        transport: 'Transport',
-        maintenance: 'Maintenance',
-        uncategorized: 'Lainnya'
-    };
-    return labels[type] || type;
-};
-
-const getGangTypeColor = (type) => {
-    const colors = {
-        harvesting: '#16a34a',
-        transport: '#2563eb',
-        maintenance: '#d97706',
-        uncategorized: '#64748b'
-    };
-    return colors[type] || '#64748b';
-};
+// Warna per tipe gang — semantik Estate Ledger (aksen tunggal + warna semantik)
+const getGangTypeColor = (type) => ({
+    [GANG_TYPE.HARVESTING]: C.upah,
+    [GANG_TYPE.TRANSPORT]: C.premi,
+    [GANG_TYPE.MAINTENANCE]: C.lembur,
+    [GANG_TYPE.UNCATEGORIZED]: C.muted,
+}[type] || C.muted);
 
 // Helper to get month name
 const getMonthName = (monthNum) => {
@@ -100,19 +77,13 @@ export default function GangComparisonReportPage() {
             if (!month || !year) return;
             setLoading(true);
             try {
-                // Fetch data from existing endpoint which returns comparison data
-                const basePath = '/backend/upah/payroll/dashboard/gang-comparison';
+                // Fetch data dari endpoint gang-comparison via helper terpadu
                 const query = new URLSearchParams();
                 query.append('month', month);
                 query.append('year', year);
 
-                const url = `${basePath}?${query.toString()}`;
+                const json = await dashJson(`/gang-comparison?${query.toString()}`, { token: localStorage.getItem('token') });
 
-                const res = await fetch(url, {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-                });
-
-                const json = await res.json();
                 if (json.success) {
                     setData(json.data);
                 } else {
@@ -150,7 +121,8 @@ export default function GangComparisonReportPage() {
             total_hk: parseFloat(gang.total_hk || 0),
             total_production: parseFloat(gang.total_production || 0),
             cost_per_hk: parseFloat(gang.cost_per_hk || 0),
-            cost_per_ton: parseFloat(gang.cost_per_ton || 0),
+            cost_per_ton: gang.cost_per_ton == null ? null : parseFloat(gang.cost_per_ton),
+            cost_per_ton_note: gang.cost_per_ton_note || 'Cost/ton valid per divisi',
         }));
 
         // Division Filter
@@ -171,10 +143,12 @@ export default function GangComparisonReportPage() {
         return { key: 'cost_per_hk', label: 'Cost / HK', formatter: formatCurrency };
     }, [analysisMode]);
 
-    // Sort data for chart (Top 20 worst/highest cost)
+    // Sort data for chart (Top 20 worst/highest cost) — exclude null metric (cost_per_ton now null for panen gangs)
     const chartData = useMemo(() => {
+        const key = analysisMetric.key;
         return [...filteredReportData]
-            .sort((a, b) => b[analysisMetric.key] - a[analysisMetric.key])
+            .filter(g => g[key] != null)
+            .sort((a, b) => (b[key] ?? -Infinity) - (a[key] ?? -Infinity))
             .slice(0, 20);
     }, [filteredReportData, analysisMetric]);
 
@@ -200,22 +174,22 @@ export default function GangComparisonReportPage() {
     if (error) return <div className="p-8 text-center text-red-500">{error}</div>;
 
     return (
-        <div className="gang-report-page-container" style={{ padding: '2rem', background: 'white', minHeight: '100vh', fontFamily: 'Inter, sans-serif' }}>
+        <div className="gang-report-page-container" style={{ padding: '2rem', background: C.cream, minHeight: '100vh', fontFamily: 'var(--font-body)' }}>
             {/* Header Controls (No Print) */}
             <div className="no-print" style={{ marginBottom: '2rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
                     <button
                         onClick={() => navigate(-1)}
-                        style={{ padding: '8px 16px', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '6px', cursor: 'pointer' }}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '8px 16px', background: C.surface, border: `1px solid ${C.border}`, borderRadius: '8px', cursor: 'pointer', color: C.text2, fontWeight: 600, boxShadow: SHADOW }}
                     >
-                        ← Back to Dashboard
+                        <ArrowLeft size={15} strokeWidth={2.2} aria-hidden="true" /> Kembali ke Dashboard
                     </button>
                     <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                         <button
                                 onClick={() => printReport({ orientation: 'landscape' })}
-                            style={{ padding: '8px 16px', background: '#0f172a', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                            style={{ padding: '8px 16px', background: C.leafDark, color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: SHADOW }}
                         >
-                            <span>🖨️</span> Print Report
+                            <Printer size={15} strokeWidth={2.2} aria-hidden="true" /> Print Report
                         </button>
                     </div>
                 </div>
@@ -223,9 +197,10 @@ export default function GangComparisonReportPage() {
                 {/* Filters & Toggles */}
                 <div className="gang-report-controls" style={{
                     padding: '1.5rem',
-                    background: '#f8fafc',
-                    borderRadius: '8px',
-                    border: '1px solid #e2e8f0',
+                    background: C.surface,
+                    borderRadius: '10px',
+                    border: `1px solid ${C.border}`,
+                    boxShadow: SHADOW,
                     display: 'flex',
                     flexWrap: 'wrap',
                     gap: '2rem',
@@ -233,7 +208,7 @@ export default function GangComparisonReportPage() {
                 }}>
                     {/* Division Filter */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        <label style={{ fontSize: '0.875rem', fontWeight: 600, color: '#64748b' }}>Filter Divisi</label>
+                        <label style={{ fontSize: '0.875rem', fontWeight: 600, color: C.muted }}>Filter Divisi</label>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                             {['ALL', 'IJL', 'NON_IJL'].map(mode => (
                                 <button
@@ -245,11 +220,11 @@ export default function GangComparisonReportPage() {
                                     }}
                                     style={{
                                         padding: '6px 12px',
-                                        borderRadius: '6px',
+                                        borderRadius: '8px',
                                         border: '1px solid',
-                                        borderColor: divisionFilter === mode ? '#2563eb' : '#cbd5e1',
-                                        background: divisionFilter === mode ? '#eff6ff' : 'white',
-                                        color: divisionFilter === mode ? '#2563eb' : '#64748b',
+                                        borderColor: divisionFilter === mode ? C.upah : C.border,
+                                        background: divisionFilter === mode ? '#E9F2EA' : C.surface,
+                                        color: divisionFilter === mode ? C.upah : C.muted,
                                         fontWeight: divisionFilter === mode ? 600 : 400,
                                         cursor: 'pointer'
                                     }}
@@ -263,11 +238,11 @@ export default function GangComparisonReportPage() {
                     {/* Gang Type Filter (Disabled if Non-IJL) */}
                     {divisionFilter !== 'NON_IJL' && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                            <label style={{ fontSize: '0.875rem', fontWeight: 600, color: '#64748b' }}>Tipe Gang</label>
+                            <label style={{ fontSize: '0.875rem', fontWeight: 600, color: C.muted }}>Tipe Gang</label>
                             <select
                                 value={gangTypeFilter}
                                 onChange={(e) => setGangTypeFilter(e.target.value)}
-                                style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                                style={{ padding: '6px 12px', borderRadius: '8px', border: `1px solid ${C.border}`, color: C.text2, background: C.surface }}
                             >
                                 <option value="ALL">Semua Tipe</option>
                                 <option value="harvesting">Panen</option>
@@ -279,8 +254,8 @@ export default function GangComparisonReportPage() {
 
                     {/* Analysis Mode Toggle */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginLeft: 'auto' }}>
-                        <label style={{ fontSize: '0.875rem', fontWeight: 600, color: '#64748b' }}>Mode Analisis</label>
-                        <div style={{ display: 'flex', backgroundColor: '#e2e8f0', padding: '4px', borderRadius: '8px' }}>
+                        <label style={{ fontSize: '0.875rem', fontWeight: 600, color: C.muted }}>Mode Analisis</label>
+                        <div style={{ display: 'flex', backgroundColor: C.surface2, border: `1px solid ${C.border}`, padding: '4px', borderRadius: '8px' }}>
                             {[
                                 { id: 'HK', label: 'Cost / HK' },
                                 { id: 'TON', label: 'Cost / Ton' },
@@ -293,12 +268,12 @@ export default function GangComparisonReportPage() {
                                         padding: '6px 16px',
                                         borderRadius: '6px',
                                         border: 'none',
-                                        background: analysisMode === option.id ? 'white' : 'transparent',
-                                        color: analysisMode === option.id ? '#0f172a' : '#64748b',
+                                        background: analysisMode === option.id ? C.surface : 'transparent',
+                                        color: analysisMode === option.id ? C.text : C.muted,
                                         fontWeight: 600,
                                         cursor: 'pointer',
-                                        boxShadow: analysisMode === option.id ? '0 1px 2px rgba(0,0,0,0.1)' : 'none',
-                                        transition: 'all 0.2s'
+                                        boxShadow: analysisMode === option.id ? SHADOW : 'none',
+                                        transition: 'all 0.15s'
                                     }}
                                 >
                                     {option.label}
@@ -349,9 +324,9 @@ export default function GangComparisonReportPage() {
                     </div>
 
                     {/* Dynamic Metric Card */}
-                    <div className="gang-report-summary-card highlight" style={{ borderColor: '#3b82f6', backgroundColor: '#f0f9ff' }}>
+                    <div className="gang-report-summary-card highlight" style={{ borderColor: C.upah, backgroundColor: '#E9F2EA' }}>
                         <div className="gang-report-summary-label">Rata-rata {analysisMetric.label}</div>
-                        <div className="gang-report-summary-value" style={{ color: '#1d4ed8' }}>
+                        <div className="gang-report-summary-value" style={{ color: C.upah }}>
                             {(() => {
                                 const totalWage = filteredReportData.reduce((sum, g) => sum + g.total_wage, 0);
                                 const totalHK = filteredReportData.reduce((sum, g) => sum + g.total_hk, 0);
@@ -366,23 +341,29 @@ export default function GangComparisonReportPage() {
                 </div>
 
                 {/* Chart Section */}
-                <div className="no-print" style={{ marginBottom: '2rem', height: '400px', backgroundColor: '#fff', borderRadius: '8px', padding: '1rem', border: '1px solid #e2e8f0' }}>
+                <div className="no-print" style={{ marginBottom: '2rem', height: '400px', backgroundColor: C.surface, borderRadius: '10px', padding: '1rem', border: `1px solid ${C.border}`, boxShadow: SHADOW }}>
                     <h3 className="gang-report-section-title" style={{ marginBottom: '1rem' }}>Top 20 Gang - {analysisMetric.label}</h3>
+                    {analysisMode === 'TON' && chartData.length === 0 ? (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '80%', color: C.muted, fontSize: 14, textAlign: 'center', padding: '0 24px' }}>
+                            Cost/Ton valid per divisi, bukan per gang, karena tonase TBS adalah properti divisi.<br />Gunakan mode Cost/HK untuk membandingkan gang, atau buka Analisis Tonase untuk cost/ton per divisi.
+                        </div>
+                    ) : (
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart
                             data={chartData}
                             margin={{ top: 20, right: 30, left: 20, bottom: 60 }} // Extra bottom margin for slanted labels
                         >
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={C.gridLine} />
                             <XAxis
                                 dataKey="gang_code"
                                 angle={-45}
                                 textAnchor="end"
                                 height={60}
                                 interval={0}
-                                tick={{ fontSize: 12 }}
+                                tick={{ fontSize: 12, fill: C.text2 }}
                             />
                             <YAxis
+                                tick={{ fontSize: 11, fill: C.muted }}
                                 tickFormatter={(val) => {
                                     if (val >= 1000000) return `${(val / 1000000).toFixed(0)}jt`;
                                     if (val >= 1000) return `${(val / 1000).toFixed(0)}rb`;
@@ -400,6 +381,7 @@ export default function GangComparisonReportPage() {
                             </Bar>
                         </BarChart>
                     </ResponsiveContainer>
+                    )}
                 </div>
 
                 {/* Detail Table */}
@@ -415,8 +397,8 @@ export default function GangComparisonReportPage() {
                                 <th className="text-right">Total HK</th>
                                 <th className="text-right">Produksi (Ton)</th>
                                 <th className="text-right">Total Cost</th>
-                                <th className="text-right" style={{ backgroundColor: analysisMode === 'HK' ? '#f1f5f9' : 'transparent' }}>Cost/HK</th>
-                                <th className="text-right" style={{ backgroundColor: analysisMode === 'TON' ? '#f1f5f9' : 'transparent' }}>Cost/Ton</th>
+                                <th className="text-right" style={{ backgroundColor: analysisMode === 'HK' ? C.surface2 : 'transparent' }}>Cost/HK</th>
+                                <th className="text-right" style={{ backgroundColor: analysisMode === 'TON' ? C.surface2 : 'transparent' }}>Cost/Ton</th>
                                 <th className="text-right">Headcount</th>
                             </tr>
                         </thead>
@@ -442,7 +424,7 @@ export default function GangComparisonReportPage() {
                                                         <span className="gang-report-badge-non-ijl">Non-IJL</span>
                                                     )}
                                                 </td>
-                                                <td style={{ fontSize: '0.8rem', color: '#64748b' }}>{gang.gang_description}</td>
+                                                <td style={{ fontSize: '0.8rem', color: C.muted }}>{gang.gang_description}</td>
                                                 <td>
                                                     <span className="gang-report-type-badge" style={{ backgroundColor: getGangTypeColor(gang.gang_type) }}>
                                                         {getGangTypeLabel(gang.gang_type)}
@@ -451,11 +433,11 @@ export default function GangComparisonReportPage() {
                                                 <td className="text-right">{formatNumber(gang.total_hk)}</td>
                                                 <td className="text-right">{formatTon(gang.total_production)}</td>
                                                 <td className="text-right">{formatCurrency(gang.total_wage)}</td>
-                                                <td className="text-right" style={{ fontWeight: analysisMode === 'HK' ? 'bold' : 'normal', backgroundColor: analysisMode === 'HK' ? '#f8fafc' : 'transparent', color: getGangTypeColor(gang.gang_type) }}>
+                                                <td className="text-right" style={{ fontWeight: analysisMode === 'HK' ? 'bold' : 'normal', backgroundColor: analysisMode === 'HK' ? C.surface2 : 'transparent', color: getGangTypeColor(gang.gang_type) }}>
                                                     {formatCurrency(gang.cost_per_hk)}
                                                 </td>
-                                                <td className="text-right" style={{ fontWeight: analysisMode === 'TON' ? 'bold' : 'normal', backgroundColor: analysisMode === 'TON' ? '#f8fafc' : 'transparent', color: getGangTypeColor(gang.gang_type) }}>
-                                                    {formatCurrency(gang.cost_per_ton)}
+                                                <td className="text-right" style={{ fontWeight: analysisMode === 'TON' ? 'bold' : 'normal', backgroundColor: analysisMode === 'TON' ? C.surface2 : 'transparent', color: getGangTypeColor(gang.gang_type) }} title={gang.cost_per_ton_note}>
+                                                    {gang.cost_per_ton == null ? <span style={{ color: C.muted, fontSize: '0.8rem' }}>per divisi</span> : formatCurrency(gang.cost_per_ton)}
                                                 </td>
                                                 <td className="text-right">{formatNumber(gang.headcount)}</td>
                                             </tr>

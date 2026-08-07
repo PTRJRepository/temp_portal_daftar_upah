@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getMillProductionSummary } from '../services/millProductionService';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -6,11 +7,13 @@ import {
 } from 'recharts';
 import { Calendar, Scale, RefreshCw, Users, DollarSign, TrendingUp, Printer } from 'lucide-react';
 import ReportWatermark from '../components/common/ReportWatermark';
+import { MetricInfo, EmptyState } from '../components/report/reportTheme';
 import { printReport } from '../utils/printPageSetup';
 import './MillProductionReport.css';
 import '../styles/report-print-foundation.css';
 
 const MillProductionReport = () => {
+    const navigate = useNavigate();
     const [month, setMonth] = useState('2');
     const [year, setYear] = useState('2026');
     const [data, setData] = useState([]);
@@ -112,12 +115,13 @@ const MillProductionReport = () => {
             {/* Header */}
             <div className="mill-report-header no-print">
                 <div>
-                    <h1 className="mill-report-title">Analisis Produktivitas Kebun</h1>
+                    <h1 className="mill-report-title" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>Analisis Produktivitas Kebun <MetricInfo metricKey="total_tonase" /></h1>
                     <p className="mill-report-subtitle">
                         {compareMode
                             ? `Perbandingan ${prevMonthName} ${prevYear} vs ${currentMonthName} ${year}`
                             : `Tonase FFB, HK, dan biaya upah per divisi — ${currentMonthName} ${year}`}
                     </p>
+                    <button onClick={() => navigate(`/cost-per-ton-story?month=${month}&year=${year}`)} style={{ marginTop: 6, padding: '6px 12px', borderRadius: 8, border: 'none', background: '#1E7A45', color: '#fff', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Cost/Ton Story →</button>
                 </div>
                 <div className="mill-report-controls">
                     {compareMode && (

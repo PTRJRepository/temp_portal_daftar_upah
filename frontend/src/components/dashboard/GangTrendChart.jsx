@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Plus, X, Search } from 'lucide-react';
+import { Plus, X, Search, AlertTriangle } from 'lucide-react';
+import { C, SHADOW, CARD, SECTION_TITLE, chartPalette } from '../report/reportTheme';
+import { dashJson } from '../../utils/dashboardApi';
+import { getScopeLabel } from '../../utils/gangTypes';
 
 const formatCurrency = (val) => {
     if (val === null || val === undefined) return '-';
@@ -9,17 +12,18 @@ const formatCurrency = (val) => {
     return `Rp ${val.toFixed(0)}`;
 };
 
-const COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#6366f1', '#14b8a6'];
+const COLORS = chartPalette;
 
 const METRICS = [
     { key: 'cost_per_hk', label: 'Cost / HK', formatter: formatCurrency },
+    { key: 'cost_per_ton', label: 'Cost / Ton', formatter: formatCurrency },
     { key: 'total_wage', label: 'Total Wage', formatter: formatCurrency },
     { key: 'total_ot', label: 'Total Overtime', formatter: formatCurrency },
     { key: 'total_premi', label: 'Total Premi', formatter: formatCurrency },
     { key: 'headcount', label: 'Headcount', formatter: (v) => `${v} Emp` },
 ];
 
-export default function GangTrendChart({ token, month, year, divisionCode }) {
+export default function GangTrendChart({ token, month, year, divisionCode, scope = 'panen' }) {
     const [rawData, setRawData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [selectedGangs, setSelectedGangs] = useState([]); // Array of strings
@@ -32,26 +36,20 @@ export default function GangTrendChart({ token, month, year, divisionCode }) {
         if (token && month && year) {
             fetchTrends();
         }
-    }, [token, month, year, divisionCode]);
+    }, [token, month, year, divisionCode, scope]);
 
     const fetchTrends = async () => {
         setLoading(true);
         try {
-            const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8002';
-
-            // Safe URL construction
+            // Safe URL construction (scope diteruskan agar konsisten dengan toggle halaman)
             const params = new URLSearchParams({
                 month: month,
-                year: year
+                year: year,
+                scope: scope
             });
             if (divisionCode) params.append('division_code', divisionCode);
 
-            const url = `${apiUrl}/payroll/dashboard/all-gangs-trend?${params.toString()}`;
-
-            const res = await fetch(url.toString(), {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const json = await res.json();
+            const json = await dashJson(`/all-gangs-trend?${params.toString()}`, { token });
             if (json.success) {
                 setRawData(json.data);
 
@@ -63,7 +61,7 @@ export default function GangTrendChart({ token, month, year, divisionCode }) {
                 if (selectedGangs.length === 0 && unique.length > 0) {
                     setSelectedGangs(unique.slice(0, 5));
                 } else {
-                    // Filter out selected gangs that are no longer available (e.g. division change)
+                    // Filter out selected gangs that are no longer available (e.g. division/scope change)
                     setSelectedGangs(prev => prev.filter(g => unique.includes(g)));
                 }
             }
@@ -78,7 +76,6 @@ export default function GangTrendChart({ token, month, year, divisionCode }) {
     const chartData = useMemo(() => {
         if (!rawData.length) return [];
 
-        const periods = [...new Set(rawData.map(d => `${d.month}/${d.year}`))];
         const periodObjs = [];
 
         // Calculate benchmarks per period
@@ -135,24 +132,30 @@ export default function GangTrendChart({ token, month, year, divisionCode }) {
 
     const activeMetricConfig = METRICS.find(m => m.key === metric) || METRICS[0];
 
-    if (loading && !rawData.length) return <div className="p-8 text-center text-gray-400">Loading trends...</div>;
+    if (loading && !rawData.length) {
+        return (
+            <div style={{ ...CARD, marginBottom: '2rem', minHeight: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.muted }}>
+                Memuat tren gang...
+            </div>
+        );
+    }
 
     return (
-        <div style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '1.5rem',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-            marginBottom: '2rem'
-        }}>
-            <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ ...CARD, marginBottom: '2rem' }}>
+            <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.75rem' }}>
                 <div>
-                    <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: '#1e293b', margin: 0 }}>
-                        📈 {activeMetricConfig.label} Trend Analysis
+                    <h3 style={{ ...SECTION_TITLE, marginBottom: 4 }}>
+                        Tren {activeMetricConfig.label}
                     </h3>
-                    <p style={{ fontSize: '0.9rem', color: '#64748b', margin: '4px 0 0 0' }}>
-                        Compare historical {activeMetricConfig.label.toLowerCase()} across gangs (Last 6 Months)
+                    <p style={{ fontSize: '0.85rem', color: C.muted, margin: 0 }}>
+                        {getScopeLabel(scope)} · perbandingan historis {activeMetricConfig.label.toLowerCase()} antar gang (6 bulan terakhir)
                     </p>
+                    {metric === 'cost_per_ton' && (
+                        <p style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontSize: '0.78rem', color: C.lembur, margin: '6px 0 0 0', fontWeight: 600 }}>
+                            <AlertTriangle size={13} strokeWidth={2.2} style={{ flexShrink: 0, marginTop: 1 }} aria-hidden="true" />
+                            Cost/ton per gang memakai tonase divisi (broadcast), gang dalam divisi yang sama tampil identik. Angka valid per divisi.
+                        </p>
+                    )}
                 </div>
 
                 {/* Metric Selector */}
@@ -161,13 +164,13 @@ export default function GangTrendChart({ token, month, year, divisionCode }) {
                     onChange={(e) => setMetric(e.target.value)}
                     style={{
                         padding: '8px 12px',
-                        border: '1px solid #cbd5e1',
+                        border: `1px solid ${C.border}`,
                         borderRadius: '8px',
-                        fontSize: '0.9rem',
-                        color: '#334155',
+                        fontSize: '0.85rem',
+                        color: C.text2,
                         outline: 'none',
                         cursor: 'pointer',
-                        backgroundColor: '#f8fafc'
+                        backgroundColor: C.surface
                     }}
                 >
                     {METRICS.map(m => (
@@ -184,17 +187,17 @@ export default function GangTrendChart({ token, month, year, divisionCode }) {
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '4px',
-                            backgroundColor: '#f1f5f9',
-                            color: '#334155',
+                            backgroundColor: C.surface2,
+                            color: C.text2,
                             padding: '4px 8px',
-                            borderRadius: '16px',
+                            borderRadius: '8px',
                             fontSize: '0.85rem',
                             fontWeight: '500',
                             border: `1px solid ${COLORS[idx % COLORS.length]}`
                         }}>
                             <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: COLORS[idx % COLORS.length] }}></span>
                             {g}
-                            <button onClick={() => toggleGang(g)} style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0, display: 'flex' }}>
+                            <button onClick={() => toggleGang(g)} style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0, display: 'flex', color: C.muted }}>
                                 <X size={14} />
                             </button>
                         </span>
@@ -208,15 +211,15 @@ export default function GangTrendChart({ token, month, year, divisionCode }) {
                                 alignItems: 'center',
                                 gap: '4px',
                                 padding: '4px 12px',
-                                borderRadius: '16px',
-                                border: '1px dashed #cbd5e1',
-                                backgroundColor: 'white',
-                                color: '#64748b',
+                                borderRadius: '8px',
+                                border: `1px dashed ${C.border}`,
+                                backgroundColor: C.surface,
+                                color: C.muted,
                                 fontSize: '0.85rem',
                                 cursor: 'pointer'
                             }}
                         >
-                            <Plus size={14} /> Add Gang
+                            <Plus size={14} /> Tambah Gang
                         </button>
 
                         {isDropdownOpen && (
@@ -226,24 +229,24 @@ export default function GangTrendChart({ token, month, year, divisionCode }) {
                                 left: 0,
                                 marginTop: '4px',
                                 width: '250px',
-                                backgroundColor: 'white',
-                                border: '1px solid #e2e8f0',
+                                backgroundColor: C.surface,
+                                border: `1px solid ${C.border}`,
                                 borderRadius: '8px',
-                                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                                boxShadow: SHADOW,
                                 zIndex: 50,
                                 maxHeight: '300px',
                                 display: 'flex',
                                 flexDirection: 'column'
                             }}>
-                                <div style={{ padding: '8px', borderBottom: '1px solid #f1f5f9' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#f8fafc', padding: '6px', borderRadius: '6px' }}>
-                                        <Search size={14} color="#94a3b8" />
+                                <div style={{ padding: '8px', borderBottom: `1px solid ${C.border}` }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: C.surface2, padding: '6px', borderRadius: '6px' }}>
+                                        <Search size={14} color={C.muted} />
                                         <input
                                             type="text"
-                                            placeholder="Search gang..."
+                                            placeholder="Cari gang..."
                                             value={searchTerm}
                                             onChange={(e) => setSearchTerm(e.target.value)}
-                                            style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '0.85rem' }}
+                                            style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '0.85rem', color: C.text }}
                                             autoFocus
                                         />
                                     </div>
@@ -257,18 +260,18 @@ export default function GangTrendChart({ token, month, year, divisionCode }) {
                                                 style={{
                                                     padding: '8px 12px',
                                                     fontSize: '0.9rem',
-                                                    color: '#334155',
+                                                    color: C.text2,
                                                     cursor: 'pointer',
-                                                    transition: 'background 0.2s'
+                                                    transition: 'background 0.15s'
                                                 }}
-                                                onMouseEnter={(e) => e.target.style.backgroundColor = '#f1f5f9'}
+                                                onMouseEnter={(e) => e.target.style.backgroundColor = C.surface2}
                                                 onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
                                             >
                                                 {g}
                                             </div>
                                         ))
                                     ) : (
-                                        <div style={{ padding: '12px', fontSize: '0.85rem', color: '#94a3b8', textAlign: 'center' }}>No gangs found</div>
+                                        <div style={{ padding: '12px', fontSize: '0.85rem', color: C.muted, textAlign: 'center' }}>Tidak ada gang ditemukan</div>
                                     )}
                                 </div>
                             </div>
@@ -281,9 +284,9 @@ export default function GangTrendChart({ token, month, year, divisionCode }) {
                 {selectedGangs.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
                         <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                            <XAxis dataKey="name" />
-                            <YAxis tickFormatter={(val) => activeMetricConfig.key === 'headcount' ? val : `${(val / 1000).toFixed(0)}k`} />
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={C.gridLine} />
+                            <XAxis dataKey="name" tick={{ fill: C.muted, fontSize: 11 }} />
+                            <YAxis tick={{ fill: C.muted, fontSize: 11 }} tickFormatter={(val) => activeMetricConfig.key === 'headcount' ? val : `${(val / 1000).toFixed(0)}k`} />
                             <Tooltip formatter={(val) => activeMetricConfig.formatter(val)} />
                             <Legend />
                             {selectedGangs.map((gang, idx) => (
@@ -301,8 +304,8 @@ export default function GangTrendChart({ token, month, year, divisionCode }) {
                             <Line
                                 type="monotone"
                                 dataKey="benchmark"
-                                name="Division Avg"
-                                stroke="#94a3b8"
+                                name="Rata-rata"
+                                stroke={C.muted}
                                 strokeWidth={2}
                                 strokeDasharray="5 5"
                                 dot={false}
@@ -310,8 +313,8 @@ export default function GangTrendChart({ token, month, year, divisionCode }) {
                         </LineChart>
                     </ResponsiveContainer>
                 ) : (
-                    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', border: '2px dashed #e2e8f0', borderRadius: '8px' }}>
-                        Select gangs to visualize trends
+                    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.muted, border: `1px dashed ${C.border}`, borderRadius: '8px', background: C.surface2 }}>
+                        Pilih gang untuk menampilkan tren
                     </div>
                 )}
             </div>

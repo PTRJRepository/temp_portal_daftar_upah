@@ -5,12 +5,14 @@
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import MonthSelector from '../components/common/MonthSelector';
 import LoadingScreen from '../components/common/LoadingScreen';
 import ReportPrintMetadata from '../components/common/ReportPrintMetadata';
 import { fetchReportRowsSimple } from '../services/payrollService';
 import { buildSalaryRangeRows, REPORT_ROWS_FETCH_LIMIT } from '../utils/payrollReportFilters';
+import { MetricInfo, EmptyState } from '../components/report/reportTheme';
 import { printReport } from '../utils/printPageSetup';
 import '../styles/wages-summary-professional.css';
 import '../styles/report-print-foundation.css';
@@ -26,6 +28,7 @@ const SalaryRangeDetailPage = ({
   initialMaxSalary = null
 }) => {
     const { token } = useAuth();
+const navigate = useNavigate();
 
     // State for filters
     const [month, setMonth] = useState(initialMonth);
@@ -119,6 +122,9 @@ const SalaryRangeDetailPage = ({
                 <div className="left-section" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                     <button onClick={onBack} className="wsp-btn">
                         KEMBALI
+                    </button>
+                    <button onClick={() => navigate(`/cost-per-ton-story?month=${month}&year=${year}`)} className="wsp-btn" style={{ background: '#1E7A45', color: '#fff', border: 'none', fontWeight: 700 }}>
+                        Cost/Ton Story →
                     </button>
 
                     <div className="wsp-filter-group" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>

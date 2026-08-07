@@ -187,7 +187,7 @@ export const aggregationSeederRoutes = new Elysia({ prefix: "/payroll/aggregatio
                     SUM(CAST(T.[NetWeight] AS DECIMAL(18,2))) / 1000.0 AS total_weight
                 FROM [dbo].[WM_TICKET] T
                 LEFT JOIN [dbo].[PU_SUPPLIER] S ON T.[CustomerCode] = S.[SupplierCode]
-                WHERE T.[CustomerCode] LIKE 'PTRJ%'
+                WHERE T.[CustomerCode] IN ('PTRJ01','PTRJ02','PTRJ03','PTRJ04','PTRJ05','PTRJ06','PTRJ07','PTRJ08','PTRJ09')
                   AND MONTH(T.[DateReceived]) = ?
                   AND YEAR(T.[DateReceived]) = ?
                   AND T.[ProductCode] = 'FFB'
@@ -221,12 +221,19 @@ export const aggregationSeederRoutes = new Elysia({ prefix: "/payroll/aggregatio
                 }
 
                 if (divTonase > 0) {
-                    // Update all gang rows for this division with the tonase value
+                    // Tulis tonase SEKALI per divisi ke tabel division_tonase (bukan broadcast ke baris gang).
+                    // Baris gang di aggregation_history tidak lagi memegang tonase (hindari double-count).
                     await db.query(`
-                        UPDATE dbo.daftar_upah_aggregation_history
-                        SET total_ffb_weight = ?, total_weight_tbs = ?, updated_at = GETDATE()
-                        WHERE division_code = ? AND period_month = ? AND period_year = ?
-                    `, [divTonase, divTonase, divCode, month, year]);
+                        MERGE dbo.division_tonase AS target
+                        USING (SELECT ? AS period_month, ? AS period_year, ? AS division_code) AS src
+                        ON target.period_month = src.period_month AND target.period_year = src.period_year
+                           AND target.division_code = src.division_code
+                        WHEN MATCHED THEN
+                            UPDATE SET tonase = ?, source = 'mill_supplier', updated_at = GETDATE()
+                        WHEN NOT MATCHED THEN
+                            INSERT (period_month, period_year, division_code, tonase, source)
+                            VALUES (src.period_month, src.period_year, src.division_code, ?, 'mill_supplier');
+                    `, [month, year, divCode, divTonase, divTonase]);
 
                     console.log(`[TonaseSeeder] ${divCode}: ${divTonase.toFixed(2)} tons → updated`);
                     results.push({ division: divCode, tonase: Math.round(divTonase * 100) / 100, status: 'UPDATED' });
@@ -1092,10 +1099,10 @@ async function insertOrUpdateAggregation(
                 dynamic_premi_data, informasi_tambahan, total_koreksi,
                 created_at, updated_at, source_endpoint
             ) VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                ?, ?, GETDATE(), GETDATE(), ?
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                ?, GETDATE(), GETDATE(), ?
             )
         `, [
             month,
@@ -1166,7 +1173,7 @@ async function fetchFfbWeightForDivision(divisionCode: string, month: number, ye
             SELECT SUM(CAST(T.[NetWeight] AS DECIMAL(18,2))) / 1000.0 AS total_weight
             FROM [dbo].[WM_TICKET] T
             LEFT JOIN [dbo].[PU_SUPPLIER] S ON T.[CustomerCode] = S.[SupplierCode]
-            WHERE T.[CustomerCode] LIKE 'PTRJ%'
+            WHERE T.[CustomerCode] IN ('PTRJ01','PTRJ02','PTRJ03','PTRJ04','PTRJ05','PTRJ06','PTRJ07','PTRJ08','PTRJ09')
               AND MONTH(T.[DateReceived]) = ?
               AND YEAR(T.[DateReceived]) = ?
               AND T.[ProductCode] = 'FFB'
@@ -1185,7 +1192,7 @@ async function fetchFfbWeightForDivision(divisionCode: string, month: number, ye
             SELECT DISTINCT TOP 5 T.CustomerCode as Code, S.Name
             FROM [dbo].[WM_TICKET] T
             LEFT JOIN [dbo].[PU_SUPPLIER] S ON T.[CustomerCode] = S.[SupplierCode]
-            WHERE T.[CustomerCode] LIKE 'PTRJ%'
+            WHERE T.[CustomerCode] IN ('PTRJ01','PTRJ02','PTRJ03','PTRJ04','PTRJ05','PTRJ06','PTRJ07','PTRJ08','PTRJ09')
               AND MONTH(T.[DateReceived]) = ?
               AND YEAR(T.[DateReceived]) = ?
         `, [month, year]);

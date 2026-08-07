@@ -77,6 +77,8 @@ import ProductivityReportPage from './pages/ProductivityReportPage'
 import DetailedSalaryAnalysisPage from './pages/DetailedSalaryAnalysisPage'
 import MillProductionReport from './pages/MillProductionReport'
 import TonaseAnalysisReportPage from './pages/TonaseAnalysisReportPage'
+import CostPerTonStoryPage from './pages/CostPerTonStoryPage'
+import SalaryAnalysisPage from './pages/SalaryAnalysisPage'
 import UpahBersihDetailPage from './pages/UpahBersihDetailPage'
 import DataVerificationPage from './pages/DataVerificationPage'
 import HighEarnerReportPage from './pages/HighEarnerReportPage'
@@ -1196,6 +1198,8 @@ function AppInner() {
             <Route path="detailed-salary" element={<SummaryReportWrapper component={DetailedSalaryAnalysisPage} />} />
             <Route path="mill-production" element={<SummaryReportWrapper component={MillProductionReport} />} />
             <Route path="tonase-analysis" element={<SummaryReportWrapper component={TonaseAnalysisReportPage} />} />
+            <Route path="cost-per-ton-story" element={<SummaryReportWrapper component={CostPerTonStoryPage} />} />
+            <Route path="salary-analysis" element={<SummaryReportWrapper component={SalaryAnalysisPage} />} />
             <Route path="detail-upah-bersih" element={<SummaryReportWrapper component={UpahBersihDetailPage} />} />
             <Route path="data-verification" element={<SummaryReportWrapper component={DataVerificationPage} />} />
             <Route path="server-monitor" element={<ServerMonitor />} />

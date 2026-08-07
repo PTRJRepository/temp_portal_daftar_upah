@@ -4,20 +4,37 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-    BarChart, Bar, Cell, PieChart, Pie, Legend, LineChart, Line, ComposedChart, LabelList
+    BarChart, Bar, Cell, Legend, LineChart, Line, LabelList
 } from 'recharts';
 import { Printer } from 'lucide-react';
+import { FileText, ArrowLeft, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import LoadingScreen from '../components/common/LoadingScreen';
-import PremiCompositionChart from '../components/dashboard/PremiCompositionChart';
 import DivisionDetailCard from './DivisionDetailCard';
-import KPICard from '../components/dashboard/KPICard';
 import GangComparisonChart from '../components/dashboard/GangComparisonChart';
 import TopBottomPerformersCard from '../components/dashboard/TopBottomPerformersCard';
-import GangCostBreakdownChart from '../components/dashboard/GangCostBreakdownChart';
 import GangTrendChart from '../components/dashboard/GangTrendChart';
 import GangDetailModal from '../components/dashboard/GangDetailModal';
 import CostHKComparisonReport from '../components/CostHKComparisonReport';
 import { printReport } from '../utils/printPageSetup';
+import { C, SHADOW, CARD, SECTION_TITLE, ReportHero, DeltaBadge, MetricInfo, ScopeToggle, Breadcrumb, EmptyState } from '../components/report/reportTheme';
+import { dashJson } from '../utils/dashboardApi';
+import { getScopeLabel } from '../utils/gangTypes';
+import CostPerTonPanel from '../components/report/CostPerTonPanel';
+import ExecSummaryStrip from '../components/report/ExecSummaryStrip';
+import CostOfWagePanel from '../components/report/CostOfWagePanel';
+import DecompositionPanel from '../components/report/DecompositionPanel';
+import EfficiencyQuadrant from '../components/report/EfficiencyQuadrant';
+import DivisionTimelineGrid from '../components/report/DivisionTimelineGrid';
+import ReportHubFooter from '../components/report/ReportHubFooter';
+import WageDistributionChart from '../components/dashboard/WageDistributionChart';
+import { SlideNav } from '../components/report/SlideNav';
+import PresentSlide from '../components/present/PresentSlide';
+import PresentController from '../components/present/PresentController';
+import usePresentMode from '../components/present/usePresentMode';
+import PotonganBreakdownPanel from '../components/report/PotonganBreakdownPanel';
+import OvertimeDeepDivePanel from '../components/report/OvertimeDeepDivePanel';
+import PremiCompositionPanel from '../components/report/PremiCompositionPanel';
+import HeadcountHkPanel from '../components/report/HeadcountHkPanel';
 import {
     buildExecutiveAlertRows,
     buildExecutiveDivisionRows,
@@ -46,30 +63,7 @@ const formatNumber = (val) => {
     return new Intl.NumberFormat('id-ID').format(val);
 };
 
-// ===== CEO BOARD VISUAL SYSTEM — SAWIT FINANCE (light, elegan, hijau daun) =====
-const C = {
-    upah: '#1E7A45', upahAccent: '#3E9E63', premi: '#2E9E6B', lembur: '#D98A1F',
-    potongan: '#C8463C', costTon: '#6C4FC4', warn: '#D98A1F', warnBg: '#FBF1DE',
-    text: '#12241A', text2: '#46584C', muted: '#7C8B80', border: '#DFE8E0',
-    surface: '#FFFFFF', surface2: '#F6FAF5', pageBg: '#EDF3EC', gridLine: '#E4ECE2',
-    leafDark: '#14532D', leafMid: '#1E7A45', leafLight: '#4CBB6B', cream: '#F7F9F4'
-};
-const SHADOW = '0 1px 2px rgba(18,36,26,.05), 0 6px 18px rgba(18,36,26,.08)';
-const SHADOW_HOVER = '0 14px 34px rgba(18,36,26,.16)';
-const CARD = { background: C.surface, borderRadius: 16, border: `1px solid ${C.border}`, padding: 24, boxShadow: SHADOW };
-const SECTION_TITLE = { fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: C.leafMid, borderLeft: `3px solid ${C.leafMid}`, paddingLeft: 12, marginBottom: 16 };
-
-// Delta badge: invert=true => kenaikan BURUK (cost/ton, lembur)
-const DeltaBadge = ({ pct, invert = false }) => {
-    const bad = (pct >= 0) === invert;
-    const color = bad ? C.potongan : C.premi;
-    const bg = bad ? '#FBE9E6' : '#E4F4EB';
-    return (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 999, fontSize: 11.5, fontWeight: 700, color, background: bg, border: `1px solid ${bad ? '#F0CFC9' : '#C4E6D2'}` }}>
-            {pct >= 0 ? '▲' : '▼'} {Math.abs(pct).toFixed(1)}%
-        </span>
-    );
-};
+// ===== Visual system: Estate Ledger tokens diimpor dari reportTheme (SSOT) =====
 
 // Sparkline mini dari trends
 const Spark = ({ data, dataKey, color }) => (
@@ -80,22 +74,15 @@ const Spark = ({ data, dataKey, color }) => (
     </ResponsiveContainer>
 );
 
-// Hero KPI card — terminal pro: glow aksen kiri, angka besar tabular
-const HeroKpiCard = ({ label, value, pct, invert, sparkData, sparkKey, color, hero, compact, link, onLink }) => {
-    const [hover, setHover] = React.useState(false);
+// Hero KPI card - ledger cell: flat, tick semantik di atas label, angka mono tabular
+const HeroKpiCard = ({ label, metricKey, value, pct, invert, sparkData, sparkKey, color, compact, link, onLink }) => {
     return (
-        <div
-            onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
-            style={{
-                ...CARD, padding: '18px 20px', position: 'relative', overflow: 'hidden',
-                transform: hover ? 'translateY(-2px)' : 'none', boxShadow: hover ? SHADOW_HOVER : SHADOW,
-                transition: 'box-shadow .2s, transform .2s',
-                ...(hero ? { border: `1px solid ${color}55`, boxShadow: `${SHADOW}, 0 0 24px ${color}22` } : {})
-            }}
-        >
-            <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: color, borderRadius: '4px 0 0 4px' }} />
-            <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: C.muted, marginBottom: 8 }}>{label}</div>
-            <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums', color: C.text, marginBottom: 8, lineHeight: 1 }}>
+        <div style={{ ...CARD, padding: '16px 18px' }}>
+            <div style={{ width: 24, height: 2, background: color, marginBottom: 10 }} />
+            <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: C.muted, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                {label} {metricKey && <MetricInfo metricKey={metricKey} />}
+            </div>
+            <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums', fontFamily: 'Roboto Mono, monospace', color: C.text, marginBottom: 8, lineHeight: 1.05 }}>
                 {compact ? formatCompactIDR(value) : value}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
@@ -111,9 +98,10 @@ const HeroKpiCard = ({ label, value, pct, invert, sparkData, sparkKey, color, he
     );
 };
 
-// Report launcher — navigasi ke report spoke, bawa month/year
+// Report launcher - navigasi ke report spoke, bawa month/year
 const REPORT_LINKS = [
-    { key: 'tonase', label: 'Cost per Ton', route: '/tonase-analysis' },
+    { key: 'story', label: 'Cost/Ton Story', route: '/cost-per-ton-story' },
+    { key: 'tonase', label: 'Analisis Tonase', route: '/tonase-analysis' },
     { key: 'summary', label: 'Ringkasan', route: '/summary' },
     { key: 'wages', label: 'Upah Rebinmas', route: '/wages-rebinmas' },
     { key: 'productivity', label: 'Produktivitas', route: '/productivity' },
@@ -133,7 +121,7 @@ const ReportLauncher = ({ month, year, onNavigate }) => (
     </div>
 );
 
-// Insight strip: alert wage spikes + tren cost/ton
+// Insight strip: alert wage spikes + tren cost/ton (strip datar, bukan kartu gradien)
 const InsightStrip = ({ spikes, costChange, onSpikeClick }) => {
     const items = [];
     if (Array.isArray(spikes)) {
@@ -141,7 +129,7 @@ const InsightStrip = ({ spikes, costChange, onSpikeClick }) => {
             const pct = s.increasePercent ?? s.increase_percent ?? s.percentage ?? s.percent;
             const code = s.gang_code ?? s.gangCode ?? s.id ?? s.name;
             const cause = s.dominant_component ?? s.component;
-            items.push({ key: code, text: `${code} Cost/HK naik ${Number(pct || 0).toFixed(1)}%${cause ? ` — ${cause}` : ''}`, ref: code });
+            items.push({ key: code, text: `${code} Cost/HK naik ${Number(pct || 0).toFixed(1)}%${cause ? `, ${cause}` : ''}`, ref: code });
         });
     }
     if (costChange !== null && Math.abs(costChange) > 10) {
@@ -149,17 +137,19 @@ const InsightStrip = ({ spikes, costChange, onSpikeClick }) => {
     }
     if (items.length === 0) {
         return (
-            <div style={{ padding: '10px 16px', borderRadius: 10, background: '#E4F4EB', border: `1px solid #C4E6D2`, color: C.premi, fontSize: 13, fontWeight: 600 }}>
-                ✓ Tidak ada anomali signifikan bulan ini
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 8, background: C.surface2, border: `1px solid ${C.border}`, color: C.upah, fontSize: 13, fontWeight: 600 }}>
+                <CheckCircle2 size={15} strokeWidth={2.2} aria-hidden="true" />
+                Tidak ada anomali signifikan bulan ini
             </div>
         );
     }
     return (
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {items.map(it => (
                 <button key={it.key} onClick={() => it.ref && onSpikeClick && onSpikeClick(it.ref)}
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 10, background: C.warnBg, border: `1px solid #EDD9B4`, color: C.lembur, fontSize: 13, fontWeight: 600, cursor: it.ref ? 'pointer' : 'default' }}>
-                    ⚠ {it.text}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 8, background: C.warnBg, border: `1px solid #E5CFA3`, color: C.lembur, fontSize: 13, fontWeight: 600, cursor: it.ref ? 'pointer' : 'default' }}>
+                    <AlertTriangle size={14} strokeWidth={2.2} aria-hidden="true" />
+                    {it.text}
                 </button>
             ))}
         </div>
@@ -175,7 +165,7 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
     const [error, setError] = useState(null);
     const [availablePeriods, setAvailablePeriods] = useState([]);
 
-    // Filters — URL query param = single source of truth (shareable + back browser jalan)
+    // Filters - URL query param = single source of truth (shareable + back browser jalan)
     const urlMonth = parseInt(searchParams.get('month')) || null;
     const urlYear = parseInt(searchParams.get('year')) || null;
     const [month, setMonth] = useState(urlMonth || initialMonth || new Date().getMonth() + 1);
@@ -210,6 +200,8 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
 
     // Employee Detail State (New)
     const [employeeData, setEmployeeData] = useState([]);
+    const [wageDistEmployees, setWageDistEmployees] = useState([]); // overview: semua divisi
+    const [wageDistLoading, setWageDistLoading] = useState(false);
     const [filteredEmployees, setFilteredEmployees] = useState([]);
     const [detailedOvertime, setDetailedOvertime] = useState([]);
     const [employeeFilters, setEmployeeFilters] = useState({
@@ -225,9 +217,6 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
 
     // Main Filter State (Header)
     const [selectedFilterDivision, setSelectedFilterDivision] = useState('ALL');
-    const [selectedGangType, setSelectedGangType] = useState('ALL'); // New Filter
-    const [selectedFilterGang, setSelectedFilterGang] = useState('ALL');
-    const [availableGangs, setAvailableGangs] = useState([]);
 
     // Gang Comparison Charts State
     const [gangComparisonData, setGangComparisonData] = useState([]);
@@ -238,16 +227,50 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
     const [detailModalOpen, setDetailModalOpen] = useState(false);
     const [selectedGangCode, setSelectedGangCode] = useState(null);
 
+    // Active slide for nav highlight (scroll-spy)
+    const [activeSlide, setActiveSlide] = useState('slide-01');
+    useEffect(() => {
+        const ids = ['slide-01', 'slide-02', 'slide-03', 'slide-04', 'slide-05', 'slide-06'];
+        const observers = ids.map(id => {
+            const el = document.getElementById(id);
+            if (!el) return null;
+            const io = new IntersectionObserver((e) => { if (e[0].isIntersecting) setActiveSlide(id); }, { rootMargin: '-30% 0px -55% 0px' });
+            io.observe(el);
+            return io;
+        });
+        return () => observers.forEach(o => o && o.disconnect());
+    }, [data]);
+
+    // Division timeline (lazy - only when its section scrolls into view)
+    const [divTrendRows, setDivTrendRows] = useState([]);
+    const [divTrendLoading, setDivTrendLoading] = useState(false);
+    const divTrendLoadedKey = React.useRef('');
+    const divTimelineRef = React.useRef(null);
+    useEffect(() => {
+        const el = divTimelineRef.current;
+        if (!el) return;
+        const key = `${month}-${year}`;
+        const io = new IntersectionObserver(async (entries) => {
+            if (!entries[0].isIntersecting) return;
+            io.disconnect();
+            if (divTrendLoadedKey.current === key) return;
+            divTrendLoadedKey.current = key;
+            setDivTrendLoading(true);
+            try {
+                const j = await dashJson(`/division-cost-trend?month=${month}&year=${year}&span=8`, { token });
+                if (j.success) setDivTrendRows(j.data?.series || j.data || []); else divTrendLoadedKey.current = '';
+            } catch { divTrendLoadedKey.current = ''; }
+            finally { setDivTrendLoading(false); }
+        }, { rootMargin: '200px' });
+        io.observe(el);
+        return () => io.disconnect();
+    }, [token, month, year]);
+
     // Load available periods
     useEffect(() => {
         async function loadPeriods() {
             try {
-                // Use relative URL for proxy mode compatibility
-                const apiUrl = '/backend/upah/payroll/dashboard';
-                const res = await fetch(`${apiUrl}/available-periods`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const json = await res.json();
+                const json = await dashJson('/available-periods', { token });
                 if (json.success) {
                     setAvailablePeriods(json.data);
                 }
@@ -263,13 +286,8 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
     useEffect(() => {
         async function initializeDashboard() {
             try {
-                const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8002';
-
                 // Step 1: Get latest period
-                const periodRes = await fetch(`${apiUrl}/payroll/dashboard/latest-period`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const periodJson = await periodRes.json();
+                const periodJson = await dashJson('/latest-period', { token });
 
                 if (periodJson.success) {
                     const { month: latestMonth, year: latestYear } = periodJson.data;
@@ -282,13 +300,9 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
                             setYear(latestYear);
 
                             // Step 2: Load filters for the latest period immediately
-                            const filterRes = await fetch(`${apiUrl}/payroll/dashboard/filter-options?month=${latestMonth}&year=${latestYear}`, {
-                                headers: { 'Authorization': `Bearer ${token}` }
-                            });
-                            const filterJson = await filterRes.json();
+                            const filterJson = await dashJson(`/filter-options?month=${latestMonth}&year=${latestYear}`, { token });
                             if (filterJson.success) {
                                 setFilterOptions(filterJson.data);
-                                setAvailableGangs((filterJson.data.gangs || []).sort());
                             }
                         }
                     }
@@ -300,15 +314,34 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
         if (token) initializeDashboard();
     }, [token]);
 
+    // Fetch semua karyawan (ALL divisi) untuk chart distribusi upah kotor di overview
+    useEffect(() => {
+        async function loadWageDistribution() {
+            if (!token || !month || !year) return;
+            setWageDistLoading(true);
+            try {
+                const json = await dashJson(`/wage-distribution?month=${month}&year=${year}&division_code=ALL`, { token });
+                setWageDistEmployees(json.success ? (json.data || []) : []);
+            } catch (e) {
+                console.error('Wage distribution fetch failed:', e);
+                setWageDistEmployees([]);
+            } finally {
+                setWageDistLoading(false);
+            }
+        }
+        loadWageDistribution();
+    }, [token, month, year]);
+
+    const [gangScope, setGangScope] = useState(() => searchParams.get('scope') || 'panen');
+    // Present mode: deck fullscreen per slide (toggle html.present-mode + HUD)
+    const { presenting, activeIndex, enter, exit } = usePresentMode();
+    const drillTo = (targetId) => document.getElementById(targetId)?.scrollIntoView({behavior:'smooth', block:'start'});
+    useEffect(() => { const p=new URLSearchParams(searchParams); p.set('scope',gangScope); if(p.toString()!==searchParams.toString()) setSearchParams(p,{replace:true}); }, [gangScope]);
     useEffect(() => {
         async function loadDashboard() {
             setLoading(true);
             try {
-                const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8002';
-                const res = await fetch(`${apiUrl}/payroll/dashboard/executive-summary?month=${month}&year=${year}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const json = await res.json();
+                const json = await dashJson(`/executive-summary?month=${month}&year=${year}&scope=${gangScope}`, { token });
                 if (json.success) {
                     setData(json.data);
                 } else {
@@ -322,7 +355,7 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
             }
         }
         if (token && month && year) loadDashboard();
-    }, [token, month, year]);
+    }, [token, month, year, gangScope]);
 
     // Load Filter Options when period changes (user selection)
     // Use ref to prevent duplicate API calls for same period
@@ -334,34 +367,14 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
 
         async function loadFilters() {
             try {
-                const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8002';
                 // Fetch basic filter options (divisions)
-                const res = await fetch(`${apiUrl}/payroll/dashboard/filter-options?month=${month}&year=${year}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const json = await res.json();
-
-                // Fetch Detailed Gang Info for smarter filtering
-                const gangRes = await fetch(`${apiUrl}/payroll/dashboard/available-gangs?month=${month}&year=${year}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const gangJson = await gangRes.json();
+                const json = await dashJson(`/filter-options?month=${month}&year=${year}`, { token });
 
                 if (json.success) {
                     setFilterOptions(prev => {
                         // Only update if data actually changed
-                        const newData = {
-                            ...json.data,
-                            gangDetails: gangJson.success ? gangJson.data : []
-                        };
-                        // Simple comparison - check if divisions or gang codes changed
                         const divisionsChanged = JSON.stringify(prev.divisions) !== JSON.stringify(json.data.divisions);
-                        const gangCodesChanged = JSON.stringify(prev.gangDetails?.map(g => g.gang_code)) !==
-                            JSON.stringify(gangJson.data?.map(g => g.gang_code));
-                        if (divisionsChanged || gangCodesChanged) {
-                            return newData;
-                        }
-                        return prev;
+                        return divisionsChanged ? json.data : prev;
                     });
                 }
                 lastPeriodRef.current = currentPeriod;
@@ -375,55 +388,14 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
         }
     }, [token, month, year]);
 
-    // Memoize gang details to prevent unnecessary re-renders
-    const gangDetails = useMemo(() => filterOptions.gangDetails ?? [], [filterOptions.gangDetails]);
-
-    // Filter gangs when division or gang type changes
-    useEffect(() => {
-        let gangs = gangDetails;
-
-        // 1. Division Filter
-        if (selectedFilterDivision !== 'ALL') {
-            gangs = gangs.filter(g => g.division_code === selectedFilterDivision || g.gang_code.startsWith(selectedFilterDivision));
-        }
-
-        // 2. Gang Type Filter
-        if (selectedGangType !== 'ALL') {
-            if (selectedGangType === 'PANEN_L') {
-                // Special case: Gang Panen (Forecast/L-Series) - Starts with 'L' or Suffix 'H'
-                // User request: "IJL gang dengan awalan kode L" and "Gang Panen".
-                // Let's filter by 'L' prefix OR 'H' suffix to be inclusive for 'Panen' unless distinct.
-                gangs = gangs.filter(g => g.gang_code.startsWith('L') || g.gang_code.endsWith('H'));
-            } else if (selectedGangType === 'IJL') {
-                gangs = gangs.filter(g => g.is_ijl || g.gang_code.startsWith('L'));
-            } else if (selectedGangType === 'NON_IJL') {
-                gangs = gangs.filter(g => !g.is_ijl && !g.gang_code.startsWith('L'));
-            } else {
-                gangs = gangs.filter(g => g.gang_type === selectedGangType);
-            }
-        }
-
-        // Extract Codes & Sort
-        const gangCodes = gangs.map(g => g.gang_code).sort((a, b) => a.localeCompare(b));
-        setAvailableGangs(gangCodes.length > 0 ? gangCodes : []);
-
-        // Reset gang selection if not in list
-        if (selectedFilterGang !== 'ALL' && !gangCodes.includes(selectedFilterGang)) {
-            setSelectedFilterGang('ALL');
-        }
-    }, [selectedFilterDivision, selectedGangType, gangDetails]);
-
     const handleCompare = async () => {
         if (selectedItems.length === 0) return;
         setCompLoading(true);
         try {
-            const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8002';
-            const res = await fetch(`${apiUrl}/payroll/dashboard/comparison`, {
+            const json = await dashJson('/comparison', {
+                token,
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     type: compMode,
                     codes: selectedItems,
@@ -431,7 +403,6 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
                     year
                 })
             });
-            const json = await res.json();
             if (json.success) {
                 setCompData(json.data);
             }
@@ -461,21 +432,13 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
         setActiveTab('overview'); // 'overview', 'overtime', 'employees'
 
         try {
-            const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8002';
-            const headers = { 'Authorization': `Bearer ${token}` };
-
             // Parallel Fetching
-            const [gangRes, premiRes, otRes, detailRes] = await Promise.all([
-                fetch(`${apiUrl}/payroll/dashboard/aggregated-gang-data?month=${month}&year=${year}&division_code=${divisionCode}`, { headers }),
-                fetch(`${apiUrl}/payroll/dashboard/premi-analysis?month=${month}&year=${year}&division_code=${divisionCode}`, { headers }),
-                fetch(`${apiUrl}/payroll/dashboard/overtime-analysis?month=${month}&year=${year}&division_code=${divisionCode}`, { headers }),
-                fetch(`${apiUrl}/payroll/dashboard/division-detail-data?month=${month}&year=${year}&division_code=${divisionCode}`, { headers })
+            const [gangData, premiData, otData, detailData] = await Promise.all([
+                dashJson(`/aggregated-gang-data?month=${month}&year=${year}&division_code=${divisionCode}`, { token }),
+                dashJson(`/premi-analysis?month=${month}&year=${year}&division_code=${divisionCode}`, { token }),
+                dashJson(`/overtime-analysis?month=${month}&year=${year}&division_code=${divisionCode}`, { token }),
+                dashJson(`/division-detail-data?month=${month}&year=${year}&division_code=${divisionCode}`, { token })
             ]);
-
-            const gangData = await gangRes.json();
-            const premiData = await premiRes.json();
-            const otData = await otRes.json();
-            const detailData = await detailRes.json();
 
             setDivisionDetails({
                 gangs: gangData.success ? gangData.data : [],
@@ -522,23 +485,16 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
 
             setGangChartsLoading(true);
             try {
-                const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8002';
                 const divParam = selectedFilterDivision !== 'ALL' ? `&division_code=${selectedFilterDivision}` : '';
 
-                // Fetch gang comparison
-                const compRes = await fetch(`${apiUrl}/payroll/dashboard/gang-comparison?month=${month}&year=${year}${divParam}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const compJson = await compRes.json();
+                // Fetch gang comparison (scope diteruskan agar konsisten dengan KPI/tren)
+                const compJson = await dashJson(`/gang-comparison?month=${month}&year=${year}${divParam}&scope=${gangScope}`, { token });
                 if (compJson.success) {
                     setGangComparisonData(compJson.data);
                 }
 
                 // Fetch top/bottom performers
-                const topBottomRes = await fetch(`${apiUrl}/payroll/dashboard/top-bottom-gangs?month=${month}&year=${year}${divParam}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const topBottomJson = await topBottomRes.json();
+                const topBottomJson = await dashJson(`/top-bottom-gangs?month=${month}&year=${year}${divParam}&scope=${gangScope}`, { token });
                 if (topBottomJson.success) {
                     setTopBottomData(topBottomJson.data);
                 }
@@ -550,7 +506,7 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
         }
 
         loadGangCharts();
-    }, [token, month, year, selectedFilterDivision]);
+    }, [token, month, year, selectedFilterDivision, gangScope]);
 
     // Derived Data for Charts
     const divisionChartData = useMemo(() => {
@@ -578,30 +534,6 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
             });
     }, [data?.breakdown]);
 
-    const gangChartData = useMemo(() => {
-        if (!data || !data.gangBreakdown) return [];
-        return data.gangBreakdown.map(g => ({
-            name: g.gang_code,
-            Wage: g.total_wage,
-            Overtime: g.total_ot
-        }));
-    }, [data?.gangBreakdown]);
-
-    // Overtime Distribution Chart Data
-    const overtimeChartData = useMemo(() => {
-        if (!data || !data.breakdown) return [];
-        const baseData = data.breakdown;
-        const totalOT = baseData.reduce((sum, d) => sum + (d.total_ot || 0), 0);
-        return baseData
-            .filter(d => d.total_ot > 0)
-            .sort((a, b) => b.total_ot - a.total_ot)
-            .map(d => ({
-                name: d.division_code,
-                Overtime: d.total_ot || 0,
-                percent: totalOT > 0 ? ((d.total_ot / totalOT) * 100).toFixed(1) : 0
-            }));
-    }, [data?.breakdown]);
-
     // Trigger detail fetch when division filter changes
     useEffect(() => {
         if (selectedFilterDivision !== 'ALL') {
@@ -612,16 +544,6 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
         }
     }, [selectedFilterDivision, month, year, fetchDivisionDetails]);
 
-    const efficiencyData = useMemo(() => {
-        if (!data || !data.efficiency) return [];
-        return data.efficiency.map(d => ({
-            name: d.division_code,
-            costPerHead: d.headcount > 0 ? d.total_cost / d.headcount : 0,
-            headcount: d.headcount,
-            totalCost: d.total_cost
-        })).sort((a, b) => b.costPerHead - a.costPerHead).slice(0, 15); // Top 15 by cost per head
-    }, [data?.efficiency]);
-
     const productivityData = useMemo(() => {
         if (!data || !data.productivityTrend) return [];
         return data.productivityTrend;
@@ -631,17 +553,6 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
         if (!data || !data.wageSpikes) return [];
         return data.wageSpikes;
     }, [data?.wageSpikes]);
-
-    const costComposition = useMemo(() => {
-        if (!data || !data.kpi) return [];
-        const wage = data.kpi.curr_wage || 0;
-        const ot = data.kpi.curr_ot || 0;
-
-        return [
-            { name: 'Overtime', value: ot, color: C.lembur },
-            { name: 'Regular Pay & Premi', value: Math.max(0, wage - ot), color: C.upah }
-        ];
-    }, [data?.kpi]);
 
     const kpi = data?.kpi || null;
     const trends = Array.isArray(data?.trends) ? data.trends : [];
@@ -675,8 +586,7 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
     });
     const activePrintFilters = [
         selectedFilterDivision === 'ALL' ? 'Semua Divisi' : `Divisi ${selectedFilterDivision}`,
-        selectedGangType === 'ALL' ? 'Semua Tipe Gang' : selectedGangType,
-        selectedFilterGang === 'ALL' ? 'Semua Gang' : `Gang ${selectedFilterGang}`
+        getScopeLabel(gangScope)
     ].join(' / ');
     const printSummary = useMemo(() => buildExecutivePrintSummary({
         kpi,
@@ -733,192 +643,165 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
                     }}
                 />
             ) : (
-                <div className="executive-payroll-page" style={{ background: C.pageBg, minHeight: '100vh', fontFamily: 'Inter, sans-serif' }}>
-                    {/* HERO HEADER — gradasi sawit + motif daun */}
-                    <div className="executive-page-header no-print" style={{ position: 'relative', overflow: 'hidden', background: `linear-gradient(115deg, ${C.leafDark} 0%, ${C.leafMid} 55%, ${C.leafLight} 100%)`, padding: '2rem 2.5rem 4.6rem', color: '#fff', marginBottom: 0 }}>
-                        {/* motif daun */}
-                        <svg style={{ position: 'absolute', right: -20, top: -30, opacity: 0.14 }} width="340" height="340" viewBox="0 0 100 100" fill="none"><path d="M50 0 C60 25 75 40 100 50 C75 60 60 75 50 100 C40 75 25 60 0 50 C25 40 40 25 50 0 Z" fill="#fff"/></svg>
-                        <svg style={{ position: 'absolute', right: 130, bottom: -50, opacity: 0.10 }} width="220" height="220" viewBox="0 0 100 100" fill="none"><path d="M50 0 C60 25 75 40 100 50 C75 60 60 75 50 100 C40 75 25 60 0 50 C25 40 40 25 50 0 Z" fill="#fff"/></svg>
-                        <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
-                            <div>
-                                <div style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', opacity: 0.85, marginBottom: 6 }}>Perkebunan Sawit · Executive</div>
-                                <h1 style={{ fontSize: '2rem', fontWeight: '800', color: '#fff', margin: 0, letterSpacing: '-0.02em' }}>Daftar Upah Analysis</h1>
-                                <p style={{ color: 'rgba(255,255,255,0.85)', marginTop: '0.4rem', fontSize: '0.92rem' }}>Kinerja biaya panen · upah kotor · cost per ton — {reportPeriodLabel}</p>
-                            </div>
-                            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                            {/* Cost/HK Report Button */}
-                            <button
-                                onClick={() => setShowCostHKReport(!showCostHKReport)}
-                                style={{
-                                    padding: '0.5rem 1rem',
-                                    background: showCostHKReport ? '#0f172a' : 'white',
-                                    color: showCostHKReport ? 'white' : '#334155',
-                                    borderRadius: '8px',
-                                    border: '1px solid #e2e8f0',
-                                    fontWeight: '600',
-                                    cursor: 'pointer',
-                                    outline: 'none',
-                                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-                                    minWidth: '140px'
-                                }}
-                            >
-                                {showCostHKReport ? '← Kembali ke Dashboard' : '📊 Laporan Cost/HK'}
-                            </button>
-
-                            {!showCostHKReport && (
+                <div className="executive-payroll-page" style={{ background: C.pageBg, minHeight: '100vh', fontFamily: 'var(--font-body)' }}>
+                    {/* MASTHEAD - datar ala ledger: paper, hairline bawah, tanpa gradient/motif */}
+                    <div className="executive-page-header no-print">
+                        <ReportHero
+                            eyebrow="Perkebunan Sawit · Executive"
+                            title="Daftar Upah Analysis"
+                            subtitle={`Kinerja biaya, upah kotor, cost per ton · ${getScopeLabel(gangScope)}`}
+                            period={reportPeriodLabel}
+                            actions={(
                                 <>
+                                    {/* Cost/HK Report Button */}
                                     <button
-                                        type="button"
-                                        className="executive-print-button"
-                                        aria-label="Cetak executive payroll report"
-                                        onClick={handlePrintExecutiveReport}
+                                        onClick={() => setShowCostHKReport(!showCostHKReport)}
                                         style={{
                                             display: 'inline-flex',
                                             alignItems: 'center',
                                             gap: '0.45rem',
                                             padding: '0.5rem 1rem',
-                                            background: '#111827',
-                                            color: 'white',
+                                            background: showCostHKReport ? C.upah : C.surface,
+                                            color: showCostHKReport ? '#fff' : C.text2,
                                             borderRadius: '8px',
-                                            border: '1px solid #111827',
-                                            fontWeight: '700',
+                                            border: `1px solid ${showCostHKReport ? C.upah : C.border}`,
+                                            fontWeight: '600',
                                             cursor: 'pointer',
                                             outline: 'none',
-                                            boxShadow: '0 1px 2px rgba(0,0,0,0.08)',
-                                            minWidth: '132px',
+                                            boxShadow: SHADOW,
+                                            minWidth: '140px',
                                             justifyContent: 'center'
                                         }}
                                     >
-                                        <span
-                                            className="executive-print-button-icon"
-                                            style={{
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                width: '1.35rem',
-                                                height: '1.35rem',
-                                                borderRadius: '6px',
-                                                background: 'white',
-                                                color: '#111827',
-                                                flex: '0 0 auto'
-                                            }}
-                                        >
-                                            <Printer size={17} strokeWidth={2.4} aria-hidden="true" />
-                                        </span>
-                                        <span>Cetak Report</span>
+                                        {showCostHKReport
+                                            ? (<><ArrowLeft size={16} strokeWidth={2.2} aria-hidden="true" /><span>Kembali ke Dashboard</span></>)
+                                            : (<><FileText size={16} strokeWidth={2.2} aria-hidden="true" /><span>Laporan Cost/HK</span></>)}
                                     </button>
 
-                                    {/* Division Filter */}
-                                    <select
-                                        value={selectedFilterDivision}
-                                        onChange={(e) => setSelectedFilterDivision(e.target.value)}
-                                        style={{
-                                            padding: '0.5rem 1rem',
-                                            background: 'white',
-                                            borderRadius: '8px',
-                                            border: '1px solid #e2e8f0',
-                                            fontWeight: '600',
-                                            color: '#334155',
-                                            cursor: 'pointer',
-                                            outline: 'none',
-                                            boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-                                            minWidth: '120px'
-                                        }}
-                                    >
-                                        <option value="ALL">Semua Divisi</option>
-                                        {(Array.isArray(filterOptions.divisions) ? filterOptions.divisions : []).map((div, idx) => (
-                                            <option key={idx} value={div}>{div}</option>
-                                        ))}
-                                    </select>
+                                    {!showCostHKReport && (
+                                        <>
+                                            <button
+                                                type="button"
+                                                className="executive-print-button"
+                                                aria-label="Cetak executive payroll report"
+                                                onClick={handlePrintExecutiveReport}
+                                                style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.45rem',
+                                                    padding: '0.5rem 1rem',
+                                                    background: C.leafDark,
+                                                    color: 'white',
+                                                    borderRadius: '8px',
+                                                    border: `1px solid ${C.leafDark}`,
+                                                    fontWeight: '700',
+                                                    cursor: 'pointer',
+                                                    outline: 'none',
+                                                    boxShadow: SHADOW,
+                                                    minWidth: '132px',
+                                                    justifyContent: 'center'
+                                                }}
+                                            >
+                                                <span
+                                                    className="executive-print-button-icon"
+                                                    style={{
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        width: '1.35rem',
+                                                        height: '1.35rem',
+                                                        borderRadius: '6px',
+                                                        background: 'white',
+                                                        color: C.leafDark,
+                                                        flex: '0 0 auto'
+                                                    }}
+                                                >
+                                                    <Printer size={17} strokeWidth={2.4} aria-hidden="true" />
+                                                </span>
+                                                <span>Cetak Report</span>
+                                            </button>
 
-                                    {/* Gang Type Filter */}
-                                    <select
-                                        value={selectedGangType}
-                                        onChange={(e) => setSelectedGangType(e.target.value)}
-                                        style={{
-                                            padding: '0.5rem 1rem',
-                                            background: 'white',
-                                            borderRadius: '8px',
-                                            border: '1px solid #e2e8f0',
-                                            fontWeight: '600',
-                                            color: '#334155',
-                                            cursor: 'pointer',
-                                            outline: 'none',
-                                            boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-                                            minWidth: '130px'
-                                        }}
-                                    >
-                                        <option value="ALL">Semua Tipe</option>
-                                        <option value="PANEN_L">Panen (Prefix L)</option>
-                                        <option value="harvesting">Panen (Suffix H)</option>
-                                        <option value="transport">Transport</option>
-                                        <option value="IJL">IJL Only</option>
-                                        <option value="NON_IJL">Non-IJL</option>
-                                    </select>
+                                            {/* Division Filter */}
+                                            <select
+                                                value={selectedFilterDivision}
+                                                onChange={(e) => setSelectedFilterDivision(e.target.value)}
+                                                style={{
+                                                    padding: '0.5rem 1rem',
+                                                    background: C.surface,
+                                                    borderRadius: '8px',
+                                                    border: `1px solid ${C.border}`,
+                                                    fontWeight: '600',
+                                                    color: C.text2,
+                                                    cursor: 'pointer',
+                                                    outline: 'none',
+                                                    boxShadow: SHADOW,
+                                                    minWidth: '120px'
+                                                }}
+                                            >
+                                                <option value="ALL">Semua Divisi</option>
+                                                {(Array.isArray(filterOptions.divisions) ? filterOptions.divisions : []).map((div, idx) => (
+                                                    <option key={idx} value={div}>{div}</option>
+                                                ))}
+                                            </select>
 
-                                    {/* Gang Filter */}
-                                    <select
-                                        value={selectedFilterGang}
-                                        onChange={(e) => setSelectedFilterGang(e.target.value)}
-                                        style={{
-                                            padding: '0.5rem 1rem',
-                                            background: 'white',
-                                            borderRadius: '8px',
-                                            border: '1px solid #e2e8f0',
-                                            fontWeight: '600',
-                                            color: '#334155',
-                                            cursor: 'pointer',
-                                            outline: 'none',
-                                            boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-                                            minWidth: '120px'
-                                        }}
-                                    >
-                                        <option value="ALL">Semua Gang</option>
-                                        {availableGangs.map((gang, idx) => (
-                                            <option key={idx} value={gang}>{gang}</option>
-                                        ))}
-                                    </select>
-
-                                    {/* Period Select */}
-                                    <select
-                                        value={`${year}-${month}`}
-                                        onChange={(e) => {
-                                            const [y, m] = e.target.value.split('-').map(Number);
-                                            setYear(y);
-                                            setMonth(m);
-                                        }}
-                                        style={{
-                                            padding: '0.5rem 1rem',
-                                            background: 'white',
-                                            borderRadius: '8px',
-                                            border: '1px solid #e2e8f0',
-                                            fontWeight: '600',
-                                            color: '#334155',
-                                            cursor: 'pointer',
-                                            outline: 'none',
-                                            boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
-                                        }}
-                                    >
-                                        {(Array.isArray(availablePeriods) && availablePeriods.length > 0) ? (
-                                            availablePeriods.map((p, idx) => (
-                                                <option key={idx} value={`${p.year}-${p.month}`}>
-                                                    {new Date(p.year, p.month - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
-                                                </option>
-                                            ))
-                                        ) : (
-                                            <option value={`${year}-${month}`}>
-                                                {new Date(year, month - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
-                                            </option>
-                                        )}
-                                    </select>
+                                            {/* Period Select */}
+                                            <select
+                                                value={`${year}-${month}`}
+                                                onChange={(e) => {
+                                                    const [y, m] = e.target.value.split('-').map(Number);
+                                                    setYear(y);
+                                                    setMonth(m);
+                                                }}
+                                                style={{
+                                                    padding: '0.5rem 1rem',
+                                                    background: C.surface,
+                                                    borderRadius: '8px',
+                                                    border: `1px solid ${C.border}`,
+                                                    fontWeight: '600',
+                                                    color: C.text2,
+                                                    cursor: 'pointer',
+                                                    outline: 'none',
+                                                    boxShadow: SHADOW
+                                                }}
+                                            >
+                                                {(Array.isArray(availablePeriods) && availablePeriods.length > 0) ? (
+                                                    availablePeriods.map((p, idx) => (
+                                                        <option key={idx} value={`${p.year}-${p.month}`}>
+                                                            {new Date(p.year, p.month - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
+                                                        </option>
+                                                    ))
+                                                ) : (
+                                                    <option value={`${year}-${month}`}>
+                                                        {new Date(year, month - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
+                                                    </option>
+                                                )}
+                                            </select>
+                                        </>
+                                    )}
                                 </>
                             )}
-                            </div>
-                        </div>
+                        />
                     </div>
 
-                    {/* CONTENT WRAPPER — overlap hero */}
-                    <div style={{ maxWidth: 1320, margin: '0 auto', padding: '0 2.5rem 3rem', marginTop: '-3rem', position: 'relative' }}>
+                    {/* PRESENT MODE - tombol Present (mode normal) + HUD deck (present mode) */}
+                    <div className="no-print" style={{ maxWidth: 1320, margin: '0 auto', padding: '0.75rem 2.5rem 0', display: 'flex', justifyContent: 'flex-end' }}>
+                        <PresentController
+                            presenting={presenting}
+                            activeIndex={activeIndex}
+                            slideCount={6}
+                            onEnter={enter}
+                            onExit={exit}
+                            caption={`Executive · ${reportPeriodLabel} · ${getScopeLabel(gangScope)}`}
+                        />
+                    </div>
+
+                    {/* CONTENT WRAPPER */}
+                    <div style={{ maxWidth: 1320, margin: '0 auto', padding: '1.5rem 2.5rem 3rem', position: 'relative' }}>
+                        <Breadcrumb items={[
+                            { label: 'Executive Board', onClick: () => { setSelectedFilterDivision('ALL'); setShowCostHKReport(false); } },
+                            ...(showCostHKReport ? [{ label: 'Laporan Cost/HK' }] : []),
+                            ...(selectedFilterDivision !== 'ALL' ? [{ label: `Divisi ${selectedFilterDivision}` }] : [])
+                        ]} />
 
                     {!showCostHKReport && (
                         <section id="executive-print-report" className="executive-print-report print-only">
@@ -1158,165 +1041,237 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
                                 <ReportLauncher month={month} year={year} onNavigate={(to) => navigate(to)} />
                             </div>
 
+                            <SlideNav activeId={activeSlide} slides={[
+                                { id: 'slide-01', num: '01', label: 'Ringkasan' },
+                                { id: 'slide-02', num: '02', label: 'Upah' },
+                                { id: 'slide-03', num: '03', label: 'Tonase & Cost' },
+                                { id: 'slide-04', num: '04', label: 'Divisi & Gang' },
+                                { id: 'slide-05', num: '05', label: 'Efisiensi' },
+                                { id: 'slide-06', num: '06', label: 'Laporan' }
+                            ]} />
+
+                            <PresentSlide num="01" id="slide-01" title="Ringkasan Eksekutif" subtitle="Kinerja utama bulan berjalan dalam satu pandangan">
                             {/* HERO KPI ROW */}
                             {kpi && (
                                 <div style={{ marginBottom: '1.5rem' }}>
-                                    <div style={SECTION_TITLE}>Kinerja Utama — Gang Panen (Upah Kotor)</div>
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 20 }}>
-                                        <HeroKpiCard label="Total Upah Kotor" value={kpi.curr_wage} pct={wageChange} invert sparkData={sparkTrends} sparkKey="total_wage" color={C.upah} compact link={`/summary?month=${month}&year=${year}`} onLink={navigate} />
-                                        <HeroKpiCard label="Cost / Ton" value={costPerTon !== null ? costPerTon : null} pct={costPerTonChange} invert sparkData={sparkTrends} sparkKey="cost_per_ton" color={C.costTon} hero compact link={`/tonase-analysis?month=${month}&year=${year}`} onLink={navigate} />
-                                        <HeroKpiCard label="Tonase" value={`${formatNumber(currentTrend.total_tonase || 0)} t`} pct={tonaseChange} sparkData={sparkTrends} sparkKey="total_tonase" color={C.premi} link={`/tonase-analysis?month=${month}&year=${year}`} onLink={navigate} />
-                                        <HeroKpiCard label="Headcount Panen" value={formatNumber(kpi.curr_headcount)} pct={headChange} sparkData={sparkTrends} sparkKey="total_headcount" color={C.upahAccent} link={`/wages-rebinmas?month=${month}&year=${year}`} onLink={navigate} />
-                                        <HeroKpiCard label="Premi Share" value={`${premiShare.toFixed(1)}%`} pct={premiShareChange} invert sparkData={premiShareSpark} sparkKey="premiShareVal" color={C.lembur} link={`/productivity?month=${month}&year=${year}`} onLink={navigate} />
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
+                                        <div style={{ ...SECTION_TITLE, marginBottom: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                            Kinerja Utama · {getScopeLabel(gangScope)} (Upah Kotor)
+                                            <MetricInfo metricKey="total_upah_kotor" />
+                                        </div>
+                                        <ScopeToggle value={gangScope} onChange={setGangScope} />
                                     </div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 20 }}>
+                                        <HeroKpiCard label="Total Upah Kotor" metricKey="total_upah_kotor" value={kpi.curr_wage} pct={wageChange} invert sparkData={sparkTrends} sparkKey="total_wage" color={C.upah} compact onLink={()=>drillTo('slide-02')} />
+                                        <HeroKpiCard label="Cost / Ton" metricKey="cost_per_ton" value={costPerTon !== null ? costPerTon : null} pct={costPerTonChange} invert sparkData={sparkTrends} sparkKey="cost_per_ton" color={C.costTon} compact onLink={()=>drillTo('slide-03')} />
+                                        <HeroKpiCard label="Tonase" metricKey="total_tonase" value={`${formatNumber(currentTrend.total_tonase || 0)} t`} pct={tonaseChange} sparkData={sparkTrends} sparkKey="total_tonase" color={C.premi} onLink={()=>drillTo('slide-03')} />
+                                        <HeroKpiCard label="Headcount" metricKey="headcount_panen" value={formatNumber(kpi.curr_headcount)} pct={headChange} sparkData={sparkTrends} sparkKey="total_headcount" color={C.upahAccent} onLink={()=>drillTo('slide-04')} />
+                                        <HeroKpiCard label="Premi Share" metricKey="premi_share" value={`${premiShare.toFixed(1)}%`} pct={premiShareChange} invert sparkData={premiShareSpark} sparkKey="premiShareVal" color={C.lembur} onLink={()=>drillTo('slide-02')} />
+                                    </div>
+                                    {(currentTrend.total_tonase || 0) === 0 && (
+                                        <div style={{ marginTop: 16 }}>
+                                            <EmptyState
+                                                title="Tonase & Cost/Ton belum aktif"
+                                                message="Sumber tonase TBS (total_ffb_weight) bernilai 0 untuk periode ini. Upah kotor & headcount tetap akurat, hanya metrik per-ton yang menunggu data tonase diisi."
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
                             {/* INSIGHT STRIP */}
                             <div style={{ marginBottom: '1.5rem' }}>
-                                <InsightStrip spikes={wageSpikes} costChange={costPerTonChange} onSpikeClick={(code) => fetchDivisionDetails(code)} />
+                                <InsightStrip spikes={wageSpikes} costChange={costPerTonChange} onSpikeClick={(code) => { setSelectedGangCode(code); setDetailModalOpen(true); }} />
                             </div>
 
-                            {/* Main Trend Chart */}
-                            <div style={{ ...CARD, marginBottom: '1.5rem' }}>
-                                <div style={SECTION_TITLE}>Tren 12 Bulan — Upah Kotor &amp; Cost/Ton</div>
-                                <div style={{ height: '380px', width: '100%', minHeight: '200px' }}>
-                                    <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
-                                        <ComposedChart data={trends} margin={{ top: 10, right: 40, left: 0, bottom: 0 }}>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={C.border} />
-                                            <XAxis dataKey="period" tick={{ fontSize: 11, fill: C.muted }} />
-                                            <YAxis yAxisId="left" tickFormatter={(val) => `${(val / 1000000).toFixed(0)}jt`} tick={{ fontSize: 11, fill: C.muted }} />
-                                            <YAxis yAxisId="right" orientation="right" tickFormatter={(val) => `${(val / 1000).toFixed(0)}k`} tick={{ fontSize: 11, fill: C.costTon }} />
-                                            <Tooltip
-                                                formatter={(val, name) => [formatCurrency(val), name]}
-                                                contentStyle={{ borderRadius: 10, border: `1px solid ${C.border}`, boxShadow: SHADOW_HOVER, fontSize: 13 }}
-                                                labelStyle={{ fontWeight: 700, color: C.text }}
-                                            />
-                                            <Legend />
-                                            <Bar yAxisId="left" dataKey="total_wage" name="Upah Kotor" fill={C.upah} radius={[4, 4, 0, 0]} barSize={26} />
-                                            <Line yAxisId="right" type="monotone" dataKey="cost_per_ton" name="Cost/Ton" stroke={C.costTon} strokeWidth={2.5} dot={{ r: 3 }} />
-                                        </ComposedChart>
-                                    </ResponsiveContainer>
+                            {/* EXEC SUMMARY STRIP - naratif otomatis */}
+                            <ExecSummaryStrip trends={trends} breakdown={Array.isArray(data?.breakdown) ? data.breakdown : []} wageSpikes={wageSpikes} periodLabel={reportPeriodLabel} />
+                            </PresentSlide>
+
+                            <PresentSlide num="02" id="slide-02" title="Upah & Komponen" subtitle="Dekomposisi upah kotor, lembur, dan premi">
+                            {/* DEKOMPOSISI UPAH KOTOR */}
+                            <DecompositionPanel breakdown={Array.isArray(data?.breakdown) ? data.breakdown : []} />
+
+                            {/* KPI ANALISIS GRID - Analisis KPI - Gang Panen */}
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <div style={{ ...SECTION_TITLE, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                    Analisis KPI · {getScopeLabel(gangScope)}
+                                    <MetricInfo metricKey="total_upah_kotor" />
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 20 }}>
+                                    {/* 1. Lembur Share */}
+                                    {(() => {
+                                        const curr = trends[trends.length - 1] || {};
+                                        const prev = trends[trends.length - 2] || {};
+                                        const currShare = curr.total_wage > 0 ? ((curr.total_ot || 0) / curr.total_wage) * 100 : 0;
+                                        const prevShare = prev.total_wage > 0 ? ((prev.total_ot || 0) / prev.total_wage) * 100 : 0;
+                                        const shareChange = currShare - prevShare;
+                                        const sparkData = trends.slice(-12).map(t => ({ ...t, lemburShare: t.total_wage > 0 ? ((t.total_ot || 0) / t.total_wage) * 100 : 0 }));
+                                        return (
+                                            <div style={CARD}>
+                                                <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: C.muted, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                    Lembur Share <MetricInfo metricKey="total_lembur" />
+                                                </div>
+                                                <div style={{ fontSize: 28, fontWeight: 800, color: C.lembur, fontVariantNumeric: 'tabular-nums', marginBottom: 4 }}>{currShare.toFixed(1)}%</div>
+                                                <DeltaBadge pct={shareChange} invert={true} />
+                                                <div style={{ marginTop: 12 }}><Spark data={sparkData} dataKey="lemburShare" color={C.lembur} /></div>
+                                            </div>
+                                        );
+                                    })()}
+
+                                    {/* 2. Upah per Karyawan */}
+                                    {(() => {
+                                        const curr = trends[trends.length - 1] || {};
+                                        const prev = trends[trends.length - 2] || {};
+                                        const currVal = curr.total_headcount > 0 ? (curr.total_wage || 0) / curr.total_headcount : 0;
+                                        const prevVal = prev.total_headcount > 0 ? (prev.total_wage || 0) / prev.total_headcount : 0;
+                                        const change = calcChange(currVal, prevVal);
+                                        return (
+                                            <div style={CARD}>
+                                                <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: C.muted, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                    Upah per Karyawan <MetricInfo metricKey="upah_kotor_per_hk" />
+                                                </div>
+                                                <div style={{ fontSize: 28, fontWeight: 800, color: C.upah, fontVariantNumeric: 'tabular-nums', marginBottom: 4 }}>{formatCompactIDR(currVal)}</div>
+                                                <DeltaBadge pct={change} invert={true} />
+                                            </div>
+                                        );
+                                    })()}
+
+                                    {/* 3. Premi Share + dekomposisi */}
+                                    {(() => {
+                                        const curr = trends[trends.length - 1] || {};
+                                        const prev = trends[trends.length - 2] || {};
+                                        const currShare = curr.total_wage > 0 ? ((curr.total_premi || 0) / curr.total_wage) * 100 : 0;
+                                        const prevShare = prev.total_wage > 0 ? ((prev.total_premi || 0) / prev.total_wage) * 100 : 0;
+                                        const shareChange = currShare - prevShare;
+                                        const premiDecomp = (Array.isArray(data?.breakdown) ? data.breakdown : [])
+                                            .filter(d => d.total_premi > 0)
+                                            .sort((a, b) => b.total_premi - a.total_premi)
+                                            .slice(0, 5)
+                                            .map(d => ({ name: d.division_code, Premi: d.total_premi }));
+                                        return (
+                                            <div style={CARD}>
+                                                <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: C.muted, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                    Premi Share <MetricInfo metricKey="premi_share" />
+                                                </div>
+                                                <div style={{ fontSize: 28, fontWeight: 800, color: C.premi, fontVariantNumeric: 'tabular-nums', marginBottom: 4 }}>{currShare.toFixed(1)}%</div>
+                                                <DeltaBadge pct={shareChange} invert={true} />
+                                                {premiDecomp.length > 0 && (
+                                                    <div style={{ marginTop: 12, height: 80 }}>
+                                                        <ResponsiveContainer width="100%" height="100%">
+                                                            <BarChart data={premiDecomp} layout="vertical" margin={{ left: 0, right: 0, top: 0, bottom: 0 }}>
+                                                                <XAxis type="number" hide />
+                                                                <YAxis dataKey="name" type="category" width={40} fontSize={9} tick={{ fill: C.muted }} />
+                                                                <Bar dataKey="Premi" fill={C.premi} radius={[0, 4, 4, 0]} barSize={10} />
+                                                            </BarChart>
+                                                        </ResponsiveContainer>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })()}
+
+                                    {/* 4. HK Utilization */}
+                                    {(() => {
+                                        const curr = trends[trends.length - 1] || {};
+                                        const hkPerHead = curr.total_headcount > 0 ? (curr.total_hk || 0) / curr.total_headcount : 0;
+                                        return (
+                                            <div style={CARD}>
+                                                <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: C.muted, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                    HK Utilization <MetricInfo metricKey="cost_per_hk" />
+                                                </div>
+                                                <div style={{ fontSize: 28, fontWeight: 800, color: C.upahAccent, fontVariantNumeric: 'tabular-nums', marginBottom: 4 }}>{hkPerHead.toFixed(1)}</div>
+                                                <div style={{ fontSize: 11, color: C.muted }}>HK per orang (rata-rata hari kerja)</div>
+                                            </div>
+                                        );
+                                    })()}
+
+                                    {/* 5. Tunjangan */}
+                                    {(() => {
+                                        const curr = trends[trends.length - 1] || {};
+                                        const hasTunjangan = curr.total_tunjangan !== undefined && curr.total_tunjangan !== null;
+                                        if (!hasTunjangan) return null;
+                                        return (
+                                            <div style={CARD}>
+                                                <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: C.muted, marginBottom: 8 }}>Tunjangan</div>
+                                                <div style={{ fontSize: 28, fontWeight: 800, color: C.text, fontVariantNumeric: 'tabular-nums', marginBottom: 4 }}>{formatCompactIDR(curr.total_tunjangan)}</div>
+                                            </div>
+                                        );
+                                    })()}
+
+                                    {/* 6. Cost / HK */}
+                                    {(() => {
+                                        const curr = trends[trends.length - 1] || {};
+                                        const prev = trends[trends.length - 2] || {};
+                                        const costHk = curr.cost_per_hk ?? null;
+                                        const prevCostHk = prev.cost_per_hk ?? null;
+                                        const change = costHk !== null && prevCostHk ? calcChange(costHk, prevCostHk) : 0;
+                                        return (
+                                            <div style={CARD}>
+                                                <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: C.muted, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                    Cost / HK <MetricInfo metricKey="cost_per_hk" />
+                                                </div>
+                                                <div style={{ fontSize: 28, fontWeight: 800, color: C.costTon, fontVariantNumeric: 'tabular-nums', marginBottom: 4 }}>{costHk !== null ? formatCurrency(costHk) : '-'}</div>
+                                                {costHk !== null && <DeltaBadge pct={change} invert={true} />}
+                                            </div>
+                                        );
+                                    })()}
                                 </div>
                             </div>
 
-                            {/* Interactive Comparison Widget */}
-                            <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', marginBottom: '2rem' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-                                    <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#334155', margin: 0 }}>Interactive Comparison</h3>
+                            {/* POTONGAN BREAKDOWN */}
+                            <PotonganBreakdownPanel breakdown={data.breakdown} onDrill={fetchDivisionDetails} />
 
-                                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                                        {/* Mode Toggle */}
-                                        <div style={{ display: 'flex', backgroundColor: '#f1f5f9', borderRadius: '8px', padding: '4px' }}>
-                                            <button
-                                                onClick={() => { setCompMode('division'); setSelectedItems([]); setCompData(null); }}
-                                                style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', background: compMode === 'division' ? 'white' : 'transparent', boxShadow: compMode === 'division' ? '0 1px 2px rgba(0,0,0,0.1)' : 'none', fontWeight: '600', color: compMode === 'division' ? '#0f172a' : '#64748b', cursor: 'pointer' }}
-                                            >
-                                                Division
-                                            </button>
-                                            <button
-                                                onClick={() => { setCompMode('gang'); setSelectedItems([]); setCompData(null); }}
-                                                style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', background: compMode === 'gang' ? 'white' : 'transparent', boxShadow: compMode === 'gang' ? '0 1px 2px rgba(0,0,0,0.1)' : 'none', fontWeight: '600', color: compMode === 'gang' ? '#0f172a' : '#64748b', cursor: 'pointer' }}
-                                            >
-                                                Gang
-                                            </button>
-                                        </div>
+                            {/* KPI tambahan - kreatif & rapi */}
+                            <OvertimeDeepDivePanel trends={trends} breakdown={data.breakdown} />
+                            <PremiCompositionPanel trends={trends} breakdown={data.breakdown} premiumBreakdown={data.premiumBreakdown || []} />
+                            <HeadcountHkPanel trends={trends} breakdown={data.breakdown} />
 
-                                        {/* Multi-Select */}
-                                        <select
-                                            multiple
-                                            value={selectedItems}
-                                            onChange={(e) => {
-                                                const options = [...e.target.selectedOptions];
-                                                const values = options.map(o => o.value);
-                                                setSelectedItems(values);
-                                            }}
-                                            style={{ padding: '0.5rem', border: '1px solid #cbd5e1', borderRadius: '8px', minWidth: '200px', height: '40px' }}
-                                        >
-                                            {(compMode === 'division' 
-                                                ? (Array.isArray(filterOptions.divisions) ? filterOptions.divisions : []) 
-                                                : (Array.isArray(filterOptions.gangs) ? filterOptions.gangs : [])
-                                            ).map(opt => (
-                                                <option key={opt} value={opt}>{opt}</option>
-                                            ))}
-                                        </select>
-
-                                        <button
-                                            onClick={handleCompare}
-                                            disabled={compLoading || selectedItems.length === 0}
-                                            style={{ backgroundColor: '#3b82f6', color: 'white', border: 'none', padding: '0.5rem 1.5rem', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', opacity: (compLoading || selectedItems.length === 0) ? 0.7 : 1 }}
-                                        >
-                                            {compLoading ? 'Loading...' : 'Compare'}
-                                        </button>
-                                    </div>
+                            {/* DISTRIBUSI UPAH KOTOR - semua divisi, klik dot drill ke salary-range report */}
+                            {!wageDistLoading && wageDistEmployees.length > 0 && (
+                                <div style={{ ...CARD, marginBottom: '1.5rem' }}>
+                                    <div style={SECTION_TITLE}>Sebaran Karyawan per Rentang Upah Kotor</div>
+                                    <WageDistributionChart
+                                        employees={wageDistEmployees}
+                                        activeRange={null}
+                                        onRangeSelect={(r) => {
+                                            if (r) navigate(`/report/salary-range-detail?month=${month}&year=${year}&min_salary=${r.min}&max_salary=${r.max}`);
+                                        }}
+                                    />
                                 </div>
+                            )}
+                            </PresentSlide>
 
-                                {/* Comparison Charts */}
-                                {compData && Array.isArray(compData) && compData.length > 0 && (
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
-                                        <div style={{ height: '300px', minHeight: '200px' }}>
-                                            <h4 style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '1rem', textAlign: 'center' }}>Total Wage</h4>
-                                            <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
-                                                <BarChart data={compData}>
-                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                                    <XAxis dataKey="name" fontSize={10} interval={0} angle={-45} textAnchor="end" height={60} />
-                                                    <YAxis tickFormatter={(val) => `${(val / 1000000).toFixed(0)}M`} />
-                                                    <Tooltip formatter={(val) => formatCurrency(val)} />
-                                                    <Bar dataKey="total_wage" fill="#3b82f6" name="Wage" />
-                                                </BarChart>
-                                            </ResponsiveContainer>
-                                        </div>
-                                        <div style={{ height: '300px', minHeight: '200px' }}>
-                                            <h4 style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '1rem', textAlign: 'center' }}>Overtime</h4>
-                                            <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
-                                                <BarChart data={compData}>
-                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                                    <XAxis dataKey="name" fontSize={10} interval={0} angle={-45} textAnchor="end" height={60} />
-                                                    <YAxis tickFormatter={(val) => `${(val / 1000000).toFixed(0)}M`} />
-                                                    <Tooltip formatter={(val) => formatCurrency(val)} />
-                                                    <Bar dataKey="total_ot" fill="#f59e0b" name="Overtime" />
-                                                </BarChart>
-                                            </ResponsiveContainer>
-                                        </div>
-                                        <div style={{ height: '300px', minHeight: '200px' }}>
-                                            <h4 style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '1rem', textAlign: 'center' }}>Productivity (Cost/HK)</h4>
-                                            <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
-                                                <BarChart data={compData}>
-                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                                    <XAxis dataKey="name" fontSize={10} interval={0} angle={-45} textAnchor="end" height={60} />
-                                                    <YAxis tickFormatter={(val) => `${(val / 1000).toFixed(0)}k`} />
-                                                    <Tooltip formatter={(val) => formatCurrency(val)} />
-                                                    <Bar dataKey="cost_per_hk" fill="#10b981" name="Cost/HK" />
-                                                </BarChart>
-                                            </ResponsiveContainer>
-                                        </div>
-                                    </div>
-                                )}
-                                {!compData && !compLoading && (
-                                    <div style={{ textAlign: 'center', color: '#cbd5e1', padding: '3rem' }}>
-                                        Select items and click Compare to see specific metrics
-                                    </div>
-                                )}
-                            </div>
+                            <PresentSlide num="03" id="slide-03" title="Tonase & Cost" subtitle="Produksi TBS dan biaya per ton">
+                            {/* COST/TON COMPREHENSIVE PANEL */}
+                            <CostPerTonPanel
+                                trends={trends}
+                                divisionRows={Array.isArray(data?.breakdown) ? data.breakdown : []}
+                                title={`Analisis Cost per Ton · ${getScopeLabel(gangScope)}`}
+                                loading={loading}
+                            />
 
+                            {/* COST OF WAGE - cost upah terhadap semua satuan */}
+                            <CostOfWagePanel trends={trends} breakdown={Array.isArray(data?.breakdown) ? data.breakdown : []} />
+                            </PresentSlide>
+
+                            <PresentSlide num="04" id="slide-04" title="Divisi & Gang" subtitle="Perbandingan kinerja antar divisi dan gang">
                             {/* Secondary Charts Row */}
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '2rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '1.25rem' }}>
                                 {/* Division Breakdown - Full Stacked Bar */}
-                                <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
-                                    <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#334155', marginBottom: '0.5rem' }}>
-                                        Division Cost Breakdown ({divisionChartData.length} divisions)
-                                    </h3>
-                                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', fontSize: '0.75rem' }}>
-                                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                            <span style={{ width: '12px', height: '12px', backgroundColor: '#3b82f6', borderRadius: '2px' }}></span>
+                                <div style={{ ...CARD }}>
+                                    <div style={{ ...SECTION_TITLE, marginBottom: 12 }}>Division Cost Breakdown ({divisionChartData.length} divisi) <MetricInfo metricKey="total_upah_kotor" /></div>
+                                    <div style={{ display: 'flex', gap: '0.9rem', marginBottom: '0.8rem', fontSize: '0.76rem', color: C.text2 }}>
+                                        <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                                            <span style={{ width: 12, height: 12, backgroundColor: C.upah, borderRadius: 2 }} />
                                             Gaji Pokok + Tunjangan
                                         </span>
-                                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                            <span style={{ width: '12px', height: '12px', backgroundColor: '#f97316', borderRadius: '2px' }}></span>
+                                        <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                                            <span style={{ width: 12, height: 12, backgroundColor: C.lembur, borderRadius: 2 }} />
                                             Lembur
                                         </span>
-                                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                            <span style={{ width: '12px', height: '12px', backgroundColor: '#10b981', borderRadius: '2px' }}></span>
+                                        <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                                            <span style={{ width: 12, height: 12, backgroundColor: C.premi, borderRadius: 2 }} />
                                             Premi
                                         </span>
                                     </div>
@@ -1331,26 +1286,27 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
                                                         const d = payload[0]?.payload;
                                                         return (
                                                             <div style={{
-                                                                background: 'white',
+                                                                background: C.surface,
                                                                 padding: '10px',
                                                                 borderRadius: '8px',
-                                                                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                                                border: `1px solid ${C.border}`,
+                                                                boxShadow: SHADOW,
                                                                 fontSize: '0.8rem'
                                                             }}>
-                                                                <div style={{ fontWeight: '700', marginBottom: '6px' }}>{label}</div>
-                                                                <div style={{ color: '#64748b', marginBottom: '4px' }}>
+                                                                <div style={{ fontWeight: '700', marginBottom: '6px', color: C.text }}>{label}</div>
+                                                                <div style={{ color: C.muted, marginBottom: '4px' }}>
                                                                     Total: {formatCurrency(d.Total)}
                                                                 </div>
-                                                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                                                    <span style={{ color: '#3b82f6' }}>■</span>
+                                                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', color: C.text2 }}>
+                                                                    <span style={{ color: C.upah }}>■</span>
                                                                     Base: {formatCurrency(d.Base)} ({d.basePercent}%)
                                                                 </div>
-                                                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                                                    <span style={{ color: '#f97316' }}>■</span>
+                                                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', color: C.text2 }}>
+                                                                    <span style={{ color: C.lembur }}>■</span>
                                                                     Lembur: {formatCurrency(d.Overtime)} ({d.otPercent}%)
                                                                 </div>
-                                                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                                                    <span style={{ color: '#10b981' }}>■</span>
+                                                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', color: C.text2 }}>
+                                                                    <span style={{ color: C.premi }}>■</span>
                                                                     Premi: {formatCurrency(d.Premi)} ({d.premiPercent}%)
                                                                 </div>
                                                             </div>
@@ -1367,156 +1323,13 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
                                     </div>
                                 </div>
 
-                                {/* Cost Composition Donut */}
-                                <div style={CARD}>
-                                    <div style={SECTION_TITLE}>Komposisi Biaya</div>
-                                    <div style={{ height: '300px', position: 'relative', minHeight: '200px' }}>
-                                        <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
-                                            <PieChart>
-                                                <Pie
-                                                    data={Array.isArray(costComposition) ? costComposition : []}
-                                                    cx="50%"
-                                                    cy="50%"
-                                                    innerRadius={70}
-                                                    outerRadius={100}
-                                                    paddingAngle={3}
-                                                    dataKey="value"
-                                                >
-                                                    {Array.isArray(costComposition) && costComposition.map((entry, index) => (
-                                                        <Cell key={`cell-${index}`} fill={entry.color} />
-                                                    ))}
-                                                </Pie>
-                                                <Tooltip formatter={(val) => formatCurrency(val)} contentStyle={{ borderRadius: 10, border: `1px solid ${C.border}`, boxShadow: SHADOW_HOVER }} />
-                                                <Legend />
-                                            </PieChart>
-                                        </ResponsiveContainer>
-                                        <div style={{ position: 'absolute', top: '44%', left: '50%', transform: 'translate(-50%,-50%)', textAlign: 'center', pointerEvents: 'none' }}>
-                                            <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: C.muted }}>Total</div>
-                                            <div style={{ fontSize: 20, fontWeight: 800, color: C.text, fontVariantNumeric: 'tabular-nums' }}>{formatCompactIDR(kpi?.curr_wage || 0)}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Premi Analysis - Full Width Row */}
-                            <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', marginTop: '2rem' }}>
-                                <PremiCompositionChart month={month} year={year} division="ALL" />
-                            </div>
-
-                            {/* Overtime Distribution - Full Width Row */}
-                            <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', marginTop: '2rem' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                                    <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#334155', margin: 0 }}>
-                                        ⏰ Distribusi Lembur per Divisi ({overtimeChartData.length} divisions)
-                                    </h3>
-                                    <div style={{
-                                        backgroundColor: '#fff7ed',
-                                        padding: '0.5rem 1rem',
-                                        borderRadius: '8px',
-                                        fontSize: '0.9rem',
-                                        fontWeight: '600',
-                                        color: '#ea580c'
-                                    }}>
-                                        Total: {formatCurrency(Array.isArray(overtimeChartData) ? overtimeChartData.reduce((sum, d) => sum + (d.Overtime || 0), 0) : 0)}
-                                    </div>
-                                </div>
-                                {Array.isArray(overtimeChartData) && overtimeChartData.length > 0 ? (
-                                    <div style={{ height: Math.max(300, overtimeChartData.length * 32), minHeight: '200px' }}>
-                                        <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
-                                            <BarChart data={overtimeChartData} layout="vertical" margin={{ left: 40, right: 80 }}>
-                                                <XAxis type="number" tickFormatter={(val) => `${(val / 1000000).toFixed(0)} jt`} fontSize={10} />
-                                                <YAxis dataKey="name" type="category" width={35} fontSize={11} />
-                                                <Tooltip
-                                                    content={({ active, payload, label }) => {
-                                                        if (!active || !payload?.length) return null;
-                                                        const d = payload[0]?.payload;
-                                                        return (
-                                                            <div style={{
-                                                                background: 'white',
-                                                                padding: '10px',
-                                                                borderRadius: '8px',
-                                                                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                                                                fontSize: '0.85rem'
-                                                            }}>
-                                                                <div style={{ fontWeight: '700', marginBottom: '4px' }}>Divisi: {label}</div>
-                                                                <div style={{ color: '#ea580c' }}>
-                                                                    Lembur: {formatCurrency(d?.Overtime || 0)} ({d?.percent || 0}%)
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    }}
-                                                />
-                                                <Bar
-                                                    dataKey="Overtime"
-                                                    fill="#f97316"
-                                                    radius={[0, 4, 4, 0]}
-                                                    barSize={24}
-                                                    label={({ x, y, width, height, value, payload }) => {
-                                                        if (!payload) return null;
-                                                        return (
-                                                            <text
-                                                                x={x + width + 5}
-                                                                y={y + height / 2}
-                                                                fill="#64748b"
-                                                                fontSize={10}
-                                                                dominantBaseline="middle"
-                                                            >
-                                                                {formatCurrency(value)} ({payload.percent || 0}%)
-                                                            </text>
-                                                        );
-                                                    }}
-                                                />
-                                            </BarChart>
-                                        </ResponsiveContainer>
-                                    </div>
-                                ) : (
-                                    <div style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>
-                                        No overtime data available for this period
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Advanced Analysis Row */}
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '2rem', marginTop: '2rem' }}>
-                                {/* Gang Comparison */}
-                                <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
-                                    <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#334155', marginBottom: '1.5rem' }}>Top 15 Gangs by Cost</h3>
-                                    <div style={{ height: '350px', minHeight: '200px' }}>
-                                        <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
-                                            <BarChart data={gangChartData} margin={{ top: 20, right: 30, left: 20, bottom: 50 }}>
-                                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                                <XAxis dataKey="name" angle={-45} textAnchor="end" height={60} interval={0} fontSize={10} />
-                                                <YAxis tickFormatter={(val) => `${(val / 1000000).toFixed(0)}M`} />
-                                                <Tooltip formatter={(val) => formatCurrency(val)} />
-                                                <Legend />
-                                                <Bar dataKey="Wage" stackId="a" fill="#3b82f6" name="Total Wages" />
-                                                <Bar dataKey="Overtime" stackId="a" fill="#f59e0b" name="Overtime" />
-                                            </BarChart>
-                                        </ResponsiveContainer>
-                                    </div>
-                                </div>
-
-                                {/* Division Efficiency */}
-                                <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
-                                    <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#334155', marginBottom: '1.5rem' }}>Cost Efficiency (Avg Cost per Employee)</h3>
-                                    <div style={{ height: '350px', minHeight: '200px' }}>
-                                        <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
-                                            <BarChart data={efficiencyData} margin={{ top: 20, right: 30, left: 20, bottom: 50 }}>
-                                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                                <XAxis dataKey="name" angle={-45} textAnchor="end" height={60} interval={0} fontSize={10} />
-                                                <YAxis tickFormatter={(val) => `${(val / 1000000).toFixed(1)}jt`} />
-                                                <Tooltip formatter={(val, name) => [formatCurrency(val), name === 'costPerHead' ? 'Avg Cost/Head' : name]} />
-                                                <Bar dataKey="costPerHead" fill="#10b981" name="Avg Cost per Employee" onClick={(data) => console.log(data)} />
-                                            </BarChart>
-                                        </ResponsiveContainer>
-                                    </div>
-                                </div>
                             </div>
 
                             {/* Gang Performance Charts Section */}
                             <TopBottomPerformersCard
                                 data={topBottomData}
                                 loading={gangChartsLoading}
+                                scope={gangScope}
                             />
 
                             <div style={{ marginTop: '2rem' }}>
@@ -1525,20 +1338,7 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
                                     loading={gangChartsLoading}
                                     month={month}
                                     year={year}
-                                    onGangClick={(data) => {
-                                        if (data?.gang_code) {
-                                            setSelectedGangCode(data.gang_code);
-                                            setDetailModalOpen(true);
-                                        }
-                                    }}
-                                />
-                            </div>
-
-                            {/* Gang Cost Breakdown - Shows composition of costs */}
-                            <div style={{ marginTop: '2rem' }}>
-                                <GangCostBreakdownChart
-                                    data={gangComparisonData}
-                                    loading={gangChartsLoading}
+                                    scope={gangScope}
                                     onGangClick={(data) => {
                                         if (data?.gang_code) {
                                             setSelectedGangCode(data.gang_code);
@@ -1555,14 +1355,25 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
                                     month={month}
                                     year={year}
                                     divisionCode={selectedFilterDivision}
+                                    scope={gangScope}
                                 />
                             </div>
 
+                            {/* Per-division cost/ton timeline (lazy fetch on view) */}
+                            <div ref={divTimelineRef} style={{ marginTop: '2rem' }}>
+                                <DivisionTimelineGrid rows={divTrendRows} loading={divTrendLoading} onDrill={(code) => fetchDivisionDetails(code)} />
+                            </div>
+                            </PresentSlide>
+
+                            <PresentSlide num="05" id="slide-05" title="Efisiensi" subtitle="Efisiensi biaya dan sinyal anomali operasional">
+                            {/* EFISIENSI QUADRANT - produktivitas vs cost/ton */}
+                            <EfficiencyQuadrant breakdown={Array.isArray(data?.breakdown) ? data.breakdown : []} onDrill={(code) => fetchDivisionDetails(code)} />
+
                             {/* Phase 2: Productivity & Alerts */}
-                            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem', marginTop: '2rem', marginBottom: '3rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.25rem', marginTop: '1.5rem', marginBottom: '2rem' }}>
                                 {/* Productivity Trend */}
-                                <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
-                                    <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#334155', marginBottom: '1.5rem' }}>Workforce Productivity Trend (Avg Cost / Man-Day)</h3>
+                                <div style={{ ...CARD }}>
+                                    <div style={{ ...SECTION_TITLE, marginBottom: 12 }}>Workforce Productivity Trend <MetricInfo metricKey="cost_per_hk" /></div>
                                     <div style={{ height: '350px', minHeight: '200px' }}>
                                         <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
                                             <LineChart data={productivityData} margin={{ top: 20, right: 30, left: 20, bottom: 50 }}>
@@ -1571,41 +1382,39 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
                                                 <YAxis tickFormatter={(val) => `${(val / 1000).toFixed(0)}k`} domain={['auto', 'auto']} />
                                                 <Tooltip formatter={(val, name) => [formatCurrency(val), name === 'costPerHk' ? 'Cost/HK' : name]} />
                                                 <Legend />
-                                                <Line type="monotone" dataKey="costPerHk" stroke="#8b5cf6" strokeWidth={3} name="Cost/HK" activeDot={{ r: 8 }} />
-                                                <Line type="monotone" dataKey="totalHk" stroke="#cbd5e1" strokeWidth={2} name="Total HK" yAxisId="right" hide={true} />
+                                                <Line type="monotone" dataKey="costPerHk" stroke={C.costTon} strokeWidth={3} name="Cost/HK" activeDot={{ r: 8 }} />
+                                                <Line type="monotone" dataKey="totalHk" stroke={C.muted} strokeWidth={2} name="Total HK" yAxisId="right" hide={true} />
                                             </LineChart>
                                         </ResponsiveContainer>
                                     </div>
                                 </div>
 
                                 {/* Wage Spikes / Alerts */}
-                                <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
-                                    <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#ef4444', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <span style={{ backgroundColor: '#fee2e2', padding: '4px 8px', borderRadius: '6px' }}>⚠️ Gang Cost Spikes (Cost/HK)</span>
-                                    </h3>
+                                <div style={{ ...CARD }}>
+                                    <div style={{ ...SECTION_TITLE, marginBottom: 12, color: C.potongan, borderLeftColor: C.potongan, display: 'flex', alignItems: 'center', gap: 6 }}>Gang Cost Spikes (Cost/HK) <MetricInfo metricKey="cost_per_hk" /></div>
                                     <div style={{ overflowY: 'auto', maxHeight: '350px' }}>
                                         {!Array.isArray(wageSpikes) || wageSpikes.length === 0 ? (
-                                            <div style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>No anomalies detected this month.</div>
+                                            <div style={{ padding: '2rem', textAlign: 'center', color: C.muted }}>Tidak ada anomali terdeteksi bulan ini.</div>
                                         ) : (
                                             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
                                                 <thead>
-                                                    <tr style={{ borderBottom: '2px solid #f1f5f9', textAlign: 'left' }}>
-                                                        <th style={{ padding: '0.75rem', color: '#64748b' }}>Gang</th>
-                                                        <th style={{ padding: '0.75rem', color: '#64748b', textAlign: 'right' }}>Increase</th>
-                                                        <th style={{ padding: '0.75rem', color: '#64748b', textAlign: 'right' }}>Cost/HK</th>
+                                                    <tr style={{ borderBottom: `2px solid ${C.border}`, textAlign: 'left' }}>
+                                                        <th style={{ padding: '0.75rem', color: C.muted }}>Gang</th>
+                                                        <th style={{ padding: '0.75rem', color: C.muted, textAlign: 'right' }}>Kenaikan</th>
+                                                        <th style={{ padding: '0.75rem', color: C.muted, textAlign: 'right' }}>Cost/HK</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     {wageSpikes.map((spike, idx) => (
-                                                        <tr key={idx} style={{ borderBottom: '1px solid #f8fafc' }}>
+                                                        <tr key={idx} style={{ borderBottom: `1px solid ${C.surface2}` }}>
                                                             <td style={{ padding: '0.75rem' }}>
-                                                                <div style={{ fontWeight: '600', color: '#334155' }}>{spike.name}</div>
-                                                                <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{spike.id} • {spike.gang}</div>
+                                                                <div style={{ fontWeight: '600', color: C.text }}>{spike.name}</div>
+                                                                <div style={{ fontSize: '0.75rem', color: C.muted }}>{spike.id} • {spike.gang}</div>
                                                             </td>
-                                                            <td style={{ padding: '0.75rem', textAlign: 'right', color: '#ef4444', fontWeight: '700' }}>
+                                                            <td style={{ padding: '0.75rem', textAlign: 'right', color: C.potongan, fontWeight: '700', fontVariantNumeric: 'tabular-nums' }}>
                                                                 +{spike.percentage.toFixed(1)}%
                                                             </td>
-                                                            <td style={{ padding: '0.75rem', textAlign: 'right', fontWeight: '600' }}>
+                                                            <td style={{ padding: '0.75rem', textAlign: 'right', fontWeight: '600', color: C.text, fontVariantNumeric: 'tabular-nums' }}>
                                                                 {formatCurrency(spike.currentWage)}
                                                             </td>
                                                         </tr>
@@ -1616,6 +1425,13 @@ export default function ExecutivePayrollPage({ onBack, initialMonth, initialYear
                                     </div>
                                 </div>
                             </div>
+
+                            </PresentSlide>
+
+                            <PresentSlide num="06" id="slide-06" title="Laporan" subtitle="Akses cepat ke laporan rinci">
+                            {/* REPORT HUB FOOTER - semua report */}
+                            <ReportHubFooter onNavigate={(to) => navigate(to)} month={month} year={year} />
+                            </PresentSlide>
 
                             {/* Division Details Modal - REMOVED, Replaced by DivisionDetailCard View */}
                             {/* Gang Detail Modal */}

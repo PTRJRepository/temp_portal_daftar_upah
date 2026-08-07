@@ -5,9 +5,10 @@
  */
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { ArrowDownRight, ArrowUpRight, Minus, Printer, RefreshCw } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { MetricInfo, EmptyState } from '../components/report/reportTheme';
 import { fetchAllDivisionsTotals, fetchAvailablePeriods, fetchComparisonSummary, fetchVirtualDivisions, updateSPSI, updateDivisionCell } from '../services/summaryReportService';
 import { fetchWagesRecapAll } from '../services/wagesService';
 import { otherIncomesService } from '../services/otherIncomesService';
@@ -30,6 +31,7 @@ import '../styles/report-print-foundation.css';
 export default function WagesSummaryRebinmasPage({ onBack, initialMonth, initialYear }) {
     const { token, user } = useAuth();
     const [searchParams, setSearchParams] = useSearchParams();
+    const navigate = useNavigate();
 
     // Filters - Use selected payroll period when provided
     const [month, setMonth] = useState(initialMonth || null);
@@ -1557,13 +1559,14 @@ export default function WagesSummaryRebinmasPage({ onBack, initialMonth, initial
         );
     };
     return (
-        <div className="wsp-container" style={{ padding: '1.5rem', backgroundColor: '#f8fafc', minHeight: '100vh' }}>
+        <div className="wsp-container" style={{ padding: '1.5rem', backgroundColor: '#EDF3EC', minHeight: '100vh' }}>
             {/* Action Bar */}
             <div className="report-header-web no-print">
                 <div className="report-header-info">
-                    <h1>Wages Summary (Rebinmas)</h1>
+                    <h1 style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>Wages Summary (Rebinmas) <MetricInfo metricKey="upah_bersih" /></h1>
                     <p>Laporan rincian upah lengkap untuk entitas PT Rebinmas Jaya.</p>
                     <div style={{ display: 'flex', gap: '10px', marginTop: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <button onClick={() => navigate(`/cost-per-ton-story?month=${month || ''}&year=${year || ''}`)} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: '#1E7A45', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>Cost/Ton Story →</button>
                         {/* Division Type Selector (All/Real/Virtual) */}
                         <select
                             value={divisionType}
@@ -1590,11 +1593,11 @@ export default function WagesSummaryRebinmasPage({ onBack, initialMonth, initial
                             display: 'flex',
                             alignItems: 'center',
                             gap: '8px',
-                            background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)',
-                            border: '2px solid #60a5fa',
+                            background: 'linear-gradient(135deg, #14532D 0%, #1E7A45 100%)',
+                            border: '2px solid #4CBB6B',
                             borderRadius: '12px',
                             padding: '5px 12px 5px 8px',
-                            boxShadow: '0 4px 16px rgba(37, 99, 235, 0.4), 0 0 0 3px rgba(96, 165, 250, 0.18)',
+                            boxShadow: '0 4px 16px rgba(30, 122, 69, 0.4), 0 0 0 3px rgba(76, 187, 107, 0.18)',
                             transition: 'box-shadow 0.2s'
                         }}>
                             <div style={{

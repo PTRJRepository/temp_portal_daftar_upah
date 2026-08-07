@@ -1,29 +1,35 @@
 /* =====================================================================
-   Sawit Finance — global report theme override
-   Restyles the shared wsp-*/report-* classes used across all report pages
-   into the palm-green "sawit finance" visual system. Load once globally.
+   Estate Ledger — global report theme override
+   Restyles the shared wsp-*/report-* classes used across all report pages.
+   Bahasa: masthead datar, hairline, satu aksen daun. Load once globally.
+   Spec: docs/superpowers/specs/2026-08-07-estate-ledger-redesign-design.md
    ===================================================================== */
 
 :root {
-  --sw-leaf-dark: #14532D;
-  --sw-leaf-mid: #1E7A45;
-  --sw-leaf-light: #4CBB6B;
-  --sw-upah: #1E7A45;
-  --sw-upah-accent: #3E9E63;
-  --sw-premi: #2E9E6B;
-  --sw-lembur: #D98A1F;
-  --sw-potongan: #C8463C;
-  --sw-cost-ton: #6C4FC4;
-  --sw-text: #12241A;
-  --sw-text2: #46584C;
-  --sw-muted: #7C8B80;
-  --sw-border: #DFE8E0;
+  --sw-leaf-dark: #143D28;
+  --sw-leaf-mid: #1F6F43;
+  --sw-leaf-light: #5E9C7B;
+  --sw-upah: #1F6F43;
+  --sw-upah-accent: #3D8B62;
+  --sw-premi: #0F766E;
+  --sw-lembur: #B45309;
+  --sw-potongan: #B3392E;
+  --sw-cost-ton: #7C5A2B;
+  --sw-text: #15211A;
+  --sw-text2: #3D4A41;
+  --sw-muted: #6E7A70;
+  --sw-border: #E0DED2;
   --sw-surface: #FFFFFF;
-  --sw-surface2: #F6FAF5;
-  --sw-page-bg: #EDF3EC;
-  --sw-grid: #E4ECE2;
-  --sw-shadow: 0 1px 2px rgba(18,36,26,.05), 0 6px 18px rgba(18,36,26,.08);
-  --sw-shadow-hover: 0 14px 34px rgba(18,36,26,.16);
+  --sw-surface2: #F5F3EC;
+  --sw-page-bg: #F0EEE6;
+  --sw-grid: #E8E6DB;
+  --sw-shadow: 0 1px 2px rgba(21,33,26,.04), 0 4px 14px rgba(21,33,26,.06);
+  --sw-shadow-hover: 0 10px 28px rgba(21,33,26,.10);
+  /* Aliases ke tokens.css */
+  --sw-display: var(--font-display);
+  --sw-body: var(--font-body);
+  --sw-mono: var(--font-mono);
+  --sw-radius-lg: var(--radius-lg);
 }
 
 /* ---------- Page canvas ---------- */
@@ -41,35 +47,28 @@
   color: var(--sw-text);
 }
 
-/* ---------- Top web header -> green hero band ---------- */
+/* ---------- Top web header -> masthead datar ---------- */
 .report-header-web {
-  background: linear-gradient(115deg, var(--sw-leaf-dark) 0%, var(--sw-leaf-mid) 55%, var(--sw-leaf-light) 100%) !important;
-  color: #fff !important;
+  background: var(--color-paper) !important;
+  color: var(--sw-text) !important;
   border: none !important;
-  border-radius: 0 0 18px 18px;
-  padding: 1.4rem 1.8rem 1.6rem !important;
-  box-shadow: var(--sw-shadow);
+  border-bottom: 1px solid var(--sw-border) !important;
+  border-radius: 0;
+  padding: 1.4rem 1.8rem 1.4rem !important;
+  box-shadow: none;
   position: relative;
-  overflow: hidden;
-}
-.report-header-web::after {
-  content: '';
-  position: absolute;
-  right: -30px; top: -40px;
-  width: 220px; height: 220px;
-  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.14), transparent 60%);
-  pointer-events: none;
 }
 .report-header-web h1,
 .report-header-web h2,
 .report-header-web .tonase-toolbar-title h1 {
-  color: #fff !important;
+  color: var(--sw-text) !important;
+  font-family: var(--sw-display) !important;
   font-weight: 800 !important;
   letter-spacing: -0.02em;
 }
 .report-header-web p,
 .report-header-web .report-header-info p {
-  color: rgba(255,255,255,.85) !important;
+  color: var(--sw-text2) !important;
 }
 
 /* Title block layout */
@@ -78,29 +77,30 @@
   gap: 12px;
 }
 
-/* Back button on hero -> glassy */
+/* Back button pada masthead -> outline datar */
 .report-header-web .wsp-btn,
 .report-header-web .tonase-back-btn,
 .wsp-btn.tonase-back-btn {
-  background: rgba(255,255,255,.16) !important;
-  color: #fff !important;
-  border: 1px solid rgba(255,255,255,.28) !important;
-  border-radius: 10px;
+  background: var(--sw-surface) !important;
+  color: var(--sw-text2) !important;
+  border: 1px solid var(--sw-border) !important;
+  border-radius: 8px;
   font-weight: 600;
 }
 .report-header-web .wsp-btn:hover,
 .report-header-web .tonase-back-btn:hover {
-  background: rgba(255,255,255,.26) !important;
+  border-color: var(--sw-leaf-mid) !important;
+  color: var(--sw-leaf-mid) !important;
 }
 
-/* ---------- Filter badges / selects on hero ---------- */
+/* ---------- Filter badges / selects pada masthead ---------- */
 .report-filter-badge,
 .report-header-web select,
 .tonase-detail-select {
-  background: rgba(255,255,255,.14) !important;
-  color: #fff !important;
-  border: 1px solid rgba(255,255,255,.28) !important;
-  border-radius: 10px !important;
+  background: var(--sw-surface) !important;
+  color: var(--sw-text) !important;
+  border: 1px solid var(--sw-border) !important;
+  border-radius: 8px !important;
   font-weight: 600;
 }
 .report-filter-badge option,
@@ -112,19 +112,23 @@
 /* ---------- Primary / secondary buttons ---------- */
 .wsp-btn-primary,
 .report-header-actions .wsp-btn-primary {
-  background: linear-gradient(135deg, var(--sw-leaf-mid), var(--sw-upah-accent)) !important;
+  background: var(--sw-leaf-mid) !important;
   color: #fff !important;
   border: none !important;
-  border-radius: 10px;
+  border-radius: 8px;
   font-weight: 700;
-  box-shadow: 0 6px 16px rgba(30,122,69,.28);
+  box-shadow: none;
+}
+.wsp-btn-primary:hover,
+.report-header-actions .wsp-btn-primary:hover {
+  background: var(--sw-leaf-dark) !important;
 }
 .wsp-btn-secondary,
 .report-header-actions .wsp-btn-secondary {
-  background: #fff !important;
+  background: var(--sw-surface) !important;
   color: var(--sw-leaf-mid) !important;
   border: 1px solid var(--sw-border) !important;
-  border-radius: 10px;
+  border-radius: 8px;
   font-weight: 600;
 }
 
@@ -138,21 +142,19 @@
 .wsp-panel {
   background: var(--sw-surface) !important;
   border: 1px solid var(--sw-border) !important;
-  border-radius: 16px !important;
+  border-radius: 10px !important;
   box-shadow: var(--sw-shadow) !important;
 }
 
-/* Section headers -> sawit eyebrow */
+/* Section headers -> judul tenang tanpa eyebrow border */
 .tonase-section-header h3,
 .wsp-section-header h3,
 .tonase-subsection-title {
-  color: var(--sw-leaf-mid) !important;
+  color: var(--sw-text) !important;
   font-weight: 700 !important;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  font-size: 0.8rem !important;
-  border-left: 3px solid var(--sw-leaf-mid);
-  padding-left: 12px;
+  font-size: 0.78rem !important;
 }
 .tonase-section-header span,
 .wsp-section-header span {
@@ -161,8 +163,8 @@
 
 /* ---------- KPI cards ---------- */
 .tonase-kpi-card {
-  border-top: 3px solid var(--sw-leaf-mid) !important;
-  border-radius: 14px !important;
+  border-top: 2px solid var(--sw-leaf-mid) !important;
+  border-radius: 10px !important;
 }
 .tonase-kpi-label { color: var(--sw-muted) !important; text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.72rem !important; font-weight: 700 !important; }
 .tonase-kpi-value { color: var(--sw-text) !important; font-weight: 800 !important; font-variant-numeric: tabular-nums; }
@@ -177,7 +179,7 @@
 .tonase-detail-mode-table {
   border-collapse: separate !important;
   border-spacing: 0;
-  border-radius: 12px;
+  border-radius: 10px;
   overflow: hidden;
   border: 1px solid var(--sw-border) !important;
 }
@@ -188,12 +190,12 @@
 .tonase-summary-table thead th,
 .tonase-detail-mode-table thead th {
   background: var(--sw-surface2) !important;
-  color: var(--sw-leaf-mid) !important;
+  color: var(--sw-text2) !important;
   font-weight: 700 !important;
   text-transform: uppercase;
   font-size: 0.72rem !important;
   letter-spacing: 0.06em;
-  border-bottom: 2px solid var(--sw-border) !important;
+  border-bottom: 1px solid var(--sw-border) !important;
 }
 .wsp-table tbody tr,
 .tonase-detail-table tbody tr,
@@ -204,11 +206,11 @@
 .wsp-table tbody tr:hover,
 .tonase-detail-table tbody tr:hover,
 .tonase-clickable-row:hover {
-  background: #F0F7F0 !important;
+  background: var(--sw-surface2) !important;
 }
 .tonase-selected-row {
-  background: #E4F4EB !important;
-  box-shadow: inset 3px 0 0 var(--sw-leaf-mid);
+  background: var(--color-accent-soft) !important;
+  box-shadow: inset 2px 0 0 var(--sw-leaf-mid);
 }
 
 /* ---------- Mode tabs ---------- */
@@ -227,17 +229,17 @@
 
 /* ---------- Warning strip ---------- */
 .tonase-warning-strip {
-  background: var(--sw-warn-bg, #FBF1DE) !important;
-  border: 1px solid #EDD9B4 !important;
+  background: var(--sw-warn-bg, #F7EBD9) !important;
+  border: 1px solid #E5CFA3 !important;
   color: var(--sw-lembur) !important;
-  border-radius: 12px !important;
+  border-radius: 10px !important;
 }
 
 /* ---------- Active scope badge ---------- */
 .tonase-active-scope {
   background: var(--sw-surface2) !important;
   border: 1px solid var(--sw-border) !important;
-  border-radius: 12px !important;
+  border-radius: 10px !important;
   color: var(--sw-text2) !important;
 }
 .tonase-active-scope strong { color: var(--sw-leaf-mid) !important; }

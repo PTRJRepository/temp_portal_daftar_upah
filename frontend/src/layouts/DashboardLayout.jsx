@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useReport } from '../context/ReportContext';
-import { getBasePath } from '../utils/prodModeUtils';
+import { getBasePath, isProdMode } from '../utils/prodModeUtils';
 import {
     Home, FileText, BarChart2, DollarSign, TrendingUp, Users,
     Settings, ChevronRight, LogOut, ShieldCheck,
@@ -10,28 +10,24 @@ import {
     CheckCircle
 } from 'lucide-react';
 
-// ─── Design System: Corporate Utility ────────────────────────────────────────
-// Aesthetic: Enterprise ERP / Banking-grade professional
-// Typography: System stack with strong weight contrast
-// Color: Deep slate sidebar + navy top bar + crisp whites
-// Spatial: Tight, purposeful — no decoration without function
+// ─── Design System: Estate Ledger ────────────────────────────────────────────
+// Aesthetic: editorial ledger, flat surfaces, satu aksen daun
+// Typography: Sora display + Inter body (loaded in index.html)
+// Color: sidebar flat forest (C.leafDark) + topbar paper hairline + page canvas
+// SSOT warna: reportTheme (mirror tokens.css)
 
-// ─── Color Tokens ────────────────────────────────────────────────────────────
-const C = {
-    sidebarBg:    '#0f172a',   // Deepest slate
-    sidebarHover:  '#1e293b',  // Slightly lighter
-    sidebarActive: '#1d3a5c',  // Navy active
-    sidebarBorder: '#334155',   // Subtle dividers
-    sidebarText:   '#94a3b8',   // Muted text
-    sidebarTextBright: '#e2e8f0', // Bright text
+import { C } from '../components/report/reportTheme';
 
-    topbarBg:     '#1e293b',   // Dark navy top bar
-    topbarBorder: '#2563eb',   // Blue accent line bottom
-    topbarText:   '#f1f5f9',
-    topbarMuted:   '#64748b',
-
-    contentBg:     '#f8fafc',  // Very light gray content
-    white:         '#ffffff',
+// ─── Sidebar tokens (turunan dari SSOT reportTheme) ──────────────────────────
+const SIDEBAR = {
+    bg:          C.leafDark,                 // Flat forest, tanpa gradient
+    hover:       'rgba(255,255,255,0.08)',   // Hover biasa: sedikit lebih terang
+    active:      'rgba(31,111,67,0.5)',      // Item aktif: aksen daun (C.leafMid)
+    activeBar:   C.leafLight,                // Left accent bar on active
+    border:      'rgba(255,255,255,0.10)',
+    text:        'rgba(226,240,231,0.62)',
+    textBright:  '#F0F9F2',
+    section:     'rgba(140,190,156,0.55)',
 }
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
@@ -55,12 +51,12 @@ function ApiBaseToggle() {
             title={mode === 'direct' ? 'API base: DIRECT (localhost:8002). Klik → PROXY' : 'API base: PROXY (relative). Klik → DIRECT'}
             style={{
                 display: 'flex', alignItems: 'center', gap: '0.35rem',
-                backgroundColor: mode === 'direct' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(34, 197, 94, 0.15)',
-                border: `1px solid ${mode === 'direct' ? 'rgba(239,68,68,0.4)' : 'rgba(34,197,94,0.4)'}`,
-                borderRadius: '6px',
+                backgroundColor: mode === 'direct' ? 'rgba(179, 57, 46, 0.10)' : 'rgba(31, 111, 67, 0.10)',
+                border: `1px solid ${mode === 'direct' ? 'rgba(179,57,46,0.35)' : 'rgba(31,111,67,0.35)'}`,
+                borderRadius: 'var(--radius-sm)',
                 padding: '0.3rem 0.6rem',
                 fontSize: '0.7rem',
-                color: mode === 'direct' ? '#fca5a5' : '#86efac',
+                color: mode === 'direct' ? C.potongan : C.upah,
                 fontWeight: '600',
                 cursor: 'pointer',
                 flexShrink: 0,
@@ -76,8 +72,8 @@ function TopBar({ user, collapsed, onToggle, periodDisplay }) {
     return (
         <div className="no-print" style={{
             height: '56px',
-            backgroundColor: C.topbarBg,
-            borderBottom: `2px solid ${C.topbarBorder}`,
+            backgroundColor: C.cream,
+            borderBottom: `1px solid ${C.border}`,
             display: 'flex',
             alignItems: 'center',
             padding: '0 1.25rem',
@@ -85,7 +81,6 @@ function TopBar({ user, collapsed, onToggle, periodDisplay }) {
             flexShrink: 0,
             zIndex: 30,
             position: 'relative',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
         }}>
             {/* Sidebar Toggle */}
             <button
@@ -93,23 +88,23 @@ function TopBar({ user, collapsed, onToggle, periodDisplay }) {
                 style={{
                     width: '36px', height: '36px',
                     backgroundColor: 'transparent',
-                    border: `1px solid ${C.sidebarBorder}`,
-                    borderRadius: '6px',
-                    color: C.sidebarText,
+                    border: `1px solid ${C.border}`,
+                    borderRadius: 'var(--radius-sm)',
+                    color: C.muted,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     cursor: 'pointer',
                     transition: 'all 0.15s',
                     flexShrink: 0,
                 }}
-                onMouseOver={(e) => { e.currentTarget.style.backgroundColor = C.sidebarHover; e.currentTarget.style.color = C.sidebarTextBright; }}
-                onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = C.sidebarText; }}
+                onMouseOver={(e) => { e.currentTarget.style.backgroundColor = 'var(--color-paper-2)'; e.currentTarget.style.color = C.upah; }}
+                onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = C.muted; }}
                 title={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
             >
                 {collapsed ? <Menu size={18} /> : <X size={18} />}
             </button>
 
             {/* Divider */}
-            <div style={{ width: '1px', height: '28px', backgroundColor: C.sidebarBorder }} />
+            <div style={{ width: '1px', height: '28px', backgroundColor: C.border }} />
 
             {/* Company Branding */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', flexShrink: 0 }}>
@@ -120,11 +115,11 @@ function TopBar({ user, collapsed, onToggle, periodDisplay }) {
                 />
                 {!collapsed && (
                     <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
-                        <span style={{ fontSize: '0.8rem', fontWeight: '700', color: C.white, letterSpacing: '0.02em' }}>
+                        <span style={{ fontSize: '0.8rem', fontWeight: '700', color: C.text, letterSpacing: '0.02em', fontFamily: 'var(--font-display)' }}>
                             PT REBINMAS JAYA
                         </span>
-                        <span style={{ fontSize: '0.65rem', color: C.topbarMuted, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                            Payroll System
+                        <span style={{ fontSize: '0.65rem', color: C.muted, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                            Portal Estate · Payroll
                         </span>
                     </div>
                 )}
@@ -136,19 +131,19 @@ function TopBar({ user, collapsed, onToggle, periodDisplay }) {
             {/* Header Actions Portal Target */}
             <div id="header-actions-portal" style={{ display: 'flex', alignItems: 'center' }}></div>
 
-            {/* API Base Toggle (DIRECT 8002 ↔ PROXY) */}
-            <ApiBaseToggle />
+            {/* API Base Toggle (DIRECT 8002 ↔ PROXY), dev only */}
+            {!isProdMode() && <ApiBaseToggle />}
 
             {/* Period Badge */}
             {periodDisplay && (
                 <div style={{
                     display: 'flex', alignItems: 'center', gap: '0.4rem',
-                    backgroundColor: 'rgba(37, 99, 235, 0.15)',
-                    border: '1px solid rgba(37, 99, 235, 0.3)',
-                    borderRadius: '6px',
+                    backgroundColor: 'rgba(31, 111, 67, 0.08)',
+                    border: '1px solid rgba(31, 111, 67, 0.28)',
+                    borderRadius: 'var(--radius-sm)',
                     padding: '0.3rem 0.75rem',
                     fontSize: '0.75rem',
-                    color: '#93c5fd',
+                    color: C.upah,
                     fontWeight: '600',
                 }}>
                     <CalendarDays size={14} />
@@ -157,27 +152,27 @@ function TopBar({ user, collapsed, onToggle, periodDisplay }) {
             )}
 
             {/* Divider */}
-            <div style={{ width: '1px', height: '28px', backgroundColor: C.sidebarBorder }} />
+            <div style={{ width: '1px', height: '28px', backgroundColor: C.border }} />
 
             {/* User Info */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: 1.2 }}>
-                    <span style={{ fontSize: '0.8rem', fontWeight: '600', color: C.white }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: '600', color: C.text }}>
                         {user?.username}
                     </span>
-                    <span style={{ fontSize: '0.65rem', color: C.topbarMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    <span style={{ fontSize: '0.65rem', color: C.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                         {user?.role || 'Staff'}
                     </span>
                 </div>
-                {/* Avatar Circle */}
+                {/* Avatar Circle, flat leaf accent */}
                 <div style={{
                     width: '34px', height: '34px',
-                    backgroundColor: '#2563eb',
+                    background: C.leafMid,
                     borderRadius: '50%',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '0.8rem', fontWeight: '700', color: C.white,
+                    fontSize: '0.8rem', fontWeight: '700', color: '#fff',
                     flexShrink: 0,
-                    border: '2px solid rgba(37, 99, 235, 0.4)',
+                    border: `2px solid ${C.leafLight}`,
                 }}>
                     {user?.username ? user.username.charAt(0).toUpperCase() : 'U'}
                 </div>
@@ -207,15 +202,15 @@ function CollapsibleSection({ title, children, defaultOpen = true, collapsed }) 
                         backgroundColor: 'transparent',
                         border: 'none',
                         cursor: 'pointer',
-                        color: '#475569',
-                        fontSize: '0.65rem',
+                        color: SIDEBAR.section,
+                        fontSize: '0.62rem',
                         fontWeight: '700',
                         textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
+                        letterSpacing: '0.12em',
                         transition: 'color 0.15s',
                     }}
-                    onMouseOver={(e) => e.currentTarget.style.color = '#64748b'}
-                    onMouseOut={(e) => e.currentTarget.style.color = '#475569'}
+                    onMouseOver={(e) => e.currentTarget.style.color = SIDEBAR.textBright}
+                    onMouseOut={(e) => e.currentTarget.style.color = SIDEBAR.section}
                 >
                     {!collapsed && <span>{title}</span>}
                     {!collapsed && (
@@ -242,32 +237,33 @@ function NavItem({ to, icon: Icon, label, description, end = false, collapsed })
                 display: 'flex',
                 alignItems: collapsed ? 'center' : 'flex-start',
                 gap: '0.625rem',
-                padding: collapsed ? '0.625rem 0' : '0.625rem 0.75rem',
-                borderRadius: '6px',
+                padding: collapsed ? '0.625rem 0' : '0.55rem 0.75rem',
+                borderRadius: 'var(--radius-md)',
                 cursor: 'pointer',
                 textDecoration: 'none',
                 transition: 'all 0.15s',
-                backgroundColor: isActive ? C.sidebarActive : 'transparent',
-                color: isActive ? C.sidebarTextBright : C.sidebarText,
-                borderLeft: isActive ? '3px solid #2563eb' : '3px solid transparent',
+                backgroundColor: isActive ? SIDEBAR.active : 'transparent',
+                color: isActive ? SIDEBAR.textBright : SIDEBAR.text,
+                borderLeft: isActive ? '3px solid ' + SIDEBAR.activeBar : '3px solid transparent',
                 marginBottom: '2px',
                 justifyContent: collapsed ? 'center' : 'flex-start',
+                fontFamily: 'var(--font-body)',
             }}
             title={collapsed ? label : ''}
             onMouseOver={(e) => {
                 if (!isActive) {
-                    e.currentTarget.style.backgroundColor = C.sidebarHover;
-                    e.currentTarget.style.color = C.sidebarTextBright;
+                    e.currentTarget.style.backgroundColor = SIDEBAR.hover;
+                    e.currentTarget.style.color = SIDEBAR.textBright;
                 }
             }}
             onMouseOut={(e) => {
                 if (!isActive) {
                     e.currentTarget.style.backgroundColor = 'transparent';
-                    e.currentTarget.style.color = C.sidebarText;
+                    e.currentTarget.style.color = SIDEBAR.text;
                 }
             }}
         >
-            <div style={{ flexShrink: 0, marginTop: collapsed ? 0 : '1px' }}>
+            <div style={{ flexShrink: 0, marginTop: collapsed ? 0 : '1px', opacity: isActive ? 1 : 0.85 }}>
                 <Icon size={18} />
             </div>
             {!collapsed && (
@@ -281,7 +277,7 @@ function NavItem({ to, icon: Icon, label, description, end = false, collapsed })
                     </span>
                     {description && (
                         <span style={{
-                            fontSize: '0.65rem', color: '#64748b', marginTop: '2px',
+                            fontSize: '0.65rem', color: 'rgba(140,190,156,0.5)', marginTop: '2px',
                             lineHeight: 1.3, display: '-webkit-box',
                             WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden'
                         }}>
@@ -404,10 +400,10 @@ const DashboardLayout = () => {
             display: 'flex',
             height: '100vh',
             width: '100vw',
-            backgroundColor: C.contentBg,
-            fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+            backgroundColor: C.pageBg,
+            fontFamily: 'var(--font-body)',
             overflow: 'hidden',
-            color: '#334155',
+            color: 'var(--color-ink)',
         }}>
             {/* Backdrop for mobile */}
             <div
@@ -415,7 +411,7 @@ const DashboardLayout = () => {
                 onClick={() => setCollapsed(true)}
                 style={{
                     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                    backgroundColor: collapsed ? 'rgba(0,0,0,0)' : 'rgba(0,0,0,0.5)',
+                    backgroundColor: collapsed ? 'rgba(0,0,0,0)' : 'rgba(14,35,24,0.5)',
                     zIndex: 15,
                     backdropFilter: collapsed ? 'none' : 'blur(2px)',
                     WebkitBackdropFilter: collapsed ? 'none' : 'blur(2px)',
@@ -430,11 +426,11 @@ const DashboardLayout = () => {
             <div data-sidebar className="no-print" style={{
                 width: sidebarWidth,
                 height: '100%',
-                backgroundColor: C.sidebarBg,
+                background: SIDEBAR.bg,
                 display: 'flex',
                 flexDirection: 'column',
                 zIndex: 20,
-                boxShadow: '2px 0 12px rgba(0,0,0,0.15)',
+                boxShadow: '2px 0 8px rgba(21,33,26,0.18)',
                 transition: 'width 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
                 position: 'relative',
                 flexShrink: 0,
@@ -444,7 +440,7 @@ const DashboardLayout = () => {
                     <div style={{
                         height: '56px',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        borderBottom: `1px solid ${C.sidebarBorder}`,
+                        borderBottom: `1px solid ${SIDEBAR.border}`,
                         padding: '0 0.75rem',
                     }}>
                         <img
@@ -461,7 +457,7 @@ const DashboardLayout = () => {
                     overflowY: 'auto', overflowX: 'hidden',
                     padding: '0.75rem 0.5rem',
                     scrollbarWidth: 'thin',
-                    scrollbarColor: '#334155 transparent',
+                    scrollbarColor: 'rgba(94,156,123,0.35) transparent',
                 }}>
                     {/* Nav Sections */}
                     {navItems.map((section) => (
@@ -509,9 +505,9 @@ const DashboardLayout = () => {
 
                 {/* Sidebar Footer */}
                 <div style={{
-                    borderTop: `1px solid ${C.sidebarBorder}`,
+                    borderTop: `1px solid ${SIDEBAR.border}`,
                     padding: collapsed ? '0.75rem 0.5rem' : '0.75rem',
-                    backgroundColor: '#0c1322',
+                    backgroundColor: 'rgba(10,26,17,0.6)',
                 }}>
                     {/* Logout Button */}
                     <button
@@ -525,22 +521,22 @@ const DashboardLayout = () => {
                             gap: '0.5rem',
                             padding: collapsed ? '0.5rem' : '0.5rem 0.75rem',
                             backgroundColor: 'transparent',
-                            border: `1px solid ${C.sidebarBorder}`,
-                            borderRadius: '6px',
-                            color: '#94a3b8',
+                            border: `1px solid ${SIDEBAR.border}`,
+                            borderRadius: 'var(--radius-md)',
+                            color: 'rgba(226,240,231,0.6)',
                             fontSize: '0.8rem',
                             fontWeight: '500',
                             cursor: 'pointer',
                             transition: 'all 0.15s',
                         }}
                         onMouseOver={(e) => {
-                            e.currentTarget.style.borderColor = '#ef4444';
-                            e.currentTarget.style.color = '#fca5a5';
-                            e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+                            e.currentTarget.style.borderColor = C.potongan;
+                            e.currentTarget.style.color = '#F2B8B3';
+                            e.currentTarget.style.backgroundColor = 'rgba(179, 57, 46, 0.14)';
                         }}
                         onMouseOut={(e) => {
-                            e.currentTarget.style.borderColor = C.sidebarBorder;
-                            e.currentTarget.style.color = '#94a3b8';
+                            e.currentTarget.style.borderColor = SIDEBAR.border;
+                            e.currentTarget.style.color = 'rgba(226,240,231,0.6)';
                             e.currentTarget.style.backgroundColor = 'transparent';
                         }}
                     >
@@ -554,10 +550,10 @@ const DashboardLayout = () => {
                             textAlign: 'center',
                             marginTop: '0.5rem',
                             fontSize: '0.6rem',
-                            color: '#475569',
+                            color: 'rgba(140,190,156,0.45)',
                             letterSpacing: '0.02em',
                         }}>
-                            Payroll System v2.0
+                            Portal Estate v2.0
                         </div>
                     )}
                 </div>

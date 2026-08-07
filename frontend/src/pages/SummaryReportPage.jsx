@@ -6,12 +6,14 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Printer, FileText, RefreshCw, Save } from 'lucide-react';
 import { fetchDivisionSummary, fetchAvailablePeriods, fetchDivisionsWithData, fetchVirtualDivisions, updateGangCell } from '../services/summaryReportService';
 import ReportKpiCards, { PrintKpiRow } from '../components/common/ReportKpiCards';
 import ReportMiniStats from '../components/common/ReportMiniStats';
 import ReportPrintHeader from '../components/common/ReportPrintHeader';
+import { MetricInfo, EmptyState } from '../components/report/reportTheme';
 import { getDivisionTypeLabel } from '../utils/reportPresentationLabels';
 import { getReportDivisionSummary } from '../utils/divisionPresentation';
 import { printReport } from '../utils/printPageSetup';
@@ -757,6 +759,7 @@ function PrintPage3({ rows, grandTotal, comparisonTotal, periodLabel, printDate,
 // ===== MAIN COMPONENT =====
 export default function SummaryReportPage({ onBack, initialDivision, initialMonth, initialYear }) {
   const { token, user } = useAuth();
+  const navigate = useNavigate();
 
   // Filters
   const [division, setDivision] = useState(initialDivision || DEFAULT_DIVISION);
@@ -1081,10 +1084,13 @@ export default function SummaryReportPage({ onBack, initialDivision, initialMont
       {/* ===== TOOLBAR ===== */}
           <div className="srn-toolbar">
             <div className="srn-toolbar-header">
-              <h1 className="srn-toolbar-title">Summary Report Detail</h1>
+              <h1 className="srn-toolbar-title" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                Summary Report Detail <MetricInfo metricKey="upah_bersih" />
+              </h1>
               <p className="srn-toolbar-subtitle">
                 Rekapitulasi total pekerja, HK, premi, lembur, potongan, dan upah bersih per estate/gang.
               </p>
+              <button onClick={() => navigate(`/cost-per-ton-story?month=${month}&year=${year}`)} style={{ marginTop: 8, padding: '7px 14px', borderRadius: 8, border: 'none', background: 'var(--srn-navy-800)', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>Cost/Ton Story →</button>
             </div>
             <div className="srn-filters">
               {/* Division type */}
@@ -1201,7 +1207,7 @@ export default function SummaryReportPage({ onBack, initialDivision, initialMont
               Memuat data...
             </div>
           ) : error ? (
-            <div className="srn-error">! {error}</div>
+            <EmptyState title="Gagal memuat" message={error} actionLabel="Coba lagi" onAction={loadData} />
           ) : (
             <SummaryTable
               data={filteredData}

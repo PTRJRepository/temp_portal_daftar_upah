@@ -29,7 +29,8 @@ export async function fetchGangComparison(token, { month, year, division_code })
         }
     });
 
-    return response.data;
+    // Backend returns { success, data: [...] } wrapper — unwrap to the array for callers.
+    return response.data?.data ?? response.data;
 }
 
 /**

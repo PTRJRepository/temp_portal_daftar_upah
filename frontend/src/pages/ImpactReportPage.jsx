@@ -5,11 +5,13 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { fetchImpactReport, fetchAvailablePeriods, updateLuasArea } from '../services/summaryReportService';
 import PrintSignature from '../components/common/PrintSignature';
 import ReportPrintMetadata from '../components/common/ReportPrintMetadata';
 import ReportWatermark from '../components/common/ReportWatermark';
+import { MetricInfo, EmptyState } from '../components/report/reportTheme';
 import { getSourceModeLabel } from '../utils/reportPresentationLabels';
 import { printReport } from '../utils/printPageSetup';
 import '../styles/wages-summary-professional.css';
@@ -17,6 +19,7 @@ import '../styles/report-print-foundation.css';
 
 export default function ImpactReportPage({ onBack, initialMonth, initialYear, initialEstateType = 'non-ijl' }) {
     const { token, user } = useAuth();
+    const navigate = useNavigate();
 
     // Filters
     const [month, setMonth] = useState(initialMonth || new Date().getMonth() + 1);
@@ -655,7 +658,13 @@ export default function ImpactReportPage({ onBack, initialMonth, initialYear, in
     };
 
     return (
-        <div className="wsp-container">
+        <div className="wsp-container" style={{ backgroundColor: '#EDF3EC', minHeight: '100vh' }}>
+            {/* Web header */}
+            <div className="no-print" style={{ marginBottom: 16 }}>
+                <h1 style={{ display: 'inline-flex', alignItems: 'center', gap: 8, margin: 0, fontSize: '1.6rem', fontWeight: 800, color: '#14532D' }}>Impact Report <MetricInfo metricKey="total_premi" /></h1>
+                <p style={{ color: '#46584C', margin: '4px 0 8px', fontSize: '0.9rem' }}>Analisis dampak premi, lembur, dan HK antar periode.</p>
+                <button onClick={() => navigate(`/cost-per-ton-story?month=${month}&year=${year}`)} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: '#1E7A45', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>Cost/Ton Story →</button>
+            </div>
             {/* Action Bar */}
             <div className="wsp-action-bar no-print">
                 <div className="left-section">

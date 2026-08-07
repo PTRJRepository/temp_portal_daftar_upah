@@ -6,30 +6,31 @@
 
 /* ===== CSS VARIABLES / TOKENS ===== */
 :root {
-  --srn-navy-950: #071a33;
-  --srn-navy-900: #0A1D3A;
-  --srn-navy-850: #0d2548;
-  --srn-navy-800: #13294b;
-  --srn-blue-700: #1e63d6;
-  --srn-blue-600: #2563EB;
-  --srn-blue-500: #3b82f6;
-  --srn-blue-100: #eaf2ff;
-  --srn-blue-050: #f4f8ff;
-  --srn-text-900: #0f172a;
-  --srn-text-700: #334155;
-  --srn-text-500: #64748b;
-  --srn-line: #d6e0ee;
-  --srn-line-soft: #e8eef7;
+  /* Sawit-finance theme — align dengan reportTheme.jsx (hijau daun) */
+  --srn-navy-950: #0d2418;
+  --srn-navy-900: #14532D;
+  --srn-navy-850: #173a26;
+  --srn-navy-800: #1E7A45;
+  --srn-blue-700: #2E9E6B;
+  --srn-blue-600: #1E7A45;
+  --srn-blue-500: #3E9E63;
+  --srn-blue-100: #E4F4EB;
+  --srn-blue-050: #F6FAF5;
+  --srn-text-900: #12241A;
+  --srn-text-700: #46584C;
+  --srn-text-500: #7C8B80;
+  --srn-line: #DFE8E0;
+  --srn-line-soft: #E4ECE2;
   --srn-paper: #ffffff;
-  --srn-bg: #F3F6FB;
-  --srn-success: #15803d;
-  --srn-success-light: #dcfce7;
-  --srn-danger: #dc2626;
-  --srn-danger-light: #fee2e2;
-  --srn-warning: #d97706;
-  --srn-warning-light: #fef3c7;
-  --srn-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-  --srn-shadow-sm: 0 6px 18px rgba(15, 23, 42, 0.05);
+  --srn-bg: #EDF3EC;
+  --srn-success: #1E7A45;
+  --srn-success-light: #E4F4EB;
+  --srn-danger: #C8463C;
+  --srn-danger-light: #FBE9E6;
+  --srn-warning: #D98A1F;
+  --srn-warning-light: #FBF1DE;
+  --srn-shadow: 0 10px 30px rgba(18, 36, 26, 0.08);
+  --srn-shadow-sm: 0 6px 18px rgba(18, 36, 26, 0.05);
   --srn-radius: 14px;
   --srn-radius-sm: 10px;
   --srn-radius-xs: 7px;

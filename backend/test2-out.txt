@@ -1,0 +1,56 @@
+bun test v1.3.12 (700fc117)
+
+src\services\dashboardService.test.ts:
+[HarvesterService] Staging DB disabled by default as requested
+(pass) DashboardService aggregation reads > uses latest aggregation rows for division breakdown totals [15.00ms]
+(pass) DashboardService aggregation reads > uses latest aggregation rows for gang comparison totals
+(pass) DashboardService gang scope filter > getGangComparison tanpa scope tidak memfilter gang (perilaku lama)
+111 |     it("getGangComparison scope=panen memfilter hanya gang suffix H", async () => {
+112 |         const getSql = mockGangDb();
+113 | 
+114 |         const rows = await dashboardService.getGangComparison(4, 2026, undefined, 'panen');
+115 | 
+116 |         expect(getSql()).toContain(HARVEST_FILTER_AGG);
+                               ^
+error: expect(received).toContain(expected)
+
+Expected to contain: "RIGHT(UPPER(LTRIM(RTRIM(agg.gang_code))), 1) = 'H'"
+Received: "\n            \n            WITH latest_rows AS (\n                SELECT\n                    h.*,\n                    ROW_NUMBER() OVER (\n                        PARTITION BY h.period_month, h.period_year, h.gang_code\n                        ORDER BY COALESCE(h.updated_at, h.created_at) DESC, h.id DESC\n                    ) as row_rank\n                FROM dbo.daftar_upah_aggregation_history h\n            )\n        \n            SELECT\n                agg.gang_code,\n                agg.gang_description,\n                SUM(ISNULL(agg.total_upah_kotor, 0)) as total_wage,\n                SUM(ISNULL(agg.total_hk, 0)) as total_hk,\n                SUM(ISNULL(agg.total_employees, 0)) as headcount,\n                SUM(ISNULL(agg.total_lembur, 0)) as total_ot,\n                SUM(ISNULL(agg.total_premi, 0)) as total_premi,\n                SUM(ISNULL(agg.total_ffb_weight, 0)) as total_production_db\n            FROM latest_rows agg\n            WHERE agg.row_rank = 1 AND agg.period_month = ? AND agg.period_year = ?\n         AND RIGHT(UPPER(LTRIM(RTRIM(agg.gang_code))), 1) IN ('H')\n            GROUP BY agg.gang_code, agg.gang_description\n            HAVING SUM(ISNULL(agg.total_employees, 0)) >= 0\n            ORDER BY total_wage DESC\n        "
+
+      at <anonymous> (D:\Gawean Rebinmas\PORTAL_ESTATE\V 2 (begin versioning)\backend\src\services\dashboardService.test.ts:116:26)
+(fail) DashboardService gang scope filter > getGangComparison scope=panen memfilter hanya gang suffix H
+(pass) DashboardService gang scope filter > getGangComparison scope=all tidak memfilter gang
+129 |     it("getTopBottomGangs meneruskan scope panen ke getGangComparison", async () => {
+130 |         const getSql = mockGangDb();
+131 | 
+132 |         const result = await dashboardService.getTopBottomGangs(4, 2026, undefined, 'panen');
+133 | 
+134 |         expect(getSql()).toContain(HARVEST_FILTER_AGG);
+                               ^
+error: expect(received).toContain(expected)
+
+Expected to contain: "RIGHT(UPPER(LTRIM(RTRIM(agg.gang_code))), 1) = 'H'"
+Received: "\n            \n            WITH latest_rows AS (\n                SELECT\n                    h.*,\n                    ROW_NUMBER() OVER (\n                        PARTITION BY h.period_month, h.period_year, h.gang_code\n                        ORDER BY COALESCE(h.updated_at, h.created_at) DESC, h.id DESC\n                    ) as row_rank\n                FROM dbo.daftar_upah_aggregation_history h\n            )\n        \n            SELECT\n                agg.gang_code,\n                agg.gang_description,\n                SUM(ISNULL(agg.total_upah_kotor, 0)) as total_wage,\n                SUM(ISNULL(agg.total_hk, 0)) as total_hk,\n                SUM(ISNULL(agg.total_employees, 0)) as headcount,\n                SUM(ISNULL(agg.total_lembur, 0)) as total_ot,\n                SUM(ISNULL(agg.total_premi, 0)) as total_premi,\n                SUM(ISNULL(agg.total_ffb_weight, 0)) as total_production_db\n            FROM latest_rows agg\n            WHERE agg.row_rank = 1 AND agg.period_month = ? AND agg.period_year = ?\n         AND RIGHT(UPPER(LTRIM(RTRIM(agg.gang_code))), 1) IN ('H')\n            GROUP BY agg.gang_code, agg.gang_description\n            HAVING SUM(ISNULL(agg.total_employees, 0)) >= 0\n            ORDER BY total_wage DESC\n        "
+
+      at <anonymous> (D:\Gawean Rebinmas\PORTAL_ESTATE\V 2 (begin versioning)\backend\src\services\dashboardService.test.ts:134:26)
+(fail) DashboardService gang scope filter > getTopBottomGangs meneruskan scope panen ke getGangComparison
+138 |     it("getAllGangsTrend scope=panen menambahkan filter suffix H pada SQL", async () => {
+139 |         const getSql = mockGangDb();
+140 | 
+141 |         await dashboardService.getAllGangsTrend(4, 2026, undefined, 'panen');
+142 | 
+143 |         expect(getSql()).toContain(HARVEST_FILTER_H);
+                               ^
+error: expect(received).toContain(expected)
+
+Expected to contain: "RIGHT(UPPER(LTRIM(RTRIM(h.gang_code))), 1) = 'H'"
+Received: "\n        \n            WITH latest_rows AS (\n                SELECT\n                    h.*,\n                    ROW_NUMBER() OVER (\n                        PARTITION BY h.period_month, h.period_year, h.gang_code\n                        ORDER BY COALESCE(h.updated_at, h.created_at) DESC, h.id DESC\n                    ) as row_rank\n                FROM dbo.daftar_upah_aggregation_history h\n            )\n        \n        SELECT\n            h.gang_code,\n            h.period_month as month,\n            h.period_year as year,\n            SUM(h.total_upah_kotor) as total_wage,\n            SUM(h.total_lembur) as total_ot,\n            SUM(h.total_premi) as total_premi,\n            MAX(h.total_employees) as headcount,\n            MAX(ISNULL(h.total_ffb_weight, 0)) as tonase,\n            CAST(SUM(h.total_upah_kotor) AS FLOAT) / NULLIF(SUM(h.total_hk), 0) as cost_per_hk,\n            CAST(SUM(h.total_upah_kotor) AS FLOAT) / NULLIF(MAX(ISNULL(h.total_ffb_weight, 0)), 0) as cost_per_ton\n            FROM latest_rows h\n        WHERE\n            h.row_rank = 1 AND\n            RIGHT(UPPER(LTRIM(RTRIM(h.gang_code))), 1) IN ('H') AND\n            (h.period_year > ? OR (h.period_year = ? AND h.period_month >= ?)) AND\n            (h.period_year < ? OR (h.period_year = ? AND h.period_month <= ?))\n            \n            GROUP BY h.gang_code, h.period_month, h.period_year\n            ORDER BY h.gang_code, h.period_year, h.period_month\n            "
+
+      at <anonymous> (D:\Gawean Rebinmas\PORTAL_ESTATE\V 2 (begin versioning)\backend\src\services\dashboardService.test.ts:143:26)
+(fail) DashboardService gang scope filter > getAllGangsTrend scope=panen menambahkan filter suffix H pada SQL
+(pass) DashboardService gang scope filter > getAllGangsTrend tanpa scope tidak menambahkan filter panen
+
+ 5 pass
+ 3 fail
+ 16 expect() calls
+Ran 8 tests across 1 file. [260.00ms]

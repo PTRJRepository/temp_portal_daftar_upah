@@ -26,7 +26,7 @@
     margin: 0;
     font-size: 1.2rem;
     font-weight: 700;
-    color: #0f172a;
+    color: #14532D;
 }
 
 .gang-report-select {
@@ -35,7 +35,7 @@
     border: 1px solid #cbd5e1;
     font-size: 0.85rem;
     font-weight: 600;
-    color: #334155;
+    color: #1E7A45;
     cursor: pointer;
     background: white;
 }
@@ -59,7 +59,7 @@
 }
 
 .gang-report-btn-primary {
-    background: #0f172a;
+    background: #14532D;
     color: #fff;
 }
 
@@ -74,7 +74,7 @@
     text-align: center;
     margin-bottom: 2rem;
     padding-bottom: 1rem;
-    border-bottom: 2px solid #0f172a;
+    border-bottom: 2px solid #14532D;
 }
 
 .gang-report-logo {
@@ -146,7 +146,7 @@
 .gang-report-summary-value {
     font-size: 1.5rem;
     font-weight: 700;
-    color: #0f172a;
+    color: #14532D;
 }
 
 .gang-report-summary-card.highlight .gang-report-summary-value {
@@ -215,7 +215,7 @@
 
 .gang-report-type-row.highlight {
     font-weight: 700;
-    color: #0f172a;
+    color: #14532D;
     font-size: 0.95rem;
     margin-top: 0.5rem;
     padding-top: 0.5rem;
@@ -238,7 +238,7 @@
 
 .gang-report-table thead th {
     background-color: #f1f5f9;
-    color: #0f172a;
+    color: #14532D;
     font-weight: 700;
     text-align: center;
     padding: 0.5rem;
@@ -329,7 +329,7 @@
 
 /* Grand Total */
 .gang-report-grand-total {
-    background-color: #0f172a !important;
+    background-color: #14532D !important;
     color: #fff !important;
 }
 

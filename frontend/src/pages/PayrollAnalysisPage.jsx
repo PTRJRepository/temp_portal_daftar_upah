@@ -18,6 +18,10 @@ import '../styles/wages-summary-professional.css';
 import '../styles/report-print-foundation.css';
 import { initPrintMode } from '../utils/printOptimizer';
 import { TrendingUp, Clock, AlertTriangle, ChevronDown, Printer, Download, RefreshCw, Filter } from 'lucide-react';
+import { PresentSlide } from '../components/present/PresentSlide';
+import { PresentController } from '../components/present/PresentController';
+import { usePresentMode } from '../components/present/usePresentMode';
+import { StatCard } from '../components/report/reportTheme';
 
 const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
   'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
@@ -29,6 +33,9 @@ export default function PayrollAnalysisPage({
   onBack
 }) {
   const { token, user } = useAuth();
+
+  // Present Mode (deck fullscreen); dipasang sebelum early return apapun
+  const { presenting, activeIndex, enter, exit } = usePresentMode();
 
   // State for filters
   const [month, setMonth] = useState(initialMonth);
@@ -305,6 +312,13 @@ export default function PayrollAnalysisPage({
     };
   }, [backendGrandTotal, filteredData]);
 
+  // Storyboard present mode: slide Sorotan Lembur hanya tampil bila ada data lembur
+  const hasTopLembur = topLemburTasks.length > 0;
+  const slideCount = hasTopLembur ? 5 : 4;
+  const scopeLabel = division === 'ALL'
+    ? 'Semua Divisi'
+    : (gang && gang !== 'ALL' ? `Divisi ${division} · Gang ${gang}` : `Divisi ${division}`);
+
   // Formatters
   const formatNumber = (val) => new Intl.NumberFormat('id-ID').format(Math.round(val || 0));
   const formatCurrency = (val) => 'Rp ' + formatNumber(val);
@@ -367,12 +381,21 @@ export default function PayrollAnalysisPage({
           </div>
         </div>
         <div className="right-section">
+          <PresentController
+            presenting={presenting}
+            activeIndex={activeIndex}
+            slideCount={slideCount}
+            onEnter={enter}
+            onExit={exit}
+            caption={`Analisis Payroll Komprehensif · ${monthNames[month-1]} ${year} · ${scopeLabel}`}
+          />
           <button onClick={handlePrint} className="wsp-btn wsp-btn-primary"><Printer size={16}/> PRINT LAPORAN</button>
         </div>
       </div>
 
       <div className="wsp-document" id="printable-analysis">
         <ReportWatermark />
+        <PresentSlide num="01" title="Konteks Laporan" subtitle="Identitas laporan, periode, dan cakupan data yang dianalisis">
         {/* Header */}
         <div className="wsp-letterhead">
           <h1 className="wsp-company-name">PT. REBINMAS JAYA</h1>
@@ -393,7 +416,9 @@ export default function PayrollAnalysisPage({
             note="KPI mengikuti data periode; tab dan nilai minimal menyaring detail karyawan yang terlihat."
           />
         </div>
+        </PresentSlide>
 
+        <PresentSlide num="02" title="Denyut Upah Periode Ini" subtitle="Total karyawan, hari kerja, lembur, premi, dan upah bersih dalam satu pandangan">
         {/* KPI Grid */}
         <div className="wsp-kpi-grid">
           <div className="wsp-kpi-card">
@@ -414,8 +439,17 @@ export default function PayrollAnalysisPage({
           </div>
         </div>
 
+        {/* KPI band tambahan (ledger cell) dari data yang sudah di-fetch */}
+        <div className="present-kpi-band" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
+          <StatCard label="Total Premi" value={formatCurrency(kpiData.totalPremi)} note="Akumulasi seluruh jenis premi" color="#0F766E" />
+          <StatCard label="Total Tunjangan" value={formatCurrency(kpiData.totalTunjangan)} note="Beras, jabatan, dan masa kerja" color="#1F6F43" />
+          <StatCard label="Total Potongan" value={formatCurrency(kpiData.totalPotongan)} note="Potongan bersih periode ini" color="#B3392E" />
+        </div>
+        </PresentSlide>
+
         {/* Top OT Summary (New Section) */}
-        {topLemburTasks.length > 0 && (
+        {hasTopLembur && (
+          <PresentSlide num="03" title="Sorotan Lembur Terbesar" subtitle="Lima pekerjaan lembur dengan nilai tertinggi periode ini">
           <div className="ot-task-summary-section" style={{ marginTop: '1.5rem', marginBottom: '2rem' }}>
             <div className="section-header" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', background: '#fffbeb', border: '1px solid #fcd34d', borderLeft: '4px solid #d97706', marginBottom: '10px' }}>
               <TrendingUp size={18} className="text-amber-600" />
@@ -434,8 +468,10 @@ export default function PayrollAnalysisPage({
               ))}
             </div>
           </div>
+          </PresentSlide>
         )}
 
+        <PresentSlide num={hasTopLembur ? '04' : '03'} title="Rincian per Karyawan" subtitle="Tabel detail mengikuti tab komponen dan nilai minimal yang dipilih">
         {/* Tabs & Filters (No-print) */}
         <div className="no-print" style={{ marginBottom: '1.5rem', padding: '1rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
           <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
@@ -638,12 +674,15 @@ export default function PayrollAnalysisPage({
             </tfoot>
           </table>
         </div>
+        </PresentSlide>
 
+        <PresentSlide num={hasTopLembur ? '05' : '04'} title="Penutup" subtitle="Keterangan cetak dan penanda resmi laporan">
         {/* Footer */}
         <div className="wsp-footer">
           <div>Dicetak: {new Date().toLocaleString('id-ID')} | User: {user?.username}</div>
           <div style={{ fontWeight: 700 }}>LAPORAN ANALISIS PAYROLL KOMPREHENSIF - PT REBINMAS JAYA</div>
         </div>
+        </PresentSlide>
       </div>
 
       {/* Internal Print Styles */}
@@ -685,6 +724,17 @@ export default function PayrollAnalysisPage({
         .row-has-detail { border-bottom: none !important; }
         .detail-row td { border-top: none !important; padding-top: 0 !important; }
         .no-border { border: none !important; }
+
+        /* Present mode: lembar paper jadi panggung gelap, kartu & tabel tetap terang */
+        html.present-mode .wsp-container { background: transparent !important; padding-bottom: 0 !important; }
+        html.present-mode .wsp-document { background: transparent !important; box-shadow: none !important; border: none !important; width: 100% !important; min-width: 0 !important; max-width: none !important; margin: 0 !important; padding: 0 !important; }
+        html.present-mode .wsp-action-bar { display: none !important; }
+        html.present-mode .wsp-letterhead { border-bottom-color: #223528 !important; }
+        html.present-mode .wsp-company-name, html.present-mode .wsp-report-title { color: #F3F1E8 !important; }
+        html.present-mode .wsp-report-period, html.present-mode .wsp-report-division { color: #93A596 !important; }
+        html.present-mode .report-print-note { color: #93A596 !important; }
+        html.present-mode .wsp-table-wrapper { background: #fff; border-radius: 10px; }
+        html.present-mode .wsp-footer { color: #93A596 !important; }
       `}} />
     </div>
   );

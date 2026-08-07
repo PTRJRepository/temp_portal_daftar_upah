@@ -1,4 +1,7 @@
 import React from 'react';
+import { Award, AlertTriangle } from 'lucide-react';
+import { C, CARD, SECTION_TITLE, EmptyState } from '../report/reportTheme';
+import { getScopeLabel } from '../../utils/gangTypes';
 
 const formatCurrency = (val) => {
     if (val === null || val === undefined) return '-';
@@ -7,128 +10,117 @@ const formatCurrency = (val) => {
     return val.toFixed(0);
 };
 
-export default function TopBottomPerformersCard({ data, loading }) {
+export default function TopBottomPerformersCard({ data, loading, scope = 'panen' }) {
     if (loading) {
         return (
             <div style={{
-                backgroundColor: 'white',
-                borderRadius: '12px',
-                padding: '1.5rem',
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                ...CARD,
                 minHeight: '300px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
             }}>
-                <div style={{ color: '#64748b' }}>Loading...</div>
+                <div style={{ color: C.muted }}>Memuat...</div>
             </div>
         );
     }
 
     if (!data || (!data.top?.length && !data.bottom?.length)) {
         return (
-            <div style={{
-                backgroundColor: 'white',
-                borderRadius: '12px',
-                padding: '1.5rem',
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                textAlign: 'center'
-            }}>
-                <div style={{ color: '#94a3b8' }}>No performance data available</div>
-            </div>
+            <EmptyState
+                title="Data performa gang belum tersedia"
+                message={`Tidak ada data performa untuk cakupan ${getScopeLabel(scope)} pada periode ini.`}
+            />
         );
     }
 
-    const PerformerCard = ({ title, gangs, isTop }) => (
-        <div style={{ flex: 1 }}>
-            <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                marginBottom: '1rem'
-            }}>
-                <span style={{ fontSize: '1.5rem' }}>{isTop ? '🏆' : '⚠️'}</span>
-                <h4 style={{
-                    margin: 0,
-                    fontSize: '1rem',
-                    fontWeight: '700',
-                    color: isTop ? '#10b981' : '#ef4444'
+    const PerformerCard = ({ title, gangs, isTop }) => {
+        const accent = isTop ? C.upah : C.potongan;
+        const Icon = isTop ? Award : AlertTriangle;
+        return (
+            <div style={{ flex: 1 }}>
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    marginBottom: '1rem',
+                    color: accent
                 }}>
-                    {title}
-                </h4>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {gangs.map((gang, idx) => (
-                    <div
-                        key={gang.gang_code}
-                        style={{
-                            padding: '12px',
-                            borderRadius: '8px',
-                            background: isTop
-                                ? `linear-gradient(135deg, rgba(16, 185, 129, ${0.15 - idx * 0.02}) 0%, rgba(16, 185, 129, ${0.05 - idx * 0.01}) 100%)`
-                                : `linear-gradient(135deg, rgba(239, 68, 68, ${0.15 - idx * 0.02}) 0%, rgba(239, 68, 68, ${0.05 - idx * 0.01}) 100%)`,
-                            border: `1px solid ${isTop ? '#d1fae5' : '#fee2e2'}`,
-                            transition: 'transform 0.2s',
-                            cursor: 'pointer'
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.transform = 'translateX(4px)'}
-                        onMouseLeave={(e) => e.currentTarget.style.transform = 'translateX(0)'}
-                    >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                            <div style={{ flex: 1 }}>
-                                <div style={{
-                                    fontSize: '0.9rem',
-                                    fontWeight: '700',
-                                    color: '#1e293b',
-                                    marginBottom: '2px'
-                                }}>
-                                    {gang.gang_code}
+                    <Icon size={16} strokeWidth={2.2} aria-hidden="true" />
+                    <h4 style={{
+                        margin: 0,
+                        fontSize: '0.78rem',
+                        fontWeight: '700',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                        color: accent
+                    }}>
+                        {title}
+                    </h4>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                    {gangs.map((gang) => (
+                        <div
+                            key={gang.gang_code}
+                            style={{
+                                padding: '12px',
+                                borderRadius: '8px',
+                                background: C.surface2,
+                                border: `1px solid ${C.border}`,
+                                borderLeft: `3px solid ${accent}`
+                            }}
+                        >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{
+                                        fontSize: '0.9rem',
+                                        fontWeight: '700',
+                                        color: C.text,
+                                        marginBottom: '2px'
+                                    }}>
+                                        {gang.gang_code}
+                                    </div>
+                                    <div style={{
+                                        fontSize: '0.75rem',
+                                        color: C.muted,
+                                        marginBottom: '6px'
+                                    }}>
+                                        {gang.gang_name}
+                                    </div>
+                                    <div style={{ fontSize: '0.75rem', color: C.muted }}>
+                                        {gang.headcount} emp • {gang.total_hk.toLocaleString()} HK
+                                    </div>
                                 </div>
-                                <div style={{
-                                    fontSize: '0.75rem',
-                                    color: '#64748b',
-                                    marginBottom: '6px'
-                                }}>
-                                    {gang.gang_name}
-                                </div>
-                                <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                                    {gang.headcount} emp • {gang.total_hk.toLocaleString()} HK
-                                </div>
-                            </div>
-                            <div style={{ textAlign: 'right' }}>
-                                <div style={{
-                                    fontSize: '1.1rem',
-                                    fontWeight: '800',
-                                    color: isTop ? '#10b981' : '#ef4444'
-                                }}>
-                                    Rp {formatCurrency(gang.cost_per_hk)}
-                                </div>
-                                <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
-                                    per HK
+                                <div style={{ textAlign: 'right' }}>
+                                    <div style={{
+                                        fontSize: '1.05rem',
+                                        fontWeight: '800',
+                                        color: accent,
+                                        fontVariantNumeric: 'tabular-nums',
+                                        fontFamily: 'Roboto Mono, monospace'
+                                    }}>
+                                        Rp {formatCurrency(gang.cost_per_hk)}
+                                    </div>
+                                    <div style={{ fontSize: '0.7rem', color: C.muted }}>
+                                        per HK
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                ))}
+                    ))}
+                </div>
             </div>
-        </div>
-    );
+        );
+    };
 
     return (
-        <div style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '1.5rem',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-        }}>
-            <h3 style={{
-                fontSize: '1.2rem',
-                fontWeight: '700',
-                color: '#1e293b',
-                marginBottom: '1.5rem'
-            }}>
-                🎯 Best & Worst Performers
+        <div style={CARD}>
+            <h3 style={{ ...SECTION_TITLE, marginBottom: 4 }}>
+                Performa Terbaik & Terlemah
             </h3>
+            <p style={{ fontSize: '0.85rem', color: C.muted, margin: '0 0 1.25rem 0' }}>
+                {getScopeLabel(scope)} · berdasarkan Cost/HK
+            </p>
 
             <div style={{
                 display: 'grid',
@@ -137,14 +129,14 @@ export default function TopBottomPerformersCard({ data, loading }) {
             }}>
                 {data.top && data.top.length > 0 && (
                     <PerformerCard
-                        title="Most Efficient"
+                        title="Paling Efisien"
                         gangs={data.top}
                         isTop={true}
                     />
                 )}
                 {data.bottom && data.bottom.length > 0 && (
                     <PerformerCard
-                        title="Needs Attention"
+                        title="Perlu Perhatian"
                         gangs={data.bottom}
                         isTop={false}
                     />

@@ -6,6 +6,7 @@ export interface FFBProductivityRow {
     total_employees: number;
     total_hk: number;
     total_upah_bersih: number;
+    total_upah_kotor: number;
     total_premi: number;
     total_lembur: number;
     total_ffb_ton: number;
@@ -48,7 +49,9 @@ export class MillProductionService {
 
             const ton = div.total_ffb_weight || 0;
             const tonPerHK = div.total_hk > 0 ? ton / div.total_hk : 0;
-            const costPerTon = ton > 0 ? div.total_upah_bersih / ton : 0;
+            // Cost/ton uses GROSS (upah kotor), not net — cost analysis basis.
+            const gross = div.total_upah_kotor ?? div.total_upah_bersih;
+            const costPerTon = ton > 0 ? gross / ton : 0;
 
             results.push({
                 division_code: div.division_code,
@@ -56,6 +59,7 @@ export class MillProductionService {
                 total_employees: div.total_employees,
                 total_hk: div.total_hk,
                 total_upah_bersih: div.total_upah_bersih,
+                total_upah_kotor: gross,
                 total_premi: div.total_premi,
                 total_lembur: div.total_lembur,
                 total_ffb_ton: ton,
