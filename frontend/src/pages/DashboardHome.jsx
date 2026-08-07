@@ -7,7 +7,7 @@ import { isProdMode } from '../utils/prodModeUtils';
 import { dashJson } from '../utils/dashboardApi';
 import { getScopeLabel } from '../utils/gangTypes';
 import {
-    AreaChart, Area, BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+    AreaChart, Area, ResponsiveContainer
 } from 'recharts';
 import {
     Settings, Info, BarChart2, ArrowRight, FlaskConical, DollarSign, Calculator,
@@ -16,25 +16,20 @@ import {
 
 // ===== Estate Ledger: tema bersama (SSOT: reportTheme) =====
 import {
-    C, SHADOW, CARD, SECTION_TITLE, chartPalette,
-    ReportHero, ReportBody, StatCard, ScopeToggle, EmptyState
+    C, SHADOW, CARD, SECTION_TITLE,
+    ReportHero, ReportBody, StatCard, ScopeToggle, EmptyState, Skeleton, SectionHeader
 } from '../components/report/reportTheme';
+import {
+    formatCompactIDR, formatNumberID, toSparklinePoints, findMissingWageDivisions
+} from '../utils/dashboardDerivations';
+import HeadcountSection from '../components/dashboard/HeadcountSection';
+import CostStructureSection from '../components/dashboard/CostStructureSection';
+import ProductivitySection from '../components/dashboard/ProductivitySection';
 import PresentSlide from '../components/present/PresentSlide';
 import PresentController from '../components/present/PresentController';
 import usePresentMode from '../components/present/usePresentMode';
 
-// ===== Formatters =====
-const formatCompactIDR = (val) => {
-    if (val === null || val === undefined || isNaN(val)) return '-';
-    const n = Number(val);
-    if (Math.abs(n) >= 1e9) return `Rp ${(n / 1e9).toLocaleString('id-ID', { maximumFractionDigits: 2 })} M`;
-    if (Math.abs(n) >= 1e6) return `Rp ${(n / 1e6).toLocaleString('id-ID', { maximumFractionDigits: 0 })} jt`;
-    return `Rp ${n.toLocaleString('id-ID')}`;
-};
-const formatNumber = (val) => {
-    if (val === null || val === undefined || isNaN(val)) return '-';
-    return new Intl.NumberFormat('id-ID').format(val);
-};
+// ===== Formatters (formatCompactIDR/formatNumberID di-import dari dashboardDerivations) =====
 const calcChange = (curr, prev) => {
     if (!prev) return null;
     return ((curr - prev) / prev) * 100;
@@ -86,11 +81,6 @@ const LinkRow = ({ label, onClick }) => {
         </button>
     );
 };
-
-// Loading skeleton (pulse halus, bukan spinner)
-const SkeletonBlock = ({ height = 120 }) => (
-    <div className="el-skeleton" style={{ height, borderRadius: 10, background: C.surface2, border: `1px solid ${C.border}` }} />
-);
 
 export default function DashboardHome() {
     const { user, token } = useAuth();
@@ -146,6 +136,62 @@ export default function DashboardHome() {
 
     useEffect(() => { loadDashboard(); }, [loadDashboard]);
 
+    // ===== Data kepersonaliaan (live master, fetch independen) =====
+    const [headData, setHeadData] = useState(null);
+    const [headLoading, setHeadLoading] = useState(true);
+    const [headError, setHeadError] = useState(null);
+
+    const loadHeadcount = useCallback(async () => {
+        if (!token || !month || !year) return;
+        setHeadLoading(true);
+        setHeadError(null);
+        try {
+            const json = await dashJson(`/headcount-summary?month=${month}&year=${year}`, { token });
+            if (json.success) {
+                setHeadData(json.data);
+            } else {
+                setHeadData(null);
+                setHeadError(json.error || 'Gagal memuat data kepersonaliaan');
+            }
+        } catch (e) {
+            console.error('Failed to load headcount summary:', e);
+            setHeadData(null);
+            setHeadError(e.message);
+        } finally {
+            setHeadLoading(false);
+        }
+    }, [token, month, year]);
+
+    useEffect(() => { loadHeadcount(); }, [loadHeadcount]);
+
+    // ===== Data struktur biaya (agregasi, ikut scope) =====
+    const [costData, setCostData] = useState(null);
+    const [costLoading, setCostLoading] = useState(true);
+    const [costError, setCostError] = useState(null);
+
+    const loadCostStructure = useCallback(async () => {
+        if (!token || !month || !year) return;
+        setCostLoading(true);
+        setCostError(null);
+        try {
+            const json = await dashJson(`/cost-structure?month=${month}&year=${year}&scope=${scope}`, { token });
+            if (json.success) {
+                setCostData(json.data);
+            } else {
+                setCostData(null);
+                setCostError(json.error || 'Gagal memuat struktur biaya');
+            }
+        } catch (e) {
+            console.error('Failed to load cost structure:', e);
+            setCostData(null);
+            setCostError(e.message);
+        } finally {
+            setCostLoading(false);
+        }
+    }, [token, month, year, scope]);
+
+    useEffect(() => { loadCostStructure(); }, [loadCostStructure]);
+
     // ===== Derivasi KPI =====
     const kpi = dashData?.kpi || null;
     const trends = useMemo(() => (Array.isArray(dashData?.trends) ? dashData.trends : []), [dashData?.trends]);
@@ -156,22 +202,21 @@ export default function DashboardHome() {
 
     const wageSpikes = useMemo(() => (Array.isArray(dashData?.wageSpikes) ? dashData.wageSpikes : []), [dashData?.wageSpikes]);
 
-    const divisionChartData = useMemo(() => {
-        if (!dashData?.breakdown) return [];
-        return [...dashData.breakdown]
-            .sort((a, b) => (b.total_wage || 0) - (a.total_wage || 0))
-            .map(d => ({ name: d.division_code, total: d.total_wage || 0, premi: d.total_premi || 0, ot: d.total_ot || 0 }));
-    }, [dashData?.breakdown]);
+    const missingWageDivisions = useMemo(
+        () => findMissingWageDivisions(dashData?.breakdown),
+        [dashData?.breakdown]
+    );
 
-    const tooltipStyle = {
-        background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8,
-        boxShadow: SHADOW, fontSize: 12, color: C.text
-    };
+    const sparkFor = (key, color) => (
+        <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={toSparklinePoints(trends, key)} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
+                <Area type="monotone" dataKey="v" stroke={color} strokeWidth={1.5} fill={color} fillOpacity={0.15} isAnimationActive={false} />
+            </AreaChart>
+        </ResponsiveContainer>
+    );
 
     return (
         <div style={{ minHeight: '100%', background: C.pageBg, fontFamily: 'var(--font-body)' }}>
-            <style>{`.el-skeleton{animation:elPulse 1.4s ease-in-out infinite}@keyframes elPulse{0%,100%{opacity:.55}50%{opacity:1}}`}</style>
-
             {/* MASTHEAD datar */}
             <ReportHero
                 eyebrow="Portal Estate · Daftar Upah"
@@ -205,7 +250,7 @@ export default function DashboardHome() {
 
                 {dashLoading ? (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: '1.6rem' }}>
-                        {Array.from({ length: 6 }).map((_, i) => <SkeletonBlock key={i} height={104} />)}
+                        {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} height={104} />)}
                     </div>
                 ) : dashError || !kpi ? (
                     <div style={{ marginBottom: '1.6rem' }}>
@@ -218,12 +263,12 @@ export default function DashboardHome() {
                     </div>
                 ) : (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: '1.6rem' }}>
-                        <StatCard label="Total Upah Kotor" value={formatCompactIDR(kpi.curr_wage)} pct={calcChange(kpi.curr_wage, kpi.prev_wage) ?? undefined} color={C.upah} note="vs bulan lalu" />
-                        <StatCard label="Premi" value={formatCompactIDR(currentTrend.total_premi)} pct={calcChange(currentTrend.total_premi, prevTrend.total_premi) ?? undefined} color={C.premi} note="vs bulan lalu" />
-                        <StatCard label="Lembur" value={formatCompactIDR(kpi.curr_ot)} pct={calcChange(kpi.curr_ot, kpi.prev_ot) ?? undefined} color={C.lembur} invert note="vs bulan lalu" />
-                        <StatCard label="Headcount" value={formatNumber(kpi.curr_headcount)} pct={calcChange(kpi.curr_headcount, kpi.prev_headcount) ?? undefined} color={C.leafLight} note="karyawan" />
-                        <StatCard label="Tonase" value={`${formatNumber(Math.round(currentTrend.total_tonase || 0))} ton`} pct={calcChange(currentTrend.total_tonase, prevTrend.total_tonase) ?? undefined} color={C.leafDark} note="vs bulan lalu" />
-                        <StatCard label="Cost/Ton" value={costPerTon !== null ? formatCompactIDR(costPerTon) : '-'} pct={calcChange(costPerTon, prevTrend.cost_per_ton) ?? undefined} color={C.costTon} invert note="upah per ton" />
+                        <StatCard label="Total Upah Kotor" value={formatCompactIDR(kpi.curr_wage)} pct={calcChange(kpi.curr_wage, kpi.prev_wage) ?? undefined} color={C.upah} note="vs bulan lalu" sparkline={sparkFor('total_wage', C.upah)} />
+                        <StatCard label="Premi" value={formatCompactIDR(currentTrend.total_premi)} pct={calcChange(currentTrend.total_premi, prevTrend.total_premi) ?? undefined} color={C.premi} note="vs bulan lalu" sparkline={sparkFor('total_premi', C.premi)} />
+                        <StatCard label="Lembur" value={formatCompactIDR(kpi.curr_ot)} pct={calcChange(kpi.curr_ot, kpi.prev_ot) ?? undefined} color={C.lembur} invert note="vs bulan lalu" sparkline={sparkFor('total_ot', C.lembur)} />
+                        <StatCard label="Headcount" value={formatNumberID(kpi.curr_headcount)} pct={calcChange(kpi.curr_headcount, kpi.prev_headcount) ?? undefined} color={C.leafLight} note="karyawan" badge={kpi.headcount_source === 'live' ? 'live' : undefined} sparkline={sparkFor('total_headcount', C.leafLight)} />
+                        <StatCard label="Tonase" value={`${formatNumberID(Math.round(currentTrend.total_tonase || 0))} ton`} pct={calcChange(currentTrend.total_tonase, prevTrend.total_tonase) ?? undefined} color={C.leafDark} note="vs bulan lalu" sparkline={sparkFor('total_tonase', C.leafDark)} />
+                        <StatCard label="Cost/Ton" value={costPerTon !== null ? formatCompactIDR(costPerTon) : '-'} pct={calcChange(costPerTon, prevTrend.cost_per_ton) ?? undefined} color={C.costTon} invert note="upah per ton" sparkline={sparkFor('cost_per_ton', C.costTon)} />
                     </div>
                 )}
 
@@ -246,52 +291,66 @@ export default function DashboardHome() {
                         </button>
                     </div>
                 )}
+
+                {/* INSIGHT STRIP: divisi sudah produksi tapi upah belum tersedia */}
+                {!dashLoading && missingWageDivisions.length > 0 && (
+                    <div style={{
+                        ...CARD, padding: '12px 16px', marginBottom: '1.6rem', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+                        borderLeft: `3px solid ${C.warn}`
+                    }}>
+                        <span style={{ color: C.warn, display: 'inline-flex', flexShrink: 0 }}><AlertTriangle size={17} /></span>
+                        <span style={{ fontSize: '0.84rem', color: C.text2, lineHeight: 1.5 }}>
+                            <b style={{ color: C.text }}>{missingWageDivisions.length} divisi sudah produksi tapi upah belum tersedia:</b>{' '}
+                            {missingWageDivisions.join(', ')} — jalankan Aggregation Seeder agar analisis biaya lengkap.
+                        </span>
+                        <button
+                            onClick={() => navigate('/seed')}
+                            style={{ marginLeft: 'auto', border: 'none', background: 'none', color: C.upah, fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer', padding: 0, display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                        >
+                            Buka Aggregation Seeder <ArrowRight size={14} />
+                        </button>
+                    </div>
+                )}
                 </PresentSlide>
 
                 <PresentSlide num="02" id="slide-02" title="Tren dan Breakdown Divisi" subtitle="Pergerakan upah 12 bulan dan sebaran upah antar divisi">
-                {/* CHARTS: tren upah 12 bulan + breakdown divisi */}
-                {!dashLoading && !dashError && trends.length > 0 && (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '1.2rem', marginBottom: '1.8rem' }}>
-                        <div style={CARD}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-                                <div style={SECTION_TITLE}>Tren Upah 12 Bulan</div>
-                                <span style={{ fontSize: 11, color: C.muted }}>{scopeLabel}</span>
-                            </div>
-                            <ResponsiveContainer width="100%" height={230}>
-                                <AreaChart data={trends} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                                    <CartesianGrid stroke={C.gridLine} vertical={false} />
-                                    <XAxis dataKey="period" tick={{ fontSize: 10.5, fill: C.muted }} tickLine={false} axisLine={{ stroke: C.border }} interval="preserveStartEnd" />
-                                    <YAxis tick={{ fontSize: 10.5, fill: C.muted }} tickLine={false} axisLine={false} tickFormatter={(v) => formatCompactIDR(v)} width={72} />
-                                    <Tooltip contentStyle={tooltipStyle} formatter={(v) => [formatCompactIDR(v), 'Total Upah']} />
-                                    <Area type="monotone" dataKey="total_wage" stroke={C.upah} strokeWidth={2} fill={C.upah} fillOpacity={0.12} isAnimationActive={false} />
-                                </AreaChart>
-                            </ResponsiveContainer>
-                        </div>
-                        <div style={CARD}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-                                <div style={SECTION_TITLE}>Upah per Divisi ({periodLabel})</div>
-                                <span style={{ fontSize: 11, color: C.muted }}>{scopeLabel}</span>
-                            </div>
-                            {divisionChartData.length > 0 ? (
-                                <ResponsiveContainer width="100%" height={230}>
-                                    <BarChart data={divisionChartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                                        <CartesianGrid stroke={C.gridLine} vertical={false} />
-                                        <XAxis dataKey="name" tick={{ fontSize: 10.5, fill: C.muted }} tickLine={false} axisLine={{ stroke: C.border }} />
-                                        <YAxis tick={{ fontSize: 10.5, fill: C.muted }} tickLine={false} axisLine={false} tickFormatter={(v) => formatCompactIDR(v)} width={72} />
-                                        <Tooltip contentStyle={tooltipStyle} formatter={(v) => [formatCompactIDR(v), 'Total Upah']} />
-                                        <Bar dataKey="total" radius={[4, 4, 0, 0]} isAnimationActive={false}>
-                                            {divisionChartData.map((_, i) => (
-                                                <Cell key={i} fill={chartPalette[i % chartPalette.length]} />
-                                            ))}
-                                        </Bar>
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            ) : (
-                                <EmptyState title="Breakdown divisi kosong" message="Belum ada data divisi untuk periode ini." />
-                            )}
-                        </div>
-                    </div>
-                )}
+                {/* SECTION: Kepersonaliaan & Headcount */}
+                <SectionHeader title="Kepersonaliaan & Headcount" meta="Sumber: master karyawan live · seluruh divisi" />
+                <div style={{ marginBottom: '1.8rem' }}>
+                    <HeadcountSection
+                        data={headData}
+                        trends={trends}
+                        loading={headLoading}
+                        error={headError}
+                        onRetry={loadHeadcount}
+                    />
+                </div>
+
+                {/* SECTION: Efisiensi & Struktur Biaya */}
+                <SectionHeader title="Efisiensi & Struktur Biaya" meta={`${periodLabel} · ${scopeLabel}`} />
+                <div style={{ marginBottom: '1.8rem' }}>
+                    <CostStructureSection
+                        costData={costData}
+                        trends={trends}
+                        gangBreakdown={dashData?.gangBreakdown}
+                        loading={costLoading}
+                        error={costError}
+                        onRetry={loadCostStructure}
+                        periodLabel={periodLabel}
+                        scopeLabel={scopeLabel}
+                    />
+                </div>
+
+                {/* SECTION: Produktivitas */}
+                <SectionHeader title="Produktivitas" meta={scopeLabel} />
+                <div style={{ marginBottom: '1.8rem' }}>
+                    <ProductivitySection
+                        productivityTrend={dashData?.productivityTrend}
+                        divisions={costData?.divisions}
+                        loading={dashLoading || costLoading}
+                        scopeLabel={scopeLabel}
+                    />
+                </div>
                 </PresentSlide>
 
                 {/* FILTER CARD */}
@@ -373,10 +432,7 @@ export default function DashboardHome() {
                 </div>
 
                 {/* FEATURED ANALYSIS TILES */}
-                <div style={{ marginBottom: '0.9rem', display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={SECTION_TITLE}>Analisis Utama</span>
-                    <span style={{ flex: 1, height: 1, background: C.border }} />
-                </div>
+                <SectionHeader title="Analisis Utama" />
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
                     <Tile icon={<TrendingUp size={19} />} title="Executive Board" desc="KPI CEO, cost/ton, insight" onClick={() => navigate('/executive')} />
                     <Tile icon={<BarChart2 size={19} />} title="Cost/Ton Story" desc="Infografis interaktif, presentasi" onClick={() => navigate('/cost-per-ton-story')} />
