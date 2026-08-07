@@ -11,10 +11,10 @@ const fmtCompact = (v) => {
 };
 
 const COMPONENTS = [
-    { key: 'spsi', label: 'SPSI', color: '#6C4FC4' },
-    { key: 'pph21', label: 'PPH21', color: '#C8463C' },
+    { key: 'spsi', label: 'SPSI', color: '#7C5A2B' },
+    { key: 'pph21', label: 'PPH21', color: '#B3392E' },
     { key: 'bpjs', label: 'BPJS Pekerja', color: '#2E9E6B' },
-    { key: 'koreksi', label: 'Koreksi', color: '#D98A1F' },
+    { key: 'koreksi', label: 'Koreksi', color: '#B45309' },
 ];
 
 /**

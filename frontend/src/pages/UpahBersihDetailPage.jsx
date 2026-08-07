@@ -11,13 +11,20 @@ import { fetchUpahBersihDetail } from '../services/upahBersihDetailService'
 import { fetchDivisions, fetchGangs } from '../services/gangService'
 import LoadingScreen from '../components/common/LoadingScreen'
 import { printReport, usePrintExpand } from '../utils/printPageSetup'
+import {
+    LayoutList, Clock, Coins, Wallet, Users, ChevronDown, ChevronUp,
+    Printer, ArrowLeft, Search, Loader2, XCircle, Inbox, BarChart3
+} from 'lucide-react'
+import PresentSlide from '../components/present/PresentSlide'
+import PresentController from '../components/present/PresentController'
+import usePresentMode from '../components/present/usePresentMode'
 import '../styles/upah-bersih-detail.css'
 
 const FILTER_OPTIONS = [
-    { value: 'all', label: 'Semua', icon: '📋' },
-    { value: 'lembur', label: 'Lembur', icon: '⏰' },
-    { value: 'premi', label: 'Premi', icon: '💰' },
-    { value: 'upah_bersih', label: 'Upah Bersih', icon: '💵' },
+    { value: 'all', label: 'Semua', icon: LayoutList },
+    { value: 'lembur', label: 'Lembur', icon: Clock },
+    { value: 'premi', label: 'Premi', icon: Coins },
+    { value: 'upah_bersih', label: 'Upah Bersih', icon: Wallet },
 ]
 
 const MONTHS = [
@@ -74,6 +81,8 @@ export default function UpahBersihDetailPage({ onBack, initialMonth, initialYear
     const [expandedEmployees, setExpandedEmployees] = useState(new Set())
     // During print, every gang + employee detail row is revealed.
     const printExpanded = usePrintExpand()
+    // Present mode: deck fullscreen per slide (toggle html.present-mode + HUD)
+    const { presenting, activeIndex, enter, exit } = usePresentMode()
 
     // Load divisions
     useEffect(() => {
@@ -170,7 +179,7 @@ export default function UpahBersihDetailPage({ onBack, initialMonth, initialYear
 
     const getFilterLabel = () => {
         const opt = FILTER_OPTIONS.find(f => f.value === filter)
-        return opt ? `${opt.icon} ${opt.label}` : filter
+        return opt ? opt.label : filter
     }
 
     const getMonthLabel = (m) => {
@@ -178,24 +187,47 @@ export default function UpahBersihDetailPage({ onBack, initialMonth, initialYear
         return opt ? opt.label : m
     }
 
+    // Present deck metadata: slide 01 selalu ada, slide 02-03 hanya saat report termuat
+    const hasReport = Boolean(data && !loading && !error)
+    const activeFilter = FILTER_OPTIONS.find(f => f.value === filter) || FILTER_OPTIONS[0]
+    const ActiveFilterIcon = activeFilter.icon
+    const scopeLabel = division === 'ALL'
+        ? (gangCode !== 'ALL' ? `Gang ${gangCode}` : 'Semua Divisi')
+        : `Divisi ${division}${gangCode !== 'ALL' ? ` · Gang ${gangCode}` : ''}`
+    const presentCaption = `Detail Upah Bersih · ${getMonthLabel(month)} ${year} · ${scopeLabel}`
+
     return (
         <div className="ubd-container">
             {/* Header */}
             <div className="ubd-header">
                 <h1>
-                    <span className="icon">📊</span>
+                    <span className="icon" style={{ display: 'inline-flex', color: '#1F6F43' }}>
+                        <BarChart3 size={26} strokeWidth={2.2} aria-hidden="true" />
+                    </span>
                     Detail Upah Bersih
                 </h1>
                 <div style={{ display: 'flex', gap: 8 }}>
                     <button className="ubd-back-btn" onClick={() => printReport({ orientation: 'landscape', margin: '6mm' })}>
-                        🖨️ Cetak
+                        <Printer size={15} aria-hidden="true" /> Cetak
                     </button>
                     {onBack && (
                         <button className="ubd-back-btn" onClick={onBack}>
-                            ← Kembali
+                            <ArrowLeft size={15} aria-hidden="true" /> Kembali
                         </button>
                     )}
                 </div>
+            </div>
+
+            {/* PRESENT MODE - tombol Present (mode normal) + HUD deck (present mode) */}
+            <div className="no-print" style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.75rem' }}>
+                <PresentController
+                    presenting={presenting}
+                    activeIndex={activeIndex}
+                    slideCount={hasReport ? 3 : 1}
+                    onEnter={enter}
+                    onExit={exit}
+                    caption={presentCaption}
+                />
             </div>
 
             {/* Toolbar */}
@@ -246,238 +278,256 @@ export default function UpahBersihDetailPage({ onBack, initialMonth, initialYear
                     <label>Filter</label>
                     <select value={filter} onChange={e => setFilter(e.target.value)}>
                         {FILTER_OPTIONS.map(f => (
-                            <option key={f.value} value={f.value}>{f.icon} {f.label}</option>
+                            <option key={f.value} value={f.value}>{f.label}</option>
                         ))}
                     </select>
                 </div>
 
                 <button className="ubd-fetch-btn" onClick={handleFetch} disabled={loading}>
-                    {loading ? '⏳ Memuat...' : '🔍 Tampilkan'}
+                    {loading
+                        ? (<><Loader2 size={15} aria-hidden="true" /> Memuat...</>)
+                        : (<><Search size={15} aria-hidden="true" /> Tampilkan</>)}
                 </button>
             </div>
 
             {/* Loading */}
             {loading && <LoadingScreen isLoading={true} message="Mengambil detail upah bersih..." />}
 
-            {/* Error */}
-            {error && !loading && (
-                <div className="ubd-empty">
-                    <div className="empty-icon">❌</div>
-                    <h3>Terjadi Kesalahan</h3>
-                    <p>{error}</p>
-                </div>
-            )}
+            {/* SLIDE 01 - Konteks & Ringkasan */}
+            <PresentSlide num="01" id="slide-01" title="Konteks & Ringkasan" subtitle="Periode, cakupan, dan total keseluruhan upah bersih">
+                {/* Summary Cards */}
+                {hasReport && (
+                    <>
+                        <div className="ubd-summary">
+                            <div className="ubd-summary-card">
+                                <div className="card-label">Total Karyawan</div>
+                                <div className="card-value">{data.summary?.total_employees || 0}</div>
+                            </div>
+                            <div className="ubd-summary-card">
+                                <div className="card-label">Total Gang</div>
+                                <div className="card-value">{data.summary?.total_gangs || 0}</div>
+                            </div>
+                            <div className="ubd-summary-card highlight">
+                                <div className="card-label">Total Lembur</div>
+                                <div className="card-value">Rp {formatCurrency(data.summary?.grand_total_lembur)}</div>
+                            </div>
+                            <div className="ubd-summary-card highlight">
+                                <div className="card-label">Total Premi</div>
+                                <div className="card-value">Rp {formatCurrency(data.summary?.grand_total_premi)}</div>
+                            </div>
+                            <div className="ubd-summary-card green">
+                                <div className="card-label">Total Upah Bersih</div>
+                                <div className="card-value">Rp {formatCurrency(data.summary?.grand_total_upah_bersih)}</div>
+                            </div>
+                        </div>
+
+                        {/* Period & Filter Info */}
+                        <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                                Periode: <strong>{getMonthLabel(data.period_month)} {data.period_year}</strong>
+                            </span>
+                            <span className="ubd-filter-badge active">
+                                <ActiveFilterIcon size={12} aria-hidden="true" /> Filter: {getFilterLabel()}
+                            </span>
+                        </div>
+                    </>
+                )}
+
+                {/* Error */}
+                {error && !loading && (
+                    <div className="ubd-empty">
+                        <div className="empty-icon" style={{ color: '#B3392E' }}><XCircle size={40} aria-hidden="true" /></div>
+                        <h3>Terjadi Kesalahan</h3>
+                        <p>{error}</p>
+                    </div>
+                )}
+
+                {/* Initial State */}
+                {!data && !loading && !error && (
+                    <div className="ubd-empty">
+                        <div className="empty-icon"><BarChart3 size={40} aria-hidden="true" /></div>
+                        <h3>Detail Upah Bersih</h3>
+                        <p>Pilih periode dan filter, lalu klik "Tampilkan" untuk melihat detail data upah bersih per karyawan dengan rincian lembur dan premi.</p>
+                    </div>
+                )}
+            </PresentSlide>
 
             {/* Data Content */}
-            {data && !loading && !error && (
+            {hasReport && (
                 <>
-                    {/* Summary Cards */}
-                    <div className="ubd-summary">
-                        <div className="ubd-summary-card">
-                            <div className="card-label">Total Karyawan</div>
-                            <div className="card-value">{data.summary?.total_employees || 0}</div>
-                        </div>
-                        <div className="ubd-summary-card">
-                            <div className="card-label">Total Gang</div>
-                            <div className="card-value">{data.summary?.total_gangs || 0}</div>
-                        </div>
-                        <div className="ubd-summary-card highlight">
-                            <div className="card-label">⏰ Total Lembur</div>
-                            <div className="card-value">Rp {formatCurrency(data.summary?.grand_total_lembur)}</div>
-                        </div>
-                        <div className="ubd-summary-card highlight">
-                            <div className="card-label">💰 Total Premi</div>
-                            <div className="card-value">Rp {formatCurrency(data.summary?.grand_total_premi)}</div>
-                        </div>
-                        <div className="ubd-summary-card green">
-                            <div className="card-label">💵 Total Upah Bersih</div>
-                            <div className="card-value">Rp {formatCurrency(data.summary?.grand_total_upah_bersih)}</div>
-                        </div>
-                    </div>
+                    {/* SLIDE 02 - Rincian per Gang & Karyawan */}
+                    <PresentSlide num="02" id="slide-02" title="Rincian per Gang & Karyawan" subtitle="Drill-down lembur, premi, dan potongan tiap pekerja">
+                        {/* Gang Groups */}
+                        {data.gangs && data.gangs.length > 0 ? (
+                            data.gangs.map(gang => {
+                                const isGangExpanded = printExpanded || expandedGangs.has(gang.gang_code)
 
-                    {/* Period & Filter Info */}
-                    <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
-                            Periode: <strong>{getMonthLabel(data.period_month)} {data.period_year}</strong>
-                        </span>
-                        <span className="ubd-filter-badge active">
-                            Filter: {getFilterLabel()}
-                        </span>
-                    </div>
-
-                    {/* Gang Groups */}
-                    {data.gangs && data.gangs.length > 0 ? (
-                        data.gangs.map(gang => {
-                            const isGangExpanded = printExpanded || expandedGangs.has(gang.gang_code)
-
-                            return (
-                                <div key={gang.gang_code} className="ubd-gang-group">
-                                    {/* Gang Header */}
-                                    <div className="ubd-gang-header" onClick={() => toggleGang(gang.gang_code)}>
-                                        <div className="gang-info">
-                                            <span className="gang-code">{gang.gang_code}</span>
-                                            <span className="gang-desc">{gang.gang_description}</span>
+                                return (
+                                    <div key={gang.gang_code} className="ubd-gang-group">
+                                        {/* Gang Header */}
+                                        <div className="ubd-gang-header" onClick={() => toggleGang(gang.gang_code)}>
+                                            <div className="gang-info">
+                                                <span className="gang-code">{gang.gang_code}</span>
+                                                <span className="gang-desc">{gang.gang_description}</span>
+                                            </div>
+                                            <div className="gang-stats">
+                                                <span><Users size={13} aria-hidden="true" /> <span className="stat-value">{gang.employee_count}</span> karyawan</span>
+                                                {gang.total_lembur > 0 && (
+                                                    <span><Clock size={13} aria-hidden="true" /> <span className="stat-value">Rp {formatCurrency(gang.total_lembur)}</span></span>
+                                                )}
+                                                {gang.total_premi > 0 && (
+                                                    <span><Coins size={13} aria-hidden="true" /> <span className="stat-value">Rp {formatCurrency(gang.total_premi)}</span></span>
+                                                )}
+                                                <span><Wallet size={13} aria-hidden="true" /> <span className="stat-value">Rp {formatCurrency(gang.total_upah_bersih)}</span></span>
+                                                <span className={`toggle-icon ${isGangExpanded ? 'expanded' : ''}`}><ChevronDown size={16} aria-hidden="true" /></span>
+                                            </div>
                                         </div>
-                                        <div className="gang-stats">
-                                            <span>👥 <span className="stat-value">{gang.employee_count}</span> karyawan</span>
-                                            {gang.total_lembur > 0 && (
-                                                <span>⏰ <span className="stat-value">Rp {formatCurrency(gang.total_lembur)}</span></span>
-                                            )}
-                                            {gang.total_premi > 0 && (
-                                                <span>💰 <span className="stat-value">Rp {formatCurrency(gang.total_premi)}</span></span>
-                                            )}
-                                            <span>💵 <span className="stat-value">Rp {formatCurrency(gang.total_upah_bersih)}</span></span>
-                                            <span className={`toggle-icon ${isGangExpanded ? 'expanded' : ''}`}>▼</span>
-                                        </div>
-                                    </div>
 
-                                    {/* Expanded Employee Table */}
-                                    {isGangExpanded && (
-                                        <>
-                                            <div className="ubd-table-wrapper">
-                                                <table className="ubd-table">
-                                                    <thead>
-                                                        <tr>
-                                                            <th className="col-emp">Emp Code</th>
-                                                            <th className="col-name">Nama</th>
-                                                            <th className="col-task">Task Code</th>
-                                                            <th className="col-hk">HK</th>
-                                                            <th className="col-amount">Gaji Pokok</th>
-                                                            <th className="col-amount">Lembur</th>
-                                                            <th className="col-amount">Premi</th>
-                                                            <th className="col-amount">Potongan</th>
-                                                            <th className="col-amount">Upah Bersih</th>
-                                                            <th className="col-actions">Detail</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {gang.employees.map(emp => {
-                                                            const empKey = `${gang.gang_code}-${emp.emp_code}`
-                                                            const isEmpExpanded = printExpanded || expandedEmployees.has(empKey)
-                                                            const hasActivities = emp.activities && emp.activities.length > 0
+                                        {/* Expanded Employee Table */}
+                                        {isGangExpanded && (
+                                            <>
+                                                <div className="ubd-table-wrapper">
+                                                    <table className="ubd-table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th className="col-emp">Emp Code</th>
+                                                                <th className="col-name">Nama</th>
+                                                                <th className="col-task">Task Code</th>
+                                                                <th className="col-hk">HK</th>
+                                                                <th className="col-amount">Gaji Pokok</th>
+                                                                <th className="col-amount">Lembur</th>
+                                                                <th className="col-amount">Premi</th>
+                                                                <th className="col-amount">Potongan</th>
+                                                                <th className="col-amount">Upah Bersih</th>
+                                                                <th className="col-actions">Detail</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {gang.employees.map(emp => {
+                                                                const empKey = `${gang.gang_code}-${emp.emp_code}`
+                                                                const isEmpExpanded = printExpanded || expandedEmployees.has(empKey)
+                                                                const hasActivities = emp.activities && emp.activities.length > 0
 
-                                                            return (
-                                                                <React.Fragment key={empKey}>
-                                                                    <tr
-                                                                        className="emp-row"
-                                                                        onClick={() => hasActivities && toggleEmployee(empKey)}
-                                                                    >
-                                                                        <td className="emp-code">{emp.emp_code}</td>
-                                                                        <td className="emp-name" title={emp.emp_name}>{emp.emp_name}</td>
-                                                                        <td title={emp.task_desc}>{emp.task_code || '-'}</td>
-                                                                        <td className="text-center">{emp.jumlah_hk || emp.hari_kerja}</td>
-                                                                        <td className="text-right">{formatCurrency(emp.gaji_pokok)}</td>
-                                                                        <td className="text-right" style={emp.lembur_jumlah > 0 ? { color: '#d97706', fontWeight: 600 } : {}}>
-                                                                            {emp.lembur_jumlah > 0 ? formatCurrency(emp.lembur_jumlah) : '-'}
-                                                                            {emp.lembur_jam > 0 && (
-                                                                                <div style={{ fontSize: '0.65rem', color: '#94a3b8' }}>{emp.lembur_jam} jam</div>
-                                                                            )}
-                                                                        </td>
-                                                                        <td className="text-right" style={emp.total_premi > 0 ? { color: '#2563eb', fontWeight: 600 } : {}}>
-                                                                            {emp.total_premi > 0 ? formatCurrency(emp.total_premi) : '-'}
-                                                                        </td>
-                                                                        <td className="text-right" style={{ color: '#dc2626' }}>
-                                                                            {emp.total_potongan > 0 ? formatCurrency(emp.total_potongan) : '-'}
-                                                                        </td>
-                                                                        <td className="text-right" style={{ fontWeight: 700, color: '#15803d' }}>
-                                                                            {formatCurrency(emp.upah_bersih)}
-                                                                        </td>
-                                                                        <td className="text-center">
-                                                                            {hasActivities ? (
-                                                                                <button
-                                                                                    className={`ubd-expand-btn ${isEmpExpanded ? 'expanded' : ''}`}
-                                                                                    onClick={(e) => { e.stopPropagation(); toggleEmployee(empKey) }}
-                                                                                    title={`${emp.activities.length} aktivitas`}
-                                                                                >
-                                                                                    {isEmpExpanded ? '▲' : '▼'} {emp.activities.length}
-                                                                                </button>
-                                                                            ) : (
-                                                                                <span style={{ color: '#cbd5e1', fontSize: '0.75rem' }}>-</span>
-                                                                            )}
-                                                                        </td>
-                                                                    </tr>
-
-                                                                    {/* Activity Detail Rows */}
-                                                                    {isEmpExpanded && emp.activities.map((act, idx) => (
-                                                                        <tr key={`${empKey}-act-${idx}`} className="ubd-activity-row">
-                                                                            <td className="act-date">{formatDate(act.date)}</td>
-                                                                            <td colSpan="2">
-                                                                                <span className={`act-category ${act.is_overtime ? 'lembur' : 'premi'}`}>
-                                                                                    {act.category}
-                                                                                </span>
-                                                                                {' '}
-                                                                                {act.doc_desc || act.task_desc || '-'}
+                                                                return (
+                                                                    <React.Fragment key={empKey}>
+                                                                        <tr
+                                                                            className="emp-row"
+                                                                            onClick={() => hasActivities && toggleEmployee(empKey)}
+                                                                        >
+                                                                            <td className="emp-code">{emp.emp_code}</td>
+                                                                            <td className="emp-name" title={emp.emp_name}>{emp.emp_name}</td>
+                                                                            <td title={emp.task_desc}>{emp.task_code || '-'}</td>
+                                                                            <td className="text-center">{emp.jumlah_hk || emp.hari_kerja}</td>
+                                                                            <td className="text-right">{formatCurrency(emp.gaji_pokok)}</td>
+                                                                            <td className="text-right" style={emp.lembur_jumlah > 0 ? { color: '#d97706', fontWeight: 600 } : {}}>
+                                                                                {emp.lembur_jumlah > 0 ? formatCurrency(emp.lembur_jumlah) : '-'}
+                                                                                {emp.lembur_jam > 0 && (
+                                                                                    <div style={{ fontSize: '0.65rem', color: '#94a3b8' }}>{emp.lembur_jam} jam</div>
+                                                                                )}
                                                                             </td>
-                                                                            <td className="text-center">{act.hours > 0 ? act.hours : '-'}</td>
-                                                                            <td></td>
-                                                                            <td className="text-right" style={act.is_overtime ? { color: '#d97706' } : {}}>
-                                                                                {act.is_overtime && act.amount > 0 ? formatCurrency(act.amount) : '-'}
+                                                                            <td className="text-right" style={emp.total_premi > 0 ? { color: '#2563eb', fontWeight: 600 } : {}}>
+                                                                                {emp.total_premi > 0 ? formatCurrency(emp.total_premi) : '-'}
                                                                             </td>
-                                                                            <td className="text-right" style={!act.is_overtime ? { color: '#2563eb' } : {}}>
-                                                                                {!act.is_overtime && act.amount > 0 ? formatCurrency(act.amount) : '-'}
+                                                                            <td className="text-right" style={{ color: '#dc2626' }}>
+                                                                                {emp.total_potongan > 0 ? formatCurrency(emp.total_potongan) : '-'}
                                                                             </td>
-                                                                            <td></td>
-                                                                            <td></td>
-                                                                            <td className="text-center" style={{ fontSize: '0.65rem', color: '#94a3b8' }}>
-                                                                                {act.task_code || ''}
+                                                                            <td className="text-right" style={{ fontWeight: 700, color: '#15803d' }}>
+                                                                                {formatCurrency(emp.upah_bersih)}
+                                                                            </td>
+                                                                            <td className="text-center">
+                                                                                {hasActivities ? (
+                                                                                    <button
+                                                                                        className={`ubd-expand-btn ${isEmpExpanded ? 'expanded' : ''}`}
+                                                                                        onClick={(e) => { e.stopPropagation(); toggleEmployee(empKey) }}
+                                                                                        title={`${emp.activities.length} aktivitas`}
+                                                                                    >
+                                                                                        {isEmpExpanded ? <ChevronUp size={12} aria-hidden="true" /> : <ChevronDown size={12} aria-hidden="true" />} {emp.activities.length}
+                                                                                    </button>
+                                                                                ) : (
+                                                                                    <span style={{ color: '#cbd5e1', fontSize: '0.75rem' }}>-</span>
+                                                                                )}
                                                                             </td>
                                                                         </tr>
-                                                                    ))}
-                                                                </React.Fragment>
-                                                            )
-                                                        })}
-                                                    </tbody>
-                                                </table>
-                                            </div>
 
-                                            {/* Gang Subtotal */}
-                                            <div className="ubd-gang-subtotal">
-                                                <div className="subtotal-item">
-                                                    <span className="subtotal-label">Subtotal Lembur:</span>
-                                                    <span className="subtotal-value">Rp {formatCurrency(gang.total_lembur)}</span>
+                                                                        {/* Activity Detail Rows */}
+                                                                        {isEmpExpanded && emp.activities.map((act, idx) => (
+                                                                            <tr key={`${empKey}-act-${idx}`} className="ubd-activity-row">
+                                                                                <td className="act-date">{formatDate(act.date)}</td>
+                                                                                <td colSpan="2">
+                                                                                    <span className={`act-category ${act.is_overtime ? 'lembur' : 'premi'}`}>
+                                                                                        {act.category}
+                                                                                    </span>
+                                                                                    {' '}
+                                                                                    {act.doc_desc || act.task_desc || '-'}
+                                                                                </td>
+                                                                                <td className="text-center">{act.hours > 0 ? act.hours : '-'}</td>
+                                                                                <td></td>
+                                                                                <td className="text-right" style={act.is_overtime ? { color: '#d97706' } : {}}>
+                                                                                    {act.is_overtime && act.amount > 0 ? formatCurrency(act.amount) : '-'}
+                                                                                </td>
+                                                                                <td className="text-right" style={!act.is_overtime ? { color: '#2563eb' } : {}}>
+                                                                                    {!act.is_overtime && act.amount > 0 ? formatCurrency(act.amount) : '-'}
+                                                                                </td>
+                                                                                <td></td>
+                                                                                <td></td>
+                                                                                <td className="text-center" style={{ fontSize: '0.65rem', color: '#94a3b8' }}>
+                                                                                    {act.task_code || ''}
+                                                                                </td>
+                                                                            </tr>
+                                                                        ))}
+                                                                    </React.Fragment>
+                                                                )
+                                                            })}
+                                                        </tbody>
+                                                    </table>
                                                 </div>
-                                                <div className="subtotal-item">
-                                                    <span className="subtotal-label">Subtotal Premi:</span>
-                                                    <span className="subtotal-value">Rp {formatCurrency(gang.total_premi)}</span>
-                                                </div>
-                                                <div className="subtotal-item">
-                                                    <span className="subtotal-label">Subtotal Upah Bersih:</span>
-                                                    <span className="subtotal-value" style={{ color: '#15803d' }}>Rp {formatCurrency(gang.total_upah_bersih)}</span>
-                                                </div>
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-                            )
-                        })
-                    ) : (
-                        <div className="ubd-empty">
-                            <div className="empty-icon">📭</div>
-                            <h3>Tidak Ada Data</h3>
-                            <p>
-                                Tidak ditemukan data untuk periode {getMonthLabel(data.period_month)} {data.period_year}
-                                {filter !== 'all' && ` dengan filter ${getFilterLabel()}`}.
-                                Pastikan data sudah di-seed melalui Aggregation Seeder.
-                            </p>
-                        </div>
-                    )}
 
-                    {/* Execution Time */}
-                    {data.execution_time_ms !== undefined && (
-                        <div className="ubd-execution-time">
-                            Query selesai dalam {data.execution_time_ms}ms
+                                                {/* Gang Subtotal */}
+                                                <div className="ubd-gang-subtotal">
+                                                    <div className="subtotal-item">
+                                                        <span className="subtotal-label">Subtotal Lembur:</span>
+                                                        <span className="subtotal-value">Rp {formatCurrency(gang.total_lembur)}</span>
+                                                    </div>
+                                                    <div className="subtotal-item">
+                                                        <span className="subtotal-label">Subtotal Premi:</span>
+                                                        <span className="subtotal-value">Rp {formatCurrency(gang.total_premi)}</span>
+                                                    </div>
+                                                    <div className="subtotal-item">
+                                                        <span className="subtotal-label">Subtotal Upah Bersih:</span>
+                                                        <span className="subtotal-value" style={{ color: '#15803d' }}>Rp {formatCurrency(gang.total_upah_bersih)}</span>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                )
+                            })
+                        ) : (
+                            <div className="ubd-empty">
+                                <div className="empty-icon"><Inbox size={40} aria-hidden="true" /></div>
+                                <h3>Tidak Ada Data</h3>
+                                <p>
+                                    Tidak ditemukan data untuk periode {getMonthLabel(data.period_month)} {data.period_year}
+                                    {filter !== 'all' && ` dengan filter ${getFilterLabel()}`}.
+                                    Pastikan data sudah di-seed melalui Aggregation Seeder.
+                                </p>
+                            </div>
+                        )}
+                    </PresentSlide>
+
+                    {/* SLIDE 03 - Catatan */}
+                    <PresentSlide num="03" id="slide-03" title="Catatan" subtitle="Sumber data dan jejak eksekusi query">
+                        <div style={{ background: '#F7F5EF', border: '1px solid #E0DED2', borderRadius: 10, padding: '1rem 1.25rem', color: '#15211A', fontSize: '0.875rem', lineHeight: 1.6 }}>
+                            Data bersumber dari tabel histori agregasi (extend_db_ptrj) untuk pengambilan cepat. Gunakan tombol Cetak untuk arsip landscape; seluruh baris gang dan aktivitas otomatis dibuka saat mencetak.
                         </div>
-                    )}
+                        {/* Execution Time */}
+                        {data.execution_time_ms !== undefined && (
+                            <div className="ubd-execution-time">
+                                Query selesai dalam {data.execution_time_ms}ms
+                            </div>
+                        )}
+                    </PresentSlide>
                 </>
-            )}
-
-            {/* Initial State */}
-            {!data && !loading && !error && (
-                <div className="ubd-empty">
-                    <div className="empty-icon">📊</div>
-                    <h3>Detail Upah Bersih</h3>
-                    <p>Pilih periode dan filter, lalu klik "Tampilkan" untuk melihat detail data upah bersih per karyawan dengan rincian lembur dan premi.</p>
-                </div>
             )}
         </div>
     )

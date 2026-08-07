@@ -17,6 +17,9 @@ import ReportWatermark from '../components/common/ReportWatermark';
 import { getDivisionTypeLabel, getReportModeLabel, getSourceModeLabel } from '../utils/reportPresentationLabels';
 import { getReportDivisionSummary } from '../utils/divisionPresentation';
 import { printReport } from '../utils/printPageSetup';
+import PresentSlide from '../components/present/PresentSlide';
+import PresentController from '../components/present/PresentController';
+import usePresentMode from '../components/present/usePresentMode';
 import '../styles/wages-summary-professional.css';
 import '../styles/print-optimization.css';
 import '../styles/report-print-foundation.css';
@@ -24,6 +27,9 @@ import '../styles/report-print-foundation.css';
 export default function WagesSummaryIJLPage({ onBack, initialMonth, initialYear }) {
     const { token, user } = useAuth();
     const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
+    // Present mode: deck fullscreen per slide (toggle html.present-mode + HUD)
+    const { presenting, activeIndex, enter, exit } = usePresentMode();
 
     // Filters - Use initial props if provided
     const [month, setMonth] = useState(initialMonth || null);
@@ -540,7 +546,7 @@ export default function WagesSummaryIJLPage({ onBack, initialMonth, initialYear 
             <div className="no-print" style={{ marginBottom: 16 }}>
                 <h1 style={{ display: 'inline-flex', alignItems: 'center', gap: 8, margin: 0, fontSize: '1.6rem', fontWeight: 800, color: '#14532D' }}>Wages Summary (IJL) <MetricInfo metricKey="upah_bersih" /></h1>
                 <p style={{ color: '#46584C', margin: '4px 0 8px', fontSize: '0.9rem' }}>Laporan rincian upah PT. Impian Jaya Lestari (IJL).</p>
-                <button onClick={() => navigate(`/cost-per-ton-story?month=${month || ''}&year=${year || ''}`)} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: '#1E7A45', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>Cost/Ton Story →</button>
+                <button onClick={() => navigate(`/cost-per-ton-story?month=${month || ''}&year=${year || ''}`)} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: '#1F6F43', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>Cost/Ton Story →</button>
             </div>
             {/* Action Bar */}
             <div className="wsp-action-bar no-print">
@@ -604,8 +610,21 @@ export default function WagesSummaryIJLPage({ onBack, initialMonth, initialYear 
                     ) : error ? (
                         <div className="wsp-error"><div className="wsp-error-title">Gagal Memuat Data</div><div className="wsp-error-message">{error}</div><button onClick={fetchData} className="wsp-btn" style={{ marginTop: '1rem' }}>Coba Lagi</button></div>
                     ) : (
+                        <>
+                        {/* PRESENT MODE - tombol Present (mode normal) + HUD deck (present mode) */}
+                        <div className="no-print" style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
+                            <PresentController
+                                presenting={presenting}
+                                activeIndex={activeIndex}
+                                slideCount={3}
+                                onEnter={enter}
+                                onExit={exit}
+                                caption={`Wages Summary IJL · ${periodLabel} · ${getDivisionTypeLabel(divisionType)}`}
+                            />
+                        </div>
                         <div className="wsp-document" id="wsp-ijl-report-content">
                             <ReportWatermark />
+                            <PresentSlide num="01" id="slide-01" title="Konteks & Ringkasan" subtitle="Identitas laporan dan indikator utama periode berjalan">
                             <div className="wsp-letterhead">
                                 <img src="/images/rebinmas.webp" alt="PT IMPIAN JAYA LESTARI" className="wsp-logo" />
                                 <h1 className="wsp-company-name">PT. IMPIAN JAYA LESTARI</h1>
@@ -629,7 +648,9 @@ export default function WagesSummaryIJLPage({ onBack, initialMonth, initialYear 
                                     <div className="wsp-kpi-card highlight"><div className="wsp-kpi-label">Total Upah Bersih</div><div className="wsp-kpi-value">Rp {formatNumber(kpiTotals.netPay)}</div></div>
                                 </div>
                             )}
+                            </PresentSlide>
 
+                            <PresentSlide num="02" id="slide-02" title={comparisonMode ? 'Perbandingan Upah Antar Periode' : 'Rincian Upah per Divisi'} subtitle={comparisonMode ? 'Gaji, TBS, dan thumb print dibandingkan dengan periode sebelumnya' : 'Manpower, potongan, dan pendapatan seluruh divisi IJL'}>
                             {comparisonMode ? renderComparisonTable() : (
                                 <div className="wsp-table-wrapper">
                                     <table className="wsp-table">
@@ -681,7 +702,9 @@ export default function WagesSummaryIJLPage({ onBack, initialMonth, initialYear 
                                     </table>
                                 </div>
                             )}
+                            </PresentSlide>
 
+                            <PresentSlide num="03" id="slide-03" title="Catatan & Penutup" subtitle="Pengesahan dan informasi cetak laporan">
                             <div className="print-only">
                                 <PrintSignature />
                             </div>
@@ -690,7 +713,9 @@ export default function WagesSummaryIJLPage({ onBack, initialMonth, initialYear 
                                 <div className="wsp-footer-left"><div>Dicetak: {printDate}</div><div>User: {user?.username}</div></div>
                                 <div className="wsp-footer-right">PT. IMPIAN JAYA LESTARI</div>
                             </footer>
+                            </PresentSlide>
                         </div>
+                        </>
                     )}
                 </>
             )}

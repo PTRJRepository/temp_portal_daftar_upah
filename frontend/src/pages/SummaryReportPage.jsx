@@ -17,6 +17,9 @@ import { MetricInfo, EmptyState } from '../components/report/reportTheme';
 import { getDivisionTypeLabel } from '../utils/reportPresentationLabels';
 import { getReportDivisionSummary } from '../utils/divisionPresentation';
 import { printReport, usePrintExpand } from '../utils/printPageSetup';
+import PresentSlide from '../components/present/PresentSlide';
+import PresentController from '../components/present/PresentController';
+import usePresentMode from '../components/present/usePresentMode';
 import '../styles/summary-report-new.css';
 
 const REBINMAS_LOGO_SRC = `${import.meta.env.BASE_URL || '/'}images/rebinmas.webp`;
@@ -260,7 +263,7 @@ function EditableCell({ editMode, value, onSave, isCurrency }) {
           />
         ) : (
           <span style={{ color: '#1e40af', fontSize: '11px', opacity: 0.7 }}>
-            {formatNumber(value)} ✏
+            {formatNumber(value)}
           </span>
         )}
       </td>
@@ -782,6 +785,9 @@ export default function SummaryReportPage({ onBack, initialDivision, initialMont
   const printExpanded = usePrintExpand();
   const showDetailEffective = showDetail || printExpanded;
 
+  // Present mode (deck fullscreen dinavigasi keyboard)
+  const { presenting, activeIndex, enter, exit } = usePresentMode();
+
   // UI State
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -1173,6 +1179,19 @@ export default function SummaryReportPage({ onBack, initialDivision, initialMont
             </div>
           </div>
 
+          {/* ===== PRESENT MODE: tombol Present (normal) + HUD deck (present) ===== */}
+          <div className="no-print" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}>
+            <PresentController
+              presenting={presenting}
+              activeIndex={activeIndex}
+              slideCount={3}
+              onEnter={enter}
+              onExit={exit}
+              caption={`Summary Report Detail · ${periodLabel} · ${divisionLabel}`}
+            />
+          </div>
+
+          <PresentSlide num="01" id="slide-01" title="Konteks & Ringkasan" subtitle="Identitas report dan indikator utama periode berjalan">
           {/* ===== REPORT HEADER ===== */}
           <div className="srn-report-head">
             <div className="srn-report-title">
@@ -1190,7 +1209,9 @@ export default function SummaryReportPage({ onBack, initialDivision, initialMont
 
           {/* ===== KPI CARDS ===== */}
           <ReportKpiCards grandTotal={grandTotal} periodLabel={periodLabel} isLoading={loading} />
+          </PresentSlide>
 
+          <PresentSlide num="02" id="slide-02" title="Distribusi Premi" subtitle="Sebaran premi per gang dan per jenis premi">
           {/* ===== CHART SECTION ===== */}
           <div className="srn-two-col">
             <div className="srn-panel">
@@ -1202,7 +1223,9 @@ export default function SummaryReportPage({ onBack, initialDivision, initialMont
               <BarChart items={chartData.premi} />
             </div>
           </div>
+          </PresentSlide>
 
+          <PresentSlide num="03" id="slide-03" title="Tabel Ringkasan Gang" subtitle="Rekapitulasi pekerja, HK, premi, potongan, dan upah bersih per estate/gang">
           {/* ===== SUMMARY TABLE ===== */}
           {loading ? (
             <div className="srn-loading">
@@ -1210,7 +1233,7 @@ export default function SummaryReportPage({ onBack, initialDivision, initialMont
               Memuat data...
             </div>
           ) : error ? (
-            <EmptyState title="Gagal memuat" message={error} actionLabel="Coba lagi" onAction={loadData} />
+            <EmptyState title="Gagal memuat" message={error} actionLabel="Coba lagi" onAction={fetchData} />
           ) : (
             <SummaryTable
               data={filteredData}
@@ -1232,6 +1255,7 @@ export default function SummaryReportPage({ onBack, initialDivision, initialMont
             totalJenisPremi={premiBreakdownData.length}
             printDate={printDate}
           />
+          </PresentSlide>
 
           {/* ===== PRINT SECTION ===== */}
           <div className="srn-print-section">

@@ -26,7 +26,7 @@ export default function ReportKpiCards({ grandTotal, periodLabel, isLoading }) {
         {[1,2,3,4].map(i => (
           <div key={i} className="srn-kpi-card">
             <div className="srn-kpi-label">Loading...</div>
-            <div className="srn-kpi-value">—</div>
+            <div className="srn-kpi-value">-</div>
           </div>
         ))}
       </div>

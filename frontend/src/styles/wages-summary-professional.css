@@ -72,7 +72,7 @@
 }
 
 .summary-premi-appendix-table th {
-    background: linear-gradient(180deg, #14532D 0%, #1E7A45 100%);
+    background: #143D28;
     color: #ffffff;
     font-weight: 700;
     text-align: center;
@@ -88,7 +88,7 @@
 
 /* Group header row */
 .summary-premi-appendix-table .summary-print-group-row td {
-    background: #1E7A45 !important;
+    background: #1F6F43 !important;
     color: #ffffff !important;
     font-weight: 800;
     font-size: 0.9rem;
@@ -489,7 +489,7 @@
 }
 
 .wsp-kpi-previous-line strong {
-    color: #1E7A45;
+    color: #1F6F43;
     font-family: 'Roboto Mono', monospace;
     font-size: 0.72rem;
     font-weight: 800;
@@ -799,12 +799,12 @@
     letter-spacing: 0.01em;
 }
 
-/* Master headers - Premium gradient style */
+/* Master headers - Premium flat style */
 .wsp-table thead tr.wsp-header-master th {
     text-transform: uppercase;
     font-size: 0.78rem;
     letter-spacing: 0.04em;
-    background: linear-gradient(180deg, #14532D 0%, #1E7A45 100%);
+    background: #143D28;
     color: #ffffff;
     border: 1px solid #475569;
     border-right: 1.5px solid #64748b;
@@ -821,12 +821,12 @@
 
 /* Sub headers - Clean professional */
 .wsp-table thead tr.wsp-header-sub th {
-    background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
+    background: #f1f5f9;
     border-bottom: 2px solid #94a3b8;
     font-size: 0.68rem;
     padding: 0.5rem 0.45rem;
     font-weight: 700;
-    color: #1E7A45;
+    color: #1F6F43;
     letter-spacing: 0.02em;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
@@ -836,7 +836,7 @@
 .wsp-table td {
     padding: 0.4rem 0.45rem;
     border: 1px solid #e2e8f0;
-    color: #1E7A45;
+    color: #1F6F43;
     vertical-align: middle;
     white-space: normal !important;
     word-wrap: break-word !important;
@@ -918,7 +918,7 @@
 .th-group-workers {
     background-color: #f1f5f9 !important;
     border-right: 1px solid #cbd5e1 !important;
-    color: #1E7A45 !important;
+    color: #1F6F43 !important;
 }
 
 .th-group-uraian {
@@ -1050,7 +1050,7 @@
 .th-group-manpower {
     background-color: #f1f5f9 !important;
     border-right: 1px solid #cbd5e1 !important;
-    color: #1E7A45 !important;
+    color: #1F6F43 !important;
 }
 
 .th-group-deductions {
@@ -1316,7 +1316,7 @@
 
 .wsp-input-edit:focus {
     outline: none;
-    border-color: #1E7A45;
+    border-color: #1F6F43;
     box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
     background-color: #eff6ff;
     color: #0d2418;

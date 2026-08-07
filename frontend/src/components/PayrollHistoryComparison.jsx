@@ -9,6 +9,21 @@ import {
     getMonthName 
 } from '../services/wagesService';
 import { fetchDivisions } from '../services/gangService';
+import {
+    Printer,
+    Download,
+    AlertTriangle,
+    ClipboardList,
+    Gift,
+    Timer,
+    Star,
+    Landmark,
+    TrendingDown,
+    Wallet,
+    BarChart3,
+    Check,
+    X
+} from 'lucide-react';
 import PrintSignature from './common/PrintSignature';
 import ReportPrintMetadata from './common/ReportPrintMetadata';
 import ReportWatermark from './common/ReportWatermark';
@@ -218,7 +233,7 @@ export default function PayrollHistoryComparison({
     if (error) {
         return (
             <div className="phc-container phc-error">
-                <div className="phc-error-icon">⚠</div>
+                <div className="phc-error-icon"><AlertTriangle size={44} strokeWidth={1.8} aria-hidden="true" /></div>
                 <p>{error}</p>
                 <button onClick={loadComparisonData} className="phc-btn phc-btn-primary">
                     Coba Lagi
@@ -273,10 +288,10 @@ export default function PayrollHistoryComparison({
                 </div>
                 <div className="phc-header-right">
                     <button onClick={() => printReport({ orientation: 'landscape' })} className="phc-btn phc-btn-print">
-                        🖨️ Cetak Laporan
+                        <Printer size={15} strokeWidth={2.2} aria-hidden="true" /> Cetak Laporan
                     </button>
                     <button onClick={handleExport} className="phc-btn phc-btn-export" disabled={!filteredData.length}>
-                        📥 Export CSV
+                        <Download size={15} strokeWidth={2.2} aria-hidden="true" /> Export CSV
                     </button>
                 </div>
             </div>
@@ -325,10 +340,10 @@ export default function PayrollHistoryComparison({
                     <label>Status</label>
                     <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
                         <option value="ALL">Semua Status</option>
-                        <option value="MATCH">✓ Cocok</option>
-                        <option value="MINOR_DIFF">⚠ Selisih Kecil</option>
-                        <option value="MAJOR_DIFF">✗ Selisih Besar</option>
-                        <option value="NO_WAGES">? Tidak Ada Data</option>
+                        <option value="MATCH">Cocok</option>
+                        <option value="MINOR_DIFF">Selisih Kecil</option>
+                        <option value="MAJOR_DIFF">Selisih Besar</option>
+                        <option value="NO_WAGES">Tidak Ada Data</option>
                     </select>
                 </div>
                 <div className="phc-filter-group phc-search">
@@ -350,7 +365,7 @@ export default function PayrollHistoryComparison({
                         <div className="phc-kpi-value">{formatNumber(summaryStats.total_employees)}</div>
                     </div>
                     <div className="phc-kpi-card phc-kpi-match">
-                        <div className="phc-kpi-label">✓ Cocok</div>
+                        <div className="phc-kpi-label">Cocok</div>
                         <div className="phc-kpi-value">{formatNumber(summaryStats.matched)}</div>
                         <div className="phc-kpi-percent">
                             {summaryStats.total_employees > 0 
@@ -359,15 +374,15 @@ export default function PayrollHistoryComparison({
                         </div>
                     </div>
                     <div className="phc-kpi-card phc-kpi-minor">
-                        <div className="phc-kpi-label">⚠ Selisih Kecil</div>
+                        <div className="phc-kpi-label">Selisih Kecil</div>
                         <div className="phc-kpi-value">{formatNumber(summaryStats.minor_differences)}</div>
                     </div>
                     <div className="phc-kpi-card phc-kpi-major">
-                        <div className="phc-kpi-label">✗ Selisih Besar</div>
+                        <div className="phc-kpi-label">Selisih Besar</div>
                         <div className="phc-kpi-value">{formatNumber(summaryStats.major_differences)}</div>
                     </div>
                     <div className="phc-kpi-card phc-kpi-no-data">
-                        <div className="phc-kpi-label">? Tidak Ada Data</div>
+                        <div className="phc-kpi-label">Tidak Ada Data</div>
                         <div className="phc-kpi-value">{formatNumber(summaryStats.no_wages_data)}</div>
                     </div>
                     <div className="phc-kpi-card phc-kpi-variance">
@@ -468,7 +483,7 @@ export default function PayrollHistoryComparison({
                                                         color: badge.color
                                                     }}
                                                 >
-                                                    {badge.icon} {badge.label}
+                                                    {badge.label}
                                                 </span>
                                             </td>
                                         </tr>
@@ -480,7 +495,7 @@ export default function PayrollHistoryComparison({
                                                     <div className="phc-detail-content">
                                                         {/* Daftar Upah Detail - Full Breakdown */}
                                                         <div className="phc-detail-section">
-                                                            <h4>📋 Detail Daftar Upah</h4>
+                                                            <h4 style={{ display: 'flex', alignItems: 'center', gap: 6 }}><ClipboardList size={15} strokeWidth={2.2} aria-hidden="true" /> Detail Daftar Upah</h4>
                                                             <div className="phc-detail-grid">
                                                                 <div className="phc-detail-group-header" style={{ gridColumn: 'span 2' }}>
                                                                     <strong>Absensi & Produksi</strong>
@@ -499,7 +514,7 @@ export default function PayrollHistoryComparison({
 
                                                         {/* Tunjangan Detail */}
                                                         <div className="phc-detail-section">
-                                                            <h4>🎁 Tunjangan Detail</h4>
+                                                            <h4 style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Gift size={15} strokeWidth={2.2} aria-hidden="true" /> Tunjangan Detail</h4>
                                                             <div className="phc-detail-grid">
                                                                 <div><span>Beras:</span> {formatCurrency(item.daftar_upah?.beras_jumlah)}</div>
                                                                 <div><span>Jabatan:</span> {formatCurrency(item.daftar_upah?.jabatan_jumlah)}</div>
@@ -507,7 +522,7 @@ export default function PayrollHistoryComparison({
                                                                 <div><span><strong>Total Tunjangan:</strong></span> <strong>{formatCurrency(item.daftar_upah?.total_tunjangan)}</strong></div>
                                                             </div>
                                                             
-                                                            <h4 style={{ marginTop: '16px' }}>⏱️ Lembur</h4>
+                                                            <h4 style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: 6 }}><Timer size={15} strokeWidth={2.2} aria-hidden="true" /> Lembur</h4>
                                                             <div className="phc-detail-grid">
                                                                 <div><span>Jam Lembur:</span> {item.daftar_upah?.lembur_jam || 0} jam</div>
                                                                 <div><span>Jumlah Lembur:</span> {formatCurrency(item.daftar_upah?.lembur_jumlah)}</div>
@@ -516,14 +531,14 @@ export default function PayrollHistoryComparison({
 
                                                         {/* Premi Detail */}
                                                         <div className="phc-detail-section">
-                                                            <h4>⭐ Premi Detail</h4>
+                                                            <h4 style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Star size={15} strokeWidth={2.2} aria-hidden="true" /> Premi Detail</h4>
                                                             <div className="phc-detail-grid">
                                                                 <div><span>Premi Brondol:</span> {formatCurrency(item.daftar_upah?.premi_brondol)}</div>
                                                                 <div><span>Premi PPH:</span> {formatCurrency(item.daftar_upah?.premi_pph)}</div>
                                                                 <div><span><strong>Total Premi:</strong></span> <strong>{formatCurrency(item.daftar_upah?.total_premi)}</strong></div>
                                                             </div>
                                                             
-                                                            <h4 style={{ marginTop: '16px' }}>🏛️ Pajak (PPH21 TER)</h4>
+                                                            <h4 style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: 6 }}><Landmark size={15} strokeWidth={2.2} aria-hidden="true" /> Pajak (PPH21 TER)</h4>
                                                             <div className="phc-detail-grid">
                                                                 <div><span>PTKP:</span> {item.daftar_upah?.status_ptkp || '-'}</div>
                                                                 <div><span>Kategori TER:</span> {item.daftar_upah?.kategori_ter || '-'}</div>
@@ -534,7 +549,7 @@ export default function PayrollHistoryComparison({
 
                                                         {/* Potongan Detail */}
                                                         <div className="phc-detail-section">
-                                                            <h4>📉 Potongan Detail</h4>
+                                                            <h4 style={{ display: 'flex', alignItems: 'center', gap: 6 }}><TrendingDown size={15} strokeWidth={2.2} aria-hidden="true" /> Potongan Detail</h4>
                                                             <div className="phc-detail-grid">
                                                                 <div><span>SPSI:</span> <span className="phc-text-neg">{formatCurrency(item.daftar_upah?.pot_spsi)}</span></div>
                                                                 <div><span>PPH21:</span> <span className="phc-text-neg">{formatCurrency(item.daftar_upah?.pot_pph21)}</span></div>
@@ -551,7 +566,7 @@ export default function PayrollHistoryComparison({
 
                                                         {/* Wages Data */}
                                                         <div className="phc-detail-section">
-                                                            <h4>💰 Data Wages (Sistem)</h4>
+                                                            <h4 style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Wallet size={15} strokeWidth={2.2} aria-hidden="true" /> Data Wages (Sistem)</h4>
                                                             {item.wages ? (
                                                                 <div className="phc-detail-grid">
                                                                     <div><span>No. Wages:</span> {item.wages.wages_no}</div>
@@ -575,7 +590,7 @@ export default function PayrollHistoryComparison({
 
                                                         {/* Comparison Summary */}
                                                         <div className="phc-detail-section phc-comparison-summary">
-                                                            <h4>📊 Ringkasan Perbandingan</h4>
+                                                            <h4 style={{ display: 'flex', alignItems: 'center', gap: 6 }}><BarChart3 size={15} strokeWidth={2.2} aria-hidden="true" /> Ringkasan Perbandingan</h4>
                                                             <div className="phc-detail-grid">
                                                                 <div>
                                                                     <span>Selisih HK:</span> 
@@ -619,13 +634,13 @@ export default function PayrollHistoryComparison({
                     </div>
                     <div className="phc-footer-legend">
                         <span className="phc-legend-item">
-                            <span className="phc-legend-badge match">✓</span> Cocok (selisih ≤ Rp 1.000)
+                            <span className="phc-legend-badge match"><Check size={11} strokeWidth={3} aria-hidden="true" /></span> Cocok (selisih ≤ Rp 1.000)
                         </span>
                         <span className="phc-legend-item">
-                            <span className="phc-legend-badge minor">⚠</span> Selisih Kecil (≤ Rp 10.000)
+                            <span className="phc-legend-badge minor"><AlertTriangle size={11} strokeWidth={2.6} aria-hidden="true" /></span> Selisih Kecil (≤ Rp 10.000)
                         </span>
                         <span className="phc-legend-item">
-                            <span className="phc-legend-badge major">✗</span> Selisih Besar (&gt; Rp 10.000)
+                            <span className="phc-legend-badge major"><X size={11} strokeWidth={3} aria-hidden="true" /></span> Selisih Besar (&gt; Rp 10.000)
                         </span>
                     </div>
                 </div>

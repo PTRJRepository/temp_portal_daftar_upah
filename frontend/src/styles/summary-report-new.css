@@ -10,9 +10,9 @@
   --srn-navy-950: #0d2418;
   --srn-navy-900: #14532D;
   --srn-navy-850: #173a26;
-  --srn-navy-800: #1E7A45;
+  --srn-navy-800: #1F6F43;
   --srn-blue-700: #2E9E6B;
-  --srn-blue-600: #1E7A45;
+  --srn-blue-600: #1F6F43;
   --srn-blue-500: #3E9E63;
   --srn-blue-100: #E4F4EB;
   --srn-blue-050: #F6FAF5;
@@ -23,11 +23,11 @@
   --srn-line-soft: #E4ECE2;
   --srn-paper: #ffffff;
   --srn-bg: #EDF3EC;
-  --srn-success: #1E7A45;
+  --srn-success: #1F6F43;
   --srn-success-light: #E4F4EB;
-  --srn-danger: #C8463C;
+  --srn-danger: #B3392E;
   --srn-danger-light: #FBE9E6;
-  --srn-warning: #D98A1F;
+  --srn-warning: #B45309;
   --srn-warning-light: #FBF1DE;
   --srn-shadow: 0 10px 30px rgba(18, 36, 26, 0.08);
   --srn-shadow-sm: 0 6px 18px rgba(18, 36, 26, 0.05);
@@ -392,11 +392,11 @@
   position: absolute;
   inset: 0 0 auto 0;
   height: 3px;
-  background: linear-gradient(90deg, var(--srn-navy-900), var(--srn-blue-600));
+  background: var(--srn-navy-900);
 }
 
 .srn-kpi-card.highlight {
-  background: linear-gradient(135deg, var(--srn-navy-900), var(--srn-navy-850));
+  background: var(--srn-navy-900);
 }
 
 .srn-kpi-card.highlight .srn-kpi-label { color: rgba(255,255,255,0.7); }
@@ -662,7 +662,7 @@
 .srn-bar-fill {
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--srn-blue-700), var(--srn-blue-600));
+  background: var(--srn-blue-600);
   transition: width 0.6s ease;
 }
 
@@ -971,7 +971,7 @@
 }
 
 .srn-print-kpi {
-  background: linear-gradient(180deg, var(--srn-navy-900), var(--srn-navy-850));
+  background: var(--srn-navy-900);
   color: #fff;
   border-radius: 8px;
   padding: 10px 12px;
@@ -1401,7 +1401,7 @@
     display: block !important;
     height: 1.2pt !important;
     bottom: -1.2pt !important;
-    background: linear-gradient(90deg, #0A1D3A 0 28%, #2563EB 28% 42%, #d6e0ee 42% 100%) !important;
+    background: linear-gradient(90deg, var(--srn-navy-900) 0 28%, var(--srn-blue-600) 28% 42%, var(--srn-line) 42% 100%) !important;
     print-color-adjust: exact !important;
     -webkit-print-color-adjust: exact !important;
   }
@@ -1555,7 +1555,7 @@
 
   .summary-compare-cell {
     background: #fff7ed !important;
-    color: #0A1D3A !important;
+    color: var(--srn-text-900) !important;
     print-color-adjust: exact !important;
     -webkit-print-color-adjust: exact !important;
   }
@@ -1718,4 +1718,18 @@ body:not(.summary-page-standalone) .topbar:not(.srn-topbar) {
   font-weight: 500;
   display: block;
   margin-top: 1px;
+}
+
+/* ===== PRESENT MODE ===== */
+/* Di atas panggung gelap: toolbar operasional & preview print disembunyikan,
+   hanya deck PresentSlide yang tampil. */
+html.present-mode .srn-toolbar,
+html.present-mode .srn-print-section {
+  display: none !important;
+}
+
+html.present-mode .srn-page-container {
+  padding: 0 !important;
+  min-height: 100vh;
+  background: transparent !important;
 }

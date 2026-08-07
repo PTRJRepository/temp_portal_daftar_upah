@@ -650,7 +650,7 @@ function WagesStatusBadge({ status }) {
             style={{ backgroundColor: badge.bgColor, color: badge.color }}
             title={badge.label}
         >
-            {badge.icon}
+            {badge.label}
         </span>
     );
 }

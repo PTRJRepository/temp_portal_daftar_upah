@@ -2,8 +2,12 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import ReportTable from '../components/common/ReportTable';
 import { useReport } from '../context/ReportContext';
 import { otherIncomesService } from '../services/otherIncomesService';
-import { Save, Trash2, RefreshCw, Calculator, X, Printer, Eye, FileDown } from 'lucide-react';
+import { Save, Trash2, RefreshCw, Calculator, X, Printer, Eye, FileDown, Users, AlertTriangle, CreditCard, CalendarDays, ClipboardList } from 'lucide-react';
 import html2pdf from 'html2pdf.js';
+import PresentSlide from '../components/present/PresentSlide';
+import PresentController from '../components/present/PresentController';
+import usePresentMode from '../components/present/usePresentMode';
+import { StatCard } from '../components/report/reportTheme';
 
 const OtherIncomesPage = ({ initialMonth, initialYear, initialDivision }) => {
     const {
@@ -26,6 +30,8 @@ const OtherIncomesPage = ({ initialMonth, initialYear, initialDivision }) => {
     const [gangMembersSummary, setGangMembersSummary] = useState(null);
     const [blacklistData, setBlacklistData] = useState([]);
     const [previewType, setPreviewType] = useState('MAIN');
+    // Present mode: deck fullscreen per slide (toggle html.present-mode + HUD)
+    const { presenting, activeIndex, enter, exit } = usePresentMode();
 
     const RELIGION_OPTIONS = [
         { value: 'ALL', label: 'Semua Agama' },
@@ -563,11 +569,11 @@ const OtherIncomesPage = ({ initialMonth, initialYear, initialDivision }) => {
         { field: 'sex', headers: ['L/P', null, null], w: 40, className: 'text-center', sticky: true, left: 50, valueGetter: (r) => r.details?.variables?.SEX || r.sex || 'L' },
         {
             field: 'emp_name', headers: ['NAMA KARYAWAN', null, null], w: 200, className: 'text-left', sticky: true, left: 90, render: (r) => (
-                <div style={{ color: r.isBlacklisted ? '#ef4444' : 'inherit' }}>
+                <div style={{ color: r.isBlacklisted ? '#B3392E' : 'inherit' }}>
                     <b>{r.emp_name}</b>
                     <br /><small>{r.new_nik || r.nik} {r.emp_code ? `| ${r.emp_code}` : ''}</small>
-                    {r.isPreview && <span style={{ fontSize: '0.6rem', color: 'green', display: 'block' }}> (Preview)</span>}
-                    {r.isBlacklisted && <span style={{ fontSize: '0.6rem', color: '#ef4444', display: 'block', fontWeight: 'bold' }}> (BLACKLISTED)</span>}
+                    {r.isPreview && <span style={{ fontSize: '0.6rem', color: '#1F6F43', display: 'block' }}> (Preview)</span>}
+                    {r.isBlacklisted && <span style={{ fontSize: '0.6rem', color: '#B3392E', display: 'block', fontWeight: 'bold' }}> (BLACKLISTED)</span>}
                 </div>
             )
         },
@@ -586,7 +592,7 @@ const OtherIncomesPage = ({ initialMonth, initialYear, initialDivision }) => {
         { field: 'amount', headers: ['UPAH KOTOR', null, null], w: 120, className: 'text-right font-bold', format: 'currency' },
         { field: 'pajak', headers: ['PAJAK THR', null, null], w: 90, className: 'text-right', format: 'currency', valueGetter: () => 0 },
         { field: 'upah_bersih', headers: ['UPAH BERSIH', null, null], w: 130, className: 'text-right font-bold', format: 'currency', valueGetter: (r) => Number(r.amount) },  // Tidak ada pajak
-        { field: '_aksi', headers: ['AKSI', null, null], w: 60, className: 'text-center', render: (r) => <button onClick={() => handleDelete(r)} style={{ color: 'red', border: 'none', background: 'none', cursor: 'pointer' }}><Trash2 size={14} /></button> }
+        { field: '_aksi', headers: ['AKSI', null, null], w: 60, className: 'text-center', render: (r) => <button onClick={() => handleDelete(r)} style={{ color: '#B3392E', border: 'none', background: 'none', cursor: 'pointer' }}><Trash2 size={14} /></button> }
     ], [handleDelete]);
 
     const displayData = useMemo(() => {
@@ -677,16 +683,48 @@ const OtherIncomesPage = ({ initialMonth, initialYear, initialDivision }) => {
     };
 
     return (
-        <div style={{ padding: '1rem', height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: '#f8fafc' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', background: '#fff', padding: '1rem', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-                <h1 style={{ fontSize: '1.2rem', margin: 0 }}>Laporan THR</h1>
+        <div style={presenting
+            ? { padding: '1rem' }
+            : { padding: '1rem', minHeight: '100%', backgroundColor: '#F7F5EF' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', background: '#fff', padding: '1rem', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #E0DED2' }}>
+                <h1 style={{ fontSize: '1.2rem', margin: 0, color: '#15211A' }}>Laporan THR</h1>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                     <select value={month} onChange={e => setMonth(Number(e.target.value))}>{Array.from({ length: 12 }, (_, i) => <option key={i + 1} value={i + 1}>Bulan {i + 1}</option>)}</select>
                     <input type="number" value={year} onChange={e => setYear(Number(e.target.value))} style={{ width: '80px' }} />
                 </div>
             </div>
-            <div style={{ flex: 1, backgroundColor: 'white', display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-                <div style={{ padding: '0.5rem', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+
+            {/* PRESENT MODE - tombol Present (mode normal) + HUD deck (present mode) */}
+            <div className="no-print" style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.75rem' }}>
+                <PresentController
+                    presenting={presenting}
+                    activeIndex={activeIndex}
+                    slideCount={2}
+                    onEnter={enter}
+                    onExit={exit}
+                    caption={`Laporan THR · ${getMonthName(month)} ${year} · Unit ${division || '-'}`}
+                />
+            </div>
+
+            <PresentSlide num="01" id="thr-slide-01" title="Konteks & Ringkasan" subtitle="Cakupan filter dan ringkasan nilai THR periode berjalan">
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.9rem', fontSize: '0.8rem', color: '#3D4A41' }}>
+                    <span style={{ background: '#F5F3EC', border: '1px solid #E0DED2', borderRadius: '6px', padding: '4px 10px' }}>Periode Data: <b>{getMonthName(month)} {year}</b></span>
+                    <span style={{ background: '#F5F3EC', border: '1px solid #E0DED2', borderRadius: '6px', padding: '4px 10px' }}>Unit: <b>{division || '-'}</b></span>
+                    <span style={{ background: '#F5F3EC', border: '1px solid #E0DED2', borderRadius: '6px', padding: '4px 10px' }}>Gang: <b>{!gang || gang === 'ALL' ? 'SEMUA' : gang}</b></span>
+                    <span style={{ background: '#F5F3EC', border: '1px solid #E0DED2', borderRadius: '6px', padding: '4px 10px' }}>Group: <b>{gangPrefix ? `Group ${gangPrefix}` : 'SEMUA'}</b></span>
+                    <span style={{ background: '#F5F3EC', border: '1px solid #E0DED2', borderRadius: '6px', padding: '4px 10px' }}>Agama: <b>{filterReligion === 'ALL' ? 'Semua' : filterReligion.replace(/^\d+\s+/, '')}</b></span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '0.75rem' }}>
+                    <StatCard label="Total Karyawan" value={formatCurrency(displayData.length)} note="penerima THR pada tabel" color="#1F6F43" />
+                    <StatCard label="Total Upah Bersih" value={`Rp ${formatCurrency(footerData?.amount || 0)}`} note="akumulasi seluruh penerima" color="#0F766E" />
+                    <StatCard label="Jumlah Gang" value={formatCurrency(new Set(displayData.map(r => r.gang_code || '-')).size)} note="gang terwakili di tabel" color="#7C5A2B" />
+                    <StatCard label="Status Data" value={isLivePreview ? 'Live Preview' : 'Tersimpan'} note={isLivePreview ? 'hasil kalkulasi belum disimpan' : 'data tersimpan di database'} color="#B45309" />
+                </div>
+            </PresentSlide>
+
+            <PresentSlide num="02" id="thr-slide-02" title="Daftar Penerima THR" subtitle="Filter, member gang, dan tabel penerima beserta komponen tunjangan">
+            <div style={{ backgroundColor: 'white', display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #E0DED2', height: presenting ? '76vh' : '62vh', minHeight: 400 }}>
+                <div style={{ padding: '0.5rem', borderBottom: '1px solid #E0DED2', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                         <select value={division} onChange={e => {
                             console.log('[OtherIncomes] Division changed to:', e.target.value);
@@ -702,29 +740,29 @@ const OtherIncomesPage = ({ initialMonth, initialYear, initialDivision }) => {
                         <select value={filterReligion} onChange={e => setFilterReligion(e.target.value)}>{RELIGION_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}</select>
                     </div>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        {isLivePreview && <button onClick={handleBulkSaveTHR} disabled={isSaving} style={{ background: '#10b981', color: 'white', border: 'none', padding: '0.4rem 0.8rem', borderRadius: '4px', cursor: 'pointer' }}><Save size={16} /> Simpan</button>}
-                        <button onClick={handleLivePreviewTHR} disabled={loading || isCalculating} style={{ background: '#f59e0b', color: 'white', border: 'none', padding: '0.4rem 0.8rem', borderRadius: '4px', cursor: 'pointer' }}><Calculator size={16} /> Kalkulasi Live</button>
-                        <button onClick={handleResetData} disabled={loading || isLivePreview} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '0.4rem 0.8rem', borderRadius: '4px', cursor: 'pointer' }}><Trash2 size={16} /> Hapus Semua</button>
-                        <button onClick={fetchIncomes} disabled={loading} style={{ background: 'white', border: '1px solid #ccc', padding: '0.4rem 0.8rem', borderRadius: '4px', cursor: 'pointer' }}><RefreshCw size={16} /> {isLivePreview ? 'Batal' : 'Refresh'}</button>
-                        <button onClick={() => openPreview('MAIN')} style={{ background: '#f1f5f9', border: '1px solid #ccc', padding: '0.4rem 0.8rem', borderRadius: '4px', cursor: 'pointer' }}><Eye size={16} /> Preview Print</button>
-                        <button onClick={() => { fetchBlacklist(); setIsBlacklistModalOpen(true); }} style={{ background: '#4b5563', color: 'white', border: 'none', padding: '0.4rem 0.8rem', borderRadius: '4px', cursor: 'pointer' }} title="Daftar Karyawan yang Dihapus/Dikecualikan"><Trash2 size={16} /> Blacklist</button>
-                        <button onClick={() => openPreview('BANK')} style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '0.4rem 0.8rem', borderRadius: '4px', cursor: 'pointer' }}><Printer size={16} /> Bank List</button>
+                        {isLivePreview && <button onClick={handleBulkSaveTHR} disabled={isSaving} style={{ background: '#1F6F43', color: 'white', border: 'none', padding: '0.4rem 0.8rem', borderRadius: '4px', cursor: 'pointer' }}><Save size={16} /> Simpan</button>}
+                        <button onClick={handleLivePreviewTHR} disabled={loading || isCalculating} style={{ background: '#B45309', color: 'white', border: 'none', padding: '0.4rem 0.8rem', borderRadius: '4px', cursor: 'pointer' }}><Calculator size={16} /> Kalkulasi Live</button>
+                        <button onClick={handleResetData} disabled={loading || isLivePreview} style={{ background: '#B3392E', color: 'white', border: 'none', padding: '0.4rem 0.8rem', borderRadius: '4px', cursor: 'pointer' }}><Trash2 size={16} /> Hapus Semua</button>
+                        <button onClick={fetchIncomes} disabled={loading} style={{ background: 'white', border: '1px solid #E0DED2', padding: '0.4rem 0.8rem', borderRadius: '4px', cursor: 'pointer' }}><RefreshCw size={16} /> {isLivePreview ? 'Batal' : 'Refresh'}</button>
+                        <button onClick={() => openPreview('MAIN')} style={{ background: '#F5F3EC', border: '1px solid #E0DED2', padding: '0.4rem 0.8rem', borderRadius: '4px', cursor: 'pointer' }}><Eye size={16} /> Preview Print</button>
+                        <button onClick={() => { fetchBlacklist(); setIsBlacklistModalOpen(true); }} style={{ background: '#6E7A70', color: 'white', border: 'none', padding: '0.4rem 0.8rem', borderRadius: '4px', cursor: 'pointer' }} title="Daftar Karyawan yang Dihapus/Dikecualikan"><Trash2 size={16} /> Blacklist</button>
+                        <button onClick={() => openPreview('BANK')} style={{ background: '#0F766E', color: 'white', border: 'none', padding: '0.4rem 0.8rem', borderRadius: '4px', cursor: 'pointer' }}><Printer size={16} /> Bank List</button>
                     </div>
                 </div>
                 <div style={{ flex: 1, position: 'relative', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
                     {/* EMP-CODE BASIS: Gang Member Panel from history_gang_member - always visible */}
-                    <div style={{ maxHeight: gangMembers.length === 0 ? '80px' : '320px', overflowY: 'auto', borderBottom: '2px solid #7c3aed', background: '#faf5ff', flexShrink: 0 }}>
-                        <div style={{ padding: '0.5rem 0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: gangMembers.length > 0 ? '1px solid #ede9fe' : 'none', background: '#f5f3ff', position: gangMembers.length > 0 ? 'sticky' : 'static', top: 0, zIndex: 5 }}>
+                    <div style={{ maxHeight: gangMembers.length === 0 ? '80px' : '320px', overflowY: 'auto', borderBottom: '2px solid #1F6F43', background: '#F5F3EC', flexShrink: 0 }}>
+                        <div style={{ padding: '0.5rem 0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: gangMembers.length > 0 ? '1px solid #E0DED2' : 'none', background: '#EFECE2', position: gangMembers.length > 0 ? 'sticky' : 'static', top: 0, zIndex: 5 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                <span style={{ fontWeight: '700', fontSize: '0.8rem', color: '#6d28d9' }}>👥 Member Gang</span>
-                                <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                                <span style={{ fontWeight: '700', fontSize: '0.8rem', color: '#143D28', display: 'inline-flex', alignItems: 'center', gap: '6px' }}><Users size={14} /> Member Gang</span>
+                                <span style={{ fontSize: '0.75rem', color: '#6E7A70' }}>
                                     ({getMonthName(month)} {year})
                                     {gangMembersSummary ? ` · ${gangMembersSummary.total_members} karyawan · ${gangMembersSummary.total_gangs} gang` : ''}
                                 </span>
                             </div>
                             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                                 <button onClick={fetchGangMembers} disabled={gangMembersLoading}
-                                    style={{ background: 'none', border: '1px solid #c4b5fd', cursor: gangMembersLoading ? 'wait' : 'pointer', color: '#7c3aed', fontSize: '0.75rem', fontWeight: '600', padding: '3px 10px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    style={{ background: 'none', border: '1px solid #CFE3D6', cursor: gangMembersLoading ? 'wait' : 'pointer', color: '#1F6F43', fontSize: '0.75rem', fontWeight: '600', padding: '3px 10px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                     <RefreshCw size={11} className={gangMembersLoading ? 'spin' : ''} />
                                     Refresh
                                 </button>
@@ -732,31 +770,32 @@ const OtherIncomesPage = ({ initialMonth, initialYear, initialDivision }) => {
                         </div>
 
                         {gangMembersLoading ? (
-                            <div style={{ padding: '0.75rem', textAlign: 'center', color: '#94a3b8', fontSize: '0.8rem' }}>Memuat member gang...</div>
+                            <div style={{ padding: '0.75rem', textAlign: 'center', color: '#6E7A70', fontSize: '0.8rem' }}>Memuat member gang...</div>
                         ) : gangMembers.length === 0 ? (
-                            <div style={{ padding: '0.5rem 0.75rem', color: '#94a3b8', fontSize: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span>⚠️ Tidak ada data gang history. Pastikan data aggregation sudah di-seed untuk periode ini.</span>
+                            <div style={{ padding: '0.5rem 0.75rem', color: '#6E7A70', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <AlertTriangle size={13} color="#B45309" />
+                                <span>Tidak ada data gang history. Pastikan data aggregation sudah di-seed untuk periode ini.</span>
                             </div>
                         ) : (
                             <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', padding: '0.5rem' }}>
                                 {gangMembers.map(gangGroup => (
                                     <div key={gangGroup.gang_code} style={{
-                                        background: gang === gangGroup.gang_code ? '#ede9fe' : 'white',
-                                        border: `1px solid ${gang === gangGroup.gang_code ? '#7c3aed' : '#e2e8f0'}`,
+                                        background: gang === gangGroup.gang_code ? '#E3EFE7' : 'white',
+                                        border: `1px solid ${gang === gangGroup.gang_code ? '#1F6F43' : '#E0DED2'}`,
                                         borderRadius: '8px', padding: '0.5rem', minWidth: '210px', maxWidth: '250px', flexShrink: 0,
                                         cursor: gang === gangGroup.gang_code ? 'default' : 'pointer',
-                                        boxShadow: gang === gangGroup.gang_code ? '0 2px 8px rgba(124,58,237,0.15)' : 'none',
+                                        boxShadow: gang === gangGroup.gang_code ? '0 2px 8px rgba(31,111,67,0.15)' : 'none',
                                         transition: 'all 0.15s'
                                     }}
                                         onClick={() => setGang(gangGroup.gang_code)}
-                                        onMouseOver={e => { if (gang !== gangGroup.gang_code) { e.currentTarget.style.borderColor = '#a78bfa'; e.currentTarget.style.background = '#f5f3ff'; } }}
-                                        onMouseOut={e => { if (gang !== gangGroup.gang_code) { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.background = 'white'; } }}
+                                        onMouseOver={e => { if (gang !== gangGroup.gang_code) { e.currentTarget.style.borderColor = '#5E9C7B'; e.currentTarget.style.background = '#F0F5F1'; } }}
+                                        onMouseOut={e => { if (gang !== gangGroup.gang_code) { e.currentTarget.style.borderColor = '#E0DED2'; e.currentTarget.style.background = 'white'; } }}
                                     >
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.375rem' }}>
-                                            <span style={{ fontWeight: '700', fontSize: '0.85rem', color: '#6d28d9' }}>{gangGroup.gang_code}</span>
+                                            <span style={{ fontWeight: '700', fontSize: '0.85rem', color: '#143D28' }}>{gangGroup.gang_code}</span>
                                             <span style={{
-                                                background: gang === gangGroup.gang_code ? '#7c3aed' : '#f1f5f9',
-                                                color: gang === gangGroup.gang_code ? 'white' : '#64748b',
+                                                background: gang === gangGroup.gang_code ? '#1F6F43' : '#F5F3EC',
+                                                color: gang === gangGroup.gang_code ? 'white' : '#6E7A70',
                                                 fontWeight: '700', fontSize: '0.7rem', padding: '1px 8px', borderRadius: '10px'
                                             }}>
                                                 {gangGroup.member_count}
@@ -766,28 +805,29 @@ const OtherIncomesPage = ({ initialMonth, initialYear, initialDivision }) => {
                                             {gangGroup.members.map((m, idx) => (
                                                 <div key={`${m.emp_code}-${idx}`} style={{
                                                     padding: '3px 5px', borderRadius: '4px', fontSize: '0.68rem',
-                                                    background: '#f8fafc', border: '1px solid #f1f5f9',
+                                                    background: '#F7F5EF', border: '1px solid #EFECE2',
                                                     display: 'flex', flexDirection: 'column', gap: '1px'
                                                 }}>
                                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                        <span style={{ fontWeight: '600', color: '#334155', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, maxWidth: '140px' }} title={m.emp_name}>{m.emp_name}</span>
+                                                        <span style={{ fontWeight: '600', color: '#15211A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, maxWidth: '140px' }} title={m.emp_name}>{m.emp_name}</span>
                                                         <span style={{
-                                                            background: m.sex === 'P' ? '#fce7f3' : '#dbeafe',
-                                                            color: m.sex === 'P' ? '#9d174d' : '#1e40af',
+                                                            background: m.sex === 'P' ? '#F2D8D2' : '#D6EAE7',
+                                                            color: m.sex === 'P' ? '#B3392E' : '#0F766E',
                                                             fontWeight: '700', fontSize: '0.6rem', padding: '0px 4px', borderRadius: '4px', flexShrink: 0, marginLeft: '2px'
                                                         }}>{m.sex}</span>
                                                     </div>
-                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#94a3b8', fontSize: '0.62rem' }}>
-                                                        <span style={{ fontFamily: 'monospace', color: '#1e40af', fontWeight: '600', fontSize: '0.6rem' }}>{m.emp_code}</span>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#6E7A70', fontSize: '0.62rem' }}>
+                                                        <span style={{ fontFamily: 'monospace', color: '#0F766E', fontWeight: '600', fontSize: '0.6rem' }}>{m.emp_code}</span>
                                                         <span style={{ fontSize: '0.6rem' }}>{(m.religion || '').replace(/^\d+\s+/, '')}</span>
                                                     </div>
                                                     {m.bank_acc_no && m.bank_acc_no !== '0' && (
-                                                        <div style={{ fontSize: '0.6rem', color: '#16a34a', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={`Bank: ${m.bank_code || 'BRI'} | ${m.bank_acc_no}`}>
-                                                            💳 {m.bank_acc_no}
+                                                        <div style={{ fontSize: '0.6rem', color: '#1F6F43', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '4px' }} title={`Bank: ${m.bank_code || 'BRI'} | ${m.bank_acc_no}`}>
+                                                            <CreditCard size={10} /> {m.bank_acc_no}
                                                         </div>
                                                     )}
                                                     {m.join_date && (
-                                                        <div style={{ fontSize: '0.6rem', color: '#f59e0b' }}>📅 {m.join_date}
+                                                        <div style={{ fontSize: '0.6rem', color: '#B45309', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                            <CalendarDays size={10} /> {m.join_date}
                                                         </div>
                                                     )}
                                                 </div>
@@ -801,8 +841,8 @@ const OtherIncomesPage = ({ initialMonth, initialYear, initialDivision }) => {
 
                     {(loading || isCalculating || isSaving) && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(255,255,255,0.7)', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '0.5rem' }}><RefreshCw className="spin" size={32} /><span style={{ fontSize: '0.85rem', color: '#555' }}>{isCalculating ? 'Sedang kalkulasi THR...' : isSaving ? 'Menyimpan...' : 'Memuat data...'}</span></div>}
                     {!loading && !isCalculating && displayData.length === 0 && (
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '200px', color: '#888' }}>
-                            <span style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📋</span>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '200px', color: '#6E7A70' }}>
+                            <ClipboardList size={32} style={{ marginBottom: '0.5rem' }} />
                             <p style={{ margin: 0, fontWeight: 'bold' }}>Belum ada data THR untuk periode ini.</p>
                             <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem' }}>Klik <b>Kalkulasi Live</b> untuk menghitung, lalu <b>Simpan</b>.</p>
                         </div>
@@ -810,16 +850,17 @@ const OtherIncomesPage = ({ initialMonth, initialYear, initialDivision }) => {
                     <ReportTable columns={reportColumns} data={displayData} footerData={footerData} footerLabel="TOTAL" footerLabelColSpan={8} statusBar={<><strong>Total:</strong> {displayData.length} karyawan</>} />
                 </div>
             </div>
-            {isPreviewModalOpen && <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 2000, display: 'flex', padding: '2rem' }}><div style={{ background: 'white', flex: 1, display: 'flex', flexDirection: 'column', borderRadius: '8px', overflow: 'hidden' }}><div style={{ padding: '1rem', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><h2>Preview {previewType === 'MAIN' ? 'Laporan Utama' : 'Bank List'}</h2><div style={{ display: 'flex', gap: '1rem' }}><button onClick={() => { const win = window.open('', '_blank'); win.document.write(`<html><body>${previewType === 'MAIN' ? getReportHTML(displayData, 'portrait') : getBankListHTML(displayData)}<script>window.onload=function(){window.print();}</script></body></html>`); win.document.close(); }} style={{ background: '#6366f1', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer' }}>Print PDF</button>
-                <button onClick={handleDownloadPDF} style={{ background: '#f59e0b', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer' }}><FileDown size={16} /> Save to PDF</button>
-                {previewType === 'BANK' && <button onClick={handleExportBankList} style={{ background: '#10b981', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer' }}>Export Excel</button>}
-                {previewType === 'MAIN' && <button onClick={handleExportTHR} style={{ background: '#10b981', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer' }}>Export Excel</button>}
-                <button onClick={() => setIsPreviewModalOpen(false)} style={{ border: 'none', background: 'none', cursor: 'pointer' }}><X size={24} /></button></div></div><div style={{ flex: 1, overflow: 'auto', padding: '2rem', background: '#f3f4f6' }} dangerouslySetInnerHTML={{ __html: previewType === 'MAIN' ? getReportHTML(displayData, 'portrait') : getBankListHTML(displayData) }} /></div></div>}
+            </PresentSlide>
+            {isPreviewModalOpen && <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 2000, display: 'flex', padding: '2rem' }}><div style={{ background: 'white', flex: 1, display: 'flex', flexDirection: 'column', borderRadius: '8px', overflow: 'hidden' }}><div style={{ padding: '1rem', borderBottom: '1px solid #E0DED2', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><h2>Preview {previewType === 'MAIN' ? 'Laporan Utama' : 'Bank List'}</h2><div style={{ display: 'flex', gap: '1rem' }}><button onClick={() => { const win = window.open('', '_blank'); win.document.write(`<html><body>${previewType === 'MAIN' ? getReportHTML(displayData, 'portrait') : getBankListHTML(displayData)}<script>window.onload=function(){window.print();}</script></body></html>`); win.document.close(); }} style={{ background: '#1F6F43', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer' }}>Print PDF</button>
+                <button onClick={handleDownloadPDF} style={{ background: '#B45309', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer' }}><FileDown size={16} /> Save to PDF</button>
+                {previewType === 'BANK' && <button onClick={handleExportBankList} style={{ background: '#1F6F43', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer' }}>Export Excel</button>}
+                {previewType === 'MAIN' && <button onClick={handleExportTHR} style={{ background: '#1F6F43', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer' }}>Export Excel</button>}
+                <button onClick={() => setIsPreviewModalOpen(false)} style={{ border: 'none', background: 'none', cursor: 'pointer' }}><X size={24} /></button></div></div><div style={{ flex: 1, overflow: 'auto', padding: '2rem', background: '#F7F5EF' }} dangerouslySetInnerHTML={{ __html: previewType === 'MAIN' ? getReportHTML(displayData, 'portrait') : getBankListHTML(displayData) }} /></div></div>}
 
             {isBlacklistModalOpen && (
                 <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <div style={{ background: 'white', width: '600px', maxHeight: '80vh', display: 'flex', flexDirection: 'column', borderRadius: '8px', overflow: 'hidden' }}>
-                        <div style={{ padding: '1rem', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#1f2937', color: 'white' }}>
+                        <div style={{ padding: '1rem', borderBottom: '1px solid #E0DED2', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#15211A', color: 'white' }}>
                             <h3 style={{ margin: 0 }}>Blacklist Karyawan (Dikecualikan) - {getMonthName(month)} {year}</h3>
                             <button onClick={() => setIsBlacklistModalOpen(false)} style={{ color: 'white', border: 'none', background: 'none', cursor: 'pointer' }}><X size={24} /></button>
                         </div>
@@ -845,7 +886,7 @@ const OtherIncomesPage = ({ initialMonth, initialYear, initialDivision }) => {
                                                 <td style={{ padding: '0.5rem', textAlign: 'center' }}>
                                                     <button
                                                         onClick={() => handleRestoreFromBlacklist(b.id)}
-                                                        style={{ background: '#10b981', color: 'white', border: 'none', padding: '0.3rem 0.6rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem' }}
+                                                        style={{ background: '#1F6F43', color: 'white', border: 'none', padding: '0.3rem 0.6rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem' }}
                                                     >
                                                         Restore
                                                     </button>

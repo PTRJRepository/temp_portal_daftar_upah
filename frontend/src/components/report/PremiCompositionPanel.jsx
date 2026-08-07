@@ -10,7 +10,7 @@ const fmtCompact = (v) => {
     return `Rp ${n.toLocaleString('id-ID')}`;
 };
 
-const PREMI_COLORS = { brondol: '#6C4FC4', pruning: '#1E7A45', insentif: '#D98A1F', kinerja: '#2E9E6B', lainnya: '#94A3B8' };
+const PREMI_COLORS = { brondol: '#0F766E', pruning: '#1F6F43', insentif: '#B45309', kinerja: '#2E9E6B', lainnya: '#94A3B8' };
 
 /**
  * PremiCompositionPanel — premi share dalam upah kotor + komposisi jenis premi + per-divisi ranking.

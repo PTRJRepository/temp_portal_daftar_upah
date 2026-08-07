@@ -110,7 +110,7 @@ export default function GangHistoricalReportPage({ division, gangCode: initialGa
                 <div className="header-info">
                     <h1 style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>Daftar Upah - Historical Report <MetricInfo metricKey="upah_bersih" /></h1>
                     <p>Laporan gaji historis berdasarkan data yang telah disimpan</p>
-                    <button onClick={() => navigate('/cost-per-ton-story')} style={{ marginTop: 6, padding: '6px 12px', borderRadius: 8, border: 'none', background: '#1E7A45', color: '#fff', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Cost/Ton Story →</button>
+                    <button onClick={() => navigate('/cost-per-ton-story')} style={{ marginTop: 6, padding: '6px 12px', borderRadius: 8, border: 'none', background: '#1F6F43', color: '#fff', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Cost/Ton Story →</button>
                 </div>
             </div>
 

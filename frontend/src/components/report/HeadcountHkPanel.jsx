@@ -47,7 +47,7 @@ export default function HeadcountHkPanel({ trends = [], breakdown = [] }) {
                                 <YAxis yAxisId="l" tick={{ fontSize: 10, fill: C.upah }} />
                                 <YAxis yAxisId="r" orientation="right" tickFormatter={(v) => (Number(v) || 0).toFixed(1)} tick={{ fontSize: 10, fill: C.lembur }} />
                                 <Tooltip formatter={(v, n) => [String(v), n === 'hkPer' ? 'HK/orang' : n === 'hk' ? 'HK' : 'Headcount']} contentStyle={{ borderRadius: 10, border: `1px solid ${C.border}`, fontSize: 12 }} />
-                                <Bar yAxisId="l" dataKey="hc" name="Headcount" fill="#1E7A45" fillOpacity={0.65} radius={[4, 4, 0, 0]} />
+                                <Bar yAxisId="l" dataKey="hc" name="Headcount" fill="#1F6F43" fillOpacity={0.65} radius={[4, 4, 0, 0]} />
                                 <Bar yAxisId="l" dataKey="hk" name="HK" fill="#94A3B8" fillOpacity={0.5} radius={[4, 4, 0, 0]} />
                                 <Line yAxisId="r" type="monotone" dataKey="hkPer" name="HK/orang" stroke="#D98A1F" strokeWidth={2} dot={false} />
                             </ComposedChart>
@@ -64,7 +64,7 @@ export default function HeadcountHkPanel({ trends = [], breakdown = [] }) {
                                 <YAxis type="category" dataKey="code" width={36} tick={{ fontSize: 12, fill: C.text, fontWeight: 700 }} />
                                 <Tooltip formatter={(v, n) => [String(v), n === 'hkPer' ? 'HK/orang' : n]} contentStyle={{ borderRadius: 10, border: `1px solid ${C.border}`, fontSize: 12 }} />
                                 <Legend />
-                                <Bar dataKey="hc" name="Headcount" stackId="a" fill="#1E7A45" />
+                                <Bar dataKey="hc" name="Headcount" stackId="a" fill="#1F6F43" />
                                 <Bar dataKey="hk" name="HK" stackId="a" fill="#94A3B8" />
                             </BarChart>
                         </ResponsiveContainer>

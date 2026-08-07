@@ -120,8 +120,10 @@ export default function SalaryAnalysisPage() {
     const gang = searchParams.get('gang_code') || '';
     // default month/year: latest available period (NOT new Date()) - e.g. data terakhir adalah bulan 7
     const [defaultPeriod, setDefaultPeriod] = useState(null);
-    const month = parseInt(searchParams.get('month')) || defaultPeriod?.month || new Date().getMonth() + 1;
-    const year = parseInt(searchParams.get('year')) || defaultPeriod?.year || new Date().getFullYear();
+    const urlMonth = parseInt(searchParams.get('month'));
+    const urlYear = parseInt(searchParams.get('year'));
+    const month = urlMonth || defaultPeriod?.month || new Date().getMonth() + 1;
+    const year = urlYear || defaultPeriod?.year || new Date().getFullYear();
 
     const [divisions, setDivisions] = useState([]);
     const [gangs, setGangs] = useState([]);
@@ -154,16 +156,25 @@ export default function SalaryAnalysisPage() {
         setSearchParams(buildAnalysisSearchParams(searchParams, overrides));
     }, [searchParams, setSearchParams]);
 
-    // fetch latest available period → default month/year (data terakhir, bukan new Date())
+    // Fetch latest available period → default month/year (data terakhir, bukan new Date()).
+    // HANYA diterapkan bila URL belum menyebut month/year DAN belum ada roster yang tampil.
+    // Setelah roster termuat, periode tidak boleh diganti diam-diam — itu membuat konten
+    // yang sudah muncul tiba-tiba hilang (periode baru kosong). Ganti periode lewat dropdown.
     useEffect(() => {
         if (defaultPeriod) return;
         (async () => {
             try {
                 const r = await axios.get('/payroll/dashboard/latest-period', { headers: authHeaders });
-                if (r.data?.data) setDefaultPeriod(r.data.data);
+                if (r.data?.data) {
+                    setDefaultPeriod(prev => {
+                        if (urlMonth || urlYear) return prev;                 // URL menang
+                        if (employees.length > 0 || globalRoster.length > 0) return prev; // jangan ganti saat data tampil
+                        return r.data.data;
+                    });
+                }
             } catch { /* ignore */ }
         })();
-    }, [authHeaders, defaultPeriod]);
+    }, [authHeaders, defaultPeriod, urlMonth, urlYear, employees.length, globalRoster.length]);
 
     // GLOBAL load on mount - snapshot first (fast, ~200ms), live-fill divisions missing from snapshot
     const PRODUCING = ['ARC','DME','ARA','AB1','P1A','P2A','P2B','AB2','P1B','IJL'];
@@ -881,9 +892,24 @@ export default function SalaryAnalysisPage() {
                             ) : null}
                             </PresentSlide>
                         </>
-                    ) : <EmptyState title="Tidak ada data global" message={`Tidak ada data payroll untuk ${month}/${year}.`} />
+                    ) : <EmptyState title="Tidak ada data global"
+                        message={defaultPeriod && (month !== defaultPeriod.month || year !== defaultPeriod.year)
+                            ? `Tidak ada data payroll untuk ${month}/${year}. Data tersedia sampai ${defaultPeriod.month}/${defaultPeriod.year}.`
+                            : `Tidak ada data payroll untuk ${month}/${year}.`}
+                        actionLabel={defaultPeriod && (month !== defaultPeriod.month || year !== defaultPeriod.year) ? `Lihat ${defaultPeriod.month}/${defaultPeriod.year}` : undefined}
+                        onAction={defaultPeriod ? () => applyParams({ month: defaultPeriod.month, year: defaultPeriod.year }) : undefined} />
                 )}
-                {!error && division && !loading && employees.length === 0 && <EmptyState title="Tidak ada data" message={`Tidak ada karyawan untuk ${division} ${gang || ''} pada ${month}/${year}.`} />}
+                {!error && division && !loading && employees.length === 0 && (
+                    <EmptyState
+                        title="Tidak ada data"
+                        message={defaultPeriod && (month !== defaultPeriod.month || year !== defaultPeriod.year)
+                            ? `Tidak ada karyawan untuk ${division} ${gang || ''} pada ${month}/${year}. Data tersedia sampai ${defaultPeriod.month}/${defaultPeriod.year}.`
+                            : `Tidak ada karyawan untuk ${division} ${gang || ''} pada ${month}/${year}.`}
+                        actionLabel={defaultPeriod && (month !== defaultPeriod.month || year !== defaultPeriod.year)
+                            ? `Lihat ${defaultPeriod.month}/${defaultPeriod.year}` : undefined}
+                        onAction={defaultPeriod ? () => applyParams({ month: defaultPeriod.month, year: defaultPeriod.year }) : undefined}
+                    />
+                )}
             </ReportBody>
 
             <style>{`@keyframes spin { to { transform: rotate(360deg) } } @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } } @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }`}</style>

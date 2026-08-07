@@ -48,7 +48,7 @@ export default function OvertimeDeepDivePanel({ trends = [], breakdown = [] }) {
                                 <YAxis yAxisId="l" tickFormatter={(v) => `${(v / 1e6).toFixed(0)}jt`} tick={{ fontSize: 10, fill: C.lembur }} />
                                 <YAxis yAxisId="r" orientation="right" tickFormatter={(v) => `${v.toFixed(1)}%`} tick={{ fontSize: 10, fill: C.text2 }} />
                                 <Tooltip formatter={(v, n) => [n === 'ot' ? fmtIDR(v) : `${Number(v).toFixed(1)}%`, n === 'ot' ? 'Lembur' : 'Share %']} contentStyle={{ borderRadius: 10, border: `1px solid ${C.border}`, fontSize: 12 }} />
-                                <Bar yAxisId="l" dataKey="ot" name="Lembur (Rp)" fill="#D98A1F" fillOpacity={0.9} radius={[4, 4, 0, 0]} />
+                                <Bar yAxisId="l" dataKey="ot" name="Lembur (Rp)" fill="#B45309" fillOpacity={0.9} radius={[4, 4, 0, 0]} />
                                 <Line yAxisId="r" type="monotone" dataKey="share" name="Share %" stroke="#6C4FC4" strokeWidth={2} dot={false} />
                             </ComposedChart>
                         </ResponsiveContainer>
@@ -63,7 +63,7 @@ export default function OvertimeDeepDivePanel({ trends = [], breakdown = [] }) {
                                 <XAxis type="number" tickFormatter={(v) => `${(v / 1e6).toFixed(0)}jt`} tick={{ fontSize: 10, fill: C.muted }} />
                                 <YAxis type="category" dataKey="code" width={36} tick={{ fontSize: 12, fill: C.text, fontWeight: 700 }} />
                                 <Tooltip formatter={(v, n) => [n === 'ot' ? fmtIDR(v) : `${Number(v).toFixed(1)}%`, n === 'ot' ? 'Lembur' : 'Share %']} contentStyle={{ borderRadius: 10, border: `1px solid ${C.border}`, fontSize: 12 }} />
-                                <Bar dataKey="ot" radius={[0, 6, 6, 0]} fill="#D98A1F" />
+                                <Bar dataKey="ot" radius={[0, 6, 6, 0]} fill="#B45309" />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>

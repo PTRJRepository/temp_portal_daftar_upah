@@ -7,6 +7,9 @@ import MonthSelector from '../components/common/MonthSelector';
 import ReportToolbar from '../components/common/ReportToolbar';
 import LoadingScreen from '../components/common/LoadingScreen';
 import { MetricInfo, EmptyState } from '../components/report/reportTheme';
+import PresentSlide from '../components/present/PresentSlide';
+import PresentController from '../components/present/PresentController';
+import usePresentMode from '../components/present/usePresentMode';
 
 const DetailedSalaryAnalysisPage = ({ onBack, initialMonth, initialYear, initialDivision }) => {
     const { token } = useAuth();
@@ -29,6 +32,9 @@ const DetailedSalaryAnalysisPage = ({ onBack, initialMonth, initialYear, initial
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [data, setData] = useState(null);
+
+    // Present mode: deck fullscreen per slide (toggle html.present-mode + HUD)
+    const { presenting, activeIndex, enter, exit } = usePresentMode();
 
     // Fetch Divisions
     useEffect(() => {
@@ -114,6 +120,10 @@ const DetailedSalaryAnalysisPage = ({ onBack, initialMonth, initialYear, initial
         return new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(value || 0);
     };
 
+    // Present deck metadata: slide 01 selalu ada, slide 02-03 hanya saat data termuat
+    const hasData = Boolean(!loading && data && data.summary_breakdown);
+    const presentCaption = `Analisis Upah Bersih & Lembur · ${month}-${year} · ${gang ? `Gang ${gang}` : 'Gang belum dipilih'}`;
+
     const renderSummaryCard = (title, value, subtitle, highlight = false) => (
         <div style={{
             padding: '1.25rem',
@@ -141,7 +151,7 @@ const DetailedSalaryAnalysisPage = ({ onBack, initialMonth, initialYear, initial
                     onBack={onBack}
                     actions={
                         <>
-                            <button onClick={() => navigate(`/cost-per-ton-story?month=${month || ''}&year=${year || ''}`)} style={{ padding: '0.375rem 0.875rem', borderRadius: '0.375rem', border: 'none', background: '#1E7A45', color: '#fff', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}>Cost/Ton Story →</button>
+                            <button onClick={() => navigate(`/cost-per-ton-story?month=${month || ''}&year=${year || ''}`)} style={{ padding: '0.375rem 0.875rem', borderRadius: '0.375rem', border: 'none', background: '#1F6F43', color: '#fff', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}>Cost/Ton Story →</button>
                             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                                 <select
                                     value={division}
@@ -202,6 +212,18 @@ const DetailedSalaryAnalysisPage = ({ onBack, initialMonth, initialYear, initial
                 />
             </div>
 
+            {/* PRESENT MODE - tombol Present (mode normal) + HUD deck (present mode) */}
+            <div className="no-print" style={{ display: 'flex', justifyContent: 'flex-end', padding: '0.75rem 2rem 0' }}>
+                <PresentController
+                    presenting={presenting}
+                    activeIndex={activeIndex}
+                    slideCount={hasData ? 3 : 1}
+                    onEnter={enter}
+                    onExit={exit}
+                    caption={presentCaption}
+                />
+            </div>
+
             <div style={{ flex: 1, overflowY: 'auto', padding: '2rem' }}>
                 {loading && <LoadingScreen isLoading={true} message="Menganalisis data gang..." />}
 
@@ -211,130 +233,142 @@ const DetailedSalaryAnalysisPage = ({ onBack, initialMonth, initialYear, initial
                     </div>
                 )}
 
-                {!loading && !error && !data && (
-                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: '#64748b' }}>
-                        Pilih divisi, gang, dan periode lalu klik "Tampilkan Analisis"
-                    </div>
-                )}
+                {/* SLIDE 01 - Konteks & Ringkasan Gang */}
+                <PresentSlide num="01" id="slide-01" title="Konteks & Ringkasan Gang" subtitle="Profil gang, periode, dan metrik utama upah bersih">
+                    {hasData ? (
+                        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
 
-                {!loading && data && data.summary_breakdown && (
-                    <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                            {/* Header Info */}
+                            <div>
+                                <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#0f172a', marginBottom: '0.25rem' }}>
+                                    Analisis Gang: {data.gang_code} - {data.summary_breakdown.gang_description}
+                                </h2>
+                                <p style={{ color: '#64748b' }}>Periode: {month}-{year} | Jumlah Pekerja: {data.summary_breakdown.total_employees}</p>
+                            </div>
 
-                        {/* Header Info */}
-                        <div>
-                            <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#0f172a', marginBottom: '0.25rem' }}>
-                                Analisis Gang: {data.gang_code} - {data.summary_breakdown.gang_description}
-                            </h2>
-                            <p style={{ color: '#64748b' }}>Periode: {month}-{year} | Jumlah Pekerja: {data.summary_breakdown.total_employees}</p>
+                            {/* Summary Metrics */}
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                                {renderSummaryCard('Total Upah Bersih', parseFloat(data.summary_breakdown.total_upah_bersih), 'Setelah potongan', true)}
+                                {renderSummaryCard('Total HK', parseFloat(data.summary_breakdown.total_hk), 'Hari Kerja')}
+                                {renderSummaryCard('Gaji Pokok', parseFloat(data.summary_breakdown.total_gaji_pokok), 'Sebelum tunjangan/premi')}
+                                {renderSummaryCard('Total Premi', parseFloat(data.summary_breakdown.total_premi), 'Insentif & Kinerja')}
+                                {renderSummaryCard('Total Lembur', parseFloat(data.summary_breakdown.total_lembur), 'Total bayaran overtime', parseFloat(data.summary_breakdown.total_lembur) > 0)}
+                                {renderSummaryCard('Total Potongan', parseFloat(data.summary_breakdown.total_potongan), 'BPJS, Pajak, SPSI, dll')}
+                            </div>
                         </div>
+                    ) : (
+                        !loading && !error && (
+                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '30vh', color: '#64748b' }}>
+                                Pilih divisi, gang, dan periode lalu klik "Tampilkan Analisis"
+                            </div>
+                        )
+                    )}
+                </PresentSlide>
 
-                        {/* Summary Metrics */}
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-                            {renderSummaryCard('Total Upah Bersih', parseFloat(data.summary_breakdown.total_upah_bersih), 'Setelah potongan', true)}
-                            {renderSummaryCard('Total HK', parseFloat(data.summary_breakdown.total_hk), 'Hari Kerja')}
-                            {renderSummaryCard('Gaji Pokok', parseFloat(data.summary_breakdown.total_gaji_pokok), 'Sebelum tunjangan/premi')}
-                            {renderSummaryCard('Total Premi', parseFloat(data.summary_breakdown.total_premi), 'Insentif & Kinerja')}
-                            {renderSummaryCard('Total Lembur', parseFloat(data.summary_breakdown.total_lembur), 'Total bayaran overtime', parseFloat(data.summary_breakdown.total_lembur) > 0)}
-                            {renderSummaryCard('Total Potongan', parseFloat(data.summary_breakdown.total_potongan), 'BPJS, Pajak, SPSI, dll')}
-                        </div>
+                {hasData && (
+                    <>
+                        {/* SLIDE 02 - Rincian Upah & Potongan */}
+                        <PresentSlide num="02" id="slide-02" title="Rincian Upah & Potongan" subtitle="Komponen upah kotor dan potongan wajib dalam satu pandangan">
+                            {/* detailed upah breakdown grid */}
+                            <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                                {/* Rincian Upah */}
+                                <div style={{ backgroundColor: '#ffffff', borderRadius: '0.5rem', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)' }}>
+                                    <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#1e293b', marginBottom: '1rem', borderBottom: '2px solid #f1f5f9', paddingBottom: '0.5rem' }}>
+                                        Rincian Komponen Upah Kotor
+                                    </h3>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Gaji Pokok</span><span style={{ fontWeight: '500' }}>{formatCurrency(data.summary_breakdown.total_gaji_pokok)}</span></div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Tunjungan Beras</span><span style={{ fontWeight: '500' }}>{formatCurrency(data.summary_breakdown.total_beras)}</span></div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Tunjangan Jabatan</span><span style={{ fontWeight: '500' }}>{formatCurrency(data.summary_breakdown.total_jabatan)}</span></div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Masa Kerja</span><span style={{ fontWeight: '500' }}>{formatCurrency(data.summary_breakdown.total_masa_kerja)}</span></div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Lembur</span><span style={{ fontWeight: '500', color: '#b45309' }}>{formatCurrency(data.summary_breakdown.total_lembur)}</span></div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Total Premi</span><span style={{ fontWeight: '500', color: '#15803d' }}>{formatCurrency(data.summary_breakdown.total_premi)}</span></div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dashed #cbd5e1', paddingTop: '0.75rem', fontWeight: 'bold' }}><span>Total Upah Kotor</span><span>{formatCurrency(data.summary_breakdown.total_upah_kotor)}</span></div>
+                                    </div>
+                                </div>
 
-                        {/* detailed upah breakdown grid */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-                            {/* Rincian Upah */}
-                            <div style={{ backgroundColor: '#ffffff', borderRadius: '0.5rem', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)' }}>
-                                <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#1e293b', marginBottom: '1rem', borderBottom: '2px solid #f1f5f9', paddingBottom: '0.5rem' }}>
-                                    Rincian Komponen Upah Kotor
-                                </h3>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Gaji Pokok</span><span style={{ fontWeight: '500' }}>{formatCurrency(data.summary_breakdown.total_gaji_pokok)}</span></div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Tunjungan Beras</span><span style={{ fontWeight: '500' }}>{formatCurrency(data.summary_breakdown.total_beras)}</span></div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Tunjungan Jabatan</span><span style={{ fontWeight: '500' }}>{formatCurrency(data.summary_breakdown.total_jabatan)}</span></div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Masa Kerja</span><span style={{ fontWeight: '500' }}>{formatCurrency(data.summary_breakdown.total_masa_kerja)}</span></div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Lembur</span><span style={{ fontWeight: '500', color: '#b45309' }}>{formatCurrency(data.summary_breakdown.total_lembur)}</span></div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Total Premi</span><span style={{ fontWeight: '500', color: '#15803d' }}>{formatCurrency(data.summary_breakdown.total_premi)}</span></div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dashed #cbd5e1', paddingTop: '0.75rem', fontWeight: 'bold' }}><span>Total Upah Kotor</span><span>{formatCurrency(data.summary_breakdown.total_upah_kotor)}</span></div>
+                                {/* Rincian Potongan */}
+                                <div style={{ backgroundColor: '#ffffff', borderRadius: '0.5rem', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)' }}>
+                                    <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#1e293b', marginBottom: '1rem', borderBottom: '2px solid #f1f5f9', paddingBottom: '0.5rem' }}>
+                                        Rincian Potongan
+                                    </h3>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>BPJS Kesehatan (Pekerja)</span><span style={{ fontWeight: '500', color: '#b91c1c' }}>{formatCurrency(data.summary_breakdown.total_bpjs_pekerja)}</span></div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>PPh21</span><span style={{ fontWeight: '500', color: '#b91c1c' }}>{formatCurrency(data.summary_breakdown.total_pph21)}</span></div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>SPSI</span><span style={{ fontWeight: '500', color: '#b91c1c' }}>{formatCurrency(data.summary_breakdown.total_spsi)}</span></div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dashed #cbd5e1', paddingTop: '0.75rem', fontWeight: 'bold' }}><span>Total Potongan</span><span style={{ color: '#b91c1c' }}>{formatSignedDeductionCurrency(data.summary_breakdown.total_potongan)}</span></div>
+                                    </div>
                                 </div>
                             </div>
+                        </PresentSlide>
 
-                            {/* Rincian Potongan */}
-                            <div style={{ backgroundColor: '#ffffff', borderRadius: '0.5rem', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)' }}>
-                                <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#1e293b', marginBottom: '1rem', borderBottom: '2px solid #f1f5f9', paddingBottom: '0.5rem' }}>
-                                    Rincian Potongan
-                                </h3>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>BPJS Kesehatan (Pekerja)</span><span style={{ fontWeight: '500', color: '#b91c1c' }}>{formatCurrency(data.summary_breakdown.total_bpjs_pekerja)}</span></div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>PPh21</span><span style={{ fontWeight: '500', color: '#b91c1c' }}>{formatCurrency(data.summary_breakdown.total_pph21)}</span></div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>SPSI</span><span style={{ fontWeight: '500', color: '#b91c1c' }}>{formatCurrency(data.summary_breakdown.total_spsi)}</span></div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dashed #cbd5e1', paddingTop: '0.75rem', fontWeight: 'bold' }}><span>Total Potongan</span><span style={{ color: '#b91c1c' }}>{formatSignedDeductionCurrency(data.summary_breakdown.total_potongan)}</span></div>
+                        {/* SLIDE 03 - Analisis Lembur */}
+                        <PresentSlide num="03" id="slide-03" title="Analisis Lembur" subtitle="Jenis task lembur tertinggi dan kontribusinya terhadap total lembur gang">
+                            {/* Detail Lembur Analysis */}
+                            <div style={{ maxWidth: '1200px', margin: '0 auto', backgroundColor: '#ffffff', borderRadius: '0.5rem', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '2px solid #f1f5f9', paddingBottom: '0.5rem' }}>
+                                    <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#1e293b' }}>
+                                        Analisis Jenis Task Lembur Tertinggi
+                                    </h3>
+                                    <span style={{ backgroundColor: '#fff7ed', color: '#c2410c', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', fontSize: '0.875rem', fontWeight: '500' }}>
+                                        Total Records: {data.lembur_analysis.total_records} Karyawan Lembur
+                                    </span>
                                 </div>
-                            </div>
-                        </div>
 
-                        {/* Detail Lembur Analysis */}
-                        <div style={{ backgroundColor: '#ffffff', borderRadius: '0.5rem', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '2px solid #f1f5f9', paddingBottom: '0.5rem' }}>
-                                <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#1e293b' }}>
-                                    Analisis Jenis Task Lembur Tertinggi
-                                </h3>
-                                <span style={{ backgroundColor: '#fff7ed', color: '#c2410c', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', fontSize: '0.875rem', fontWeight: '500' }}>
-                                    Total Records: {data.lembur_analysis.total_records} Karyawan Lembur
-                                </span>
-                            </div>
-
-                            {data.lembur_analysis.tasks && data.lembur_analysis.tasks.length > 0 ? (
-                                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                                    <thead>
-                                        <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                                            <th style={{ padding: '0.75rem 1rem', fontWeight: '600', color: '#475569' }}>Task Code</th>
-                                            <th style={{ padding: '0.75rem 1rem', fontWeight: '600', color: '#475569' }}>Task Description</th>
-                                            <th style={{ padding: '0.75rem 1rem', fontWeight: '600', color: '#475569', textAlign: 'right' }}>Total Hours</th>
-                                            <th style={{ padding: '0.75rem 1rem', fontWeight: '600', color: '#475569', textAlign: 'right' }}>Total Amount (Rp)</th>
-                                            <th style={{ padding: '0.75rem 1rem', fontWeight: '600', color: '#475569', textAlign: 'right' }}>% dari Total Lembur</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {data.lembur_analysis.tasks.map((task, idx) => {
-                                            const totalAmount = parseFloat(data.summary_breakdown.total_lembur);
-                                            const percentage = totalAmount > 0 ? ((task.total_amount / totalAmount) * 100).toFixed(1) : 0;
-                                            return (
-                                                <tr key={task.task_code} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                                    <td style={{ padding: '0.75rem 1rem', color: '#334155', fontWeight: '500' }}>{task.task_code}</td>
-                                                    <td style={{ padding: '0.75rem 1rem', color: '#334155' }}>{task.task_desc}</td>
-                                                    <td style={{ padding: '0.75rem 1rem', color: '#0f172a', textAlign: 'right', fontWeight: '500' }}>{formatNumber(task.total_hours)}</td>
-                                                    <td style={{ padding: '0.75rem 1rem', color: '#b45309', textAlign: 'right', fontWeight: '600' }}>{formatCurrency(task.total_amount)}</td>
-                                                    <td style={{ padding: '0.75rem 1rem', color: '#64748b', textAlign: 'right' }}>
-                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.5rem' }}>
-                                                            <span>{percentage}%</span>
-                                                            <div style={{ width: '50px', height: '6px', backgroundColor: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
-                                                                <div style={{ width: `${percentage}%`, height: '100%', backgroundColor: '#f59e0b' }}></div>
+                                {data.lembur_analysis.tasks && data.lembur_analysis.tasks.length > 0 ? (
+                                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                                        <thead>
+                                            <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                                                <th style={{ padding: '0.75rem 1rem', fontWeight: '600', color: '#475569' }}>Task Code</th>
+                                                <th style={{ padding: '0.75rem 1rem', fontWeight: '600', color: '#475569' }}>Task Description</th>
+                                                <th style={{ padding: '0.75rem 1rem', fontWeight: '600', color: '#475569', textAlign: 'right' }}>Total Hours</th>
+                                                <th style={{ padding: '0.75rem 1rem', fontWeight: '600', color: '#475569', textAlign: 'right' }}>Total Amount (Rp)</th>
+                                                <th style={{ padding: '0.75rem 1rem', fontWeight: '600', color: '#475569', textAlign: 'right' }}>% dari Total Lembur</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {data.lembur_analysis.tasks.map((task, idx) => {
+                                                const totalAmount = parseFloat(data.summary_breakdown.total_lembur);
+                                                const percentage = totalAmount > 0 ? ((task.total_amount / totalAmount) * 100).toFixed(1) : 0;
+                                                return (
+                                                    <tr key={task.task_code} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                                        <td style={{ padding: '0.75rem 1rem', color: '#334155', fontWeight: '500' }}>{task.task_code}</td>
+                                                        <td style={{ padding: '0.75rem 1rem', color: '#334155' }}>{task.task_desc}</td>
+                                                        <td style={{ padding: '0.75rem 1rem', color: '#0f172a', textAlign: 'right', fontWeight: '500' }}>{formatNumber(task.total_hours)}</td>
+                                                        <td style={{ padding: '0.75rem 1rem', color: '#b45309', textAlign: 'right', fontWeight: '600' }}>{formatCurrency(task.total_amount)}</td>
+                                                        <td style={{ padding: '0.75rem 1rem', color: '#64748b', textAlign: 'right' }}>
+                                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                                                                <span>{percentage}%</span>
+                                                                <div style={{ width: '50px', height: '6px', backgroundColor: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
+                                                                    <div style={{ width: `${percentage}%`, height: '100%', backgroundColor: '#f59e0b' }}></div>
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                    <tfoot>
-                                        <tr style={{ backgroundColor: '#f8fafc', fontWeight: 'bold' }}>
-                                            <td colSpan="2" style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>TOTAL KESELURUHAN</td>
-                                            <td style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>
-                                                {formatNumber(data.lembur_analysis.tasks.reduce((sum, task) => sum + task.total_hours, 0))}
-                                            </td>
-                                            <td style={{ padding: '0.75rem 1rem', textAlign: 'right', color: '#b45309' }}>
-                                                {formatCurrency(data.lembur_analysis.tasks.reduce((sum, task) => sum + task.total_amount, 0))}
-                                            </td>
-                                            <td></td>
-                                        </tr>
-                                    </tfoot>
-                                </table>
-                            ) : (
-                                <div style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>
-                                    Tidak ada data lembur untuk gang ini pada periode yang dipilih.
-                                </div>
-                            )}
-                        </div>
-
-                    </div>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                        <tfoot>
+                                            <tr style={{ backgroundColor: '#f8fafc', fontWeight: 'bold' }}>
+                                                <td colSpan="2" style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>TOTAL KESELURUHAN</td>
+                                                <td style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>
+                                                    {formatNumber(data.lembur_analysis.tasks.reduce((sum, task) => sum + task.total_hours, 0))}
+                                                </td>
+                                                <td style={{ padding: '0.75rem 1rem', textAlign: 'right', color: '#b45309' }}>
+                                                    {formatCurrency(data.lembur_analysis.tasks.reduce((sum, task) => sum + task.total_amount, 0))}
+                                                </td>
+                                                <td></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                ) : (
+                                    <div style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>
+                                        Tidak ada data lembur untuk gang ini pada periode yang dipilih.
+                                    </div>
+                                )}
+                            </div>
+                        </PresentSlide>
+                    </>
                 )}
             </div>
         </div>

@@ -4,6 +4,9 @@ import { useReport } from '../context/ReportContext';
 import LoadingScreen from '../components/common/LoadingScreen';
 import { usePrintExpand } from '../utils/printPageSetup';
 import { Search, AlertTriangle, CheckCircle, XCircle, Info, Download, RefreshCw, Filter, ChevronDown, ChevronRight } from 'lucide-react';
+import PresentSlide from '../components/present/PresentSlide';
+import PresentController from '../components/present/PresentController';
+import usePresentMode from '../components/present/usePresentMode';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8002';
 
@@ -64,6 +67,8 @@ export default function DataVerificationPage() {
     const [expandedRows, setExpandedRows] = useState(new Set());
     // Saat print: rincian DB_PTRJ per baris dibuka lengkap.
     const printExpanded = usePrintExpand();
+    // Present mode: deck fullscreen per slide (toggle html.present-mode + HUD)
+    const { presenting, activeIndex, enter, exit } = usePresentMode();
 
     const runVerification = useCallback(async () => {
         if (!division || !month || !year || !token) return;
@@ -162,13 +167,26 @@ export default function DataVerificationPage() {
 
     return (
         <div style={{ padding: '1.5rem', maxWidth: '1400px', margin: '0 auto' }}>
+            {/* PRESENT MODE - tombol Present (mode normal) + HUD deck (present mode) */}
+            <div className="no-print" style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+                <PresentController
+                    presenting={presenting}
+                    activeIndex={activeIndex}
+                    slideCount={3}
+                    onEnter={enter}
+                    onExit={exit}
+                    caption={`Data Verification · ${month}/${year} · Divisi ${division}`}
+                />
+            </div>
+
+            <PresentSlide num="01" id="slide-01" title="Ringkasan Verifikasi" subtitle="Hasil pembandingan nilai DB_PTRJ dengan tampilan laporan">
             {/* Header */}
             <div style={{ marginBottom: '1.5rem' }}>
                 <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
                     Data Verification Report
                 </h1>
                 <p style={{ color: '#64748b', fontSize: '0.85rem', margin: '0.35rem 0 0' }}>
-                    Periode {month}/{year} — Divisi {division}
+                    Periode {month}/{year} · Divisi {division}
                 </p>
             </div>
 
@@ -200,16 +218,18 @@ export default function DataVerificationPage() {
                             <div key={source} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0.75rem', background: '#fff', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
                                 <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#334155' }}>{SOURCE_LABELS[source] || source}</span>
                                 <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.72rem' }}>
-                                    <span style={{ color: '#047857', fontWeight: 700 }}>{data.match}✓</span>
-                                    <span style={{ color: '#b45309', fontWeight: 700 }}>{data.mismatch}!</span>
-                                    <span style={{ color: '#dc2626', fontWeight: 700 }}>{data.missing_in_display + data.missing_in_source}✗</span>
+                                    <span style={{ color: '#047857', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 2 }}><CheckCircle size={11} /> {data.match}</span>
+                                    <span style={{ color: '#b45309', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 2 }}><AlertTriangle size={11} /> {data.mismatch}</span>
+                                    <span style={{ color: '#dc2626', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 2 }}><XCircle size={11} /> {data.missing_in_display + data.missing_in_source}</span>
                                 </div>
                             </div>
                         ))}
                     </div>
                 </div>
             )}
+            </PresentSlide>
 
+            <PresentSlide num="02" id="slide-02" title="Tabel Verifikasi Detail" subtitle="Saring per sumber data, status temuan, atau kata kunci karyawan">
             {/* Tabs + Filters */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem', alignItems: 'center' }}>
                 {TAB_OPTIONS.map(tab => (
@@ -361,6 +381,27 @@ export default function DataVerificationPage() {
                     Pilih divisi dan periode, lalu klik Refresh untuk menjalankan verifikasi.
                 </div>
             )}
+            </PresentSlide>
+
+            <PresentSlide num="03" id="slide-03" title="Cara Membaca Hasil" subtitle="Legenda status temuan dan tindak lanjutnya">
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.75rem' }}>
+                    {Object.entries(STATUS_CONFIG).map(([key, cfg]) => {
+                        const Icon = cfg.icon;
+                        return (
+                            <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.75rem 0.9rem', background: cfg.bg, border: `1px solid ${cfg.color}22`, borderRadius: '8px' }}>
+                                <span style={{ color: cfg.color, display: 'inline-flex', flexShrink: 0 }}><Icon size={16} /></span>
+                                <div>
+                                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: cfg.color }}>{cfg.label}</div>
+                                    <div style={{ fontSize: '0.68rem', color: '#64748b', fontFamily: 'monospace' }}>{key}</div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+                <p style={{ margin: '1rem 0 0', fontSize: '0.8rem', color: '#64748b', lineHeight: 1.6 }}>
+                    Temuan berstatus selain Sama perlu ditelusuri ke sumber datanya. Gunakan filter status pada tabel detail, buka rincian DB_PTRJ per baris, atau ekspor CSV untuk tindak lanjut.
+                </p>
+            </PresentSlide>
         </div>
     );
 }

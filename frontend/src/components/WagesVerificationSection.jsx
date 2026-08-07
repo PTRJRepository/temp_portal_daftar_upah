@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Wallet, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { 
     fetchEmployeeWagesComparison,
@@ -59,7 +60,7 @@ export default function WagesVerificationSection({
     if (error) {
         return (
             <div className="wvs-container wvs-error">
-                <span className="wvs-error-icon">⚠</span>
+                <span className="wvs-error-icon"><AlertTriangle size={20} aria-hidden="true" /></span>
                 <span>Gagal memuat data wages</span>
             </div>
         );
@@ -77,7 +78,7 @@ export default function WagesVerificationSection({
             {/* Header with status */}
             <div className="wvs-header" onClick={() => setExpanded(!expanded)}>
                 <div className="wvs-title">
-                    <span className="wvs-icon">💰</span>
+                    <span className="wvs-icon"><Wallet size={18} aria-hidden="true" /></span>
                     <span>Verifikasi Upah Bersih</span>
                 </div>
                 <div className="wvs-status">
@@ -85,7 +86,7 @@ export default function WagesVerificationSection({
                         className="wvs-badge"
                         style={{ backgroundColor: badge.bgColor, color: badge.color }}
                     >
-                        {badge.icon} {badge.label}
+                        {badge.label}
                     </span>
                     <button className="wvs-expand-btn">
                         {expanded ? '▼' : '▶'}
@@ -194,7 +195,7 @@ export default function WagesVerificationSection({
                             <div className="wvs-comparison-item">
                                 <span className="wvs-comp-label">HK Match</span>
                                 <span className={`wvs-comp-value ${comparison.comparison?.hk_match ? 'match' : 'diff'}`}>
-                                    {comparison.comparison?.hk_match ? '✓ Cocok' : '✗ Berbeda'}
+                                    {comparison.comparison?.hk_match ? 'Cocok' : 'Berbeda'}
                                 </span>
                             </div>
                             <div className="wvs-comparison-item">
@@ -207,7 +208,7 @@ export default function WagesVerificationSection({
                             <div className="wvs-comparison-item">
                                 <span className="wvs-comp-label">Amount Match</span>
                                 <span className={`wvs-comp-value ${comparison.comparison?.amount_match ? 'match' : 'diff'}`}>
-                                    {comparison.comparison?.amount_match ? '✓ Cocok' : '✗ Berbeda'}
+                                    {comparison.comparison?.amount_match ? 'Cocok' : 'Berbeda'}
                                 </span>
                             </div>
                             <div className="wvs-comparison-item">

@@ -8,6 +8,9 @@ import {
 import { Calendar, Scale, RefreshCw, Users, DollarSign, TrendingUp, Printer } from 'lucide-react';
 import ReportWatermark from '../components/common/ReportWatermark';
 import { MetricInfo, EmptyState } from '../components/report/reportTheme';
+import PresentSlide from '../components/present/PresentSlide';
+import PresentController from '../components/present/PresentController';
+import usePresentMode from '../components/present/usePresentMode';
 import { printReport } from '../utils/printPageSetup';
 import './MillProductionReport.css';
 import '../styles/report-print-foundation.css';
@@ -26,6 +29,8 @@ const MillProductionReport = () => {
     const [prevYear, setPrevYear] = useState('2026');
     const [prevData, setPrevData] = useState([]);
     const [loadingPrev, setLoadingPrev] = useState(false);
+    // Present mode: deck fullscreen per slide (toggle html.present-mode + HUD)
+    const { presenting, activeIndex, enter, exit } = usePresentMode();
 
     const fetchData = async () => {
         setLoading(true);
@@ -119,9 +124,9 @@ const MillProductionReport = () => {
                     <p className="mill-report-subtitle">
                         {compareMode
                             ? `Perbandingan ${prevMonthName} ${prevYear} vs ${currentMonthName} ${year}`
-                            : `Tonase FFB, HK, dan biaya upah per divisi — ${currentMonthName} ${year}`}
+                            : `Tonase FFB, HK, dan biaya upah per divisi · ${currentMonthName} ${year}`}
                     </p>
-                    <button onClick={() => navigate(`/cost-per-ton-story?month=${month}&year=${year}`)} style={{ marginTop: 6, padding: '6px 12px', borderRadius: 8, border: 'none', background: '#1E7A45', color: '#fff', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Cost/Ton Story →</button>
+                    <button onClick={() => navigate(`/cost-per-ton-story?month=${month}&year=${year}`)} style={{ marginTop: 6, padding: '6px 12px', borderRadius: 8, border: 'none', background: '#7C5A2B', color: '#fff', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Cost/Ton Story →</button>
                 </div>
                 <div className="mill-report-controls">
                     {compareMode && (
@@ -167,6 +172,18 @@ const MillProductionReport = () => {
                 </div>
             </div>
 
+            {/* PRESENT MODE - tombol Present (mode normal) + HUD deck (present mode) */}
+            <div className="no-print" style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+                <PresentController
+                    presenting={presenting}
+                    activeIndex={activeIndex}
+                    slideCount={!error && !loading ? 3 : 1}
+                    onEnter={enter}
+                    onExit={exit}
+                    caption={`Produktivitas Kebun · ${currentMonthName} ${year}${compareMode ? ` · vs ${prevMonthName} ${prevYear}` : ''}`}
+                />
+            </div>
+
             {/* Print Header */}
             <div className="print-header print-only">
                 <h1>PT REBINMAS JAYA</h1>
@@ -179,6 +196,7 @@ const MillProductionReport = () => {
             {!error && !loading && (
                 <>
                     {/* KPI Cards */}
+                    <PresentSlide num="01" id="mill-slide-01" title="Ringkasan Produktivitas" subtitle="Indikator utama tonase, hari kerja, dan biaya upah periode berjalan">
                     <div className="mill-summary-cards no-print">
                         {compareMode ? (
                             <>
@@ -253,7 +271,7 @@ const MillProductionReport = () => {
                                         <p className="card-value" style={{ fontSize: '1.35rem' }}>{fmtCur(totalCost)}</p>
                                     </div>
                                 </div>
-                                <div className="summary-card var-purple">
+                                <div className="summary-card var-umber">
                                     <div className="card-icon-wrapper"><TrendingUp size={24} /></div>
                                     <div className="card-content">
                                         <h3>Efisiensi</h3>
@@ -264,8 +282,10 @@ const MillProductionReport = () => {
                             </>
                         )}
                     </div>
+                    </PresentSlide>
 
                     {/* Charts - hidden in print */}
+                    <PresentSlide num="02" id="mill-slide-02" title="Grafik per Divisi" subtitle="Tonase, hari kerja, dan biaya per ton divisualisasikan per divisi">
                     <div className="mill-charts-grid no-print">
                         {compareMode ? (
                             <>
@@ -274,14 +294,14 @@ const MillProductionReport = () => {
                                     <h3 className="chart-title">Perbandingan Tonase FFB: {currentMonthName} {year} vs {prevMonthName} {prevYear}</h3>
                                     <ResponsiveContainer width="100%" height={360}>
                                         <ComposedChart data={mergedData} margin={{ top: 20, right: 40, left: 20, bottom: 60 }}>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                                            <XAxis dataKey="division_code" tick={{ fill: '#6b7280', fontSize: 13, fontWeight: 600 }} />
-                                            <YAxis yAxisId="left" tick={{ fill: '#10b981', fontSize: 12 }} label={{ value: 'Ton', angle: -90, position: 'insideLeft', fill: '#10b981' }} />
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E0DED2" />
+                                            <XAxis dataKey="division_code" tick={{ fill: '#6E7A70', fontSize: 13, fontWeight: 600 }} />
+                                            <YAxis yAxisId="left" tick={{ fill: '#1F6F43', fontSize: 12 }} label={{ value: 'Ton', angle: -90, position: 'insideLeft', fill: '#1F6F43' }} />
                                             <Tooltip contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                                                 formatter={(v, name) => name.includes('Cur') ? [fmt(v) + ' Ton', name] : [fmt(v) + ' Ton', name]} />
                                             <Legend />
-                                            <Bar yAxisId="left" dataKey="total_ffb_ton" name={`${currentMonthName} ${year}`} radius={[4, 4, 0, 0]} fill="#10b981" />
-                                            <Bar yAxisId="left" dataKey="prev_ton" name={`${prevMonthName} ${prevYear}`} radius={[4, 4, 0, 0]} fill="#94a3b8" />
+                                            <Bar yAxisId="left" dataKey="total_ffb_ton" name={`${currentMonthName} ${year}`} radius={[4, 4, 0, 0]} fill="#1F6F43" />
+                                            <Bar yAxisId="left" dataKey="prev_ton" name={`${prevMonthName} ${prevYear}`} radius={[4, 4, 0, 0]} fill="#6E7A70" />
                                         </ComposedChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -290,13 +310,13 @@ const MillProductionReport = () => {
                                     <h3 className="chart-title">Perubahan Tonase per Divisi (Δ Ton)</h3>
                                     <ResponsiveContainer width="100%" height={360}>
                                         <ComposedChart data={mergedData} margin={{ top: 20, right: 40, left: 20, bottom: 60 }}>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                                            <XAxis dataKey="division_code" tick={{ fill: '#6b7280', fontSize: 13, fontWeight: 600 }} />
-                                            <YAxis tick={{ fill: '#6b7280', fontSize: 12 }} label={{ value: 'Δ Ton', angle: -90, position: 'insideLeft', fill: '#6b7280' }} />
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E0DED2" />
+                                            <XAxis dataKey="division_code" tick={{ fill: '#6E7A70', fontSize: 13, fontWeight: 600 }} />
+                                            <YAxis tick={{ fill: '#6E7A70', fontSize: 12 }} label={{ value: 'Δ Ton', angle: -90, position: 'insideLeft', fill: '#6E7A70' }} />
                                             <Tooltip contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                                                 formatter={(v, name) => [fmt(v) + ' Ton', name]} />
                                             <Legend />
-                                            <Bar dataKey="delta_ton" name="Δ Tonase" radius={[4, 4, 0, 0]} fill="#10b981" />
+                                            <Bar dataKey="delta_ton" name="Δ Tonase" radius={[4, 4, 0, 0]} fill="#1F6F43" />
                                         </ComposedChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -308,15 +328,15 @@ const MillProductionReport = () => {
                                     <h3 className="chart-title">Tonase FFB vs Hari Kerja (HK) per Divisi</h3>
                                     <ResponsiveContainer width="100%" height={360}>
                                         <ComposedChart data={data} margin={{ top: 20, right: 40, left: 20, bottom: 60 }}>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                                            <XAxis dataKey="division_code" tick={{ fill: '#6b7280', fontSize: 13, fontWeight: 600 }} />
-                                            <YAxis yAxisId="left" tick={{ fill: '#10b981', fontSize: 12 }} label={{ value: 'Ton', angle: -90, position: 'insideLeft', fill: '#10b981' }} />
-                                            <YAxis yAxisId="right" orientation="right" tick={{ fill: '#f59e0b', fontSize: 12 }} label={{ value: 'HK', angle: 90, position: 'insideRight', fill: '#f59e0b' }} />
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E0DED2" />
+                                            <XAxis dataKey="division_code" tick={{ fill: '#6E7A70', fontSize: 13, fontWeight: 600 }} />
+                                            <YAxis yAxisId="left" tick={{ fill: '#1F6F43', fontSize: 12 }} label={{ value: 'Ton', angle: -90, position: 'insideLeft', fill: '#1F6F43' }} />
+                                            <YAxis yAxisId="right" orientation="right" tick={{ fill: '#B45309', fontSize: 12 }} label={{ value: 'HK', angle: 90, position: 'insideRight', fill: '#B45309' }} />
                                             <Tooltip contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                                                 formatter={(v, name) => name === 'Tonase (Ton)' ? [fmt(v) + ' Ton', name] : [fmt(v), name]} />
                                             <Legend />
-                                            <Bar yAxisId="left" dataKey="total_ffb_ton" name="Tonase (Ton)" radius={[4, 4, 0, 0]} fill="#10b981" />
-                                            <Bar yAxisId="right" dataKey="total_hk" name="HK" radius={[4, 4, 0, 0]} fill="#f59e0b" opacity={0.75} />
+                                            <Bar yAxisId="left" dataKey="total_ffb_ton" name="Tonase (Ton)" radius={[4, 4, 0, 0]} fill="#1F6F43" />
+                                            <Bar yAxisId="right" dataKey="total_hk" name="HK" radius={[4, 4, 0, 0]} fill="#B45309" opacity={0.75} />
                                         </ComposedChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -325,23 +345,25 @@ const MillProductionReport = () => {
                                     <h3 className="chart-title">Biaya per Ton & Produktivitas (Ton/HK)</h3>
                                     <ResponsiveContainer width="100%" height={360}>
                                         <ComposedChart data={data} margin={{ top: 20, right: 40, left: 20, bottom: 60 }}>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                                            <XAxis dataKey="division_code" tick={{ fill: '#6b7280', fontSize: 13, fontWeight: 600 }} />
-                                            <YAxis yAxisId="left" tick={{ fill: '#ef4444', fontSize: 12 }} label={{ value: 'Rp/Ton', angle: -90, position: 'insideLeft', fill: '#ef4444' }} />
-                                            <YAxis yAxisId="right" orientation="right" tick={{ fill: '#8b5cf6', fontSize: 12 }} label={{ value: 'Ton/HK', angle: 90, position: 'insideRight', fill: '#8b5cf6' }} />
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E0DED2" />
+                                            <XAxis dataKey="division_code" tick={{ fill: '#6E7A70', fontSize: 13, fontWeight: 600 }} />
+                                            <YAxis yAxisId="left" tick={{ fill: '#B3392E', fontSize: 12 }} label={{ value: 'Rp/Ton', angle: -90, position: 'insideLeft', fill: '#B3392E' }} />
+                                            <YAxis yAxisId="right" orientation="right" tick={{ fill: '#7C5A2B', fontSize: 12 }} label={{ value: 'Ton/HK', angle: 90, position: 'insideRight', fill: '#7C5A2B' }} />
                                             <Tooltip contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                                                 formatter={(v, name) => name === 'Biaya / Ton' ? [fmtCur(v), name] : [fmt(v), name]} />
                                             <Legend />
-                                            <Bar yAxisId="left" dataKey="cost_per_ton" name="Biaya / Ton" radius={[4, 4, 0, 0]} fill="#ef4444" opacity={0.8} />
-                                            <Line yAxisId="right" type="monotone" dataKey="ton_per_hk" name="Ton / HK" stroke="#8b5cf6" strokeWidth={3} dot={{ r: 5, fill: '#8b5cf6' }} activeDot={{ r: 7 }} />
+                                            <Bar yAxisId="left" dataKey="cost_per_ton" name="Biaya / Ton" radius={[4, 4, 0, 0]} fill="#B3392E" opacity={0.8} />
+                                            <Line yAxisId="right" type="monotone" dataKey="ton_per_hk" name="Ton / HK" stroke="#7C5A2B" strokeWidth={3} dot={{ r: 5, fill: '#7C5A2B' }} activeDot={{ r: 7 }} />
                                         </ComposedChart>
                                     </ResponsiveContainer>
                                 </div>
                             </>
                         )}
                     </div>
+                    </PresentSlide>
 
                     {/* Data Table - shown in print */}
+                    <PresentSlide num="03" id="mill-slide-03" title="Detail per Divisi" subtitle="Tabel lengkap produktivitas beserta total keseluruhan">
                     <div className="mill-data-table-container">
                         <h3 className="table-title">
                             {compareMode
@@ -419,7 +441,7 @@ const MillProductionReport = () => {
                                                 <td className="text-right">{fmtCur(row.total_upah_bersih)}</td>
                                                 <td className="text-right">{fmtCur(row.total_premi)}</td>
                                                 <td className="text-right">{fmtCur(row.total_lembur)}</td>
-                                                <td className="text-right font-semibold text-purple-600">{fmt(row.ton_per_hk)}</td>
+                                                <td className="text-right font-semibold text-umber-600">{fmt(row.ton_per_hk)}</td>
                                                 <td className="text-right text-red-600">{fmtCur(row.cost_per_ton)}</td>
                                                 <td className="text-right text-gray-500">
                                                     {totalTonnage > 0 ? ((row.total_ffb_ton / totalTonnage) * 100).toFixed(1) + '%' : '-'}
@@ -476,7 +498,7 @@ const MillProductionReport = () => {
                                                 <td className="text-right">{fmtCur(totalCost)}</td>
                                                 <td className="text-right">{fmtCur(totalPremi)}</td>
                                                 <td className="text-right">{fmtCur(totalLembur)}</td>
-                                                <td className="text-right text-purple-700">{fmt(avgTonPerHK)}</td>
+                                                <td className="text-right text-umber-700">{fmt(avgTonPerHK)}</td>
                                                 <td className="text-right text-red-700">{fmtCur(avgCostPerTon)}</td>
                                                 <td className="text-right">100%</td>
                                             </tr>
@@ -510,6 +532,7 @@ const MillProductionReport = () => {
                             <span>Rata-rata Biaya/Ton:</span><strong>{fmtCur(avgCostPerTon)}</strong>
                         </div>
                     </div>
+                    </PresentSlide>
                 </>
             )}
 

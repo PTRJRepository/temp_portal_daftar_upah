@@ -19,6 +19,9 @@ import {
     C, SHADOW, CARD, SECTION_TITLE, chartPalette,
     ReportHero, ReportBody, StatCard, ScopeToggle, EmptyState
 } from '../components/report/reportTheme';
+import PresentSlide from '../components/present/PresentSlide';
+import PresentController from '../components/present/PresentController';
+import usePresentMode from '../components/present/usePresentMode';
 
 // ===== Formatters =====
 const formatCompactIDR = (val) => {
@@ -107,6 +110,8 @@ export default function DashboardHome() {
         [month, year]
     );
     const ready = division && gang && !gangLoading;
+    // Present mode: deck fullscreen per slide (toggle html.present-mode + HUD)
+    const { presenting, activeIndex, enter, exit } = usePresentMode();
 
     const goOperational = () => ready && navigate('/operational');
     const goPajak = () => ready && navigate('/report-pajak');
@@ -175,7 +180,20 @@ export default function DashboardHome() {
                 period={periodLabel}
             />
 
+            {/* PRESENT MODE - tombol Present (mode normal) + HUD deck (present mode) */}
+            <div className="no-print" style={{ maxWidth: 1320, margin: '0 auto', padding: '0.75rem 2.4rem 0', display: 'flex', justifyContent: 'flex-end' }}>
+                <PresentController
+                    presenting={presenting}
+                    activeIndex={activeIndex}
+                    slideCount={2}
+                    onEnter={enter}
+                    onExit={exit}
+                    caption={`Dashboard · ${periodLabel} · ${scopeLabel}`}
+                />
+            </div>
+
             <ReportBody>
+                <PresentSlide num="01" id="slide-01" title="Ringkasan Kinerja" subtitle="KPI utama periode berjalan dalam satu pandangan">
                 {/* KPI BAND: 6 ledger cell */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -228,7 +246,9 @@ export default function DashboardHome() {
                         </button>
                     </div>
                 )}
+                </PresentSlide>
 
+                <PresentSlide num="02" id="slide-02" title="Tren dan Breakdown Divisi" subtitle="Pergerakan upah 12 bulan dan sebaran upah antar divisi">
                 {/* CHARTS: tren upah 12 bulan + breakdown divisi */}
                 {!dashLoading && !dashError && trends.length > 0 && (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '1.2rem', marginBottom: '1.8rem' }}>
@@ -272,6 +292,7 @@ export default function DashboardHome() {
                         </div>
                     </div>
                 )}
+                </PresentSlide>
 
                 {/* FILTER CARD */}
                 <div style={{ ...CARD, padding: '1.6rem 1.8rem', marginBottom: '2rem' }}>
