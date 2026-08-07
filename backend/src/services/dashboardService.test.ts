@@ -151,3 +151,53 @@ describe("DashboardService gang scope filter", () => {
         expect(getSql()).not.toContain(HARVEST_FILTER_H);
     });
 });
+
+describe("DashboardService headcount summary", () => {
+    const service = dashboardService as any;
+    const originalHrDb = service.hrDb;
+
+    afterEach(() => {
+        service.hrDb = originalHrDb;
+    });
+
+    const masterRows = [
+        { loc_code: "ARA", hr_emp_type: "SKU", gender: "1", join_date: "2020-01-10" },
+        { loc_code: "ARA", hr_emp_type: "BHL", gender: "2", join_date: "2026-03-05" },
+        { loc_code: "ARC", hr_emp_type: null, gender: "M", join_date: null },
+        { loc_code: "", hr_emp_type: "sku", gender: "P", join_date: "2025-12-20" }
+    ];
+
+    it("mengagregasi total, divisi, tipe karyawan, gender, dan tren join 12 bulan", async () => {
+        service.hrDb = { query: async () => masterRows };
+
+        const result = await dashboardService.getHeadcountSummary(4, 2026);
+
+        expect(result.total).toBe(4);
+        expect(result.by_division).toEqual([
+            { division_code: "ARA", headcount: 2 },
+            { division_code: "ARC", headcount: 1 },
+            { division_code: "UNKNOWN", headcount: 1 }
+        ]);
+        expect(result.by_emp_type).toEqual([
+            { emp_type: "SKU", headcount: 2 },
+            { emp_type: "BHL", headcount: 1 },
+            { emp_type: "LAINNYA", headcount: 1 }
+        ]);
+        expect(result.by_gender).toEqual([
+            { gender: "L", headcount: 2 },
+            { gender: "P", headcount: 2 }
+        ]);
+        // Window 12 bulan untuk periode akhir Apr 2026 = Mei 2025..Apr 2026
+        expect(result.join_trend_12m).toHaveLength(12);
+        expect(result.join_trend_12m.find((p: any) => p.month === 3 && p.year === 2026).joined).toBe(1);
+        expect(result.join_trend_12m.find((p: any) => p.month === 12 && p.year === 2025).joined).toBe(1);
+        expect(result.join_trend_12m.find((p: any) => p.month === 1 && p.year === 2026).joined).toBe(0);
+    });
+
+    it("menandai sumber KPI headcount: aggregation bila ada, live bila kosong", () => {
+        expect(dashboardService.withLiveHeadcountFallback({ curr_headcount: 120 }, 999))
+            .toEqual({ curr_headcount: 120, headcount_source: "aggregation" });
+        expect(dashboardService.withLiveHeadcountFallback({ curr_headcount: 0 }, 999))
+            .toEqual({ curr_headcount: 999, headcount_source: "live" });
+    });
+});

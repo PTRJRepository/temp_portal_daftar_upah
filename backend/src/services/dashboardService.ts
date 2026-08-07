@@ -39,9 +39,11 @@ type TonaseAggregationRow = {
 export class DashboardService {
     private static instance: DashboardService;
     private extendDb: Database;
+    private hrDb: Database;
 
     private constructor() {
         this.extendDb = Database.getInstance("extend_db_ptrj", Config.DB_EXTEND_PROFILE);
+        this.hrDb = Database.getInstance();
     }
 
     private latestAggregationRowsCte(): string {
@@ -291,6 +293,94 @@ export class DashboardService {
             totalHk: r.total_hk,
             totalTonase: r.total_tonase
         }));
+    }
+
+    /**
+     * Ringkasan headcount live dari master karyawan HR (HR_EMPLOYEE + HR_GANGLN).
+     * Sumber ini selalu aktual dan tidak tergantung Aggregation Seeder.
+     * Dipakai section Kepersonaliaan dashboard dan fallback KPI headcount.
+     * month/year hanya dipakai untuk window tren karyawan masuk (12 bulan).
+     */
+    public async getHeadcountSummary(month: number, year: number): Promise<any> {
+        const query = `
+            SELECT loc_code, hr_emp_type, gender, join_date
+            FROM (
+                SELECT
+                    RTRIM(e.LocCode) as loc_code,
+                    NULLIF(RTRIM(e.HREmpType), '') as hr_emp_type,
+                    e.Gender as gender,
+                    em.AppJoinGrpDate as join_date,
+                    ROW_NUMBER() OVER(PARTITION BY e.EmpCode ORDER BY e.EmpCode DESC) as rn
+                FROM HR_EMPLOYEE e
+                INNER JOIN HR_GANGLN gl ON RTRIM(gl.GangMember) = RTRIM(e.EmpCode)
+                LEFT JOIN HR_EMPLOYMENT em ON RTRIM(em.EmpCode) = RTRIM(e.EmpCode)
+            ) t WHERE rn = 1
+        `;
+        const rows = await this.hrDb.query<any>(query);
+
+        const byDivisionMap = new Map<string, number>();
+        const byEmpTypeMap = new Map<string, number>();
+        let male = 0, female = 0;
+        const joinMap = new Map<string, number>();
+        const { startMonth, startYear } = this.getStartPeriod(month, year);
+
+        for (const r of rows) {
+            const div = (r.loc_code || '').trim() || 'UNKNOWN';
+            byDivisionMap.set(div, (byDivisionMap.get(div) || 0) + 1);
+
+            const empType = (r.hr_emp_type || '').trim().toUpperCase() || 'LAINNYA';
+            byEmpTypeMap.set(empType, (byEmpTypeMap.get(empType) || 0) + 1);
+
+            // Konvensi sama dengan employeeRepository.mapGender
+            const g = String(r.gender ?? '').trim();
+            if (g === '2' || g === 'P') female++; else male++;
+
+            if (r.join_date) {
+                const d = new Date(r.join_date);
+                const jm = d.getMonth() + 1;
+                const jy = d.getFullYear();
+                const inWindow = (jy > startYear || (jy === startYear && jm >= startMonth))
+                    && (jy < year || (jy === year && jm <= month));
+                if (inWindow) {
+                    const key = this.getPeriodKey(jm, jy);
+                    joinMap.set(key, (joinMap.get(key) || 0) + 1);
+                }
+            }
+        }
+
+        const sortDesc = (a: any, b: any) => b.headcount - a.headcount;
+        return {
+            total: rows.length,
+            by_division: [...byDivisionMap.entries()]
+                .map(([division_code, headcount]) => ({ division_code, headcount }))
+                .sort(sortDesc),
+            by_emp_type: [...byEmpTypeMap.entries()]
+                .map(([emp_type, headcount]) => ({ emp_type, headcount }))
+                .sort(sortDesc),
+            by_gender: [
+                { gender: 'L', headcount: male },
+                { gender: 'P', headcount: female }
+            ],
+            join_trend_12m: this.getPeriodWindow(month, year, 12).map(p => ({
+                month: p.month,
+                year: p.year,
+                label: p.label,
+                joined: joinMap.get(p.key) || 0
+            }))
+        };
+    }
+
+    /**
+     * Fallback KPI headcount: bila agregasi bulan berjalan kosong (0),
+     * pakai total headcount live dari master karyawan.
+     */
+    public withLiveHeadcountFallback(kpi: any, liveTotal: number): any {
+        const fromAggregation = this.toReportNumber(kpi?.curr_headcount) > 0;
+        return {
+            ...kpi,
+            curr_headcount: fromAggregation ? kpi.curr_headcount : this.toReportNumber(liveTotal),
+            headcount_source: fromAggregation ? 'aggregation' : 'live'
+        };
     }
 
     /**
