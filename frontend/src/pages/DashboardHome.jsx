@@ -313,7 +313,7 @@ export default function DashboardHome() {
                 )}
                 </PresentSlide>
 
-                <PresentSlide num="02" id="slide-02" title="Tren dan Breakdown Divisi" subtitle="Pergerakan upah 12 bulan dan sebaran upah antar divisi">
+                <PresentSlide num="02" id="slide-02" title="Analisis Komprehensif" subtitle="Kepersonaliaan, struktur biaya, dan produktivitas dalam satu pandangan">
                 {/* SECTION: Kepersonaliaan & Headcount */}
                 <SectionHeader title="Kepersonaliaan & Headcount" meta="Sumber: master karyawan live · seluruh divisi" />
                 <div style={{ marginBottom: '1.8rem' }}>
