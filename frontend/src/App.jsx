@@ -1081,10 +1081,12 @@ function AppInner() {
       const currentPath = location.pathname
       const isLoginPath = currentPath === '/login' || currentPath.endsWith('/login')
 
-      // 1. PROXY MODE: Redirect to gateway if not authenticated
+      // 1. PROXY MODE: kalau gateway/external token sudah ada, langsung masuk (auto-login).
+      //    Tanpa token → arahkan ke halaman login internal (bukan gateway /login).
+      //    External-user SSO tetap jalan: AuthContext checkAuth restore token gateway dari localStorage.
       if (inProdMode && !isAuthenticated && !isLoginPath) {
-        console.log('[App] Proxy mode: Not authenticated, redirecting to gateway login')
-        redirectToExternalLogin()
+        console.log('[App] Proxy mode: Not authenticated, going to internal login')
+        navigate('/login', { replace: true })
         return
       }
 
@@ -1096,8 +1098,8 @@ function AppInner() {
         return
       }
 
-      // 2b. DEV MODE: sudah login tapi masih di /login → masuk ke app root
-      if (isAuthenticated && isLoginPath && !inProdMode) {
+      // 2b. sudah login tapi masih di /login → masuk ke app root (dev & proxy)
+      if (isAuthenticated && isLoginPath) {
         navigate('/', { replace: true })
         return
       }
@@ -1136,8 +1138,8 @@ function AppInner() {
     <ErrorBoundary>
       <Suspense fallback={<LoadingScreen isLoading={true} message="Memuat halaman..." />}>
         <Routes>
-          {/* Internal Login Route - ONLY for DEV mode, NOT for proxy mode */}
-          {!inProdMode && <Route path="/login" element={<LoginPage />} />}
+          {/* Internal Login Route - dev & proxy mode */}
+          <Route path="/login" element={<LoginPage />} />
 
           {/* Employee Detail Route - From Daftar Upah (Operational: payslip, attendance matrix) */}
           <Route path="/employee/detail" element={

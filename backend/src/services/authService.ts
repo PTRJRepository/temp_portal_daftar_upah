@@ -214,6 +214,7 @@ export class AuthService {
                 if (roleStr === "admin") role = UserRole.ADMIN;
                 else if (roleStr === "kerani") role = UserRole.KERANI;
                 else if (roleStr === "visitor") role = UserRole.VISITOR;
+                else if (roleStr === "gm_estate") role = UserRole.GM_ESTATE;
 
                 const rawDivs = (payload as any).divisions || (payload as any).division || (payload as any).divisi || [];
                 let divisions = Array.isArray(rawDivs)
@@ -260,6 +261,7 @@ export class AuthService {
             if (roleStr === "admin") role = UserRole.ADMIN;
             else if (roleStr === "kerani") role = UserRole.KERANI;
             else if (roleStr === "visitor") role = UserRole.VISITOR;
+            else if (roleStr === "gm_estate") role = UserRole.GM_ESTATE;
 
             // Try to find user locally
             const user = await this.getUser(username);
@@ -362,14 +364,18 @@ export class AuthService {
                 // Note: If role is VISITOR, they get all divisions but DO NOT become ADMIN
                 const currentRole = role as UserRole;
                 const isAllDivisions = divisions.some(d => d.toUpperCase() === "ALL");
-                const isAdmin = currentRole === UserRole.ADMIN || (isAllDivisions && roleStr !== "visitor");
+                const isAdmin = currentRole === UserRole.ADMIN || (isAllDivisions && roleStr !== "visitor" && roleStr !== "gm_estate");
                 const isVisitor = roleStr === "visitor" || (isAllDivisions && roleStr === "visitor");
+                const isGm = currentRole === UserRole.GM_ESTATE;
 
                 if (isAdmin) {
                     role = UserRole.ADMIN;
                     divisions = AuthService.ALL_DIVISIONS;
                 } else if (isVisitor) {
                     role = UserRole.VISITOR;
+                    divisions = AuthService.ALL_DIVISIONS;
+                } else if (isGm) {
+                    // GM Estate: akses semua divisi tapi bukan ADMIN (tetap gm_estate)
                     divisions = AuthService.ALL_DIVISIONS;
                 } else {
                     // Normalize "AREC" to "ARC" and "WORKSHOP" aliases to fix external token mappings
@@ -420,7 +426,7 @@ export class AuthService {
     }
 
     public getAccessibleDivisions(user: User): string[] {
-        if (user.role === UserRole.ADMIN || user.role === UserRole.VISITOR) {
+        if (user.role === UserRole.ADMIN || user.role === UserRole.VISITOR || user.role === UserRole.GM_ESTATE) {
             return AuthService.ALL_DIVISIONS;
         }
         // For USER and KERANI, return assigned divisions

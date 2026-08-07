@@ -30,6 +30,7 @@ Putusan target daftar upah ada di 4 tempat: 2 di `routes-config.json` + 2 di `ro
 | 8001 | SQL Gateway db_api (Bun/MSSQL proxy) | RUNNING |
 | **8002** | **Root app `backend/src` (PUBLISHED via proxy)** | RUNNING |
 | **8005** | **Dev-unified `backend/src` (kode+build working tree terbaru, TANPA proxy)** | RUNNING |
+| 8006 | v1.6 release (snapshot 2026-08-07 @ `f07c1d1` — tema sawit-finance + exec-board + premi_items) | stopped |
 | 8007 | v2.1 release | down |
 | 5175 | Vite dev (root frontend) | RUNNING |
 | 5176 | Monitoring absen / attendance API | RUNNING |
@@ -63,7 +64,7 @@ Prefix route:
 - `/auth`, `/payroll`, `/reports`, `/payroll/summary`, `/tax-report`, `/users`, `/dashboardRoutes`, `/history`, `/wages`, `/logs`, `/employeeHrData`, `/employeeComparison`, `/otherIncomes`, `/api/mill-production`
 - Semua routes juga di-mount ulang di bawah `/backend/upah` group (proxy prefix)
 - Utility: `/health`, `/api-info`
-- `GET /payroll/locked/verify` — verifikasi token eksternal (RS256/HS256), dipakai frontend `verifyExternalToken()`; wajib ada di root + v1.5 + v2.1. Dipatch 2026-08-05 bersama fix key RSA missing di snapshot v1.5 & v2.1.export
+- `GET /payroll/locked/verify` — verifikasi token eksternal (RS256/HS256), dipakai frontend `verifyExternalToken()`; wajib ada di root + v1.5 + v1.6 + v2.1. Dipatch 2026-08-05 bersama fix key RSA missing di snapshot v1.5 & v2.1.export
 
 ## Perubahan yang WAJIB update file ini
 

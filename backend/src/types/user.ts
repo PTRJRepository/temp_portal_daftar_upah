@@ -3,6 +3,7 @@ export enum UserRole {
     USER = "user",
     KERANI = "kerani",
     VISITOR = "visitor",
+    GM_ESTATE = "gm_estate",
 }
 
 export interface User {

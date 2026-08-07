@@ -244,8 +244,8 @@ export const payrollRoutes = new Elysia({ prefix: "/payroll" })
             const division = query.division === "ALL" ? undefined : query.division;
             const search = query.search || undefined;
 
-            // Permission check
-            if (currentUser && (currentUser.role !== UserRole.ADMIN)) {
+            // Permission check — ADMIN/GM_ESTATE full akses (GM: semua divisi, non-admin)
+            if (currentUser && (currentUser.role !== UserRole.ADMIN && currentUser.role !== UserRole.GM_ESTATE)) {
                 if (division && !currentUser.divisions.includes(division)) {
                     set.status = 403;
                     return { message: "Division not accessible" };
@@ -2892,7 +2892,8 @@ export const payrollRoutes = new Elysia({ prefix: "/payroll" })
         }
 
         // Permission check - Use NORMALIZED division check like non-SSE endpoints
-        if (user && user.role !== UserRole.ADMIN) {
+        // ADMIN/GM_ESTATE full akses (GM: semua divisi, non-admin)
+        if (user && user.role !== UserRole.ADMIN && user.role !== UserRole.GM_ESTATE) {
             const { divisionDefinition } = await import("../services/divisionDefinition");
             const requestedDiv = divisionDefinition.resolveDivisionCode(String(divisionCode).trim().toUpperCase());
 

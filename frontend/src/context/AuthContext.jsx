@@ -260,16 +260,9 @@ export function AuthProvider({ children }) {
   // Auto-login moved to LoginPage in test mode to show the login UI while submitting automatically
 
   async function login(username, password, rememberMe = true) {
-    // Di PROXY MODE (prod), internal login dinonaktifkan
-    // User harus login via gateway/proxy
-    if (isProdMode()) {
-      console.error('[Auth] Proxy mode: Internal login is DISABLED. Please use gateway login.')
-      alert('Login internal tidak tersedia dalam mode proxy.\nSilakan login melalui halaman gateway.')
-      // Redirect ke gateway login
-      redirectToExternalLogin()
-      return false
-    }
-
+    // Proxy mode: internal login diizinkan. Gateway login tetap jalan utk user
+    // eksternal via localStorage token (isExternalAuth). Internal users (users.db)
+    // login langsung ke backend lewat proxy /backend/upah/auth/login.
     // Prevent multiple simultaneous login attempts
     if (loginInProgress) {
       console.log('[Auth] Login already in progress, skipping duplicate request')
