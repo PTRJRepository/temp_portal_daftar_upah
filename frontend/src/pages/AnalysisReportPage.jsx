@@ -13,8 +13,12 @@ import { initPrintMode } from '../utils/printOptimizer';
 import { getSourceModeLabel } from '../utils/reportPresentationLabels';
 import { printReport } from '../utils/printPageSetup';
 import { buildAnalysisReportInsights } from '../utils/analysisReportInsights';
+import PresentSlide from '../components/present/PresentSlide';
+import PresentController from '../components/present/PresentController';
+import usePresentMode from '../components/present/usePresentMode';
 import '../styles/wages-summary-professional.css';
 import '../styles/report-print-foundation.css';
+import '../styles/analysis-report-page.css';
 
 // Company information for consistent header branding
 const COMPANY_INFO = {
@@ -62,6 +66,9 @@ export default function AnalysisReportPage({ onBack, initialMonth, initialYear }
     const [otRange, setOtRange] = useState({ min: '', max: '' });
     const [premiRange, setPremiRange] = useState({ min: '', max: '' });
     const [showFilters, setShowFilters] = useState(false);
+
+    // Present mode: deck fullscreen per slide (toggle html.present-mode + HUD)
+    const { presenting, activeIndex, enter, exit } = usePresentMode();
 
     // Load available periods
     useEffect(() => {
@@ -176,9 +183,12 @@ export default function AnalysisReportPage({ onBack, initialMonth, initialYear }
 
     const companyInfo = getCompanyInfo(filterType);
     const periodLabel = reportData ? `${getMonthName(reportData.previous_period?.month)} ${reportData.previous_period?.year} vs ${getMonthName(reportData.current_period?.month)} ${reportData.current_period?.year}` : '';
+    const scopeLabel = filterType === 'all' ? 'All Divisions' : filterType === 'ijl' ? 'IJL' : 'Rebinmas';
+    // Slide hanya ter-render saat dokumen tampil; hitung dinamis agar HUD sinkron
+    const slideCount = (!loading && !error && reportData) ? 3 : 0;
 
     return (
-        <div className="wsp-container" style={{ padding: '1.5rem', backgroundColor: '#EDF3EC' }}>
+        <div className="wsp-container analysis-report-page" style={{ padding: '1.5rem', backgroundColor: '#F0EEE6' }}>
             {/* Header / Action Bar */}
             <div className="report-header-web no-print">
                 <div className="report-header-info">
@@ -191,7 +201,7 @@ export default function AnalysisReportPage({ onBack, initialMonth, initialYear }
                             &larr; Kembali
                         </button>
                         <h1 style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>Analysis & Progress Report <MetricInfo metricKey="total_premi" /></h1>
-                        <button onClick={() => navigate(`/cost-per-ton-story?month=${month}&year=${year}`)} style={{ marginLeft: 'auto', padding: '7px 14px', borderRadius: 8, border: 'none', background: '#1E7A45', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>Cost/Ton Story →</button>
+                        <button onClick={() => navigate(`/cost-per-ton-story?month=${month}&year=${year}`)} style={{ marginLeft: 'auto', padding: '7px 14px', borderRadius: 8, border: 'none', background: '#1F6F43', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>Cost/Ton Story →</button>
                     </div>
                     <p style={{ marginLeft: '4.5rem' }}>Laporan perbandingan biaya premi dan lembur antar periode.</p>
                     
@@ -244,6 +254,18 @@ export default function AnalysisReportPage({ onBack, initialMonth, initialYear }
                         <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
                     </button>
                 </div>
+            </div>
+
+            {/* PRESENT MODE - tombol Present (mode normal) + HUD deck (present mode) */}
+            <div className="no-print" style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.75rem' }}>
+                <PresentController
+                    presenting={presenting}
+                    activeIndex={activeIndex}
+                    slideCount={slideCount}
+                    onEnter={enter}
+                    onExit={exit}
+                    caption={`Analysis & Progress · ${getMonthName(month)} ${year} · ${scopeLabel}`}
+                />
             </div>
 
             {/* Range Filters Panel */}
@@ -321,6 +343,7 @@ export default function AnalysisReportPage({ onBack, initialMonth, initialYear }
                         note="KPI berasal dari summary periode; filter range hanya menyaring tabel detail yang sedang ditampilkan."
                     />
 
+                    <PresentSlide num="01" id="slide-01" title="Ringkasan & Indikator Utama" subtitle="Perbandingan premi dan lembur antar periode dalam satu pandangan">
                     {/* KPI Comparison Cards */}
                     <div className="wsp-kpi-grid comparison-grid">
                         <KPIComparisonCard 
@@ -366,8 +389,10 @@ export default function AnalysisReportPage({ onBack, initialMonth, initialYear }
                         formatPercent={formatPercent}
                         getDiffClass={getDiffClass}
                     />
+                    </PresentSlide>
 
                     {/* Section 1: Summary Premi & OT Analysis (Aggregated by division) */}
+                    <PresentSlide num="02" id="slide-02" title="Progres Premi & Lembur per Divisi" subtitle="Agregat per divisi dengan gang driver utama periode berjalan">
                     <AggregatedPremiOTTable
                         groupedRows={analysisInsights.groupedRows}
                         totals={reportData.totals}
@@ -376,8 +401,10 @@ export default function AnalysisReportPage({ onBack, initialMonth, initialYear }
                         formatCurrency={formatCurrency}
                         getDiffClass={getDiffClass}
                     />
+                    </PresentSlide>
 
                     {/* Section 2: Full Premi Breakdown (Seluruh Variasi Premi) */}
+                    <PresentSlide num="03" id="slide-03" title="Uraian Premi Seluruh Variasi" subtitle="Rincian lengkap komponen premi bulan berjalan">
                     <FullPremiBreakdownTable 
                         data={analysisInsights.groupedRows}
                         headers={reportData.all_premi_headers}
@@ -388,6 +415,7 @@ export default function AnalysisReportPage({ onBack, initialMonth, initialYear }
                         otherPremiTotal={analysisInsights.otherPremiTotal}
                         formatCurrency={formatCurrency}
                     />
+                    </PresentSlide>
 
                     {/* Signature Section */}
                     <div className="print-only">
@@ -523,7 +551,7 @@ const AnalysisPrintInsights = ({ insights, totals, formatCurrency, formatPercent
 
 const AggregatedPremiOTTable = ({ groupedRows = [], totals = {}, prevMonthLabel, currMonthLabel, formatCurrency, getDiffClass }) => (
     <div className="analysis-section" style={{ marginTop: '2rem' }}>
-        <div className="analysis-section-title" style={{ padding: '0.75rem 1rem', background: '#f8fafc', borderLeft: '4px solid #334155', fontWeight: 700, display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+        <div className="analysis-section-title" style={{ padding: '0.75rem 1rem', background: '#F7F5EF', borderLeft: '4px solid #1F6F43', fontWeight: 700, display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
             <span>Summary Premi & OT Progress - Agregat per Divisi</span>
             <span style={{ fontSize: '0.75rem', fontWeight: 400 }}>Agregat per Divisi; gang hanya ditampilkan sebagai driver utama</span>
         </div>
@@ -602,7 +630,7 @@ const FullPremiBreakdownTable = ({
     formatCurrency
 }) => (
     <div className="analysis-section" style={{ marginTop: '3rem', pageBreakBefore: 'always' }}>
-        <div className="analysis-section-title" style={{ padding: '0.75rem 1rem', background: '#f8fafc', borderLeft: '4px solid #1e40af', fontWeight: 700, display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+        <div className="analysis-section-title" style={{ padding: '0.75rem 1rem', background: '#F7F5EF', borderLeft: '4px solid #1F6F43', fontWeight: 700, display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
             <span>Uraian Premi Seluruh Variasi (Current Month)</span>
             <span style={{ fontSize: '0.75rem', fontWeight: 400 }}>Rincian Lengkap Seluruh Premi</span>
         </div>

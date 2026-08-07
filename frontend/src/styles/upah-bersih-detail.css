@@ -526,9 +526,18 @@
     }
 
     .ubd-gang-group {
-        page-break-inside: avoid;
+        page-break-inside: auto;
         border: 1px solid #ccc;
         box-shadow: none;
+    }
+
+    /* Saat print: semua gang + karyawan + aktivitas tercetak lengkap */
+    .ubd-gang-header {
+        page-break-after: avoid;
+    }
+    .ubd-table tr,
+    .ubd-activity-row {
+        page-break-inside: avoid;
     }
 
     .ubd-table {

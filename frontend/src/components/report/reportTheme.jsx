@@ -1,5 +1,6 @@
 import React from 'react';
 import { AlertTriangle, BarChart3 } from 'lucide-react';
+import { usePrintExpand } from '../../utils/printPageSetup';
 
 // ===== Estate Ledger — shared theme tokens (SSOT mirror dari tokens.css) =====
 // Keys preserved for backward compat across 25+ page files.
@@ -109,6 +110,9 @@ export function MetricInfo({ metricKey, def, size = 13 }) {
     const d = def || getMetric(metricKey);
     const [open, setOpen] = React.useState(false);
     const wrapRef = React.useRef(null);
+    // Saat print: keterangan audit (yang biasanya cuma muncul di hover/klik) dirender inline
+    // supaya "angka ini dari mana?" ikut tercetak.
+    const printExpanded = usePrintExpand();
 
     React.useEffect(() => {
         if (!open) return;
@@ -131,6 +135,14 @@ export function MetricInfo({ metricKey, def, size = 13 }) {
                     cursor: 'help', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1, padding: 0
                 }}
             >i</button>
+            {printExpanded && d && (
+                <span className="metric-info-print-note">
+                    {d.formula && <span><b>Rumus:</b> {d.formula}</span>}
+                    {d.column && <span><b>Kolom:</b> {d.column}</span>}
+                    {d.scope?.label && <span><b>Cakupan:</b> {d.scope.label}{d.scope.desc ? ` — ${d.scope.desc}` : ''}</span>}
+                    {d.caveat && <span><b>Catatan:</b> {d.caveat}</span>}
+                </span>
+            )}
             {open && (
                 <div style={{
                     position: 'absolute', zIndex: 50, top: 'calc(100% + 8px)', left: '50%', transform: 'translateX(-50%)',

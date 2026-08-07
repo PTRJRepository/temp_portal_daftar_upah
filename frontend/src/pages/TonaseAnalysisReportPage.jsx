@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Bar, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Scatter, ScatterChart, XAxis, YAxis, Tooltip, Cell, LabelList } from 'recharts';
+import { Bar, CartesianGrid, ComposedChart, Legend, Line, Pie, PieChart, ResponsiveContainer, Scatter, ScatterChart, XAxis, YAxis, Tooltip, Cell, LabelList } from 'recharts';
 import { AlertTriangle, ArrowLeft, BarChart3, DollarSign, Printer, RefreshCw, Scale, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -7,8 +7,8 @@ import { fetchAvailablePeriods } from '../services/summaryReportService';
 import { fetchTonaseAnalysisReport } from '../services/dashboardService';
 import ReportPrintMetadata from '../components/common/ReportPrintMetadata';
 import ReportWatermark from '../components/common/ReportWatermark';
-import { printReport } from '../utils/printPageSetup';
-import { C, CARD, SECTION_TITLE, ReportHero, ReportBody, StatCard, MetricInfo, Breadcrumb, EmptyState } from '../components/report/reportTheme';
+import { printReport, usePrintExpand } from '../utils/printPageSetup';
+import { C, CARD, SECTION_TITLE, ReportHero, ReportBody, StatCard, MetricInfo, Breadcrumb, EmptyState, chartPalette, DeltaBadge } from '../components/report/reportTheme';
 import CostPerTonPanel from '../components/report/CostPerTonPanel';
 import { PresentSlide } from '../components/present/PresentSlide';
 import { PresentController } from '../components/present/PresentController';
@@ -42,6 +42,8 @@ export default function TonaseAnalysisReportPage({ onBack, initialMonth, initial
     const [error, setError] = useState('');
     const [selectedDivision, setSelectedDivision] = useState(null); // drill division_code
     const { presenting, activeIndex, enter, exit } = usePresentMode();
+    // During print: semua divisi dibedah per-gang (tabel), bukan hanya divisi yang diklik.
+    const printExpanded = usePrintExpand();
 
     useEffect(() => {
         if (initialMonth !== undefined) setMonth(initialMonth);
@@ -99,6 +101,45 @@ export default function TonaseAnalysisReportPage({ onBack, initialMonth, initial
     // drill data
     const drillDetail = useMemo(() => details.find(d => d.division_code === selectedDivision) || null, [details, selectedDivision]);
 
+    // Perbandingan MoM: pasangan periode terakhir vs sebelumnya.
+    const currentTrend = trend.length ? trend[trend.length - 1] : null;
+    const prevTrend = trend.length >= 2 ? trend[trend.length - 2] : null;
+    const momRows = [
+        { label: 'Tonase TBS', cur: currentTrend?.total_tonase, prev: prevTrend?.total_tonase, fmt: (v) => `${fmtNum(v, 1)} t`, invert: false },
+        { label: 'Upah Kotor / Ton', cur: currentTrend?.upah_kotor_per_ton, prev: prevTrend?.upah_kotor_per_ton, fmt: fmtCompact, invert: true },
+        { label: 'Upah Bersih / Ton', cur: currentTrend?.upah_bersih_per_ton, prev: prevTrend?.upah_bersih_per_ton, fmt: fmtCompact, invert: true },
+        { label: 'Premi / Ton', cur: currentTrend?.premi_per_ton, prev: prevTrend?.premi_per_ton, fmt: fmtCompact, invert: true },
+        { label: 'Upah Kotor / HK', cur: currentTrend?.upah_kotor_per_hk, prev: prevTrend?.upah_kotor_per_hk, fmt: fmtCompact, invert: true },
+        { label: 'HK', cur: currentTrend?.total_hk, prev: prevTrend?.total_hk, fmt: (v) => fmtNum(v, 0), invert: false },
+        { label: 'Karyawan', cur: currentTrend?.total_employees, prev: prevTrend?.total_employees, fmt: (v) => fmtNum(v, 0), invert: false },
+        { label: 'Total Premi', cur: currentTrend?.total_premi, prev: prevTrend?.total_premi, fmt: fmtCompact, invert: false }
+    ].filter(r => r.cur !== undefined && r.cur !== null && r.cur !== '' && r.prev !== undefined && r.prev !== null && r.prev !== '');
+
+    // Sebaran tonase per divisi (porsi) + konsentrasi kumulatif (Pareto).
+    const shareData = useMemo(() => producingDivs.map((d, i) => ({
+        name: d.division_code,
+        value: Number(d.total_tonase) || 0,
+        pct: Number(d.tonase_share) || 0,
+        color: chartPalette[i % chartPalette.length]
+    })), [producingDivs]);
+    let cumShare = 0;
+    const pareto = shareData.map(s => ({ ...s, cum: (cumShare += s.pct) }));
+
+    // History tonase per divisi (wide-format: tiap baris = periode, tiap kolom = divisi).
+    const divisionHistory = useMemo(() => {
+        const labels = trend.map(t => t.label);
+        const metrics = details.filter(d => (d.trend || []).length > 0);
+        const rows = labels.map(lbl => {
+            const row = { label: lbl };
+            metrics.forEach(d => {
+                const pt = (d.trend || []).find(t => t.label === lbl);
+                row[d.division_code] = Number(pt?.total_tonase || 0);
+            });
+            return row;
+        });
+        return { rows, metrics };
+    }, [details, trend]);
+
     const handlePrint = () => printReport({ orientation: 'landscape' });
 
     if (loading && !reportData) return <div className="cpts-page"><div className="cpts-empty">Memuat analisis tonase…</div></div>;
@@ -139,7 +180,7 @@ export default function TonaseAnalysisReportPage({ onBack, initialMonth, initial
                     <PresentController
                         presenting={presenting}
                         activeIndex={activeIndex}
-                        slideCount={6}
+                        slideCount={9}
                         onEnter={enter}
                         onExit={exit}
                         caption={`Analisis Tonase · ${periodLabel} · Gang Panen`}
@@ -182,7 +223,45 @@ export default function TonaseAnalysisReportPage({ onBack, initialMonth, initial
                 />
                 </PresentSlide>
 
-                <PresentSlide num="03" id="slide-03" title="Breakdown Divisi & Gang" subtitle="Tonase, upah, dan cost per ton tiap divisi produksi">
+                <PresentSlide num="03" id="slide-03" title="Perbandingan vs Periode Lalu" subtitle={`Selisih ${periodLabel} dibanding ${prevTrend?.label || 'periode sebelumnya'}`}>
+                {momRows.length === 0 ? <EmptyState title="Belum ada perbandingan" message="Butuh minimal 2 periode dalam window tren." /> : (
+                    <div style={{ ...CARD, marginBottom: 24 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, ...SECTION_TITLE, marginBottom: 16 }}>
+                            Selisih vs Periode Lalu <MetricInfo metricKey="total_tonase" />
+                        </div>
+                        <div style={{ overflowX: 'auto' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                                <thead>
+                                    <tr style={{ borderBottom: `2px solid ${C.border}` }}>
+                                        {['Metrik', prevTrend?.label || 'Periode Lalu', 'Periode Berjalan', 'Selisih', '%'].map(h => (
+                                            <th key={h} style={{ textAlign: h === 'Metrik' ? 'left' : 'right', padding: '10px 12px', color: C.muted, fontWeight: 700, textTransform: 'uppercase', fontSize: 11, letterSpacing: '0.06em' }}>{h}</th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {momRows.map(r => {
+                                        const cur = Number(r.cur); const prev = Number(r.prev);
+                                        const delta = cur - prev;
+                                        const pct = prev === 0 ? null : (delta / prev) * 100;
+                                        return (
+                                            <tr key={r.label} style={{ borderBottom: `1px solid ${C.border}` }}>
+                                                <td style={{ padding: '11px 12px', fontWeight: 700, color: C.text }}>{r.label}</td>
+                                                <td style={{ textAlign: 'right', padding: '11px 12px', color: C.text2 }}>{r.fmt(prev)}</td>
+                                                <td style={{ textAlign: 'right', padding: '11px 12px', fontVariantNumeric: 'tabular-nums', fontWeight: 800 }}>{r.fmt(cur)}</td>
+                                                <td style={{ textAlign: 'right', padding: '11px 12px', fontVariantNumeric: 'tabular-nums', color: delta > 0 ? C.upah : delta < 0 ? C.potongan : C.muted }}>{delta > 0 ? '+' : ''}{r.fmt(delta)}</td>
+                                                <td style={{ textAlign: 'right', padding: '11px 12px' }}><DeltaBadge pct={pct} invert={r.invert} /></td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div style={{ fontSize: 11.5, color: C.muted, marginTop: 10 }}>Merah pada kolom selisih = penurunan. Warna Δ memakai semantik biaya: tonase & jumlah tenaga naik bagus; upah per ton/HK naik tidak bagus.</div>
+                    </div>
+                )}
+                </PresentSlide>
+
+                <PresentSlide num="04" id="slide-04" title="Breakdown Divisi & Gang" subtitle="Tonase, upah, dan cost per ton tiap divisi produksi">
                 {/* Division breakdown table — division-first, cost/ton + benchmark */}
                 <div style={{ ...CARD, marginBottom: 24 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, ...SECTION_TITLE, marginBottom: 16 }}>
@@ -271,7 +350,68 @@ export default function TonaseAnalysisReportPage({ onBack, initialMonth, initial
                 )}
                 </PresentSlide>
 
-                <PresentSlide num="04" id="slide-04" title="Komposisi & Efisiensi Cost per Ton" subtitle="Dekomposisi biaya per ton dan peta efisiensi tiap divisi">
+                <PresentSlide num="05" id="slide-05" title="Sebaran & Konsentrasi Tonase" subtitle="Porsi tiap divisi dan kumulasi produksi (analisis Pareto)">
+                {shareData.length === 0 ? <EmptyState message="Butuh tonase > 0" /> : (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: 24, marginBottom: 24 }}>
+                        {/* Donut sebaran */}
+                        <div style={{ ...CARD }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, ...SECTION_TITLE, marginBottom: 16 }}>
+                                Sebaran Tonase per Divisi <MetricInfo metricKey="total_tonase" />
+                            </div>
+                            <div style={{ height: 260 }}>
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Tooltip formatter={(v) => `${fmtNum(v, 1)} t`} contentStyle={{ borderRadius: 10, border: `1px solid ${C.border}`, fontSize: 13 }} />
+                                        <Pie data={shareData} dataKey="value" nameKey="name" innerRadius={58} outerRadius={96} paddingAngle={2}
+                                            onClick={(p) => setSelectedDivision(p.name)}
+                                            label={(e) => `${e.name} ${fmtPercent(e.pct)}`}
+                                            labelLine={{ stroke: C.muted }} style={{ cursor: 'pointer' }}>
+                                            {shareData.map(s => <Cell key={s.name} fill={s.color} />)}
+                                        </Pie>
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                            <div style={{ fontSize: 11.5, color: C.muted, marginTop: 6, textAlign: 'center' }}>Klik irisan untuk bedah ke per-gang.</div>
+                        </div>
+
+                        {/* Pareto: porsi + kumulatif */}
+                        <div style={{ ...CARD }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, ...SECTION_TITLE, marginBottom: 16 }}>
+                                Konsentrasi Produksi (Pareto) <MetricInfo metricKey="total_tonase" />
+                            </div>
+                            {pareto.length === 0 ? <EmptyState message="Butuh tonase > 0" /> : (
+                                <>
+                                    <div style={{ height: 260 }}>
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <ComposedChart data={pareto} margin={{ top: 10, right: 12, left: -14, bottom: 0 }}>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={C.border} />
+                                                <XAxis dataKey="name" tick={{ fontSize: 11, fill: C.muted }} />
+                                                <YAxis yAxisId="l" tickFormatter={(v) => `${v}%`} tick={{ fontSize: 11, fill: C.muted }} domain={[0, 100]} />
+                                                <YAxis yAxisId="r" orientation="right" tickFormatter={(v) => `${v}%`} tick={{ fontSize: 11, fill: C.costTon }} domain={[0, 100]} />
+                                                <Tooltip contentStyle={{ borderRadius: 10, border: `1px solid ${C.border}`, fontSize: 13 }} />
+                                                <Bar yAxisId="l" dataKey="pct" name="Porsi" fill={C.leafMid} barSize={22} radius={[4, 4, 0, 0]} />
+                                                <Line yAxisId="r" type="monotone" dataKey="cum" name="Kumulatif" stroke={C.costTon} strokeWidth={2.5} dot={{ r: 3 }} />
+                                            </ComposedChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 8, marginTop: 12, fontSize: 12 }}>
+                                        {pareto.map(s => (
+                                            <div key={s.name} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 8px', background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 8 }}>
+                                                <span style={{ width: 10, height: 10, borderRadius: '50%', background: s.color, flexShrink: 0 }} />
+                                                <span style={{ fontWeight: 700, color: C.text }}>{s.name}</span>
+                                                <span style={{ marginLeft: 'auto', color: C.muted }}>{fmtPercent(s.pct)}<span style={{ color: C.costTon }}> · {fmtPercent(s.cum)}</span></span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div style={{ fontSize: 11.5, color: C.muted, marginTop: 8 }}>Porsi = kontribusi tonase divisi. Kumulatif naik cepat → produksi terkonsentrasi di sedikit divisi (Pareto).</div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                )}
+                </PresentSlide>
+
+                <PresentSlide num="06" id="slide-06" title="Komposisi & Efisiensi Cost per Ton" subtitle="Dekomposisi biaya per ton dan peta efisiensi tiap divisi">
                 {/* Decomposition + Scatter — deepen cost/ton */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: 24, marginBottom: 24 }}>
                     {/* Dekomposisi cost/ton */}
@@ -350,7 +490,58 @@ export default function TonaseAnalysisReportPage({ onBack, initialMonth, initial
                 </div>
                 </PresentSlide>
 
-                <PresentSlide num="05" id="slide-05" title="Tren Tonase & Upah per HK" subtitle="Pergerakan tonase dan upah antar periode">
+                <PresentSlide num="07" id="slide-07" title="History Tonase per Divisi" subtitle={`Perjalanan tonase tiap divisi sepanjang ${trend.length} periode`}>
+                {divisionHistory.metrics.length === 0 ? <EmptyState message="Belum ada data history divisi" /> : (
+                    <>
+                        <div style={{ ...CARD, marginBottom: 24 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, ...SECTION_TITLE, marginBottom: 16 }}>
+                                Tren Tonase per Divisi <MetricInfo metricKey="total_tonase" />
+                            </div>
+                            <div style={{ height: 320 }}>
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <ComposedChart data={divisionHistory.rows} margin={{ top: 10, right: 24, left: 0, bottom: 0 }}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={C.border} />
+                                        <XAxis dataKey="label" tick={{ fontSize: 11, fill: C.muted }} />
+                                        <YAxis tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11, fill: C.muted }} />
+                                        <Tooltip formatter={(v, n) => [`${fmtNum(v, 1)} t`, n]} contentStyle={{ borderRadius: 10, border: `1px solid ${C.border}`, fontSize: 13 }} />
+                                        <Legend />
+                                        {divisionHistory.metrics.map((d, i) => (
+                                            <Line key={d.division_code} type="monotone" dataKey={d.division_code} name={d.division_code} stroke={chartPalette[i % chartPalette.length]} strokeWidth={2} dot={{ r: 2.5 }} />
+                                        ))}
+                                    </ComposedChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                        <div style={{ ...CARD, marginBottom: 24 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, ...SECTION_TITLE, marginBottom: 16 }}>
+                                Matriks History Tonase <MetricInfo metricKey="total_tonase" />
+                            </div>
+                            <div style={{ overflowX: 'auto' }}>
+                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                                    <thead>
+                                        <tr style={{ borderBottom: `2px solid ${C.border}` }}>
+                                            <th style={{ textAlign: 'left', padding: '10px 12px', color: C.muted, fontWeight: 700, textTransform: 'uppercase', fontSize: 11, letterSpacing: '0.06em' }}>Divisi</th>
+                                            {divisionHistory.rows.map(r => <th key={r.label} style={{ textAlign: 'right', padding: '10px 12px', color: C.muted, fontWeight: 700, fontSize: 11 }}>{r.label}</th>)}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {divisionHistory.metrics.map((d, i) => (
+                                            <tr key={d.division_code} style={{ borderBottom: `1px solid ${C.border}` }}>
+                                                <td style={{ padding: '11px 12px', fontWeight: 800, color: C.text }}>{d.division_code}</td>
+                                                {divisionHistory.rows.map(r => (
+                                                    <td key={r.label} style={{ textAlign: 'right', padding: '11px 12px', fontVariantNumeric: 'tabular-nums', color: Number(r[d.division_code]) > 0 ? C.text : C.muted }}>{fmtNum(r[d.division_code], 0)}</td>
+                                                ))}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </>
+                )}
+                </PresentSlide>
+
+                <PresentSlide num="08" id="slide-08" title="Tren Tonase & Upah per HK" subtitle="Pergerakan tonase dan upah antar periode">
                 {/* Trend chart */}
                 <div style={{ ...CARD, marginBottom: 24 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, ...SECTION_TITLE, marginBottom: 16 }}>
@@ -376,7 +567,7 @@ export default function TonaseAnalysisReportPage({ onBack, initialMonth, initial
                 </div>
                 </PresentSlide>
 
-                <PresentSlide num="06" id="slide-06" title="Insight & Penutup" subtitle="Uraian premi per divisi dan sorotan penting periode ini">
+                <PresentSlide num="09" id="slide-09" title="Insight & Penutup" subtitle="Uraian premi per divisi dan sorotan penting periode ini">
                 {/* Premium breakdown */}
                 {premiumBreakdown.length > 0 && (
                     <div style={{ ...CARD, marginBottom: 24 }}>
@@ -419,10 +610,58 @@ export default function TonaseAnalysisReportPage({ onBack, initialMonth, initial
 
                 <ReportPrintMetadata mode="Analisis Tonase" scope="Gang Panen (per divisi)" source={meta.tonase_source || 'division_tonase'} note="Tonase dari mill supplier PTRJ01-09 internal. Cost/Ton valid per divisi." />
                 </PresentSlide>
+
+                {/* LAMPIRAN CETAK — bedah per-gang untuk SEMUA divisi produksi */}
+                {printExpanded && details.length > 0 && (
+                    <div className="tonase-print-drills">
+                        <div className="cpts-print-title">Lampiran · Uraian Gang per Divisi</div>
+                        <div className="cpts-print-sub">Cost/Ton tidak valid per gang (tonase = properti divisi). Bandingkan gang lewat Cost/HK.</div>
+                        {producingDivs.map(d => {
+                            const det = details.find(x => x.division_code === d.division_code);
+                            return det ? <GangDrillTable key={d.division_code} division={d.division_code} rows={det.gang_rows || []} /> : null;
+                        })}
+                    </div>
+                )}
             </ReportBody>
         </div>
     );
 }
+
+const GangDrillTable = ({ division, rows }) => (
+    <div style={{ ...CARD, marginBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, ...SECTION_TITLE, marginBottom: 16 }}>
+            Bedah Divisi {division} · Per Gang <MetricInfo metricKey="cost_per_hk" />
+        </div>
+        <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <thead>
+                    <tr style={{ borderBottom: `2px solid ${C.border}` }}>
+                        {['Gang', 'Deskripsi', 'HK', 'Upah Kotor', 'Cost/HK', 'Premi', 'Karyawan'].map(h => (
+                            <th key={h} style={{ textAlign: h === 'Gang' || h === 'Deskripsi' ? 'left' : 'right', padding: '10px 12px', color: C.muted, fontWeight: 700, textTransform: 'uppercase', fontSize: 11, letterSpacing: '0.06em' }}>{h}</th>
+                        ))}
+                    </tr>
+                </thead>
+                <tbody>
+                    {rows.map(g => {
+                        const cphk = Number(g.total_hk) > 0 ? Number(g.total_upah_kotor) / Number(g.total_hk) : 0;
+                        return (
+                            <tr key={g.gang_code} style={{ borderBottom: `1px solid ${C.border}` }}>
+                                <td style={{ padding: '11px 12px', fontWeight: 800 }}>{g.gang_code}</td>
+                                <td style={{ padding: '11px 12px', color: C.text2 }}>{g.gang_description || '-'}</td>
+                                <td style={{ textAlign: 'right', padding: '11px 12px' }}>{fmtNum(g.total_hk, 0)}</td>
+                                <td style={{ textAlign: 'right', padding: '11px 12px', fontVariantNumeric: 'tabular-nums' }}>{fmtCompact(g.total_upah_kotor)}</td>
+                                <td style={{ textAlign: 'right', padding: '11px 12px', fontVariantNumeric: 'tabular-nums', fontWeight: 700, color: C.lembur }}>{fmtCompact(cphk)}</td>
+                                <td style={{ textAlign: 'right', padding: '11px 12px', fontVariantNumeric: 'tabular-nums' }}>{fmtCompact(g.total_premi)}</td>
+                                <td style={{ textAlign: 'right', padding: '11px 12px' }}>{fmtNum(g.total_employees, 0)}</td>
+                            </tr>
+                        );
+                    })}
+                    {rows.length === 0 && <tr><td colSpan={7} style={{ padding: 20, textAlign: 'center', color: C.muted }}>Tidak ada gang panen di divisi ini.</td></tr>}
+                </tbody>
+            </table>
+        </div>
+    </div>
+);
 
 const InsightBox = ({ label, value, note, icon }) => (
     <div style={{ ...CARD, padding: '14px 16px' }}>

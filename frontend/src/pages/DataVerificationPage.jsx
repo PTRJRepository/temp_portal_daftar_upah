@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useReport } from '../context/ReportContext';
 import LoadingScreen from '../components/common/LoadingScreen';
+import { usePrintExpand } from '../utils/printPageSetup';
 import { Search, AlertTriangle, CheckCircle, XCircle, Info, Download, RefreshCw, Filter, ChevronDown, ChevronRight } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8002';
@@ -61,6 +62,8 @@ export default function DataVerificationPage() {
     const [statusFilter, setStatusFilter] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedRows, setExpandedRows] = useState(new Set());
+    // Saat print: rincian DB_PTRJ per baris dibuka lengkap.
+    const printExpanded = usePrintExpand();
 
     const runVerification = useCallback(async () => {
         if (!division || !month || !year || !token) return;
@@ -295,7 +298,7 @@ export default function DataVerificationPage() {
                                 {filteredComparisons.slice(0, 500).map((item, idx) => {
                                     const cfg = STATUS_CONFIG[item.status] || STATUS_CONFIG.MISMATCH;
                                     const Icon = cfg.icon;
-                                    const isExpanded = expandedRows.has(idx);
+                                    const isExpanded = printExpanded || expandedRows.has(idx);
                                     const hasDetails = item.db_ptrj_detail && Object.keys(item.db_ptrj_detail).length > 0;
 
                                     return (

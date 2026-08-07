@@ -10,10 +10,11 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { Search, X, RotateCcw } from 'lucide-react';
+import { Search, X, RotateCcw, Printer } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend, ComposedChart, Line, ScatterChart, Scatter, ZAxis } from 'recharts';
 import { ReportHero, ReportBody, StatCard, EmptyState, C, CARD, SHADOW, SHADOW_HOVER, chartPalette, MetricInfo, Breadcrumb } from '../components/report/reportTheme';
 import { buildAnalysisSearchParams } from '../utils/salaryAnalysisParams';
+import { printReport, usePrintExpand } from '../utils/printPageSetup';
 import { PresentSlide } from '../components/present/PresentSlide';
 import { PresentController } from '../components/present/PresentController';
 import { usePresentMode } from '../components/present/usePresentMode';
@@ -143,6 +144,8 @@ export default function SalaryAnalysisPage() {
 
     // present mode deck (fullscreen scroll-snap)
     const { presenting, activeIndex, enter, exit } = usePresentMode();
+    // During print: roster difilter-klik (band/type/komponen/divisi) diabaikan → semua karyawan tercetak; drawer jadi inline.
+    const printExpanded = usePrintExpand();
 
     const authHeaders = useMemo(() => ({ Authorization: `Bearer ${token}`, 'X-API-Key': localStorage.getItem('api_key') || '' }), [token]);
 
@@ -437,6 +440,23 @@ export default function SalaryAnalysisPage() {
 
     const activeDrill = globalBand || typeFilter || compoSlice || divFilter;
 
+    // Roster hasil drill global (band/type/komponen/divisi) — sama dengan logika di slide 05.
+    const filteredGlobalRoster = useMemo(() => {
+        let pool = globalRoster;
+        if (globalBand) pool = pool.filter(e => { const u = num(e.upah_kotor); const b = global.bands.find(bd => u >= bd.min && u < bd.max); return b?.label === globalBand; });
+        if (typeFilter) pool = pool.filter(e => classifyTypeOf(e.gang_code) === typeFilter);
+        if (divFilter) pool = pool.filter(e => (e.division_code || '').trim() === divFilter);
+        if (compoSlice) {
+            const key = compoKey(compoSlice);
+            pool = pool.filter(e => Math.abs(num(e[key])) > 0).sort((a, b) => num(b[key]) - num(a[key]));
+        }
+        return pool;
+    }, [globalRoster, globalBand, typeFilter, divFilter, compoSlice]);
+
+    // Saat print: abaikan filter klik (band/type/komponen/divisi) supaya seluruh karyawan tercetak.
+    const rosterRows = printExpanded ? employees : filtered;
+    const globalRosterRows = printExpanded ? globalRoster : (activeDrill ? filteredGlobalRoster : []);
+
     return (
         <>
             <ReportHero
@@ -444,18 +464,22 @@ export default function SalaryAnalysisPage() {
                 subtitle="Roster karyawan + rincian komponen gaji per orang. Klik baris untuk bedah full payslip."
                 period={`${String(month).padStart(2, '0')}/${year}`}
                 eyebrow="Perkebunan Sawit · Analisis Gaji"
-                actions={<PresentController
+                actions={<>
+                    <button className="no-print" onClick={() => printReport({ orientation: 'landscape', margin: '6mm' })} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: 'none', background: '#111827', color: '#fff', borderRadius: 8, padding: '8px 14px', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+                        <Printer size={14} /> Cetak
+                    </button>
+                    <PresentController
                     presenting={presenting}
                     activeIndex={activeIndex}
                     slideCount={slideCount}
                     onEnter={enter}
                     onExit={exit}
                     caption={`Analisis Gaji · ${String(month).padStart(2, '0')}/${year} · ${division ? (gang ? `${division} · ${gang}` : `Divisi ${division}`) : 'Semua Divisi'}`}
-                />}
+                /></>}
             />
             <ReportBody>
                 {/* Filter bar */}
-                <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: 18, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: '16px 18px', boxShadow: SHADOW }}>
+                <div className="no-print" style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: 18, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: '16px 18px', boxShadow: SHADOW }}>
                     <Field label="Divisi">
                         <select value={division} onChange={e => applyParams({ division: e.target.value, gang: '' })} style={selectStyle}>
                             <option value="">Pilih divisi</option>
@@ -561,14 +585,14 @@ export default function SalaryAnalysisPage() {
                             </Section>
 
                             {/* Visual roster cards */}
-                            <Section title={`Roster Karyawan · ${filtered.length}`} sub="Klik kartu untuk bedah payslip lengkap" style={{ marginBottom: 0 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 8, padding: '7px 12px', marginBottom: 12 }}>
+                            <Section title={`Roster Karyawan · ${rosterRows.length}`} sub="Klik kartu untuk bedah payslip lengkap" style={{ marginBottom: 0 }}>
+                                <div className="no-print" style={{ display: 'flex', alignItems: 'center', gap: 8, background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 8, padding: '7px 12px', marginBottom: 12 }}>
                                     <Search size={14} color={C.muted} />
                                     <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari nama / kode…" style={{ border: 'none', background: 'transparent', outline: 'none', fontSize: 13, width: '100%', color: C.text }} />
                                 </div>
-                                {filtered.length === 0 ? <div style={{ color: C.muted, fontSize: 12, padding: 20, textAlign: 'center' }}>Tidak ada karyawan cocok dengan pencarian.</div> : (
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: 10, maxHeight: 340, overflowY: 'auto', paddingRight: 4 }}>
-                                        {filtered.map(e => {
+                                {rosterRows.length === 0 ? <div style={{ color: C.muted, fontSize: 12, padding: 20, textAlign: 'center' }}>Tidak ada karyawan cocok dengan pencarian.</div> : (
+                                    <div className="sal-roster-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: 10, maxHeight: 340, overflowY: 'auto', paddingRight: 4 }}>
+                                        {rosterRows.map(e => {
                                             const uk = num(e.upah_kotor);
                                             const top = salaryDist.bands[salaryDist.bands.length - 1]?.max || 1;
                                             const mid = salaryDist.bands[Math.floor(salaryDist.bands.length / 2)]?.min || 0;
@@ -823,33 +847,38 @@ export default function SalaryAnalysisPage() {
                             )}
 
                             {/* Drill roster: band OR work-type OR component OR division */}
-                            {activeDrill && (
+                            {(!printExpanded && activeDrill) ? (
                                 <Section title={`Roster drill: ${globalBand ? `rentang ${globalBand}` : typeFilter ? `jenis ${typeFilter}` : compoSlice ? `komponen ${compoSlice}` : divFilter ? `divisi ${divFilter}` : ''}`}
                                     actions={<ResetBtn onClick={() => { setGlobalBand(null); setTypeFilter(null); setCompoSlice(null); setDivFilter(null); }} label="← Reset semua" />}>
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: 10, maxHeight: 380, overflowY: 'auto', paddingRight: 4 }}>
-                                        {(() => {
-                                            let pool = globalRoster;
-                                            if (globalBand) pool = pool.filter(e => { const u = num(e.upah_kotor); const b = global.bands.find(bd => u >= bd.min && u < bd.max); return b?.label === globalBand; });
-                                            if (typeFilter) pool = pool.filter(e => classifyTypeOf(e.gang_code) === typeFilter);
-                                            if (divFilter) pool = pool.filter(e => (e.division_code || '').trim() === divFilter);
-                                            if (compoSlice) {
-                                                const key = compoKey(compoSlice);
-                                                pool = pool.filter(e => Math.abs(num(e[key])) > 0).sort((a, b) => num(b[key]) - num(a[key]));
-                                            }
-                                            return pool.map(e => (
-                                                <div key={e.emp_code} onClick={() => setSelected(e)} style={{ background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 10, padding: '10px 12px', cursor: 'pointer' }} onMouseEnter={ev => ev.currentTarget.style.boxShadow = SHADOW_HOVER} onMouseLeave={ev => ev.currentTarget.style.boxShadow = 'none'}>
-                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                                                        <span style={{ fontWeight: 800, fontSize: 12.5, color: C.text, fontFamily: 'var(--font-mono)' }}>{e.emp_code}</span>
-                                                        <span style={{ fontSize: 10, fontWeight: 700, color: C.muted, fontFamily: 'var(--font-mono)' }}>{e.division_code} · {e.gang_code}</span>
-                                                    </div>
-                                                    <div style={{ fontSize: 11.5, color: C.text2, marginBottom: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.nama || e.emp_name || '-'}</div>
-                                                    <div style={{ fontSize: 13, fontWeight: 800, color: C.leafDark, fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)' }}>{fmtCompact(num(e.upah_kotor))}</div>
+                                    <div className="sal-roster-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: 10, maxHeight: 380, overflowY: 'auto', paddingRight: 4 }}>
+                                        {globalRosterRows.map(e => (
+                                            <div key={e.emp_code} onClick={() => setSelected(e)} style={{ background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 10, padding: '10px 12px', cursor: 'pointer' }} onMouseEnter={ev => ev.currentTarget.style.boxShadow = SHADOW_HOVER} onMouseLeave={ev => ev.currentTarget.style.boxShadow = 'none'}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                                                    <span style={{ fontWeight: 800, fontSize: 12.5, color: C.text, fontFamily: 'var(--font-mono)' }}>{e.emp_code}</span>
+                                                    <span style={{ fontSize: 10, fontWeight: 700, color: C.muted, fontFamily: 'var(--font-mono)' }}>{e.division_code} · {e.gang_code}</span>
                                                 </div>
-                                            ));
-                                        })()}
+                                                <div style={{ fontSize: 11.5, color: C.text2, marginBottom: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.nama || e.emp_name || '-'}</div>
+                                                <div style={{ fontSize: 13, fontWeight: 800, color: C.leafDark, fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)' }}>{fmtCompact(num(e.upah_kotor))}</div>
+                                            </div>
+                                        ))}
                                     </div>
                                 </Section>
-                            )}
+                            ) : printExpanded && globalRosterRows.length > 0 ? (
+                                <Section title={`Roster Lengkap Lintas Divisi · ${globalRosterRows.length}`} sub="Semua karyawan — filter klik diabaikan pada cetakan">
+                                    <div className="sal-roster-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: 10 }}>
+                                        {globalRosterRows.map(e => (
+                                            <div key={e.emp_code} style={{ background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 10, padding: '10px 12px' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                                                    <span style={{ fontWeight: 800, fontSize: 12.5, color: C.text, fontFamily: 'var(--font-mono)' }}>{e.emp_code}</span>
+                                                    <span style={{ fontSize: 10, fontWeight: 700, color: C.muted, fontFamily: 'var(--font-mono)' }}>{e.division_code} · {e.gang_code}</span>
+                                                </div>
+                                                <div style={{ fontSize: 11.5, color: C.text2, marginBottom: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.nama || e.emp_name || '-'}</div>
+                                                <div style={{ fontSize: 13, fontWeight: 800, color: C.leafDark, fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)' }}>{fmtCompact(num(e.upah_kotor))}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </Section>
+                            ) : null}
                             </PresentSlide>
                         </>
                     ) : <EmptyState title="Tidak ada data global" message={`Tidak ada data payroll untuk ${month}/${year}.`} />
@@ -859,7 +888,26 @@ export default function SalaryAnalysisPage() {
 
             <style>{`@keyframes spin { to { transform: rotate(360deg) } } @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } } @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }`}</style>
 
-            {selected && <DetailDrawer emp={selected} onClose={() => setSelected(null)} />}
+            {/* LAMPIRAN CETAK — data yang di layar hanya muncul saat hover/diklik: distribusi band + definisi */}
+            {printExpanded && (
+                <div className="sal-print-appendix" style={{ maxWidth: 1320, margin: '0 auto', padding: '0 2.4rem 2rem' }}>
+                    <div className="cpts-print-title">Lampiran · Distribusi & Definisi</div>
+                    <div className="cpts-print-sub">Periode {String(month).padStart(2, '0')}/{year} · {division ? (gang ? `${division} · ${gang}` : `Divisi ${division}`) : 'Semua Divisi'} · Dicetak {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
+                    {!division && global.counts.length > 0 && <BandTable title="Sebaran Gaji Lintas Divisi" counts={global.counts} />}
+                    {division && salaryDist.counts.length > 0 && <BandTable title="Sebaran Upah Kotor" counts={salaryDist.counts} />}
+                    {compo.otCounts.length > 0 && <BandTable title="Sebaran Upah Lembur" counts={compo.otCounts} />}
+                    <div className="cpts-print-notes" style={{ fontSize: 12, color: C.text2, lineHeight: 1.7, paddingLeft: 18 }}>
+                        <li><b>Kelompok gaji</b>: rentang upah kotor per 1 juta (mis. &lt;1jt, 1–2jt, …, &ge;7jt). Klik bar di layar memfilter roster.</li>
+                        <li><b>Upah kotor</b> = jumlah_upah_kotor (gaji pokok + tunjangan + premi + koreksi + pendapatan lainnya), sebelum potongan.</li>
+                        <li><b>Komposisi upah</b> = proporsi gaji pokok, lembur, premi terhadap total upah kotor.</li>
+                        <li><b>Jenis pekerjaan</b>: suffix kode gang — H = Panen, T = Transport, M = Maintenance, selainnya Lainnya.</li>
+                        <li><b>Efisiensi</b>: sebaran HK vs upah kotor; kiri-bawah = HK tinggi tapi gaji rendah (perlu perhatian).</li>
+                        <li><b>Sumber</b>: snapshot payroll_history_detail periode terpilih (fallback live raw-tree bila snapshot belum terisi).</li>
+                    </div>
+                </div>
+            )}
+
+            {selected && <DetailDrawer emp={selected} onClose={() => setSelected(null)} printMode={printExpanded} />}
         </>
     );
 }
@@ -872,6 +920,31 @@ function Field({ label, children }) {
             <span style={{ fontSize: 10.5, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: 'var(--font-display)' }}>{label}</span>
             {children}
         </label>
+    );
+}
+
+/** BandTable — jumlah karyawan per kelompok gaji; di layar cuma muncul saat hover chart, dicetak sebagai tabel. */
+function BandTable({ title, counts }) {
+    return (
+        <div style={{ marginTop: 10 }}>
+            <div style={{ fontSize: 12, fontWeight: 800, color: C.text, marginBottom: 6 }}>{title}</div>
+            <table className="sal-band-table" style={{ borderCollapse: 'collapse', width: '100%', fontSize: 12 }}>
+                <thead>
+                    <tr>
+                        <th style={{ textAlign: 'left', padding: '6px 10px', color: C.muted, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: `1.5px solid ${C.text}` }}>Kelompok</th>
+                        <th style={{ textAlign: 'right', padding: '6px 10px', color: C.muted, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: `1.5px solid ${C.text}` }}>Karyawan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {counts.map(c => (
+                        <tr key={c.band}>
+                            <td style={{ padding: '5px 10px', borderBottom: `1px solid ${C.border}` }}>{c.band}</td>
+                            <td style={{ textAlign: 'right', padding: '5px 10px', borderBottom: `1px solid ${C.border}`, fontVariantNumeric: 'tabular-nums', fontWeight: 700 }}>{c.count}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
     );
 }
 
@@ -926,7 +999,43 @@ function KpiCard({ label, value, note, color = C.upah, metric }) {
     );
 }
 
-function DetailDrawer({ emp, onClose }) {
+function DetailDrawer({ emp, onClose, printMode }) {
+    // Saat print: drawer dirender inline (bukan overlay fixed) supaya tercetak penuh.
+    if (printMode) {
+        return (
+            <section className="sal-drawer-print" style={{ background: C.surface, border: `1px solid ${C.border}`, borderTop: `3px solid ${C.upah}`, borderRadius: 10, marginBottom: 18, boxShadow: SHADOW }}>
+                <div style={{ background: C.leafDark, color: '#fff', padding: '16px 20px', borderTopLeftRadius: 10, borderTopRightRadius: 10 }}>
+                    <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', opacity: 0.85, fontFamily: 'var(--font-display)' }}>{emp.emp_code} · {emp.gang_code}</div>
+                    <h3 style={{ margin: '4px 0 0', fontSize: '1.25rem', fontWeight: 800, fontFamily: 'var(--font-display)' }}>{emp.nama || emp.emp_name || '-'}</h3>
+                    <div style={{ marginTop: 8, fontSize: 12.5, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>Upah Kotor {fmtIDR(emp.upah_kotor)}</div>
+                </div>
+                <div>
+                    {GROUPS.map(g => {
+                        const rows = g.fields.filter(([k]) => emp[k] != null && emp[k] !== '' && !(typeof emp[k] === 'number' && emp[k] === 0));
+                        if (rows.length === 0) return null;
+                        return (
+                            <div key={g.title} style={{ padding: '10px 20px', borderBottom: `1px solid ${C.border}` }}>
+                                <div style={{ fontSize: 10.5, fontWeight: 700, color: C.leafMid, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6, fontFamily: 'var(--font-display)' }}>{g.title}</div>
+                                {rows.map(([key, label]) => {
+                                    let val = emp[key];
+                                    if (typeof val === 'object') val = JSON.stringify(val);
+                                    const isMoney = ['gaji_pokok', 'gaji_pokok_aktual', 'beras_jumlah', 'jabatan_jumlah', 'masa_kerja_jumlah', 'total_tunjangan', 'premi_brondol_total', 'total_premi', 'lembur_jumlah', 'lembur_rate', 'pot_astek_pekerja', 'pot_bpjs_kesehatan_pekerja', 'pot_bpjs_pensiun_pekerja', 'pot_spsi', 'pot_pph21', 'pot_koreksi', 'total_potongan', 'pendapatan_thr', 'pendapatan_bonus', 'pendapatan_custom', 'total_pendapatan_lainnya', 'upah_kotor', 'jumlah_upah_kotor', 'upah_bersih'].includes(key);
+                                    return (
+                                        <div key={key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '3px 0', fontSize: 12.5 }}>
+                                            <span style={{ color: C.text2 }}>{label}</span>
+                                            <span style={{ fontWeight: 700, color: C.text, fontVariantNumeric: 'tabular-nums', textAlign: 'right', fontFamily: 'var(--font-mono)' }}>
+                                                {isMoney ? fmtIDR(val) : key === 'lembur_jam' ? fmtNum(val, 1) + ' jam' : String(val)}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        );
+                    })}
+                </div>
+            </section>
+        );
+    }
     return (
         <>
             <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(21,33,26,0.42)', zIndex: 50, animation: 'fadeIn .18s' }} />

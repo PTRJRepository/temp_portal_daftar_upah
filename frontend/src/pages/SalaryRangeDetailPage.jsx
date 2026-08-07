@@ -12,7 +12,10 @@ import LoadingScreen from '../components/common/LoadingScreen';
 import ReportPrintMetadata from '../components/common/ReportPrintMetadata';
 import { fetchReportRowsSimple } from '../services/payrollService';
 import { buildSalaryRangeRows, REPORT_ROWS_FETCH_LIMIT } from '../utils/payrollReportFilters';
-import { MetricInfo, EmptyState } from '../components/report/reportTheme';
+import { MetricInfo, EmptyState, StatCard, C } from '../components/report/reportTheme';
+import PresentSlide from '../components/present/PresentSlide';
+import PresentController from '../components/present/PresentController';
+import usePresentMode from '../components/present/usePresentMode';
 import { printReport } from '../utils/printPageSetup';
 import '../styles/wages-summary-professional.css';
 import '../styles/report-print-foundation.css';
@@ -49,6 +52,9 @@ const navigate = useNavigate();
     const [meta, setMeta] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+
+    // Present mode: deck fullscreen per slide (toggle html.present-mode + HUD)
+    const { presenting, activeIndex, enter, exit } = usePresentMode();
 
     const monthOptions = [
         { value: 1, label: 'Januari' }, { value: 2, label: 'Februari' },
@@ -114,6 +120,9 @@ const navigate = useNavigate();
     }
 
     const periodLabel = `${monthNames[month - 1]} ${year}`;
+    const rangeLabel = maxSalary
+        ? `Rp ${formatCurrency(minSalary)} - Rp ${formatCurrency(maxSalary)}`
+        : `Gaji > Rp ${formatCurrency(minSalary)}`;
 
     return (
         <div className="wsp-container salary-range-container">
@@ -123,7 +132,7 @@ const navigate = useNavigate();
                     <button onClick={onBack} className="wsp-btn">
                         KEMBALI
                     </button>
-                    <button onClick={() => navigate(`/cost-per-ton-story?month=${month}&year=${year}`)} className="wsp-btn" style={{ background: '#1E7A45', color: '#fff', border: 'none', fontWeight: 700 }}>
+                    <button onClick={() => navigate(`/cost-per-ton-story?month=${month}&year=${year}`)} className="wsp-btn" style={{ background: '#1F6F43', color: '#fff', border: 'none', fontWeight: 700 }}>
                         Cost/Ton Story →
                     </button>
 
@@ -173,6 +182,30 @@ const navigate = useNavigate();
                 </div>
             )}
 
+            {/* PRESENT MODE - tombol Present (mode normal) + HUD deck (present mode) */}
+            <div className="no-print" style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.75rem' }}>
+                <PresentController
+                    presenting={presenting}
+                    activeIndex={activeIndex}
+                    slideCount={3}
+                    onEnter={enter}
+                    onExit={exit}
+                    caption={`Detail Gaji Range · ${periodLabel} · ${rangeLabel}`}
+                />
+            </div>
+
+            {/* SLIDE 01 - Ringkasan KPI range gaji */}
+            <PresentSlide num="01" id="slide-01" title="Ringkasan Range Gaji" subtitle="Parameter range dan total agregat periode berjalan">
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 20 }}>
+                    <StatCard label="Total Karyawan" value={meta ? formatCurrency(meta.count) : '-'} note={`Range ${rangeLabel}`} color={C.upah} />
+                    <StatCard label="Total Upah Bersih" value={meta ? `Rp ${formatCurrency(meta.sum_upah_bersih)}` : '-'} note="Akumulasi karyawan dalam range" color={C.premi} />
+                    <StatCard label="Total Lembur" value={meta ? `Rp ${formatCurrency(meta.sum_lembur)}` : '-'} note="Pendapatan lembur dalam range" color={C.lembur} />
+                    <StatCard label="Total Potongan" value={meta ? `Rp ${formatCurrency(meta.sum_potongan)}` : '-'} note="Potongan bersih dalam range" color={C.potongan} />
+                </div>
+            </PresentSlide>
+
+            {/* SLIDE 02 - Tabel detail karyawan dalam range */}
+            <PresentSlide num="02" id="slide-02" title="Daftar Karyawan dalam Range" subtitle="Rincian gaji, tunjangan, potongan, dan upah bersih per karyawan">
             {/* Report Content - Landscape */}
             <div id="salary-range-report" className="wsp-paper a4-landscape">
                 <div className="wsp-header">
@@ -287,6 +320,20 @@ const navigate = useNavigate();
                     </table>
                 </div>
             </div>
+            </PresentSlide>
+
+            {/* SLIDE 03 - Catatan pembacaan laporan */}
+            <PresentSlide num="03" id="slide-03" title="Catatan Pembacaan" subtitle="Cara membaca tabel dan tindak lanjut analisis">
+                <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: 24 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: C.muted, marginBottom: 12 }}>Cara Membaca</div>
+                    <ul style={{ margin: 0, paddingLeft: 18, color: C.text2, fontSize: '0.9rem', lineHeight: 1.7 }}>
+                        <li>Baris menampilkan karyawan dengan upah bersih di dalam range yang dipilih pada filter periode berjalan.</li>
+                        <li>Sorotan pada kolom Lembur menandai karyawan dengan pendapatan lembur di atas nol.</li>
+                        <li>Total Potongan merangkum seluruh potongan bersih per karyawan pada periode ini.</li>
+                        <li>Gunakan tombol Cost/Ton Story untuk melihat konteks biaya per ton pada periode yang sama.</li>
+                    </ul>
+                </div>
+            </PresentSlide>
 
             {/* Custom Styles */}
             <style>{`

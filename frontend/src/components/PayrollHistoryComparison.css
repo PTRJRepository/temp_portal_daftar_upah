@@ -28,7 +28,7 @@
     width: 48px;
     height: 48px;
     border: 4px solid #e5e7eb;
-    border-top-color: #3b82f6;
+    border-top-color: #1F6F43;
     border-radius: 50%;
     animation: phc-spin 1s linear infinite;
 }
@@ -76,7 +76,7 @@
 }
 
 .phc-period-badge {
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    background: #1F6F43;
     color: white;
     padding: 6px 16px;
     border-radius: 20px;
@@ -113,21 +113,21 @@
 }
 
 .phc-btn-primary {
-    background: #3b82f6;
+    background: #1F6F43;
     color: white;
 }
 
 .phc-btn-primary:hover {
-    background: #2563eb;
+    background: #143D28;
 }
 
 .phc-btn-export {
-    background: #10b981;
+    background: #1F6F43;
     color: white;
 }
 
 .phc-btn-export:hover {
-    background: #059669;
+    background: #143D28;
 }
 
 .phc-btn-export:disabled {
@@ -173,8 +173,8 @@
 .phc-filter-group select:focus,
 .phc-filter-group input:focus {
     outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: #1F6F43;
+    box-shadow: 0 0 0 3px rgba(31, 111, 67, 0.12);
 }
 
 .phc-search {
@@ -261,12 +261,12 @@
 }
 
 .phc-kpi-variance {
-    background: #ede9fe;
-    border-color: #8b5cf6;
+    background: #F7EBD9;
+    border-color: #B45309;
 }
 
 .phc-kpi-variance .phc-kpi-value {
-    color: #7c3aed;
+    color: #B45309;
     font-size: 1.25rem;
 }
 
@@ -322,11 +322,11 @@
 }
 
 .phc-th-group.wages {
-    background: #1e40af !important;
+    background: #1F6F43 !important;
 }
 
 .phc-th-group.comparison {
-    background: #7c3aed !important;
+    background: #7C5A2B !important;
 }
 
 .phc-th-sticky {
@@ -497,7 +497,7 @@
 }
 
 .phc-text-highlight {
-    color: #3b82f6;
+    color: #1F6F43;
 }
 
 .phc-no-data {
@@ -525,12 +525,12 @@
 
 /* Comparison Summary Section */
 .phc-comparison-summary {
-    background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
-    border-color: #3b82f6;
+    background: #F7F5EF;
+    border-color: #1F6F43;
 }
 
 .phc-comparison-summary h4 {
-    color: #1d4ed8;
+    color: #1F6F43;
 }
 
 /* Empty State */

@@ -10,6 +10,7 @@ import { useAuth } from '../context/AuthContext'
 import { fetchUpahBersihDetail } from '../services/upahBersihDetailService'
 import { fetchDivisions, fetchGangs } from '../services/gangService'
 import LoadingScreen from '../components/common/LoadingScreen'
+import { printReport, usePrintExpand } from '../utils/printPageSetup'
 import '../styles/upah-bersih-detail.css'
 
 const FILTER_OPTIONS = [
@@ -71,6 +72,8 @@ export default function UpahBersihDetailPage({ onBack, initialMonth, initialYear
     const [gangs, setGangs] = useState([])
     const [expandedGangs, setExpandedGangs] = useState(new Set())
     const [expandedEmployees, setExpandedEmployees] = useState(new Set())
+    // During print, every gang + employee detail row is revealed.
+    const printExpanded = usePrintExpand()
 
     // Load divisions
     useEffect(() => {
@@ -183,11 +186,16 @@ export default function UpahBersihDetailPage({ onBack, initialMonth, initialYear
                     <span className="icon">📊</span>
                     Detail Upah Bersih
                 </h1>
-                {onBack && (
-                    <button className="ubd-back-btn" onClick={onBack}>
-                        ← Kembali
+                <div style={{ display: 'flex', gap: 8 }}>
+                    <button className="ubd-back-btn" onClick={() => printReport({ orientation: 'landscape', margin: '6mm' })}>
+                        🖨️ Cetak
                     </button>
-                )}
+                    {onBack && (
+                        <button className="ubd-back-btn" onClick={onBack}>
+                            ← Kembali
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Toolbar */}
@@ -300,7 +308,7 @@ export default function UpahBersihDetailPage({ onBack, initialMonth, initialYear
                     {/* Gang Groups */}
                     {data.gangs && data.gangs.length > 0 ? (
                         data.gangs.map(gang => {
-                            const isGangExpanded = expandedGangs.has(gang.gang_code)
+                            const isGangExpanded = printExpanded || expandedGangs.has(gang.gang_code)
 
                             return (
                                 <div key={gang.gang_code} className="ubd-gang-group">
@@ -345,7 +353,7 @@ export default function UpahBersihDetailPage({ onBack, initialMonth, initialYear
                                                     <tbody>
                                                         {gang.employees.map(emp => {
                                                             const empKey = `${gang.gang_code}-${emp.emp_code}`
-                                                            const isEmpExpanded = expandedEmployees.has(empKey)
+                                                            const isEmpExpanded = printExpanded || expandedEmployees.has(empKey)
                                                             const hasActivities = emp.activities && emp.activities.length > 0
 
                                                             return (

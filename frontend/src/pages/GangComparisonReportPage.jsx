@@ -15,6 +15,9 @@ import { Printer, ArrowLeft } from 'lucide-react';
 import ReportWatermark from '../components/common/ReportWatermark';
 import { printReport } from '../utils/printPageSetup';
 import { C, SHADOW, CARD } from '../components/report/reportTheme';
+import PresentSlide from '../components/present/PresentSlide';
+import PresentController from '../components/present/PresentController';
+import usePresentMode from '../components/present/usePresentMode';
 import { dashJson } from '../utils/dashboardApi';
 import { GANG_TYPE, getGangType, isIJLGang, getGangTypeLabel } from '../utils/gangTypes';
 import '../styles/gang-report-print.css';
@@ -38,7 +41,7 @@ const formatTon = (val) => {
     return new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val / 1000); // Convert kg to Ton
 };
 
-// Warna per tipe gang — semantik Estate Ledger (aksen tunggal + warna semantik)
+// Warna per tipe gang - semantik Estate Ledger (aksen tunggal + warna semantik)
 const getGangTypeColor = (type) => ({
     [GANG_TYPE.HARVESTING]: C.upah,
     [GANG_TYPE.TRANSPORT]: C.premi,
@@ -66,6 +69,9 @@ export default function GangComparisonReportPage() {
     const [divisionFilter, setDivisionFilter] = useState(searchParams.get('division') || 'ALL');
     const [gangTypeFilter, setGangTypeFilter] = useState(searchParams.get('type') || 'ALL');
     const [analysisMode, setAnalysisMode] = useState('HK'); // HK, TON, COST
+
+    // Present mode: deck fullscreen per slide (toggle html.present-mode + HUD)
+    const { presenting, activeIndex, enter, exit } = usePresentMode();
 
     // Params from URL (for data fetching)
     const month = searchParams.get('month');
@@ -143,7 +149,7 @@ export default function GangComparisonReportPage() {
         return { key: 'cost_per_hk', label: 'Cost / HK', formatter: formatCurrency };
     }, [analysisMode]);
 
-    // Sort data for chart (Top 20 worst/highest cost) — exclude null metric (cost_per_ton now null for panen gangs)
+    // Sort data for chart (Top 20 worst/highest cost) - exclude null metric (cost_per_ton now null for panen gangs)
     const chartData = useMemo(() => {
         const key = analysisMetric.key;
         return [...filteredReportData]
@@ -170,6 +176,10 @@ export default function GangComparisonReportPage() {
         return groups;
     }, [filteredReportData]);
 
+    // Label caption HUD present mode: "<Nama Report> · <periode> · <scope>"
+    const reportPeriodLabel = month && year ? `${getMonthName(parseInt(month))} ${year}` : '-';
+    const divisionScopeLabel = divisionFilter === 'ALL' ? 'Semua Divisi' : divisionFilter === 'IJL' ? 'IJL Only' : 'Non-IJL';
+
     if (loading) return <div className="p-8 text-center">Loading Report...</div>;
     if (error) return <div className="p-8 text-center text-red-500">{error}</div>;
 
@@ -185,6 +195,15 @@ export default function GangComparisonReportPage() {
                         <ArrowLeft size={15} strokeWidth={2.2} aria-hidden="true" /> Kembali ke Dashboard
                     </button>
                     <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                        {/* PRESENT MODE - tombol Present (mode normal) + HUD deck (present mode) */}
+                        <PresentController
+                            presenting={presenting}
+                            activeIndex={activeIndex}
+                            slideCount={3}
+                            onEnter={enter}
+                            onExit={exit}
+                            caption={`Perbandingan Gang · ${reportPeriodLabel} · ${divisionScopeLabel}`}
+                        />
                         <button
                                 onClick={() => printReport({ orientation: 'landscape' })}
                             style={{ padding: '8px 16px', background: C.leafDark, color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: SHADOW }}
@@ -287,6 +306,7 @@ export default function GangComparisonReportPage() {
             {/* Report Content */}
             <div className="gang-report-content">
                 <ReportWatermark />
+                <PresentSlide num="01" id="slide-01" title="Ringkasan Kinerja Gang" subtitle="Total biaya, hari kerja, dan produksi seluruh gang pada periode terpilih">
                 {/* Letterhead */}
                 <div className="gang-report-letterhead">
                     <img src="/assets/images/rebinmas.webp" alt="Logo" className="gang-report-logo" />
@@ -339,8 +359,10 @@ export default function GangComparisonReportPage() {
                         </div>
                     </div>
                 </div>
+                </PresentSlide>
 
                 {/* Chart Section */}
+                <PresentSlide num="02" id="slide-02" title="Peringkat Gang Tertinggi" subtitle={`20 gang dengan ${analysisMetric.label} tertinggi, diwarnai per tipe gang`}>
                 <div className="no-print" style={{ marginBottom: '2rem', height: '400px', backgroundColor: C.surface, borderRadius: '10px', padding: '1rem', border: `1px solid ${C.border}`, boxShadow: SHADOW }}>
                     <h3 className="gang-report-section-title" style={{ marginBottom: '1rem' }}>Top 20 Gang - {analysisMetric.label}</h3>
                     {analysisMode === 'TON' && chartData.length === 0 ? (
@@ -383,8 +405,10 @@ export default function GangComparisonReportPage() {
                     </ResponsiveContainer>
                     )}
                 </div>
+                </PresentSlide>
 
                 {/* Detail Table */}
+                <PresentSlide num="03" id="slide-03" title="Detail per Gang" subtitle="Rincian HK, produksi, dan biaya per gang, dikelompokkan per tipe">
                 <div className="gang-report-table-wrapper">
                     <h3 className="gang-report-section-title">Detail per Gang</h3>
                     <table className="gang-report-table">
@@ -477,6 +501,7 @@ export default function GangComparisonReportPage() {
                 <div className="gang-report-footer">
                     <p>Dicetak pada: {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                 </div>
+                </PresentSlide>
             </div>
         </div>
     );

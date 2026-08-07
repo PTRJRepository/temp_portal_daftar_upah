@@ -70,4 +70,72 @@
     div[style*="min-height: 70px"] {
         display: none !important;
     }
+
+    /* ============================================
+       PRINT-EXPAND: reveal click-hidden report content
+       (dipakai SalaryAnalysisPage, CostPerTonStoryPage, TonaseAnalysis)
+       ============================================ */
+    html.print-expanded [class*="sal-roster-grid"] {
+        max-height: none !important;
+        overflow: visible !important;
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    }
+    html.print-expanded .sal-drawer-print {
+        page-break-inside: avoid !important;
+    }
+    html.print-expanded .no-print {
+        display: none !important;
+    }
+    /* Sticky/scroll-spy chrome yang hanya untuk layar */
+    html.print-expanded .cpts-sticky-bar,
+    html.print-expanded .cpts-act-nav,
+    html.print-expanded [class*="slide-nav"] {
+        display: none !important;
+    }
+    /* Present HUD tidak pernah ikut cetak */
+    .present-hud,
+    .present-hud-caption,
+    .present-exit-hint {
+        display: none !important;
+    }
+    /* Keterangan audit (MetricInfo) yang di layar hanya hover/klik → dicetak inline */
+    .metric-info-print-note {
+        display: inline !important;
+        margin-left: 8px;
+        font-size: 8.5pt !important;
+        color: #334155 !important;
+        font-weight: 500 !important;
+        line-height: 1.4;
+    }
+    .metric-info-print-note b {
+        color: #0f172a;
+    }
+    .metric-info-print-note span {
+        margin-right: 10px;
+    }
+    /* Lampiran analisis gaji: tabel distribusi rapi */
+    html.print-expanded .sal-print-appendix {
+        page-break-before: always;
+    }
+    html.print-expanded .sal-print-appendix table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        margin-bottom: 12px;
+    }
+    html.print-expanded .sal-print-appendix th {
+        background: #eef3ee !important;
+        border: 0.5pt solid #000 !important;
+        padding: 4pt 6pt !important;
+        font-size: 8pt !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    html.print-expanded .sal-print-appendix td {
+        border: 0.5pt solid #000 !important;
+        padding: 4pt 6pt !important;
+        font-size: 8.5pt !important;
+    }
+    html.print-expanded .sal-print-appendix tr {
+        page-break-inside: avoid !important;
+    }
 }

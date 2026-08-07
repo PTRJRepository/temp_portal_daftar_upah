@@ -103,10 +103,52 @@
 .cpts-drill-panel h3 { margin: 0 0 4px; font-size: 1.3rem; font-weight: 800; color: var(--c-leafDark); }
 .cpts-drill-panel .back { background: none; border: none; color: var(--c-leafMid); font-weight: 700; cursor: pointer; font-size: 13px; padding: 0; margin-bottom: 12px; }
 
+/* Tombol cetak di sticky bar */
+.cpts-print-btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--c-border); background: var(--c-surface); color: var(--c-ink); border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer; }
+.cpts-print-btn:hover { background: var(--c-surface2); border-color: var(--c-leafMid); }
+
+/* Lampiran cetak: uraian lengkap (hanya dirender saat print mode aktif) */
+.cpts-print-detail { margin-top: 28px; }
+.cpts-print-page { margin-bottom: 18px; }
+.cpts-print-header { margin-bottom: 14px; }
+.cpts-print-brand { display: flex; align-items: center; gap: 12px; }
+.cpts-print-logo { width: 44px; height: 44px; object-fit: contain; border: 1px solid var(--c-border); border-radius: 8px; padding: 3px; background: #fff; }
+.cpts-print-company { font-size: 1.05rem; font-weight: 800; color: var(--c-ink); letter-spacing: -0.01em; font-family: var(--font-display); }
+.cpts-print-title { font-size: 1.1rem; font-weight: 800; color: var(--c-leafDark); letter-spacing: -0.01em; margin-bottom: 4px; }
+.cpts-print-sub { font-size: 12px; color: var(--c-muted); margin-bottom: 10px; }
+.cpts-print-rule { height: 2px; background: var(--c-leafMid); margin-top: 12px; }
+.cpts-print-ganghead { font-weight: 800; font-size: 13px; color: var(--c-ink); margin: 14px 0 6px; }
+.cpts-print-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.cpts-print-table th { text-align: left; color: var(--c-muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; padding: 5px 8px; border-bottom: 1.5px solid var(--c-ink); }
+.cpts-print-table td { padding: 5px 8px; border-bottom: 1px solid var(--c-border); font-variant-numeric: tabular-nums; }
+.cpts-print-table tfoot td { font-weight: 700; background: #EDF3EC; border-top: 1.5px solid var(--c-ink); }
+.cpts-print-notes { margin: 0; padding-left: 18px; font-size: 12px; color: var(--c-text2); line-height: 1.7; }
+
 @media print {
     .cpts-sticky-bar, .cpts-act-nav { display: none; }
-    .cpts-act { opacity: 1 !important; transform: none !important; page-break-after: always; padding: 20px; }
-    .cpts-page { background: #fff; }
+    /* Dek interaktif (chart + uraian klik) tidak dicetak; cetakan = lampiran tabel rapi */
+    .cpts-interactive { display: none !important; }
+    .cpts-drill-panel { display: none !important; }
+    /* Chart recharts tidak dicetak (sering kepotong); data tetap lengkap via tabel */
+    .cpts-page .recharts-responsive-container, .cpts-page .recharts-wrapper { display: none !important; }
+    .cpts-page { background: #fff !important; }
+    .cpts-print-detail { page-break-before: always; }
+    .cpts-print-page { page-break-inside: avoid; }
+    .cpts-print-gankset { page-break-inside: avoid; margin-bottom: 8px; }
+    .cpts-print-table th { background: #eef3ee !important; }
+    .cpts-print-table th, .cpts-print-table td { border: 0.5pt solid #000 !important; padding: 4pt 6pt !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    .cpts-print-table th { font-size: 8pt !important; }
+    .cpts-print-table td { font-size: 8.5pt !important; }
+    .cpts-print-table tfoot td { background: #dfe9df !important; }
+    .cpts-btn-ghost, .cpts-drill-panel .back { display: none !important; }
+    /* Tabel Tonase (halaman lain pemakai css ini): border tegas + header berulang */
+    .cpts-page table { width: 100% !important; border-collapse: collapse !important; }
+    .cpts-page th { background: #eef3ee !important; border: 0.5pt solid #000 !important; padding: 4pt 6pt !important; font-size: 8pt !important; color: #000 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    .cpts-page td { border: 0.5pt solid #000 !important; padding: 4pt 6pt !important; font-size: 8.5pt !important; color: #000 !important; }
+    .cpts-page tr { page-break-inside: avoid !important; }
+    .cpts-page thead { display: table-header-group !important; }
+    .tonase-print-drills { page-break-before: always; }
+    .tonase-print-drills > div { page-break-inside: avoid; }
 }
 
 @media (prefers-reduced-motion: reduce) {

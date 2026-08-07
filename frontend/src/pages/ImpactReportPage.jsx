@@ -14,6 +14,9 @@ import ReportWatermark from '../components/common/ReportWatermark';
 import { MetricInfo, EmptyState } from '../components/report/reportTheme';
 import { getSourceModeLabel } from '../utils/reportPresentationLabels';
 import { printReport } from '../utils/printPageSetup';
+import PresentSlide from '../components/present/PresentSlide';
+import PresentController from '../components/present/PresentController';
+import usePresentMode from '../components/present/usePresentMode';
 import '../styles/wages-summary-professional.css';
 import '../styles/report-print-foundation.css';
 
@@ -37,6 +40,9 @@ export default function ImpactReportPage({ onBack, initialMonth, initialYear, in
     // State
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+
+    // Present mode: deck fullscreen per slide (toggle html.present-mode + HUD)
+    const { presenting, activeIndex, enter, exit } = usePresentMode();
 
     useEffect(() => {
         if (initialMonth !== undefined) setMonth(initialMonth);
@@ -273,6 +279,7 @@ export default function ImpactReportPage({ onBack, initialMonth, initialYear, in
     const periodLabel = `MONTH OF ${getMonthName(month).toUpperCase()} ${year}`;
     const prevMonth = month === 1 ? 12 : month - 1;
     const prevYear = month === 1 ? year - 1 : year;
+    const scopeLabel = estateType === 'all' ? 'Semua Estate' : estateType === 'ijl' ? 'IJL' : 'Rebinmas';
 
     // Print date
     const printDate = new Date().toLocaleDateString('id-ID', {
@@ -663,7 +670,18 @@ export default function ImpactReportPage({ onBack, initialMonth, initialYear, in
             <div className="no-print" style={{ marginBottom: 16 }}>
                 <h1 style={{ display: 'inline-flex', alignItems: 'center', gap: 8, margin: 0, fontSize: '1.6rem', fontWeight: 800, color: '#14532D' }}>Impact Report <MetricInfo metricKey="total_premi" /></h1>
                 <p style={{ color: '#46584C', margin: '4px 0 8px', fontSize: '0.9rem' }}>Analisis dampak premi, lembur, dan HK antar periode.</p>
-                <button onClick={() => navigate(`/cost-per-ton-story?month=${month}&year=${year}`)} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: '#1E7A45', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>Cost/Ton Story →</button>
+                <button onClick={() => navigate(`/cost-per-ton-story?month=${month}&year=${year}`)} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: '#1F6F43', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>Cost/Ton Story →</button>
+            </div>
+            {/* PRESENT MODE - tombol Present (mode normal) + HUD deck (present mode) */}
+            <div className="no-print" style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
+                <PresentController
+                    presenting={presenting}
+                    activeIndex={activeIndex}
+                    slideCount={4}
+                    onEnter={enter}
+                    onExit={exit}
+                    caption={`Impact Report · ${getMonthName(month)} ${year} · ${scopeLabel}`}
+                />
             </div>
             {/* Action Bar */}
             <div className="wsp-action-bar no-print">
@@ -751,6 +769,7 @@ export default function ImpactReportPage({ onBack, initialMonth, initialYear, in
                 /* Paper Document */
                 <div className="wsp-document impact-print-document" id="impact-report-content">
                     <ReportWatermark />
+                    <PresentSlide num="01" id="slide-01" title="Konteks Laporan" subtitle="Identitas laporan, periode, dan cakupan estate yang dianalisis">
                     {/* Letterhead */}
                     <div className="wsp-letterhead">
                         <img
@@ -774,10 +793,14 @@ export default function ImpactReportPage({ onBack, initialMonth, initialYear, in
                             note="Grand total mengikuti data yang terlihat setelah filter estate pada report ini."
                         />
                     </div>
+                    </PresentSlide>
 
+                    <PresentSlide num="02" id="slide-02" title="Karyawan, Gaji, dan Tonase per Estate" subtitle={`Perbandingan ${getMonthName(month)} ${year} terhadap ${getMonthName(prevMonth)} ${prevYear} per divisi`}>
                     {/* Main Table (Top) */}
                     {renderMainTable()}
+                    </PresentSlide>
 
+                    <PresentSlide num="03" id="slide-03" title="Pruning & Dampak Finansial" subtitle="Realisasi premi pruning dan lima komponen pembentuk dampak periode ini">
                     {/* Bottom Section: Two Tables Side by Side */}
                     <div className="wsp-bottom-section impact-bottom-section" style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
                         {/* Pruning Table (Left) */}
@@ -786,7 +809,9 @@ export default function ImpactReportPage({ onBack, initialMonth, initialYear, in
                         {/* HK Analysis Table (Right) */}
                         {renderHKAnalysisTable()}
                     </div>
+                    </PresentSlide>
 
+                    <PresentSlide num="04" id="slide-04" title="Penutup & Pengesahan" subtitle="Keterangan cetak dan penanda resmi laporan">
                     {/* Report Footer & Signatures */}
                     <div className="print-only impact-print-signature" style={{ marginTop: '3rem', pageBreakInside: 'avoid' }}>
                         <PrintSignature />
@@ -801,8 +826,22 @@ export default function ImpactReportPage({ onBack, initialMonth, initialYear, in
                             {estateType === 'ijl' ? 'PT. IMPIAN JAYA LESTARI' : 'PT. REBINMAS JAYA'}
                         </div>
                     </footer>
+                    </PresentSlide>
                 </div>
             )}
+
+            {/* Present mode: lembar paper jadi panggung gelap, kartu & tabel tetap terang */}
+            <style dangerouslySetInnerHTML={{ __html: `
+                html.present-mode .wsp-container { background: transparent !important; }
+                html.present-mode .wsp-document { background: transparent !important; box-shadow: none !important; border: none !important; width: 100% !important; max-width: none !important; margin: 0 !important; padding: 0 !important; }
+                html.present-mode .wsp-action-bar { display: none !important; }
+                html.present-mode .wsp-letterhead { border-bottom-color: #223528 !important; }
+                html.present-mode .wsp-company-name, html.present-mode .wsp-report-title { color: #F3F1E8 !important; }
+                html.present-mode .wsp-report-period { color: #93A596 !important; }
+                html.present-mode .report-print-note { color: #93A596 !important; }
+                html.present-mode .wsp-table-wrapper { background: #fff; border-radius: 10px; }
+                html.present-mode .wsp-footer { color: #93A596 !important; }
+            `}} />
         </div>
     );
 }

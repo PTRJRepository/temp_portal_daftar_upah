@@ -1,0 +1,36 @@
+/* =============================================
+   ANALYSIS REPORT PAGE - Estate Ledger overrides
+   Scoped ke .analysis-report-page agar tidak bocor ke
+   halaman lain yang ikut memakai wages-summary-professional.css
+   Palet kanonik: leaf #1F6F43, bata #B3392E,
+   ink #15211A, paper #F7F5EF, hairline #E0DED2
+   ============================================= */
+
+/* Header master tabel: flat leaf menggantikan gradient hijau lama */
+.analysis-report-page .wsp-table thead tr.wsp-header-master th {
+    background: #1F6F43;
+    color: #FFFFFF;
+}
+
+/* Sub-header tabel: kertas flat menggantikan gradient slate */
+.analysis-report-page .wsp-table thead tr.wsp-header-sub th {
+    background: #F7F5EF;
+    color: #1F6F43;
+}
+
+/* Sel tabel: tinta menggantikan hijau lama */
+.analysis-report-page .wsp-table td {
+    color: #15211A;
+}
+
+/* Variance: hemat = leaf, kenaikan biaya = bata.
+   Bentuk td.* dibutuhkan agar tetap menang atas warna dasar td di atas. */
+.analysis-report-page .text-diff-pos,
+.analysis-report-page .wsp-table td.text-diff-pos {
+    color: #1F6F43;
+}
+
+.analysis-report-page .text-diff-neg,
+.analysis-report-page .wsp-table td.text-diff-neg {
+    color: #B3392E;
+}

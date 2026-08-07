@@ -52,18 +52,21 @@ export function usePresentMode() {
 
     useEffect(() => {
         if (!presenting) return;
-        const slides = Array.from(document.querySelectorAll('.present-slide'));
-        if (!slides.length) return;
-        const io = new IntersectionObserver((entries) => {
-            entries.forEach(en => {
-                if (en.isIntersecting) {
-                    const i = slides.indexOf(en.target);
-                    if (i >= 0) setActiveIndex(i);
-                }
+        const update = () => {
+            const slides = Array.from(document.querySelectorAll('.present-slide'));
+            if (!slides.length) return;
+            const probe = window.innerHeight * 0.35;
+            let idx = 0;
+            let best = -Infinity;
+            slides.forEach((s, i) => {
+                const top = s.getBoundingClientRect().top;
+                if (top <= probe && top > best) { best = top; idx = i; }
             });
-        }, { threshold: 0.55 });
-        slides.forEach(s => io.observe(s));
-        return () => io.disconnect();
+            setActiveIndex(idx);
+        };
+        update();
+        window.addEventListener('scroll', update, true); // capture: menangkap scroll container manapun
+        return () => window.removeEventListener('scroll', update, true);
     }, [presenting]);
 
     return { presenting, activeIndex, enter, exit };

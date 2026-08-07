@@ -6,6 +6,7 @@ import { fetchMonthlyTaxReport, fetchAnnualTaxReport, fetchAnnualAstekBpjsReport
 import { fetchDivisions, fetchGangs } from '../services/gangService';
 import { Calculator, BarChart2, CalendarDays, Activity, FileWarning, Search, ChevronDown, ChevronRight, DollarSign, Download, Filter } from 'lucide-react';
 import { useCurrentPeriod } from '../hooks/useCurrentPeriod';
+import { usePrintExpand } from '../utils/printPageSetup';
 import PrintSignature from '../components/common/PrintSignature';
 import '../styles/TaxReportPage.css';
 
@@ -91,6 +92,8 @@ function MonthlyTaxTab({ token, month, year, setMonth, setYear, division, gang, 
     const [downloadingExcel, setDownloadingExcel] = useState(false);
     const [exportingJson, setExportingJson] = useState(false);
     const [expandedRows, setExpandedRows] = useState(new Set());
+    // Saat print: semua baris rincian PPH21 per karyawan dibuka (tidak hanya yang diklik).
+    const printExpanded = usePrintExpand();
 
     const toggleRow = (empCode) => {
         const newExpanded = new Set(expandedRows);
@@ -320,7 +323,7 @@ function MonthlyTaxTab({ token, month, year, setMonth, setYear, division, gang, 
                         </thead>
                         <tbody>
                             {data.employees.map((emp, idx) => {
-                                const isExpanded = expandedRows.has(emp.emp_code);
+                                const isExpanded = printExpanded || expandedRows.has(emp.emp_code);
                                 return (
                                     <React.Fragment key={emp.emp_code}>
                                         <tr

@@ -2,10 +2,12 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Treemap, BarChart, Bar, ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ScatterChart, Scatter, Cell, LabelList, Legend, LineChart, Line, ReferenceLine } from 'recharts';
+import { Printer } from 'lucide-react';
 import { EmptyState } from '../components/report/reportTheme';
 import { PresentSlide } from '../components/present/PresentSlide';
 import { PresentController } from '../components/present/PresentController';
 import { usePresentMode } from '../components/present/usePresentMode';
+import { printReport, usePrintExpand } from '../utils/printPageSetup';
 import { decomposeCost, costPerTon, productivity, benchmarkMean, deltaPct, heatColor, pivotDivisionSeries, movementBuckets } from '../utils/costPerTonStory.derive';
 import '../styles/cost-per-ton-story.css';
 
@@ -95,6 +97,8 @@ export default function CostPerTonStoryPage() {
     // Hero KPI drill: null | 'upah' | 'cpt' | 'tonase'
     const [heroDrill, setHeroDrill] = useState(null);
     const { presenting, activeIndex, enter, exit } = usePresentMode();
+    // During print: semua uraian klik-reveal (hero breakdown, bedah gang per divisi, dekomposisi) dirender lengkap.
+    const printExpanded = usePrintExpand();
 
     // Act 6: fetch cross-division cost/ton timeline bersama load utama (data kecil, ~74 rows)
     const trendLoadedKey = useRef('');
@@ -233,6 +237,9 @@ export default function CostPerTonStoryPage() {
             {/* Sticky bar */}
             <div className="cpts-sticky-bar">
                 <span className="title">Cost per Ton · Story</span>
+                <button onClick={() => printReport({ orientation: 'landscape', margin: '6mm' })} title="Cetak laporan lengkap (semua uraian terbuka)" className="cpts-print-btn">
+                    <Printer size={14} /> Cetak
+                </button>
                 <select value={`${year}-${month}`} onChange={(e) => { const [y, m] = e.target.value.split('-').map(Number); const n = new URLSearchParams(searchParams); n.set('year', y); n.set('month', m); setSearchParams(n); }}>
                     {(periods.length ? periods : [{ year, month }]).map((p, i) => <option key={i} value={`${p.year}-${p.month}`}>{new Date(p.year, p.month - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}</option>)}
                 </select>
@@ -262,6 +269,8 @@ export default function CostPerTonStoryPage() {
                 />
             </div>
 
+            {/* Dek interaktif (layar saja; cetakan memakai lampiran tabel) */}
+            <div className="cpts-interactive">
             {/* ACT 1 - hero */}
             <PresentSlide num="01" id="act1" title="Berapa yang kita habiskan per ton TBS?" subtitle="Titik mulut: total biaya tenaga kerja panen dibanding tonase TBS yang masuk. Angka ini adalah detak biaya paling kasat mata.">
             <div className="cpts-act in-view">
@@ -489,6 +498,134 @@ export default function CostPerTonStoryPage() {
                     })()}
                 </div>
             </Act>
+            </div>{/* /cpts-interactive */}
+
+            {/* LAMPIRAN CETAK — semua uraian klik-reveal, dirender lengkap saat print mode */}
+            {printExpanded && (
+                <section className="cpts-print-detail">
+                    <div className="cpts-print-header">
+                        <div className="cpts-print-brand">
+                            <img className="cpts-print-logo" src={`${import.meta.env.BASE_URL || '/'}images/rebinmas.webp`} alt="PT. Rebinmas Jaya" />
+                            <div>
+                                <div className="cpts-print-company">PT. REBINMAS JAYA</div>
+                                <div className="cpts-print-title">Laporan Cost per Ton — Story</div>
+                                <div className="cpts-print-sub">Periode {periodLabel} · Upah {gangTypes.map(t => GANG_TYPE_LABEL[t]).join(' + ')} · Dicetak {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
+                            </div>
+                        </div>
+                        <div className="cpts-print-rule" />
+                    </div>
+                    <div className="cpts-print-page">
+                        <div className="cpts-print-title">Uraian Lengkap per Divisi</div>
+                        <div className="cpts-print-sub">Cost/ton = upah kotor ÷ tonase TBS (mill supplier PTRJ01-09 internal). Komponen per ton dihitung dari dekomposisi upah.</div>
+                        <table className="cpts-print-table">
+                            <thead>
+                                <tr>
+                                    <th>Divisi</th>
+                                    <th style={{ textAlign: 'right' }}>Tonase (t)</th>
+                                    <th style={{ textAlign: 'right' }}>Upah Kotor</th>
+                                    <th style={{ textAlign: 'right' }}>Gaji Pokok / t</th>
+                                    <th style={{ textAlign: 'right' }}>Lembur / t</th>
+                                    <th style={{ textAlign: 'right' }}>Premi / t</th>
+                                    <th style={{ textAlign: 'right' }}>Cost/Ton</th>
+                                    <th style={{ textAlign: 'right' }}>vs rata-rata</th>
+                                    <th style={{ textAlign: 'right' }}>Prod. (t/HK)</th>
+                                    <th style={{ textAlign: 'right' }}>HK</th>
+                                    <th style={{ textAlign: 'right' }}>Orang</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {[...divsWithTon].sort((a, b) => costPerTon(b) - costPerTon(a)).map(d => {
+                                    const dec = decomposeCost(d); const ton = Number(d.total_tonase);
+                                    const cpt = costPerTon(d); const prod = productivity(d);
+                                    const vsMean = cpt != null && meanCpt != null ? (cpt - meanCpt) / meanCpt * 100 : null;
+                                    return (
+                                        <tr key={d.division_code}>
+                                            <td style={{ fontWeight: 700 }}>{d.division_code}</td>
+                                            <td style={{ textAlign: 'right' }}>{fmtNum(ton, 1)}</td>
+                                            <td style={{ textAlign: 'right', fontWeight: 700 }}>{fmtCompact(d.total_wage)}</td>
+                                            <td style={{ textAlign: 'right' }}>{ton > 0 ? fmtCompact(dec.gajiPokok / ton) : '-'}</td>
+                                            <td style={{ textAlign: 'right' }}>{ton > 0 ? fmtCompact(dec.lembur / ton) : '-'}</td>
+                                            <td style={{ textAlign: 'right' }}>{ton > 0 ? fmtCompact(dec.premi / ton) : '-'}</td>
+                                            <td style={{ textAlign: 'right', fontWeight: 700 }}>{cpt != null ? fmtCompact(cpt) : '-'}</td>
+                                            <td style={{ textAlign: 'right' }}>{vsMean != null ? `${vsMean >= 0 ? '+' : ''}${vsMean.toFixed(1)}%` : '-'}</td>
+                                            <td style={{ textAlign: 'right' }}>{prod != null ? fmtNum(prod, 3) : '-'}</td>
+                                            <td style={{ textAlign: 'right' }}>{fmtNum(d.total_hk)}</td>
+                                            <td style={{ textAlign: 'right' }}>{fmtNum(d.headcount)}</td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td>TOTAL {divsWithTon.length} DIVISI</td>
+                                    <td style={{ textAlign: 'right' }}>{fmtNum(totalTonase, 1)}</td>
+                                    <td style={{ textAlign: 'right', fontWeight: 800 }}>{fmtCompact(totalWage)}</td>
+                                    <td style={{ textAlign: 'right' }}>{totalTonase > 0 ? fmtCompact(divsWithTon.reduce((s, d) => { const dec = decomposeCost(d); return s + dec.gajiPokok; }, 0) / totalTonase) : '-'}</td>
+                                    <td style={{ textAlign: 'right' }}>{totalTonase > 0 ? fmtCompact(divsWithTon.reduce((s, d) => s + Number(d.total_lembur || 0), 0) / totalTonase) : '-'}</td>
+                                    <td style={{ textAlign: 'right' }}>{totalTonase > 0 ? fmtCompact(divsWithTon.reduce((s, d) => s + Number(d.total_premi || 0), 0) / totalTonase) : '-'}</td>
+                                    <td style={{ textAlign: 'right', fontWeight: 800 }}>{overallCpt != null ? fmtCompact(overallCpt) : '-'}</td>
+                                    <td style={{ textAlign: 'right' }}>-</td>
+                                    <td style={{ textAlign: 'right' }}>{totalTonase > 0 ? fmtNum(totalTonase / (divsWithTon.reduce((s, d) => s + Number(d.total_hk || 0), 0) || 1), 3) : '-'}</td>
+                                    <td style={{ textAlign: 'right' }}>{fmtNum(divsWithTon.reduce((s, d) => s + Number(d.total_hk || 0), 0))}</td>
+                                    <td style={{ textAlign: 'right' }}>{fmtNum(divsWithTon.reduce((s, d) => s + Number(d.headcount || 0), 0))}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    <div className="cpts-print-page">
+                        <div className="cpts-print-title">Uraian Gang per Divisi</div>
+                        <div className="cpts-print-sub">Semua gang sesuai jenis terpilih ({gangTypes.map(t => GANG_TYPE_LABEL[t]).join(' + ')}) — kolom komprehensif upah kotor, lembur, premi, HK, headcount, cost/HK</div>
+                        {divsWithTon.map(d => {
+                            const gs = (gangRows || []).filter(g => String(g.division_code).toUpperCase() === String(d.division_code).toUpperCase() && gangTypes.includes(g.gang_type));
+                            if (gs.length === 0) return null;
+                            return (
+                                <div key={d.division_code} className="cpts-print-gankset">
+                                    <div className="cpts-print-ganghead">{d.division_code} · {gs.length} gang · upah {fmtCompact(gs.reduce((s, g) => s + Number(g.total_cost || 0), 0))}</div>
+                                    <table className="cpts-print-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Gang</th>
+                                                <th>Jenis</th>
+                                                <th style={{ textAlign: 'right' }}>Upah Kotor</th>
+                                                <th style={{ textAlign: 'right' }}>Lembur</th>
+                                                <th style={{ textAlign: 'right' }}>Premi</th>
+                                                <th style={{ textAlign: 'right' }}>HK</th>
+                                                <th style={{ textAlign: 'right' }}>Orang</th>
+                                                <th style={{ textAlign: 'right' }}>Cost/HK</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {gs.sort((a, b) => Number(b.total_cost) - Number(a.total_cost)).map(g => (
+                                                <tr key={`${d.division_code}-${g.gang_code}`}>
+                                                    <td style={{ fontWeight: 700 }}>{g.gang_code}</td>
+                                                    <td><span style={{ fontSize: 10, fontWeight: 700, color: GANG_TYPE_COLOR[g.gang_type] }}>{GANG_TYPE_LABEL[g.gang_type] || g.gang_type}</span></td>
+                                                    <td style={{ textAlign: 'right', fontWeight: 700 }}>{fmtCompact(g.total_cost)}</td>
+                                                    <td style={{ textAlign: 'right' }}>{fmtCompact(g.total_lembur)}</td>
+                                                    <td style={{ textAlign: 'right' }}>{fmtCompact(g.total_premi)}</td>
+                                                    <td style={{ textAlign: 'right' }}>{fmtNum(g.total_hk)}</td>
+                                                    <td style={{ textAlign: 'right' }}>{fmtNum(g.headcount)}</td>
+                                                    <td style={{ textAlign: 'right' }}>{Number(g.total_hk) > 0 ? fmtCompact(Number(g.total_cost) / Number(g.total_hk)) : '-'}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            );
+                        })}
+                    </div>
+                    <div className="cpts-print-page">
+                        <div className="cpts-print-title">Definisi & Catatan</div>
+                        <ul className="cpts-print-notes">
+                            <li><b>Cost/Ton</b> = upah kotor (gang jenis terpilih) ÷ tonase TBS divisi. Tonase = properti divisi dari mill supplier PTRJ01-09 internal — tidak valid per gang.</li>
+                            <li><b>Produktivitas</b> = tonase ÷ HK (ton per hari kerja). Efisien = produktivitas di atas rata-rata dan cost/ton di bawah rata-rata estate.</li>
+                            <li><b>Komposisi per ton</b> = gaji pokok, lembur, dan premi di-normalisasi per ton TBS; dipakai menelusuri penyebab naik/turun cost/ton.</li>
+                            <li><b>Anomali</b> = divisi dengan cost/ton di atas rata-rata estate, urut paling menyimpang — prioritas review operasional.</li>
+                            <li><b>Upah yang dihitung</b> = gaji pokok + tunjangan + premi untuk gang jenis {gangTypes.map(t => GANG_TYPE_LABEL[t]).join(' + ')} pada periode {periodLabel}.</li>
+                            <li><b>Sumber</b>: executive-summary + cost-hk-comparison (agregasi snapshot payroll periode berjalan).</li>
+                        </ul>
+                    </div>
+                </section>
+            )}
 
             {/* Drill panel */}
             {drill && (

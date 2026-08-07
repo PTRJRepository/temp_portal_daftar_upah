@@ -11,9 +11,13 @@ import {
     REPORT_ROWS_FETCH_LIMIT,
 } from '../utils/payrollReportFilters';
 import { printReport } from '../utils/printPageSetup';
-import { MetricInfo, EmptyState } from '../components/report/reportTheme';
+import { MetricInfo, EmptyState, StatCard, C } from '../components/report/reportTheme';
+import PresentSlide from '../components/present/PresentSlide';
+import PresentController from '../components/present/PresentController';
+import usePresentMode from '../components/present/usePresentMode';
 import '../styles/wages-summary-professional.css'; // Reuse existing styles
 import '../styles/report-print-foundation.css';
+import '../styles/high-earner-report.css'; // Perataan Estate Ledger khusus halaman ini
 
 const HighEarnerReportPage = () => {
     const { token } = useAuth();
@@ -34,6 +38,9 @@ const HighEarnerReportPage = () => {
     const [gangs, setGangs] = useState([]);
     const [selectedDivision, setSelectedDivision] = useState('ALL');
     const [selectedGang, setSelectedGang] = useState('ALL');
+
+    // Present mode: deck fullscreen per slide (toggle html.present-mode + HUD)
+    const { presenting, activeIndex, enter, exit } = usePresentMode();
 
     // Options
     const monthOptions = [
@@ -148,23 +155,33 @@ const HighEarnerReportPage = () => {
         return new Intl.NumberFormat('id-ID').format(num);
     };
 
+    // Caption present mode: "<Nama Report> · <periode> · <scope>"
+    const monthLabel = monthOptions[month - 1]?.label || month;
+    const scopeLabel = selectedDivision === 'ALL' ? 'Semua Divisi' : selectedDivision;
+    const presentCaption = `High Earners · ${monthLabel} ${year} · ${scopeLabel}${selectedGang !== 'ALL' ? ` · Gang ${selectedGang}` : ''}`;
+
+    // KPI sorotan dihitung dari data yang sudah ada (tanpa fetch tambahan)
+    const totalUpahBersih = data.reduce((sum, row) => sum + (row.upah_bersih || 0), 0);
+    const topEarner = data[0] || null;
+    const avgUpahBersih = data.length ? Math.round(totalUpahBersih / data.length) : 0;
+
     return (
         <div className="wsp-container high-earner-container">
             {/* Loading Overlay */}
             {loading && (
                 <div style={{
                     position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                    backgroundColor: 'rgba(255,255,255,0.7)',
+                    backgroundColor: 'rgba(247,245,239,0.75)',
                     zIndex: 9999,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     flexDirection: 'column'
                 }}>
                     <div className="spinner-border" style={{
                         width: '3rem', height: '3rem',
-                        border: '5px solid #e2e8f0', borderTopColor: '#3b82f6',
+                        border: '5px solid #E0DED2', borderTopColor: '#1F6F43',
                         borderRadius: '50%', animation: 'spin 1s linear infinite'
                     }}></div>
-                    <div style={{ marginTop: '1rem', fontWeight: 'bold', color: '#1e3a8a' }}>Loading Data...</div>
+                    <div style={{ marginTop: '1rem', fontWeight: 'bold', color: '#143D28' }}>Memuat Data...</div>
                     <style>{`
                         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
                     `}</style>
@@ -177,7 +194,7 @@ const HighEarnerReportPage = () => {
                     <button onClick={() => navigate(-1)} className="wsp-btn">
                         &larr; Kembali
                     </button>
-                    <button onClick={() => navigate(`/cost-per-ton-story?month=${month}&year=${year}`)} className="wsp-btn" style={{ background: '#1E7A45', color: '#fff', border: 'none', fontWeight: 700 }}>
+                    <button onClick={() => navigate(`/cost-per-ton-story?month=${month}&year=${year}`)} className="wsp-btn" style={{ background: '#1F6F43', color: '#fff', border: 'none', fontWeight: 700 }}>
                         Cost/Ton Story →
                     </button>
 
@@ -234,7 +251,7 @@ const HighEarnerReportPage = () => {
                         )}
 
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', borderLeft: '1px solid #ccc', paddingLeft: '8px', marginLeft: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', borderLeft: '1px solid #E0DED2', paddingLeft: '8px', marginLeft: '8px' }}>
                             <span style={{ fontSize: '0.85rem' }}>Limit &gt;</span>
                             <input
                                 type="number"
@@ -258,15 +275,28 @@ const HighEarnerReportPage = () => {
                 </div>
             </div>
 
+            {/* PRESENT MODE - tombol Present (mode normal) + HUD deck (present mode) */}
+            <div className="no-print" style={{ display: 'flex', justifyContent: 'flex-end', padding: '0.75rem 1.5rem 0' }}>
+                <PresentController
+                    presenting={presenting}
+                    activeIndex={activeIndex}
+                    slideCount={3}
+                    onEnter={enter}
+                    onExit={exit}
+                    caption={presentCaption}
+                />
+            </div>
+
             {/* Error Message */}
             {error && (
-                <div style={{ padding: '1rem', backgroundColor: '#fee2e2', color: '#b91c1c', borderRadius: '0.5rem', marginBottom: '1rem', margin: '1rem' }}>
+                <div style={{ padding: '1rem', backgroundColor: '#F9E5E2', color: '#B3392E', border: '1px solid #E7B8B1', borderRadius: '0.5rem', marginBottom: '1rem', margin: '1rem' }}>
                     {error}
                 </div>
             )}
 
             {/* Report Content */}
             <div id="high-earner-report" className="wsp-paper a4-landscape">
+                <PresentSlide num="01" id="slide-01" title="Konteks Laporan" subtitle="Periode, cakupan, dan limit upah bersih yang dipakai">
                 <div className="wsp-header">
                     <div className="wsp-title">LAPORAN GAJI TERTINGGI (High Earners)</div>
                     <div className="wsp-subtitle">
@@ -286,12 +316,30 @@ const HighEarnerReportPage = () => {
                         note="Daftar menampilkan karyawan dengan upah bersih di atas limit yang dipilih."
                     />
                     {meta && (
-                        <div className="wsp-meta" style={{ fontSize: '0.8rem', color: '#666' }}>
+                        <div className="wsp-meta" style={{ fontSize: '0.8rem', color: '#6E7A70' }}>
                             Total Karyawan: {meta.count}
                         </div>
                     )}
                 </div>
+                </PresentSlide>
 
+                <PresentSlide num="02" id="slide-02" title="Sorotan High Earners" subtitle="Ikhtisar karyawan dengan upah bersih di atas limit">
+                {data.length > 0 ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 20 }}>
+                        <StatCard label="Karyawan di Atas Limit" value={formatNumber(meta?.count ?? data.length)} note={`Limit Rp ${formatNumber(limit)}`} color={C.upah} />
+                        <StatCard label="Upah Bersih Tertinggi" value={topEarner ? `Rp ${formatNumber(topEarner.upah_bersih)}` : '-'} note={topEarner ? `Teratas: ${topEarner.nama}` : undefined} color={C.premi} />
+                        <StatCard label="Rata-rata Upah Bersih" value={`Rp ${formatNumber(avgUpahBersih)}`} note={`${formatNumber(data.length)} karyawan terdaftar`} color={C.lembur} />
+                        <StatCard label="Total Upah Bersih" value={`Rp ${formatNumber(totalUpahBersih)}`} note="Akumulasi seluruh nama di daftar" color={C.costTon} />
+                    </div>
+                ) : (
+                    <EmptyState
+                        title="Belum ada data"
+                        message="Tidak ada karyawan dengan upah bersih di atas limit untuk periode dan cakupan ini."
+                    />
+                )}
+                </PresentSlide>
+
+                <PresentSlide num="03" id="slide-03" title="Peringkat Gaji Tertinggi" subtitle="Daftar lengkap karyawan berikut komponen upahnya">
                 <div className="wsp-table-wrapper">
                     <table className="wsp-table">
                         <thead>
@@ -316,7 +364,7 @@ const HighEarnerReportPage = () => {
                                         <td>{row.rank}</td>
                                         <td>
                                             <div style={{ fontWeight: 'bold' }}>{row.nama}</div>
-                                            <div style={{ fontSize: '0.75rem', color: '#555' }}>
+                                            <div style={{ fontSize: '0.75rem', color: '#6E7A70' }}>
                                                 {row.new_nik || row.nik} | {row.jabatan_estate || '-'}
                                             </div>
                                         </td>
@@ -328,7 +376,7 @@ const HighEarnerReportPage = () => {
                                         <td className="text-right">
                                             {formatNumber(row.total_tunjangan)}
                                             {/* Details on hover/small */}
-                                            <div style={{ fontSize: '0.7rem', color: '#666' }}>
+                                            <div style={{ fontSize: '0.7rem', color: '#6E7A70' }}>
                                                 {row.jabatan_jumlah > 0 && `Jab: ${formatNumber(row.jabatan_jumlah)} `}
                                                 {row.beras_jumlah > 0 && `Ber: ${formatNumber(row.beras_jumlah)}`}
                                             </div>
@@ -336,7 +384,7 @@ const HighEarnerReportPage = () => {
                                         <td className="text-right">
                                             {isOvertime ? (
                                                 <span style={{
-                                                    backgroundColor: '#fee2e2', color: '#991b1b',
+                                                    backgroundColor: '#F7EBD9', color: '#B45309', border: '1px solid #E5CFA3',
                                                     padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold'
                                                 }}>
                                                     {formatNumber(row.lembur_jumlah)}
@@ -349,7 +397,7 @@ const HighEarnerReportPage = () => {
                                         <td className="text-right">
                                             {formatNumber(row.total_premi)}
                                             {/* Top Premi breakdown */}
-                                            <div style={{ fontSize: '0.65rem', color: '#666', maxWidth: '150px', marginLeft: 'auto' }}>
+                                            <div style={{ fontSize: '0.65rem', color: '#6E7A70', maxWidth: '150px', marginLeft: 'auto' }}>
                                                 {Object.entries(row.premi || {})
                                                     .filter(([_, val]) => val > 0)
                                                     .sort((a, b) => b[1] - a[1]) // Sort desc
@@ -374,7 +422,7 @@ const HighEarnerReportPage = () => {
                             })}
                             {data.length === 0 && !loading && (
                                 <tr>
-                                    <td colSpan="10" className="text-center" style={{ padding: '2rem', fontStyle: 'italic', color: '#666' }}>
+                                    <td colSpan="10" className="text-center" style={{ padding: '2rem', fontStyle: 'italic', color: '#6E7A70' }}>
                                         Tidak ada data yang ditemukan.
                                     </td>
                                 </tr>
@@ -382,6 +430,7 @@ const HighEarnerReportPage = () => {
                         </tbody>
                     </table>
                 </div>
+                </PresentSlide>
             </div>
         </div>
     );

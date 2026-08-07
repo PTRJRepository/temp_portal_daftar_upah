@@ -16,7 +16,7 @@ import ReportPrintHeader from '../components/common/ReportPrintHeader';
 import { MetricInfo, EmptyState } from '../components/report/reportTheme';
 import { getDivisionTypeLabel } from '../utils/reportPresentationLabels';
 import { getReportDivisionSummary } from '../utils/divisionPresentation';
-import { printReport } from '../utils/printPageSetup';
+import { printReport, usePrintExpand } from '../utils/printPageSetup';
 import '../styles/summary-report-new.css';
 
 const REBINMAS_LOGO_SRC = `${import.meta.env.BASE_URL || '/'}images/rebinmas.webp`;
@@ -778,6 +778,9 @@ export default function SummaryReportPage({ onBack, initialDivision, initialMont
   const [gangDescriptions, setGangDescriptions] = useState({});
   const [filteredHeaders, setFilteredHeaders] = useState([]);
   const [showDetail, setShowDetail] = useState(false);
+  // During print, "Show Detail Premi" columns render regardless of toggle state.
+  const printExpanded = usePrintExpand();
+  const showDetailEffective = showDetail || printExpanded;
 
   // UI State
   const [loading, setLoading] = useState(false);
@@ -1216,7 +1219,7 @@ export default function SummaryReportPage({ onBack, initialDivision, initialMont
               onCellEdit={handleCellEdit}
               editMode={editMode}
               filteredGrandTotalLabel={filteredGrandTotalLabel}
-              showDetail={showDetail}
+              showDetail={showDetailEffective}
               filteredHeaders={filteredHeaders}
               getDynamicPremiValue={getDynamicPremiValue}
             />
