@@ -80,31 +80,28 @@ export function DeltaBadge({ pct, invert = false }) {
 }
 
 /** StatCard — ledger cell: flat, hairline, angka mono tabular, tick semantik tipis.
- *  Prop opsional: badge (pill kecil di samping label), sparkline (ReactNode di kanan kartu). */
+ *  Prop opsional: badge (pill kecil di samping label), sparkline (ReactNode strip penuh di dasar kartu).
+ *  Angka value nowrap + font clamp supaya tidak pernah jatuh ke baris baru saat kartu sempit. */
 export function StatCard({ label, value, note, color = C.upah, pct, invert, badge, sparkline }) {
     const [hover, setHover] = React.useState(false);
     return (
         <div
             onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
-            style={{ ...CARD, padding: '16px 18px', borderColor: hover ? C.leafLight : C.border, transition: 'border-color .15s' }}
+            style={{ ...CARD, padding: '16px 18px', borderColor: hover ? C.leafLight : C.border, transition: 'border-color .15s', minWidth: 0 }}
         >
             <div style={{ width: 24, height: 2, background: color, marginBottom: 10 }} />
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: C.muted }}>{label}</div>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: C.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</div>
                 {badge && (
-                    <span style={{ fontSize: 9, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: C.premi, background: '#E3EFEC', border: '1px solid #BFD8D3', borderRadius: 999, padding: '1px 7px' }}>{badge}</span>
+                    <span style={{ fontSize: 9, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: C.premi, background: '#E3EFEC', border: '1px solid #BFD8D3', borderRadius: 999, padding: '1px 7px', flexShrink: 0 }}>{badge}</span>
                 )}
             </div>
-            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 10 }}>
-                <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums', color: C.text, lineHeight: 1.05, marginBottom: 6, fontFamily: 'var(--font-mono)' }}>{value}</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                        {pct !== undefined && <DeltaBadge pct={pct} invert={invert} />}
-                        {note && <span style={{ fontSize: 11.5, color: C.text2 }}>{note}</span>}
-                    </div>
-                </div>
-                {sparkline && <div style={{ width: 88, height: 36, flexShrink: 0 }}>{sparkline}</div>}
+            <div style={{ fontSize: 'clamp(14px, 1.15vw, 24px)', fontWeight: 800, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums', color: C.text, lineHeight: 1.05, marginBottom: 6, fontFamily: 'var(--font-mono)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                {pct !== undefined && <DeltaBadge pct={pct} invert={invert} />}
+                {note && <span style={{ fontSize: 11.5, color: C.text2 }}>{note}</span>}
             </div>
+            {sparkline && <div style={{ height: 32, marginTop: 10 }}>{sparkline}</div>}
         </div>
     );
 }

@@ -7,7 +7,7 @@ import {
     Home, FileText, BarChart2, DollarSign, TrendingUp, Users,
     Settings, ChevronRight, LogOut, ShieldCheck,
     PieChart, Menu, X, Database, CalendarDays, ChevronDown, ChevronUp,
-    CheckCircle
+    Wallet, Scale, Activity
 } from 'lucide-react';
 
 // ─── Design System: Estate Ledger ────────────────────────────────────────────
@@ -354,28 +354,33 @@ const DashboardLayout = () => {
     const sidebarWidth = collapsed ? '72px' : '248px';
 
     // ─── Navigation Config ─────────────────────────────────────────────────────
+    // indent: true = item disembunyikan dari user kerani (lihat filter di render loop);
+    // pertahankan flag ini pada semua item report agar visibilitas kerani tidak berubah.
+    // Sidebar sengaja ramping; report lanjutan lainnya diakses dari panel di Dashboard.
     const navItems = [
         { section: 'Utama', items: [
             { to: '/', icon: Home, label: 'Dashboard', description: 'Ringkasan & metrik', end: true },
+        ]},
+        { section: 'Analisis Utama', items: [
+            { to: '/executive', icon: TrendingUp, label: 'Executive Analysis', description: 'Analisis eksekutif', indent: true },
+            { to: '/salary-analysis', icon: Wallet, label: 'Analisis Gaji', description: 'Roster & komponen gaji', indent: true },
+            { to: '/tonase-analysis', icon: Scale, label: 'Analisis Tonase', description: 'Tonase, HK, premi panen', indent: true },
+            { to: '/cost-per-ton-story', icon: BarChart2, label: 'Cost/Ton Story', description: 'Infografis biaya per ton', indent: true },
+            { to: '/comprehensive', icon: PieChart, label: 'Analisis Payroll', description: 'Breakdown komponen upah', parent: true },
+            { to: '/productivity', icon: Activity, label: 'Produktivitas', description: 'Tonase vs upah', indent: true },
+        ]},
+        { section: 'Laporan Keuangan', items: [
+            { to: '/wages-rebinmas', icon: DollarSign, label: 'Wages Rebinmas', description: 'Upah Rebinmas saat ini', indent: true },
+            { to: '/wages-rebinmas?mode=comparison', icon: ShieldCheck, label: 'Wages Comparison', description: 'Perbandingan upah', indent: true },
+            { to: '/wages-ijl', icon: DollarSign, label: 'Wages IJL', description: 'Upah IJL', indent: true },
+            { to: '/summary', icon: BarChart2, label: 'Summary Report', description: 'Rekap per divisi', indent: true },
+            { to: '/wages-comparison', icon: BarChart2, label: 'Summary Comparison', description: 'Perbandingan ringkasan', indent: true },
         ]},
         { section: 'Operasional', items: [
             { to: '/operational', icon: FileText, label: 'Daftar Upah', description: 'Filter upah operasional' },
             { to: '/pendapatan-tidak-tetap', icon: DollarSign, label: 'Pendapatan Lain', description: 'Pendapatan tidak tetap' },
             { to: '/mill-production', icon: BarChart2, label: 'Produktivitas Kebun', description: 'Tonase FFB, HK & biaya' },
-        ]},
-        { section: 'Analisis & Laporan', items: [
-            { to: '/comprehensive', icon: PieChart, label: 'Analisis Payroll', description: 'Breakdown komponen upah', parent: true },
-            { to: '/summary', icon: BarChart2, label: 'Summary Report', description: 'Rekap per divisi', indent: true },
-            { to: '/wages-rebinmas', icon: DollarSign, label: 'Wages Rebinmas', description: 'Upah Rebinmas saat ini', indent: true },
-            { to: '/wages-rebinmas?mode=comparison', icon: ShieldCheck, label: 'Wages Comparison', description: 'Perbandingan upah', indent: true },
-            { to: '/wages-ijl', icon: DollarSign, label: 'Wages IJL', description: 'Upah IJL', indent: true },
-            { to: '/wages-comparison', icon: BarChart2, label: 'Summary Comparison', description: 'Perbandingan ringkasan', indent: true },
-            { to: '/impact', icon: TrendingUp, label: 'Impact Report', description: 'Analisis dampak', indent: true },
-            { to: '/analysis', icon: TrendingUp, label: 'Analisa Lembur & Premi', description: 'Lembur dan premi detail', indent: true },
-            { to: '/tonase-analysis', icon: BarChart2, label: 'Analisis Tonase', description: 'Tonase, HK, premi panen', indent: true },
-            { to: '/executive', icon: BarChart2, label: 'Executive Analysis', description: 'Analisis eksekutif', indent: true },
             { to: '/report-pajak', icon: FileText, label: 'Report Pajak (PPh21)', description: 'Laporan pajak', indent: true },
-            { to: '/data-verification', icon: CheckCircle, label: 'Data Verification', description: 'Verifikasi konsistensi data', indent: true },
         ]},
     ];
 

@@ -35,9 +35,20 @@ const calcChange = (curr, prev) => {
     return ((curr - prev) / prev) * 100;
 };
 
-// Tile launcher besar (flat, satu aksen daun)
-const Tile = ({ icon, title, desc, onClick }) => {
+// Tile launcher besar (flat, satu aksen daun). highlight = tile report utama (forest fill)
+const Tile = ({ icon, title, desc, onClick, highlight = false }) => {
     const [hover, setHover] = React.useState(false);
+    const s = highlight ? {
+        bg: hover ? C.leafMid : C.leafDark,
+        border: hover ? C.leafMid : C.leafDark,
+        chipBg: 'rgba(255,255,255,0.14)', chipBorder: 'rgba(255,255,255,0.28)', chipColor: '#EAF5EE',
+        title: '#FFFFFF', desc: 'rgba(234,245,238,0.72)', arrow: hover ? '#FFFFFF' : 'rgba(234,245,238,0.6)',
+    } : {
+        bg: C.surface,
+        border: hover ? C.leafMid : C.border,
+        chipBg: '#E9F2EA', chipBorder: '#C4DBC8', chipColor: C.leafMid,
+        title: hover ? C.leafMid : C.text, desc: C.muted, arrow: hover ? C.leafMid : C.muted,
+    };
     return (
         <button
             onClick={onClick}
@@ -45,18 +56,18 @@ const Tile = ({ icon, title, desc, onClick }) => {
             onMouseLeave={() => setHover(false)}
             style={{
                 textAlign: 'left', cursor: 'pointer', borderRadius: 10, padding: '1.1rem 1.2rem',
-                background: C.surface, border: `1px solid ${hover ? C.leafMid : C.border}`, boxShadow: SHADOW,
-                transition: 'border-color .15s ease', minHeight: 108,
+                background: s.bg, border: `1px solid ${s.border}`, boxShadow: SHADOW,
+                transition: 'all .15s ease', minHeight: 108,
                 display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 12
             }}
         >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ background: '#E9F2EA', border: '1px solid #C4DBC8', color: C.leafMid, borderRadius: 8, padding: 7, display: 'inline-flex' }}>{icon}</span>
-                <ArrowRight size={17} style={{ color: hover ? C.leafMid : C.muted, transition: 'color .15s' }} />
+                <span style={{ background: s.chipBg, border: `1px solid ${s.chipBorder}`, color: s.chipColor, borderRadius: 8, padding: 7, display: 'inline-flex' }}>{icon}</span>
+                <ArrowRight size={17} style={{ color: s.arrow, transition: 'color .15s' }} />
             </div>
             <div>
-                <div style={{ fontWeight: 800, fontSize: '0.95rem', letterSpacing: '-0.01em', color: hover ? C.leafMid : C.text, transition: 'color .15s' }}>{title}</div>
-                {desc && <div style={{ fontSize: '0.76rem', color: C.muted, marginTop: 2, fontWeight: 500 }}>{desc}</div>}
+                <div style={{ fontWeight: 800, fontSize: '0.95rem', letterSpacing: '-0.01em', color: s.title, transition: 'color .15s' }}>{title}</div>
+                {desc && <div style={{ fontSize: '0.76rem', color: s.desc, marginTop: 2, fontWeight: 500 }}>{desc}</div>}
             </div>
         </button>
     );
@@ -249,7 +260,7 @@ export default function DashboardHome() {
                 </div>
 
                 {dashLoading ? (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: '1.6rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, minmax(0, 1fr))', gap: 12, marginBottom: '1.6rem' }}>
                         {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} height={104} />)}
                     </div>
                 ) : dashError || !kpi ? (
@@ -262,7 +273,7 @@ export default function DashboardHome() {
                         />
                     </div>
                 ) : (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: '1.6rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, minmax(0, 1fr))', gap: 12, marginBottom: '1.6rem' }}>
                         <StatCard label="Total Upah Kotor" value={formatCompactIDR(kpi.curr_wage)} pct={calcChange(kpi.curr_wage, kpi.prev_wage) ?? undefined} color={C.upah} note="vs bulan lalu" sparkline={sparkFor('total_wage', C.upah)} />
                         <StatCard label="Premi" value={formatCompactIDR(currentTrend.total_premi)} pct={calcChange(currentTrend.total_premi, prevTrend.total_premi) ?? undefined} color={C.premi} note="vs bulan lalu" sparkline={sparkFor('total_premi', C.premi)} />
                         <StatCard label="Lembur" value={formatCompactIDR(kpi.curr_ot)} pct={calcChange(kpi.curr_ot, kpi.prev_ot) ?? undefined} color={C.lembur} invert note="vs bulan lalu" sparkline={sparkFor('total_ot', C.lembur)} />
@@ -301,7 +312,7 @@ export default function DashboardHome() {
                         <span style={{ color: C.warn, display: 'inline-flex', flexShrink: 0 }}><AlertTriangle size={17} /></span>
                         <span style={{ fontSize: '0.84rem', color: C.text2, lineHeight: 1.5 }}>
                             <b style={{ color: C.text }}>{missingWageDivisions.length} divisi sudah produksi tapi upah belum tersedia:</b>{' '}
-                            {missingWageDivisions.join(', ')} — jalankan Aggregation Seeder agar analisis biaya lengkap.
+                            {missingWageDivisions.join(', ')}. Jalankan Aggregation Seeder agar analisis biaya lengkap.
                         </span>
                         <button
                             onClick={() => navigate('/seed')}
@@ -312,6 +323,17 @@ export default function DashboardHome() {
                     </div>
                 )}
                 </PresentSlide>
+
+                {/* FEATURED ANALYSIS TILES: report utama ditaruh paling depan */}
+                <SectionHeader title="Report &amp; Analisis Utama" />
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+                    <Tile icon={<TrendingUp size={19} />} title="Executive Board" desc="KPI CEO, cost/ton, insight" onClick={() => navigate('/executive')} highlight />
+                    <Tile icon={<Wallet size={19} />} title="Analisis Gaji" desc="Roster + rincian komponen per karyawan" onClick={() => navigate('/salary-analysis')} highlight />
+                    <Tile icon={<Scale size={19} />} title="Analisis Tonase" desc="Biaya per ton & per HK" onClick={() => navigate('/tonase-analysis')} highlight />
+                    <Tile icon={<BarChart2 size={19} />} title="Cost/Ton Story" desc="Infografis interaktif, presentasi" onClick={() => navigate('/cost-per-ton-story')} highlight />
+                    <Tile icon={<Activity size={19} />} title="Produktivitas" desc="Tonase vs upah" onClick={() => navigate('/productivity')} />
+                    <Tile icon={<Layers size={19} />} title="Comprehensive" desc="Analisis payroll menyeluruh" onClick={() => navigate('/comprehensive')} />
+                </div>
 
                 <PresentSlide num="02" id="slide-02" title="Analisis Komprehensif" subtitle="Kepersonaliaan, struktur biaya, dan produktivitas dalam satu pandangan">
                 {/* SECTION: Kepersonaliaan & Headcount */}
@@ -429,17 +451,6 @@ export default function DashboardHome() {
                             {gangLoading ? 'Memuat...' : 'TAMPILKAN DATA UPAH'} <ArrowRight size={16} />
                         </button>
                     </div>
-                </div>
-
-                {/* FEATURED ANALYSIS TILES */}
-                <SectionHeader title="Analisis Utama" />
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-                    <Tile icon={<TrendingUp size={19} />} title="Executive Board" desc="KPI CEO, cost/ton, insight" onClick={() => navigate('/executive')} />
-                    <Tile icon={<BarChart2 size={19} />} title="Cost/Ton Story" desc="Infografis interaktif, presentasi" onClick={() => navigate('/cost-per-ton-story')} />
-                    <Tile icon={<Wallet size={19} />} title="Analisis Gaji" desc="Roster + rincian komponen per karyawan" onClick={() => navigate('/salary-analysis')} />
-                    <Tile icon={<Scale size={19} />} title="Analisis Tonase" desc="Biaya per ton & per HK" onClick={() => navigate('/tonase-analysis')} />
-                    <Tile icon={<Activity size={19} />} title="Produktivitas" desc="Tonase vs upah" onClick={() => navigate('/productivity')} />
-                    <Tile icon={<Layers size={19} />} title="Comprehensive" desc="Analisis payroll menyeluruh" onClick={() => navigate('/comprehensive')} />
                 </div>
 
                 {/* REPORT PANELS */}

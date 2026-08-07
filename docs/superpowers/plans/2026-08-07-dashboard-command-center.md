@@ -998,6 +998,7 @@ git commit -m "feat: add headcount section component"
 - Produces: `export default function CostStructureSection({ costData, trends, gangBreakdown, loading, error, onRetry, periodLabel, scopeLabel })` —
   - `costData`: response `data` dari `/cost-structure` (Task 3) atau null.
   - `trends`: array dari `/executive-summary` (chart Tren Upah 12 Bulan, dipindah dari DashboardHome).
+  - Catatan: chart lama "Upah per Divisi" **digantikan** stacked "Komposisi Biaya per Divisi" (data per divisi sama, lebih kaya) — sesuai intent anti-duplikasi di spec.
   - `gangBreakdown`: array dari `/executive-summary` (Top 5 gang; field: `gang_code, total_wage, total_ot, headcount, total_tonase`).
 - Consumed by: Task 9.
 
