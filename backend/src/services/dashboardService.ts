@@ -384,6 +384,60 @@ export class DashboardService {
     }
 
     /**
+     * Komposisi biaya per divisi dari breakdown agregasi.
+     * upah_pokok = upah kotor - premi - lembur. Rasio biaya null bila
+     * penyebut 0 atau divisi belum punya data upah (upah_available = 0),
+     * supaya frontend bisa menampilkan "-" alih-alih angka menyesatkan.
+     */
+    public async getCostStructure(month: number, year: number, gangScope: string = 'panen'): Promise<any> {
+        const rows = await this.getDivisionBreakdown(month, year, gangScope);
+        const divisions = rows.map((r: any) => {
+            const wage = this.toReportNumber(r.total_wage);
+            const premi = this.toReportNumber(r.total_premi);
+            const ot = this.toReportNumber(r.total_ot);
+            const headcount = this.toReportNumber(r.headcount);
+            const hk = this.toReportNumber(r.total_hk);
+            const tonase = this.toReportNumber(r.total_tonase);
+            const upahAvailable = r.upah_available === 1;
+            return {
+                division_code: r.division_code,
+                upah_pokok: Math.max(wage - premi - ot, 0),
+                premi,
+                lembur: ot,
+                total_wage: wage,
+                potongan: this.toReportNumber(r.total_potongan),
+                pph21: this.toReportNumber(r.total_pph21),
+                spsi: this.toReportNumber(r.total_spsi),
+                bpjs_pekerja: this.toReportNumber(r.total_bpjs_pekerja),
+                headcount,
+                total_hk: hk,
+                tonase,
+                cost_per_head: upahAvailable && headcount > 0 ? wage / headcount : null,
+                cost_per_hk: upahAvailable && hk > 0 ? wage / hk : null,
+                cost_per_ton: upahAvailable && tonase > 0 ? wage / tonase : null,
+                upah_available: upahAvailable
+            };
+        });
+        const sum = (key: string) => divisions.reduce((acc: number, d: any) => acc + (d[key] || 0), 0);
+        return {
+            divisions,
+            totals: {
+                upah_pokok: sum('upah_pokok'),
+                premi: sum('premi'),
+                lembur: sum('lembur'),
+                total_wage: sum('total_wage'),
+                potongan: sum('potongan'),
+                pph21: sum('pph21'),
+                spsi: sum('spsi'),
+                bpjs_pekerja: sum('bpjs_pekerja'),
+                headcount: sum('headcount'),
+                total_hk: sum('total_hk'),
+                tonase: sum('tonase')
+            }
+        };
+    }
+
+    /**
      * Cross-division cost/ton timeline — flat (division × month) series.
      * Powers Act 6 small-multiples in CostPerTonStoryPage. Tonase from
      * division_tonase (authoritative, PTRJ01-09); plasma excluded via harvestGangSql.

@@ -201,3 +201,49 @@ describe("DashboardService headcount summary", () => {
             .toEqual({ curr_headcount: 999, headcount_source: "live" });
     });
 });
+
+describe("DashboardService cost structure", () => {
+    const service = dashboardService as any;
+    const originalExtendDb = service.extendDb;
+
+    afterEach(() => {
+        service.extendDb = originalExtendDb;
+    });
+
+    it("menurunkan upah pokok, rasio biaya, dan total dari breakdown divisi", async () => {
+        service.extendDb = {
+            query: async () => [
+                { division_code: "ARA", total_wage: 1000, total_ot: 100, total_premi: 200, headcount: 10, total_hk: 200, total_potongan: 50, total_spsi: 5, total_pph21: 15, total_bpjs_pekerja: 30, total_koreksi: 0, total_tonase: 250, upah_available: 1 },
+                { division_code: "DME", total_wage: 0, total_ot: 0, total_premi: 0, headcount: 0, total_hk: 0, total_potongan: 0, total_spsi: 0, total_pph21: 0, total_bpjs_pekerja: 0, total_koreksi: 0, total_tonase: 120, upah_available: 0 }
+            ]
+        };
+
+        const result = await dashboardService.getCostStructure(4, 2026, 'panen');
+
+        expect(result.divisions[0]).toMatchObject({
+            division_code: "ARA",
+            upah_pokok: 700,
+            premi: 200,
+            lembur: 100,
+            cost_per_head: 100,
+            cost_per_hk: 5,
+            cost_per_ton: 4,
+            upah_available: true
+        });
+        // Divisi produksi tanpa data upah: rasio null + flag false (bukan angka 0 menyesatkan)
+        expect(result.divisions[1]).toMatchObject({
+            division_code: "DME",
+            cost_per_head: null,
+            cost_per_hk: null,
+            cost_per_ton: null,
+            upah_available: false
+        });
+        expect(result.totals).toMatchObject({
+            upah_pokok: 700,
+            total_wage: 1000,
+            headcount: 10,
+            total_hk: 200,
+            tonase: 370
+        });
+    });
+});
