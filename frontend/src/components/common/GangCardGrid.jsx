@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react'
+import { Search } from 'lucide-react'
 import '../../styles/dashboard-modern.css'
 
 /**
@@ -52,7 +53,7 @@ export default function GangCardGrid({
         <div className="gang-card-grid-container">
             {/* Search Bar */}
             <div className="gang-search-container">
-                <span className="gang-search-icon">🔍</span>
+                <span className="gang-search-icon"><Search size={16} /></span>
                 <input
                     type="text"
                     className="gang-search-input"
@@ -74,7 +75,7 @@ export default function GangCardGrid({
                         tabIndex={0}
                         onKeyPress={(e) => e.key === 'Enter' && !disabled && onChange('ALL')}
                     >
-                        <div className="gang-card-code">📋 SEMUA GANG</div>
+                        <div className="gang-card-code">SEMUA GANG</div>
                         <div className="gang-card-desc">
                             Tampilkan laporan gabungan untuk {gangs.length} gang
                         </div>
@@ -104,7 +105,7 @@ export default function GangCardGrid({
                 {/* Empty State */}
                 {filteredGangs.length === 0 && !isLoading && (
                     <div className="empty-state" style={{ gridColumn: '1 / -1' }}>
-                        <div className="empty-state-icon">🔎</div>
+                        <div className="empty-state-icon"><Search size={32} strokeWidth={1.5} /></div>
                         <div className="empty-state-text">
                             {gangs.length === 0
                                 ? 'Tidak ada gang untuk divisi ini'

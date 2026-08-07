@@ -49,7 +49,7 @@ export default function HeadcountHkPanel({ trends = [], breakdown = [] }) {
                                 <Tooltip formatter={(v, n) => [String(v), n === 'hkPer' ? 'HK/orang' : n === 'hk' ? 'HK' : 'Headcount']} contentStyle={{ borderRadius: 10, border: `1px solid ${C.border}`, fontSize: 12 }} />
                                 <Bar yAxisId="l" dataKey="hc" name="Headcount" fill="#1F6F43" fillOpacity={0.65} radius={[4, 4, 0, 0]} />
                                 <Bar yAxisId="l" dataKey="hk" name="HK" fill="#94A3B8" fillOpacity={0.5} radius={[4, 4, 0, 0]} />
-                                <Line yAxisId="r" type="monotone" dataKey="hkPer" name="HK/orang" stroke="#D98A1F" strokeWidth={2} dot={false} />
+                                <Line yAxisId="r" type="monotone" dataKey="hkPer" name="HK/orang" stroke="#B45309" strokeWidth={2} dot={false} />
                             </ComposedChart>
                         </ResponsiveContainer>
                     </div>

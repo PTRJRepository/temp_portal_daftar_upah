@@ -8,6 +8,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { List, FileText, Type } from 'lucide-react';
 import {
     PRINT_MODES,
     initPrintMode,
@@ -50,9 +51,9 @@ const PrintModeSelector = ({ onPrint }) => {
     };
 
     const modeOptions = [
-        { mode: PRINT_MODES.COMPACT, icon: '📊', color: 'bg-blue-50 border-blue-200 text-blue-700' },
-        { mode: PRINT_MODES.STANDARD, icon: '📄', color: 'bg-green-50 border-green-200 text-green-700' },
-        { mode: PRINT_MODES.LARGE, icon: '📝', color: 'bg-purple-50 border-purple-200 text-purple-700' },
+        { mode: PRINT_MODES.COMPACT, Icon: List, color: 'bg-blue-50 border-blue-200 text-blue-700' },
+        { mode: PRINT_MODES.STANDARD, Icon: FileText, color: 'bg-green-50 border-green-200 text-green-700' },
+        { mode: PRINT_MODES.LARGE, Icon: Type, color: 'bg-purple-50 border-purple-200 text-purple-700' },
     ];
 
     const getCurrentModeInfo = () => {
@@ -69,7 +70,7 @@ const PrintModeSelector = ({ onPrint }) => {
                 className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border transition-all duration-200 ${currentModeInfo.color} hover:shadow-md`}
                 title={getPrintModeDescription(currentMode)}
             >
-                <span className="text-lg">{currentModeInfo.icon}</span>
+                <span className="text-lg" style={{ display: 'inline-flex' }}><currentModeInfo.Icon size={16} /></span>
                 <span className="font-semibold text-sm">{getPrintModeDisplayName(currentMode)}</span>
                 <svg
                     className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
@@ -100,7 +101,7 @@ const PrintModeSelector = ({ onPrint }) => {
 
                         {/* Mode Options */}
                         <div className="p-2 space-y-1">
-                            {modeOptions.map(({ mode, icon, color }) => {
+                            {modeOptions.map(({ mode, Icon, color }) => {
                                 const isActive = mode === currentMode;
                                 return (
                                     <button
@@ -113,7 +114,7 @@ const PrintModeSelector = ({ onPrint }) => {
                                         }`}
                                     >
                                         <div className="flex items-start gap-3">
-                                            <span className="text-2xl">{icon}</span>
+                                            <span className="text-2xl" style={{ display: 'inline-flex' }}><Icon size={22} /></span>
                                             <div className="flex-1">
                                                 <div className={`font-bold text-sm ${isActive ? 'text-green-700' : 'text-gray-700'}`}>
                                                     {getPrintModeDisplayName(mode)}

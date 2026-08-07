@@ -300,27 +300,27 @@ const safeValue = isNaN(numValue) ? 0 : numValue
   process(rawData) {
     const startTime = performance.now()
 
-    // console.log('[AggregationEngine] 🚀 Starting processing:', rawData.length, 'raw records')
+    // console.log('[AggregationEngine] Starting processing:', rawData.length, 'raw records')
 
     // Step 1: Apply filter rules
     const filtered = this.applyFilterRules(rawData)
-    // console.log('[AggregationEngine] ✅ Step 1: Filtered', filtered.length, 'records')
+    // console.log('[AggregationEngine] Step 1: Filtered', filtered.length, 'records')
 
     // Step 2: Apply row-level calculations
     const calculatedData = this.applyRowCalculations(filtered)
-    // console.log('[AggregationEngine] ✅ Step 2: Calculated', calculatedData.length, 'rows')
+    // console.log('[AggregationEngine] Step 2: Calculated', calculatedData.length, 'rows')
 
     // Step 3: Calculate summary/aggregations
     const summary = this.calculateSummary(calculatedData)
-    // console.log('[AggregationEngine] ✅ Step 3: Summary computed')
+    // console.log('[AggregationEngine] Step 3: Summary computed')
 
     // Step 4: Calculate statistics
     const statistics = this.calculateStatistics(calculatedData)
-    // console.log('[AggregationEngine] ✅ Step 4: Statistics computed')
+    // console.log('[AggregationEngine] Step 4: Statistics computed')
 
     const processingTime = performance.now() - startTime
     if (processingTime > 100) {
-        console.log('[AggregationEngine] ⚡ Total processing time:', processingTime.toFixed(2), 'ms')
+        console.log('[AggregationEngine] Total processing time:', processingTime.toFixed(2), 'ms')
     }
 
     return {

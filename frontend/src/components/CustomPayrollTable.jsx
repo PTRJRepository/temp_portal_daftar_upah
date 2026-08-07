@@ -2835,7 +2835,7 @@ const CustomPayrollTable = memo(function CustomPayrollTable({
                                     }}
                                     onClick={(e) => e.stopPropagation()}
                                     disabled={!canEditPtkp}
-                                    title={canEditPtkp ? 'Ubah status PTKP' : 'PTKP terkunci — hanya gang percobaan yang bisa diubah'}
+                                    title={canEditPtkp ? 'Ubah status PTKP' : 'PTKP terkunci · hanya gang percobaan yang bisa diubah'}
                                     style={{ fontSize: '11px', padding: '1px 2px', width: '100%', cursor: canEditPtkp ? 'pointer' : 'not-allowed' }}
                                 >
                                     {ptkpOptions.map(opt => (

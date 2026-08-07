@@ -85,7 +85,7 @@ export default function PayslipPrintPage() {
                         const employeeDataMap = parsedData?.data && typeof parsedData.data === 'object'
                             ? parsedData.data
                             : parsedData;
-                        console.log('[PayslipPrintPage] ✅ Using fast sessionStorage data from UI');
+                        console.log('[PayslipPrintPage] Using fast sessionStorage data from UI');
 
                         const results = [];
                         empCodes.forEach(code => {
@@ -211,7 +211,7 @@ export default function PayslipPrintPage() {
         try {
             const result = await savePayslipHistory(token, month, year, division);
             if (result.success) {
-                setSuccessMessage('✅ Data slip gaji berhasil disimpan ke history database.');
+                setSuccessMessage('Data slip gaji berhasil disimpan ke history database.');
                 // Hide message after 5 seconds
                 setTimeout(() => setSuccessMessage(''), 5000);
             } else {
@@ -298,7 +298,7 @@ export default function PayslipPrintPage() {
         return (
             <div className="payslip-preview-container">
                 <div className="payslip-error">
-                    <p>❌ {error}</p>
+                    <p>▲ {error}</p>
                     <button
                         onClick={handleBack}
                         style={{
@@ -388,7 +388,7 @@ export default function PayslipPrintPage() {
                 textAlign: 'center',
                 fontSize: '0.85rem'
             }} className="no-print">
-                <strong style={{ color: '#b45309' }}>⚠️ WAJIB: </strong>
+                <strong style={{ color: '#b45309' }}>▲ WAJIB: </strong>
                 <span style={{ color: '#92400e' }}>Saat Print, pilih <strong>Orientation: Portrait</strong> dan <strong>Scale: 100%</strong> agar 4 slip muat di 1 halaman A4</span>
             </div>
 
@@ -427,13 +427,13 @@ export default function PayslipPrintPage() {
                     maxWidth: '600px',
                     margin: '0 auto 1rem auto'
                 }}>
-                    <strong style={{ color: '#b45309' }}>⚠️ PENTING - Pengaturan Print:</strong>
+                    <strong style={{ color: '#b45309' }}>▲ PENTING - Pengaturan Print:</strong>
                     <ul style={{ textAlign: 'left', marginTop: '8px', paddingLeft: '20px' }}>
                         <li><strong>Orientation: Portrait (Tegak)</strong> - WAJIB pilih Portrait</li>
                         <li><strong>Paper Size: A4</strong></li>
                         <li><strong>Scale: 100%</strong> - Jangan pakai "Fit to page"</li>
                         <li><strong>Margins: Minimum</strong></li>
-                        <li><strong>Background Graphics: ✓ ON</strong></li>
+                        <li><strong>Background Graphics: ON</strong></li>
                     </ul>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
@@ -442,14 +442,14 @@ export default function PayslipPrintPage() {
                         onClick={handleSaveHistory}
                         disabled={saving}
                     >
-                        {saving ? 'Menyimpan History...' : '💾 Simpan ke History Database'}
+                        {saving ? 'Menyimpan History...' : 'Simpan ke History Database'}
                     </button>
                     <button
                         className="payslip-preview-btn"
                         onClick={handleExportPDF}
                         disabled={exporting}
                     >
-                        {exporting ? 'Memproses PDF...' : '📄 Simpan sebagai PDF'}
+                        {exporting ? 'Memproses PDF...' : 'Simpan sebagai PDF'}
                     </button>
                     <button
                         className="payslip-preview-btn"
@@ -462,7 +462,7 @@ export default function PayslipPrintPage() {
                         className="payslip-preview-btn payslip-preview-btn-primary"
                         onClick={handlePrint}
                     >
-                        🖨️ Print Sekarang
+                        Print Sekarang
                     </button>
                 </div>
             </div>

@@ -94,7 +94,7 @@ export function EmployeeTrendsCharts({ empCode }) {
     if (error) {
         return (
             <div className="employee-trends-charts error">
-                <p>❌ {error}</p>
+                <p>{error}</p>
             </div>
         );
     }
@@ -110,7 +110,7 @@ export function EmployeeTrendsCharts({ empCode }) {
     return (
         <div className="employee-trends-charts">
             <div className="trends-header">
-                <h3>📈 Tren Gaji & Komponen</h3>
+                <h3>Tren Gaji & Komponen</h3>
                 <div className="trends-tabs">
                     <button
                         className={`tab-btn ${activeTab === 'overview' ? 'active' : ''}`}

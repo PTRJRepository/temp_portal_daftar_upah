@@ -127,6 +127,10 @@ export default function SalaryAnalysisPage() {
 
     const [divisions, setDivisions] = useState([]);
     const [gangs, setGangs] = useState([]);
+    // [[RACE-GUARD]] Monotonic load counter: response dari load() lama yang
+    // resolve setelah load() baru (mis. live-fallback 10s untuk periode kosong)
+    // tidak boleh menimpa roster yang lebih baru — itu yang bikin data "tiba-tiba hilang".
+    const loadSeqRef = React.useRef(0);
     const [employees, setEmployees] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -162,19 +166,23 @@ export default function SalaryAnalysisPage() {
     // yang sudah muncul tiba-tiba hilang (periode baru kosong). Ganti periode lewat dropdown.
     useEffect(() => {
         if (defaultPeriod) return;
+        let cancelled = false;
         (async () => {
             try {
                 const r = await axios.get('/payroll/dashboard/latest-period', { headers: authHeaders });
-                if (r.data?.data) {
-                    setDefaultPeriod(prev => {
-                        if (urlMonth || urlYear) return prev;                 // URL menang
-                        if (employees.length > 0 || globalRoster.length > 0) return prev; // jangan ganti saat data tampil
-                        return r.data.data;
-                    });
-                }
+                if (cancelled || !r.data?.data) return;
+                const lp = r.data.data;
+                setDefaultPeriod(prev => {
+                    if (prev) return prev;                                    // sudah di-set; jangan ubah lagi
+                    if (urlMonth || urlYear) return prev;                     // URL menang
+                    if (employees.length > 0 || globalRoster.length > 0) return prev; // data sudah tampil → jangan ganti
+                    return lp;
+                });
             } catch { /* ignore */ }
         })();
-    }, [authHeaders, defaultPeriod, urlMonth, urlYear, employees.length, globalRoster.length]);
+        return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [authHeaders, defaultPeriod]);
 
     // GLOBAL load on mount - snapshot first (fast, ~200ms), live-fill divisions missing from snapshot
     const PRODUCING = ['ARC','DME','ARA','AB1','P1A','P2A','P2B','AB2','P1B','IJL'];
@@ -234,16 +242,20 @@ export default function SalaryAnalysisPage() {
 
     const load = useCallback(async () => {
         if (!division) { setError('Pilih divisi dulu'); setEmployees([]); return; }
+        const seq = ++loadSeqRef.current;                 // tiket load ini
+        const isStale = () => loadSeqRef.current !== seq; // load lebih baru sudah mulai → buang hasil ini
         setLoading(true); setError(null); setBandFilter(null); setCompoSlice(null);
         try {
             // snapshot first (fast); fallback to live raw-tree when period not yet seeded
             let rows = [];
             const snap = await axios.get('/payroll/dashboard/wage-distribution', { params: { month, year, division_code: division }, headers: authHeaders });
+            if (isStale()) return; // periode/divisi sudah berganti saat snapshot in-flight
             const snapArr = (snap.data?.data || []).map(normSnapRow);
             if (snapArr.length > 0) {
                 rows = snapArr;
             } else {
                 const r = await axios.get('/payroll/report/division-raw-tree', { params: { division_code: division, month, year }, headers: authHeaders });
+                if (isStale()) return; // fallback live lambat; jangan timpa roster periode baru
                 const j = r.data;
                 if (!j.success && j.error) { setError(j.error); setEmployees([]); return; }
                 const data = j.data || j;
@@ -259,8 +271,8 @@ export default function SalaryAnalysisPage() {
                 return gc === String(gang).trim().toUpperCase();
             });
             setEmployees(rows);
-        } catch (e) { setError(e.message); setEmployees([]); }
-        finally { setLoading(false); }
+        } catch (e) { if (!isStale()) { setError(e.message); setEmployees([]); } }
+        finally { if (!isStale()) setLoading(false); }
     }, [authHeaders, division, gang, month, year]);
 
     useEffect(() => { if (division) load(); }, [load]);
@@ -350,6 +362,20 @@ export default function SalaryAnalysisPage() {
         if (last === 'M') return 'Maintenance';
         return 'Lainnya';
     };
+    const TYPE_ORDER = ['Panen', 'Transport', 'Maintenance', 'Lainnya'];
+    const typeColorMap = { Panen: C.upah, Transport: C.lembur, Maintenance: C.premi, Lainnya: C.muted };
+
+    // Division histogram: per-band count dipecah per jenis pekerjaan (stacked, sama seperti global).
+    const salaryBandTypeCounts = useMemo(() => {
+        return salaryDist.counts.map(b => {
+            const row = { band: b.band, total: b.count, Panen: 0, Transport: 0, Maintenance: 0, Lainnya: 0 };
+            for (const e of employees) {
+                const u = num(e.upah_kotor);
+                if (u >= b.min && u < b.max) { const t = classifyTypeOf(e.gang_code); row[t] += 1; }
+            }
+            return row;
+        });
+    }, [salaryDist, employees]);
 
     // cross-division salary histogram (FIXED 1jt bands) + work-type breakdown with member refs for drilldown
     const global = useMemo(() => {
@@ -376,6 +402,22 @@ export default function SalaryAnalysisPage() {
             pot += Math.abs(num(e.total_potongan));
         }
         const types = [...typeMap.values()].sort((a, b) => b.wage - a.wage);
+        // per-type gang breakdown: type → [{ gang_code, division_code, count, wage, members }]
+        const typeGangMap = new Map();
+        for (const t of types) {
+            const gangMap = new Map();
+            for (const e of t.members) {
+                const gk = (e.gang_code || '').trim().toUpperCase() || '-';
+                const dk = (e.division_code || '').trim() || '';
+                const key = `${dk}·${gk}`;
+                let g = gangMap.get(key) || { gang_code: gk, division_code: dk, count: 0, wage: 0, members: [] };
+                g.count += 1;
+                g.wage += num(e.upah_kotor);
+                g.members.push(e);
+                gangMap.set(key, g);
+            }
+            typeGangMap.set(t.type, [...gangMap.values()].sort((a, b) => b.wage - a.wage));
+        }
         const compo = [
             { name: 'Gaji Pokok', value: pokok, color: chartPalette[0] },
             { name: 'Lembur', value: lembur, color: C.lembur },
@@ -428,7 +470,19 @@ export default function SalaryAnalysisPage() {
                 const driver = m >= p && m >= l ? 'Premi' : l >= p ? 'Lembur' : 'Gaji Pokok';
                 return { emp: e, driver, driverVal: driver === 'Premi' ? m : driver === 'Lembur' ? l : p };
             });
-        return { bands, counts, totalHc, totalWage, avgWage: totalHc > 0 ? totalWage / totalHc : 0, types, compo, otEarners, otCounts, byDivision, scatterGroups, topEarners };
+        // stacked band counts: band → { band, Panen, Transport, Maintenance, Lainnya, total }
+        const bandTypeCounts = counts.map(b => {
+            const row = { band: b.band, total: b.count, Panen: 0, Transport: 0, Maintenance: 0, Lainnya: 0 };
+            for (const e of globalRoster) {
+                const u = num(e.upah_kotor);
+                if (u >= b.min && u < b.max) {
+                    const t = classifyTypeOf(e.gang_code);
+                    row[t] += 1;
+                }
+            }
+            return row;
+        });
+        return { bands, counts, bandTypeCounts, totalHc, totalWage, avgWage: totalHc > 0 ? totalWage / totalHc : 0, types, typeGangMap, compo, otEarners, otCounts, byDivision, scatterGroups, topEarners };
     }, [globalRoster, tonaseMap]);
 
     // jumlah slide deck: division view (3-4) atau global view (5), 0 saat belum ada konten
@@ -468,9 +522,62 @@ export default function SalaryAnalysisPage() {
     const rosterRows = printExpanded ? employees : filtered;
     const globalRosterRows = printExpanded ? globalRoster : (activeDrill ? filteredGlobalRoster : []);
 
+    // Roster divisi: kelompok jenis kerja (Panen/Transport/Maintenance/Lainnya) → gang → karyawan.
+    const gangDescMap = useMemo(() => {
+        const m = new Map();
+        for (const g of gangs) m.set(String(g.gang_code || '').trim().toUpperCase(), g.description || '');
+        return m;
+    }, [gangs]);
+    const rosterByType = useMemo(() => {
+        const map = new Map();
+        for (const e of rosterRows) {
+            const t = classifyTypeOf(e.gang_code);
+            if (!map.has(t)) map.set(t, new Map());
+            const gm = map.get(t);
+            const g = String(e.gang_code || '').trim() || 'TANPA GANG';
+            if (!gm.has(g)) gm.set(g, []);
+            gm.get(g).push(e);
+        }
+        return TYPE_ORDER
+            .filter(t => map.has(t))
+            .map(t => {
+                const gangs = [...map.get(t).entries()]
+                    .map(([gang, rows]) => ({ gang, rows, count: rows.length, wage: rows.reduce((s, e) => s + num(e.upah_kotor), 0), desc: gangDescMap.get(gang.toUpperCase()) || '' }))
+                    .sort((a, b) => a.gang.localeCompare(b.gang));
+                return { type: t, gangs, count: gangs.reduce((s, g) => s + g.count, 0), wage: gangs.reduce((s, g) => s + g.wage, 0) };
+            });
+    }, [rosterRows, gangDescMap]);
+
+    // Komponen gaji per gang (division scope): stacked gaji+lembur+premi+tunjangan = total upah kotor,
+    // potongan tampil di bawah sumbu (negatif). Total tiap gang tetap terlihat via tooltip + tinggi bar.
+    const gangCompo = useMemo(() => {
+        const map = new Map();
+        for (const e of rosterRows) {
+            const g = String(e.gang_code || '').trim() || 'TANPA GANG';
+            if (!map.has(g)) map.set(g, { gang: g, count: 0, gaji: 0, lembur: 0, premi: 0, tunjangan: 0, potongan: 0, upah: 0 });
+            const a = map.get(g);
+            a.count += 1;
+            a.gaji += Math.abs(num(e.gaji_pokok));
+            a.lembur += Math.abs(num(e.lembur_jumlah));
+            a.premi += Math.abs(num(e.total_premi));
+            a.tunjangan += Math.abs(num(e.total_tunjangan));
+            a.potongan += Math.abs(num(e.total_potongan));
+            a.upah += num(e.upah_kotor);
+        }
+        return [...map.values()]
+            .map(a => ({
+                ...a,
+                desc: gangDescMap.get(a.gang.toUpperCase()) || '',
+                Gaji: a.gaji, Lembur: a.lembur, Premi: a.premi, Tunjangan: a.tunjangan,
+                Potongan: -a.potongan, // negatif → bar potongan di bawah sumbu
+            }))
+            .sort((x, y) => y.upah - x.upah);
+    }, [rosterRows, gangDescMap]);
+
     return (
         <>
             <ReportHero
+                className="sal-hero"
                 title="Analisis Gaji per Karyawan"
                 subtitle="Roster karyawan + rincian komponen gaji per orang. Klik baris untuk bedah full payslip."
                 period={`${String(month).padStart(2, '0')}/${year}`}
@@ -549,22 +656,33 @@ export default function SalaryAnalysisPage() {
 
                         <PresentSlide num="02" id="slide-02" title="Sebaran Upah Kotor" subtitle="Berapa banyak karyawan di tiap kelompok gaji">
                         {/* Salary distribution histogram - count per band */}
-                        <Section title="Sebaran Upah Kotor" sub={bandFilter ? `Filter aktif: ${bandFilter} · klik bar lagi untuk reset` : 'Klik bar untuk filter tabel ke kelompok gaji itu'}
+                        <Section title="Sebaran Upah Kotor" sub={bandFilter ? `Filter aktif: ${bandFilter} · klik bar lagi untuk reset` : 'Klik bar untuk filter tabel · warna = jenis pekerjaan (panen/transport/maintenance)'}
                             actions={bandFilter ? <ResetBtn onClick={() => setBandFilter(null)} label="← Semua" /> : null}>
                             <ResponsiveContainer width="100%" height={240}>
-                                <ComposedChart data={salaryDist.counts} margin={{ top: 8, right: 16, bottom: 4, left: 4 }}>
+                                <ComposedChart data={salaryBandTypeCounts} margin={{ top: 8, right: 16, bottom: 4, left: 4 }}>
                                     <CartesianGrid strokeDasharray="2 4" stroke={C.border} />
                                     <XAxis dataKey="band" tick={{ fontSize: 11, fill: C.text2 }} tickLine={false} axisLine={false} interval={0} />
                                     <YAxis tick={{ fontSize: 12, fill: C.muted }} tickLine={false} axisLine={false} width={32} allowDecimals={false} />
                                     <Tooltip cursor={{ fill: 'rgba(31,111,67,0.06)' }} formatter={(v, n) => [`${v} karyawan`, n]} contentStyle={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 12 }} labelStyle={{ color: C.text, fontWeight: 700 }} />
-                                    <Bar dataKey="count" name="Jumlah" radius={[4, 4, 0, 0]} cursor="pointer" onClick={(d) => { const lab = d?.band || (d?.payload?.band); setBandFilter(bf => bf === lab ? null : lab); }} >
-                                        {salaryDist.counts.map((d) => (
-                                            <Cell key={d.band} fill={bandFilter === d.band ? C.leafDark : bandFilter && bandFilter !== d.band ? C.border : C.upah} />
-                                        ))}
-                                    </Bar>
-                                    <Line type="monotone" dataKey="count" name="Tren" stroke={C.leafDark} strokeWidth={2} dot={{ r: 3, fill: C.leafDark }} activeDot={{ r: 5 }} isAnimationActive={false} />
+                                    <Legend wrapperStyle={{ fontSize: 11 }} />
+                                    {TYPE_ORDER.map(t => (
+                                        <Bar key={t} dataKey={t} name={t} stackId="a" fill={typeColorMap[t]} cursor="pointer" onClick={(d) => { const lab = d?.band || d?.payload?.band; setBandFilter(bf => bf === lab ? null : lab); }} />
+                                    ))}
+                                    <Line type="monotone" dataKey="total" name="Total" stroke={C.leafDark} strokeWidth={2} dot={{ r: 3, fill: C.leafDark }} activeDot={{ r: 5 }} isAnimationActive={false} />
                                 </ComposedChart>
                             </ResponsiveContainer>
+                            <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginTop: 10, fontSize: 11, color: C.text2 }}>
+                                {TYPE_ORDER.map(t => {
+                                    const total = salaryBandTypeCounts.reduce((s, b) => s + (b[t] || 0), 0);
+                                    if (total === 0) return null;
+                                    return (
+                                        <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                                            <span style={{ width: 9, height: 9, borderRadius: 2, background: typeColorMap[t] }} />
+                                            {t}: <b style={{ color: C.text }}>{total}</b> karyawan
+                                        </span>
+                                    );
+                                })}
+                            </div>
                         </Section>
                         </PresentSlide>
 
@@ -602,23 +720,49 @@ export default function SalaryAnalysisPage() {
                                     <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari nama / kode…" style={{ border: 'none', background: 'transparent', outline: 'none', fontSize: 13, width: '100%', color: C.text }} />
                                 </div>
                                 {rosterRows.length === 0 ? <div style={{ color: C.muted, fontSize: 12, padding: 20, textAlign: 'center' }}>Tidak ada karyawan cocok dengan pencarian.</div> : (
-                                    <div className="sal-roster-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: 10, maxHeight: 340, overflowY: 'auto', paddingRight: 4 }}>
-                                        {rosterRows.map(e => {
-                                            const uk = num(e.upah_kotor);
-                                            const top = salaryDist.bands[salaryDist.bands.length - 1]?.max || 1;
-                                            const mid = salaryDist.bands[Math.floor(salaryDist.bands.length / 2)]?.min || 0;
-                                            const tone = uk >= (salaryDist.bands[salaryDist.bands.length - 1]?.min || 0) ? C.leafDark : (uk >= mid ? C.upah : C.upahAccent);
+                                    <div style={{ maxHeight: 340, overflowY: 'auto', paddingRight: 4 }} className="sal-roster-scroll">
+                                        {rosterByType.map(tg => {
+                                            const tColor = typeColorMap[tg.type] || C.muted;
                                             return (
-                                                <div key={e.emp_code} onClick={() => setSelected(e)} style={{ background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 10, padding: '10px 12px', cursor: 'pointer', transition: 'transform .12s, box-shadow .12s' }} onMouseEnter={ev => { ev.currentTarget.style.transform = 'translateY(-2px)'; ev.currentTarget.style.boxShadow = SHADOW_HOVER; }} onMouseLeave={ev => { ev.currentTarget.style.transform = 'none'; ev.currentTarget.style.boxShadow = 'none'; }}>
-                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                                                        <span style={{ fontWeight: 800, fontSize: 12.5, color: C.text, fontFamily: 'var(--font-mono)' }}>{e.emp_code}</span>
-                                                        <span style={{ fontSize: 10, fontWeight: 700, color: C.muted, fontFamily: 'var(--font-mono)' }}>{e.gang_code}</span>
+                                                <div key={tg.type} className="sal-type-group" style={{ marginBottom: 16, pageBreakInside: 'avoid' }}>
+                                                    {/* type group header */}
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, padding: '8px 12px', marginBottom: 10, background: tColor, borderRadius: 8, position: 'sticky', top: 0, zIndex: 2, boxShadow: SHADOW }}>
+                                                        <span style={{ fontWeight: 800, fontSize: 12.5, color: '#fff', letterSpacing: '0.08em', fontFamily: 'var(--font-display)', textTransform: 'uppercase' }}>{tg.type}</span>
+                                                        <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.92)', fontFamily: 'var(--font-mono)', flexShrink: 0 }}>{tg.count} orang · {fmtCompact(tg.wage)}</span>
                                                     </div>
-                                                    <div style={{ fontSize: 11.5, color: C.text2, marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.nama || e.emp_name || '-'}</div>
-                                                    <div style={{ fontSize: 13, fontWeight: 800, color: tone, fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)' }}>{fmtCompact(uk)}</div>
-                                                    <div style={{ height: 4, borderRadius: 2, background: C.border, marginTop: 8, overflow: 'hidden' }}>
-                                                        <div style={{ width: `${Math.min(100, (uk / top) * 100)}%`, height: '100%', background: tone, borderRadius: 2 }} />
-                                                    </div>
+                                                    {tg.gangs.map(g => (
+                                                        <div key={g.gang} className="sal-gang-group" style={{ marginBottom: 12, pageBreakInside: 'avoid' }}>
+                                                            {/* gang group header */}
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, padding: '6px 10px', marginBottom: 8, background: C.surface2, borderLeft: `3px solid ${tColor}`, borderRadius: 6 }}>
+                                                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                                                                    <span style={{ fontWeight: 800, fontSize: 12, color: C.text, letterSpacing: '0.05em', fontFamily: 'var(--font-mono)', flexShrink: 0 }}>{g.gang}</span>
+                                                                    {g.desc && <span style={{ fontSize: 11, fontWeight: 600, color: C.text2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.desc}</span>}
+                                                                </span>
+                                                                <span style={{ fontSize: 10.5, fontWeight: 700, color: C.text2, fontFamily: 'var(--font-mono)', flexShrink: 0 }}>{g.count} orang · {fmtCompact(g.wage)}</span>
+                                                            </div>
+                                                            <div className="sal-roster-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: 10 }}>
+                                                                {g.rows.map(e => {
+                                                                    const uk = num(e.upah_kotor);
+                                                                    const top = salaryDist.bands[salaryDist.bands.length - 1]?.max || 1;
+                                                                    const mid = salaryDist.bands[Math.floor(salaryDist.bands.length / 2)]?.min || 0;
+                                                                    const tone = uk >= (salaryDist.bands[salaryDist.bands.length - 1]?.min || 0) ? C.leafDark : (uk >= mid ? C.upah : C.upahAccent);
+                                                                    return (
+                                                                        <div key={e.emp_code} onClick={() => setSelected(e)} style={{ background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 10, padding: '10px 12px', cursor: 'pointer', transition: 'transform .12s, box-shadow .12s' }} onMouseEnter={ev => { ev.currentTarget.style.transform = 'translateY(-2px)'; ev.currentTarget.style.boxShadow = SHADOW_HOVER; }} onMouseLeave={ev => { ev.currentTarget.style.transform = 'none'; ev.currentTarget.style.boxShadow = 'none'; }}>
+                                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                                                                                <span style={{ fontWeight: 800, fontSize: 12.5, color: C.text, fontFamily: 'var(--font-mono)' }}>{e.emp_code}</span>
+                                                                                <span style={{ fontSize: 10, fontWeight: 700, color: C.muted, fontFamily: 'var(--font-mono)' }}>{e.gang_code}</span>
+                                                                            </div>
+                                                                            <div style={{ fontSize: 11.5, color: C.text2, marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.nama || e.emp_name || '-'}</div>
+                                                                            <div style={{ fontSize: 13, fontWeight: 800, color: tone, fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)' }}>{fmtCompact(uk)}</div>
+                                                                            <div style={{ height: 4, borderRadius: 2, background: C.border, marginTop: 8, overflow: 'hidden' }}>
+                                                                                <div style={{ width: `${Math.min(100, (uk / top) * 100)}%`, height: '100%', background: tone, borderRadius: 2 }} />
+                                                                            </div>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             );
                                         })}
@@ -626,6 +770,26 @@ export default function SalaryAnalysisPage() {
                                 )}
                             </Section>
                         </div>
+
+                        {/* Komponen Gaji per Gang — stacked per gang, total + breakdown tetap terlihat */}
+                        {gangCompo.length > 0 && (
+                            <Section title={`Komponen Gaji per Gang · ${division}`} sub="Stack: gaji pokok + lembur + premi + tunjangan = total upah kotor per gang · potongan di bawah sumbu · klik legend untuk sorot">
+                                <ResponsiveContainer width="100%" height={Math.max(240, gangCompo.length * 34)}>
+                                    <BarChart data={gangCompo} layout="vertical" margin={{ top: 4, right: 20, bottom: 4, left: 8 }} barCategoryGap={6}>
+                                        <CartesianGrid strokeDasharray="2 4" stroke={C.border} horizontal={false} />
+                                        <XAxis type="number" tick={{ fontSize: 11, fill: C.muted }} tickLine={false} axisLine={false} tickFormatter={fmtCompact} />
+                                        <YAxis type="category" dataKey="gang" tick={{ fontSize: 11, fill: C.text2 }} tickLine={false} axisLine={false} width={70} />
+                                        <Tooltip cursor={{ fill: 'rgba(31,111,67,0.06)' }} formatter={(v, n) => [fmtCompact(Math.abs(v)), n]} contentStyle={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 12 }} labelFormatter={(l) => { const d = gangCompo.find(x => x.gang === l); return d ? `${l}${d.desc ? ' · ' + d.desc : ''} · ${d.count} orang · total upah kotor ${fmtCompact(d.upah)}` : l; }} />
+                                        <Bar dataKey="Gaji" name="Gaji Pokok" stackId="a" fill={chartPalette[0]} />
+                                        <Bar dataKey="Lembur" name="Lembur" stackId="a" fill={C.lembur} />
+                                        <Bar dataKey="Premi" name="Premi" stackId="a" fill={chartPalette[2]} />
+                                        <Bar dataKey="Tunjangan" name="Tunjangan" stackId="a" fill={chartPalette[1]} />
+                                        <Bar dataKey="Potongan" name="Potongan" stackId="p" fill={C.potongan} radius={[0, 4, 4, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                                <LegendRow items={[['Gaji Pokok', chartPalette[0]], ['Lembur', C.lembur], ['Premi', chartPalette[2]], ['Tunjangan', chartPalette[1]], ['Potongan', C.potongan]]} />
+                            </Section>
+                        )}
                         </PresentSlide>
 
                         {/* Overtime analysis (division scope) */}
@@ -679,23 +843,55 @@ export default function SalaryAnalysisPage() {
                             </div>
                             </PresentSlide>
 
-                            <PresentSlide num="02" id="slide-02" title="Sebaran Gaji Lintas Divisi" subtitle="Distribusi karyawan per kelompok gaji di semua divisi">
-                            {/* Cross-division salary histogram */}
-                            <Section title="Sebaran Gaji Lintas Divisi" sub={globalBand ? `Filter: ${globalBand} · klik bar lagi untuk reset` : 'Klik bar untuk lihat karyawan di rentang itu (semua divisi)'}
+                            <PresentSlide num="02" id="slide-02" title="Sebaran Gaji Lintas Divisi" subtitle="Distribusi karyawan per kelompok gaji di semua divisi, dipecah per jenis pekerjaan">
+                            {/* Cross-division salary histogram — stacked per jenis pekerjaan */}
+                            <Section title="Sebaran Gaji Lintas Divisi" sub={globalBand ? `Filter: ${globalBand} · klik bar lagi untuk reset` : 'Klik bar untuk lihat karyawan di rentang itu (semua divisi) · warna = jenis pekerjaan'}
                                 actions={globalBand ? <ResetBtn onClick={() => setGlobalBand(null)} label="← Semua" /> : null}>
-                                <ResponsiveContainer width="100%" height={260}>
-                                    <ComposedChart data={global.counts} margin={{ top: 8, right: 16, bottom: 4, left: 4 }}>
+                                <ResponsiveContainer width="100%" height={280}>
+                                    <ComposedChart data={global.bandTypeCounts} margin={{ top: 8, right: 16, bottom: 4, left: 4 }}>
                                         <CartesianGrid strokeDasharray="2 4" stroke={C.border} />
                                         <XAxis dataKey="band" tick={{ fontSize: 11, fill: C.text2 }} tickLine={false} axisLine={false} interval={0} />
                                         <YAxis tick={{ fontSize: 12, fill: C.muted }} tickLine={false} axisLine={false} width={32} allowDecimals={false} />
                                         <Tooltip cursor={{ fill: 'rgba(31,111,67,0.06)' }} formatter={(v, n) => [`${v} karyawan`, n]} contentStyle={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 12 }} labelStyle={{ color: C.text, fontWeight: 700 }} />
-                                        <Bar dataKey="count" name="Jumlah" radius={[4, 4, 0, 0]} cursor="pointer" onClick={(d) => { const lab = d?.band || d?.payload?.band; setGlobalBand(b => b === lab ? null : lab); }} >
-                                            {global.counts.map(d => <Cell key={d.band} fill={globalBand === d.band ? C.leafDark : globalBand && globalBand !== d.band ? C.border : C.upah} />)}
-                                        </Bar>
-                                        <Line type="monotone" dataKey="count" name="Tren" stroke={C.leafDark} strokeWidth={2} dot={{ r: 3, fill: C.leafDark }} activeDot={{ r: 5 }} isAnimationActive={false} />
+                                        <Legend wrapperStyle={{ fontSize: 11 }} />
+                                        {TYPE_ORDER.map(t => (
+                                            <Bar key={t} dataKey={t} name={t} stackId="a" fill={typeColorMap[t]} cursor="pointer" onClick={(d) => { const lab = d?.band || d?.payload?.band; setGlobalBand(b => b === lab ? null : lab); }} />
+                                        ))}
+                                        <Line type="monotone" dataKey="total" name="Total" stroke={C.leafDark} strokeWidth={2} dot={{ r: 3, fill: C.leafDark }} activeDot={{ r: 5 }} isAnimationActive={false} />
                                     </ComposedChart>
                                 </ResponsiveContainer>
+                                <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginTop: 10, fontSize: 11, color: C.text2 }}>
+                                    {TYPE_ORDER.map(t => {
+                                        const total = global.bandTypeCounts.reduce((s, b) => s + (b[t] || 0), 0);
+                                        if (total === 0) return null;
+                                        return (
+                                            <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                                                <span style={{ width: 9, height: 9, borderRadius: 2, background: typeColorMap[t] }} />
+                                                {t}: <b style={{ color: C.text }}>{total}</b> karyawan
+                                            </span>
+                                        );
+                                    })}
+                                </div>
                             </Section>
+
+                            {/* Inline drill roster — muncul langsung di bawah chart saat klik bar */}
+                            {(!printExpanded && activeDrill) && (
+                                <Section title={`Roster drill: ${globalBand ? `rentang ${globalBand}` : typeFilter ? `jenis ${typeFilter}` : compoSlice ? `komponen ${compoSlice}` : divFilter ? `divisi ${divFilter}` : ''}`}
+                                    actions={<ResetBtn onClick={() => { setGlobalBand(null); setTypeFilter(null); setCompoSlice(null); setDivFilter(null); }} label="← Reset semua" />}>
+                                    <div className="sal-roster-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: 10, maxHeight: 380, overflowY: 'auto', paddingRight: 4 }}>
+                                        {globalRosterRows.map(e => (
+                                            <div key={e.emp_code} onClick={() => setSelected(e)} style={{ background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 10, padding: '10px 12px', cursor: 'pointer' }} onMouseEnter={ev => ev.currentTarget.style.boxShadow = SHADOW_HOVER} onMouseLeave={ev => ev.currentTarget.style.boxShadow = 'none'}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                                                    <span style={{ fontWeight: 800, fontSize: 12.5, color: C.text, fontFamily: 'var(--font-mono)' }}>{e.emp_code}</span>
+                                                    <span style={{ fontSize: 10, fontWeight: 700, color: C.muted, fontFamily: 'var(--font-mono)' }}>{e.division_code} · {e.gang_code}</span>
+                                                </div>
+                                                <div style={{ fontSize: 11.5, color: C.text2, marginBottom: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.nama || e.emp_name || '-'}</div>
+                                                <div style={{ fontSize: 13, fontWeight: 800, color: C.leafDark, fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)' }}>{fmtCompact(num(e.upah_kotor))}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </Section>
+                            )}
                             </PresentSlide>
 
                             <PresentSlide num="03" id="slide-03" title="Breakdown & Efisiensi Divisi" subtitle="Perbandingan komponen gaji, rata-rata upah, dan efisiensi HK antar divisi">
@@ -756,11 +952,11 @@ export default function SalaryAnalysisPage() {
                             </PresentSlide>
 
                             <PresentSlide num="04" id="slide-04" title="Komposisi & Jenis Pekerjaan" subtitle="Pembentuk upah lintas divisi dan pembagian Panen, Transport, Maintenance">
-                            {/* Work-type breakdown: Panen / Transport / Maintenance */}
+                            {/* Work-type breakdown: Panen / Transport / Maintenance — per-gang frame di bawah */}
                             {global.types.length > 0 && (
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14, marginBottom: 18 }}>
                                     {global.types.map(t => {
-                                        const tone = t.type === 'Panen' ? C.upah : t.type === 'Transport' ? C.lembur : t.type === 'Maintenance' ? C.premi : C.muted;
+                                        const tone = typeColorMap[t.type] || C.muted;
                                         const active = typeFilter === t.type;
                                         return (
                                             <div key={t.type} onClick={() => setTypeFilter(f => f === t.type ? null : t.type)} style={{ background: C.surface, border: `1px solid ${active ? tone : C.border}`, borderRadius: 10, padding: 16, borderTop: `3px solid ${tone}`, cursor: 'pointer', boxShadow: active ? SHADOW_HOVER : SHADOW, transition: 'all .15s' }} onMouseEnter={ev => ev.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={ev => ev.currentTarget.style.transform = 'none'}>
@@ -770,6 +966,50 @@ export default function SalaryAnalysisPage() {
                                                 </div>
                                                 <div style={{ fontSize: 22, fontWeight: 800, color: C.text, fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)' }}>{fmtNum(t.count, 0)} <span style={{ fontSize: 12, fontWeight: 600, color: C.muted, fontFamily: 'var(--font-body)' }}>karyawan</span></div>
                                                 <div style={{ fontSize: 13, color: C.text2, marginTop: 6 }}>{fmtCompact(t.wage)} total · {fmtCompact(t.hk > 0 ? t.wage / t.hk : 0)}/HK</div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+
+                            {/* Per-gang breakdown per jenis pekerjaan — frame berisi kartu gang */}
+                            {global.types.length > 0 && (
+                                <div style={{ marginBottom: 18 }}>
+                                    {TYPE_ORDER.filter(t => global.typeGangMap.get(t)?.length > 0).map(t => {
+                                        const gangs = global.typeGangMap.get(t) || [];
+                                        const tone = typeColorMap[t] || C.muted;
+                                        const totalCount = gangs.reduce((s, g) => s + g.count, 0);
+                                        const totalWage = gangs.reduce((s, g) => s + g.wage, 0);
+                                        return (
+                                            <div key={t} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: '16px 18px', marginBottom: 14, boxShadow: SHADOW }}>
+                                                {/* frame header */}
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, paddingBottom: 12, borderBottom: `1px solid ${C.border}` }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                                        <span style={{ width: 12, height: 12, borderRadius: 3, background: tone, flexShrink: 0 }} />
+                                                        <span style={{ fontSize: 13, fontWeight: 800, color: C.text, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: 'var(--font-display)' }}>{t}</span>
+                                                        <span style={{ fontSize: 11, color: C.muted, fontWeight: 600 }}>{gangs.length} gang</span>
+                                                    </div>
+                                                    <div style={{ textAlign: 'right' }}>
+                                                        <div style={{ fontSize: 15, fontWeight: 800, color: C.text, fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)' }}>{fmtNum(totalCount, 0)} <span style={{ fontSize: 11, fontWeight: 600, color: C.muted }}>karyawan</span></div>
+                                                        <div style={{ fontSize: 12, color: C.text2, fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)' }}>{fmtCompact(totalWage)}</div>
+                                                    </div>
+                                                </div>
+                                                {/* gang cards inside frame */}
+                                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10 }}>
+                                                    {gangs.map(g => {
+                                                        const active = typeFilter === t && divFilter === g.division_code;
+                                                        return (
+                                                            <div key={`${g.division_code}-${g.gang_code}`} onClick={() => { setTypeFilter(f => f === t ? null : t); setDivFilter(f => f === g.division_code ? null : g.division_code); }} style={{ background: C.surface2, border: `1px solid ${active ? tone : C.border}`, borderRadius: 10, padding: '10px 12px', cursor: 'pointer', transition: 'all .12s' }} onMouseEnter={ev => { ev.currentTarget.style.boxShadow = SHADOW_HOVER; }} onMouseLeave={ev => { ev.currentTarget.style.boxShadow = 'none'; }}>
+                                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                                                                    <span style={{ fontWeight: 800, fontSize: 12, color: C.text, fontFamily: 'var(--font-mono)' }}>{g.gang_code}</span>
+                                                                    <span style={{ fontSize: 10, fontWeight: 700, color: C.muted, fontFamily: 'var(--font-mono)' }}>{g.division_code}</span>
+                                                                </div>
+                                                                <div style={{ fontSize: 11, color: C.text2, marginBottom: 6 }}>{g.count} karyawan</div>
+                                                                <div style={{ fontSize: 12.5, fontWeight: 800, color: tone, fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)' }}>{fmtCompact(g.wage)}</div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
                                             </div>
                                         );
                                     })}
@@ -857,25 +1097,9 @@ export default function SalaryAnalysisPage() {
                                 </Section>
                             )}
 
-                            {/* Drill roster: band OR work-type OR component OR division */}
-                            {(!printExpanded && activeDrill) ? (
-                                <Section title={`Roster drill: ${globalBand ? `rentang ${globalBand}` : typeFilter ? `jenis ${typeFilter}` : compoSlice ? `komponen ${compoSlice}` : divFilter ? `divisi ${divFilter}` : ''}`}
-                                    actions={<ResetBtn onClick={() => { setGlobalBand(null); setTypeFilter(null); setCompoSlice(null); setDivFilter(null); }} label="← Reset semua" />}>
-                                    <div className="sal-roster-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: 10, maxHeight: 380, overflowY: 'auto', paddingRight: 4 }}>
-                                        {globalRosterRows.map(e => (
-                                            <div key={e.emp_code} onClick={() => setSelected(e)} style={{ background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 10, padding: '10px 12px', cursor: 'pointer' }} onMouseEnter={ev => ev.currentTarget.style.boxShadow = SHADOW_HOVER} onMouseLeave={ev => ev.currentTarget.style.boxShadow = 'none'}>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                                                    <span style={{ fontWeight: 800, fontSize: 12.5, color: C.text, fontFamily: 'var(--font-mono)' }}>{e.emp_code}</span>
-                                                    <span style={{ fontSize: 10, fontWeight: 700, color: C.muted, fontFamily: 'var(--font-mono)' }}>{e.division_code} · {e.gang_code}</span>
-                                                </div>
-                                                <div style={{ fontSize: 11.5, color: C.text2, marginBottom: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.nama || e.emp_name || '-'}</div>
-                                                <div style={{ fontSize: 13, fontWeight: 800, color: C.leafDark, fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)' }}>{fmtCompact(num(e.upah_kotor))}</div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </Section>
-                            ) : printExpanded && globalRosterRows.length > 0 ? (
-                                <Section title={`Roster Lengkap Lintas Divisi · ${globalRosterRows.length}`} sub="Semua karyawan — filter klik diabaikan pada cetakan">
+                            {/* Print-only full roster (filter klik diabaikan) */}
+                            {printExpanded && globalRosterRows.length > 0 && (
+                                <Section title={`Roster Lengkap Lintas Divisi · ${globalRosterRows.length}`} sub="Semua karyawan · filter klik diabaikan pada cetakan">
                                     <div className="sal-roster-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: 10 }}>
                                         {globalRosterRows.map(e => (
                                             <div key={e.emp_code} style={{ background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 10, padding: '10px 12px' }}>
@@ -889,7 +1113,7 @@ export default function SalaryAnalysisPage() {
                                         ))}
                                     </div>
                                 </Section>
-                            ) : null}
+                            )}
                             </PresentSlide>
                         </>
                     ) : <EmptyState title="Tidak ada data global"
@@ -926,7 +1150,7 @@ export default function SalaryAnalysisPage() {
                         <li><b>Kelompok gaji</b>: rentang upah kotor per 1 juta (mis. &lt;1jt, 1–2jt, …, &ge;7jt). Klik bar di layar memfilter roster.</li>
                         <li><b>Upah kotor</b> = jumlah_upah_kotor (gaji pokok + tunjangan + premi + koreksi + pendapatan lainnya), sebelum potongan.</li>
                         <li><b>Komposisi upah</b> = proporsi gaji pokok, lembur, premi terhadap total upah kotor.</li>
-                        <li><b>Jenis pekerjaan</b>: suffix kode gang — H = Panen, T = Transport, M = Maintenance, selainnya Lainnya.</li>
+                        <li><b>Jenis pekerjaan</b>: suffix kode gang · H = Panen, T = Transport, M = Maintenance, selainnya Lainnya.</li>
                         <li><b>Efisiensi</b>: sebaran HK vs upah kotor; kiri-bawah = HK tinggi tapi gaji rendah (perlu perhatian).</li>
                         <li><b>Sumber</b>: snapshot payroll_history_detail periode terpilih (fallback live raw-tree bila snapshot belum terisi).</li>
                     </div>

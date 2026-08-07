@@ -4,6 +4,7 @@
  * Uses the same data source as GangAttendanceMatrix for efficiency
  */
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { Users, AlertTriangle, Search, RefreshCw } from 'lucide-react'
 import { getGangAttendanceMatrix } from '../services/employeeDetailService'
 import { compareEmpCodeValues } from '../utils/employeeSort'
 
@@ -11,12 +12,12 @@ const MONTHS = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
     'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
 
 const RELIGION_COLORS = {
-    'ISLAM': { bg: '#dbeafe', text: '#1e40af', icon: '🕌' },
-    'KRISTEN': { bg: '#fce7f3', text: '#9d174d', icon: '✝️' },
-    'KATHOLIK': { bg: '#fef3c7', text: '#92400e', icon: '⛪' },
-    'HINDU': { bg: '#fee2e2', text: '#991b1b', icon: '🪔' },
-    'BUDHA': { bg: '#fff7ed', text: '#9a3412', icon: '☸️' },
-    'KONGHUCU': { bg: '#f0fdf4', text: '#166534', icon: '📿' },
+    'ISLAM': { bg: '#dbeafe', text: '#1e40af' },
+    'KRISTEN': { bg: '#fce7f3', text: '#9d174d' },
+    'KATHOLIK': { bg: '#fef3c7', text: '#92400e' },
+    'HINDU': { bg: '#fee2e2', text: '#991b1b' },
+    'BUDHA': { bg: '#fff7ed', text: '#9a3412' },
+    'KONGHUCU': { bg: '#f0fdf4', text: '#166534' },
 }
 
 const DIVISION_COLORS = {
@@ -168,7 +169,7 @@ export default function GangEmployeeInfo({ token, gangCodes, month, year, divisi
     if (!gangCodes || gangCodes.length === 0) {
         return (
             <div style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>
-                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>👥</div>
+                <div style={{ marginBottom: '1rem', color: '#94a3b8' }}><Users size={48} strokeWidth={1.5} /></div>
                 <h3 style={{ color: '#334155', marginBottom: '0.5rem' }}>Informasi Karyawan</h3>
                 <p>Pilih gang untuk melihat informasi karyawan</p>
             </div>
@@ -180,7 +181,7 @@ export default function GangEmployeeInfo({ token, gangCodes, month, year, divisi
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.5rem', borderBottom: '1px solid #e2e8f0', background: 'white' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <h2 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#0f172a', margin: 0 }}>👥 Informasi Karyawan</h2>
+                        <h2 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Users size={18} /> Informasi Karyawan</h2>
                         <span style={{ background: '#f1f5f9', color: '#64748b', padding: '2px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '600' }}>
                             {MONTHS[month - 1]} {year}
                         </span>
@@ -210,16 +211,17 @@ export default function GangEmployeeInfo({ token, gangCodes, month, year, divisi
         return (
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.5rem', borderBottom: '1px solid #e2e8f0', background: 'white' }}>
-                    <h2 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#0f172a', margin: 0 }}>👥 Informasi Karyawan</h2>
+                    <h2 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Users size={18} /> Informasi Karyawan</h2>
                 </div>
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <div style={{ textAlign: 'center' }}>
-                        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⚠️</div>
+                        <div style={{ marginBottom: '1rem', color: '#f59e0b' }}><AlertTriangle size={48} strokeWidth={1.5} /></div>
                         <p style={{ color: '#dc2626', marginBottom: '1rem' }}>{error}</p>
                         <button onClick={fetchData} style={{
                             padding: '0.5rem 1rem', background: '#1e3a8a', color: 'white',
-                            border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600'
-                        }}>🔄 Coba Lagi</button>
+                            border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600',
+                            display: 'inline-flex', alignItems: 'center', gap: '6px'
+                        }}><RefreshCw size={14} /> Coba Lagi</button>
                     </div>
                 </div>
             </div>
@@ -233,7 +235,7 @@ export default function GangEmployeeInfo({ token, gangCodes, month, year, divisi
             {/* Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.5rem', borderBottom: '1px solid #e2e8f0', background: 'white', flexShrink: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                    <h2 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#0f172a', margin: 0 }}>👥 Informasi Karyawan</h2>
+                    <h2 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Users size={18} /> Informasi Karyawan</h2>
                     <span style={{ background: '#f1f5f9', color: '#64748b', padding: '2px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '600' }}>
                         {MONTHS[month - 1]} {year}
                     </span>
@@ -283,7 +285,7 @@ export default function GangEmployeeInfo({ token, gangCodes, month, year, divisi
             }}>
                 {/* Search */}
                 <div style={{ position: 'relative', flex: 1, maxWidth: '400px' }}>
-                    <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '1rem' }}>🔍</span>
+                    <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', display: 'inline-flex' }}><Search size={16} /></span>
                     <input
                         type="text"
                         placeholder="Cari nama, NIK, atau emp code..."
@@ -312,7 +314,7 @@ export default function GangEmployeeInfo({ token, gangCodes, month, year, divisi
             <div style={{ flex: 1, overflow: 'auto', padding: '1rem 1.5rem' }}>
                 {sortedEmployees.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>
-                        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔍</div>
+                        <div style={{ marginBottom: '1rem', color: '#94a3b8' }}><Search size={48} strokeWidth={1.5} /></div>
                         <p>Tidak ada karyawan yang cocok dengan pencarian</p>
                     </div>
                 ) : (
@@ -417,7 +419,7 @@ export default function GangEmployeeInfo({ token, gangCodes, month, year, divisi
                                     {/* Bank & Bottom info */}
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '0.5rem' }}>
                                         <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>
-                                            {emp.bank_acc_no ? `💳 ${emp.bank_acc_no.substring(0, 4)}...` : '💳 -'}
+                                            {emp.bank_acc_no ? `${emp.bank_acc_no.substring(0, 4)}...` : '-'}
                                         </span>
                                         <span style={{ fontSize: '0.65rem', color: '#1e40af', fontWeight: '600' }}>
                                             →

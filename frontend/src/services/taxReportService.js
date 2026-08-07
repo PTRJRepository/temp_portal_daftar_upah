@@ -214,7 +214,7 @@ async function processBlobResponse(response, defaultFileName) {
 
     // 2. Check for empty blob FIRST - this is the main issue
     if (blob.size === 0) {
-        console.error('[processBlobResponse] ⚠️ EMPTY BLOB RECEIVED!');
+        console.error('[processBlobResponse] EMPTY BLOB RECEIVED!');
         console.error('[processBlobResponse] Response status:', response.status);
         console.error('[processBlobResponse] Response headers:', response.headers);
         
@@ -532,7 +532,7 @@ export async function downloadTaxReportExcel(token, year, month, division, gang,
         // If it's a blob, check if it's empty
         if (response.data instanceof Blob) {
             if (response.data.size === 0) {
-                console.error('[downloadTaxReportExcel] ⚠️ RECEIVED EMPTY BLOB (0 bytes)');
+                console.error('[downloadTaxReportExcel] RECEIVED EMPTY BLOB (0 bytes)');
                 throw new Error('Server returned an empty file (0 bytes). This may happen if the request timed out or the data was lost during transmission.');
             }
             
@@ -540,7 +540,7 @@ export async function downloadTaxReportExcel(token, year, month, division, gang,
             if (response.data.type.includes('json') || response.data.type.includes('text') || response.data.size < 2000) {
                 const text = await response.data.text();
                 if (text.startsWith('{') || text.includes('error') || text.includes('DOCTYPE')) {
-                    console.warn('[downloadTaxReportExcel] ⚠️ Blob content looks like an error/HTML:', text.substring(0, 500));
+                    console.warn('[downloadTaxReportExcel] Blob content looks like an error/HTML:', text.substring(0, 500));
                 }
             }
         }

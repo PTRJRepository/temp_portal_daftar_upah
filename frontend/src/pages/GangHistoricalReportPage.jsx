@@ -151,7 +151,7 @@ export default function GangHistoricalReportPage({ division, gangCode: initialGa
             {/* Error State */}
             {error && !loading && (
                 <div className="error-container">
-                    <div className="error-message">⚠️ {error}</div>
+                    <div className="error-message">▲ {error}</div>
                     <p className="error-hint">
                         Pastikan data untuk periode {formatMonthName(selectedPeriod.month)} {selectedPeriod.year} telah di-seed.
                         Gunakan fitur "Seeding History" untuk menyimpan data historis.

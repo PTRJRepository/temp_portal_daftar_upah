@@ -86,10 +86,10 @@ const TunjanganDisplay = ({
           <div className="tunjangan-label">
             <span>Tunjangan Jabatan</span>
             {jabatanStatus.status === 'warning' && (
-              <span className="warning-icon" title={jabatanStatus.message}>⚠️</span>
+              <span className="warning-icon" title={jabatanStatus.message}>▲</span>
             )}
             {jabatanStatus.status === 'error' && (
-              <span className="error-icon" title={jabatanStatus.message}>❌</span>
+              <span className="error-icon" title={jabatanStatus.message}>×</span>
             )}
           </div>
           <div className="tunjangan-amount">
@@ -110,10 +110,10 @@ const TunjanganDisplay = ({
               <span className="service-years">({masaKerjaYears} tahun)</span>
             )}
             {masaKerjaStatus.status === 'warning' && (
-              <span className="warning-icon" title={masaKerjaStatus.message}>⚠️</span>
+              <span className="warning-icon" title={masaKerjaStatus.message}>▲</span>
             )}
             {masaKerjaStatus.status === 'error' && (
-              <span className="error-icon" title={masaKerjaStatus.message}>❌</span>
+              <span className="error-icon" title={masaKerjaStatus.message}>×</span>
             )}
           </div>
           <div className="tunjangan-amount">
@@ -134,10 +134,10 @@ const TunjanganDisplay = ({
               <span className="overtime-hours">({lemburHours} jam)</span>
             )}
             {lemburStatus.status === 'warning' && (
-              <span className="warning-icon" title={lemburStatus.message}>⚠️</span>
+              <span className="warning-icon" title={lemburStatus.message}>▲</span>
             )}
             {lemburStatus.status === 'error' && (
-              <span className="error-icon" title={lemburStatus.message}>❌</span>
+              <span className="error-icon" title={lemburStatus.message}>×</span>
             )}
           </div>
           <div className="tunjangan-amount">
@@ -166,7 +166,7 @@ const TunjanganDisplay = ({
           onClick={handleRefresh}
           title="Refresh data tunjangan"
         >
-          🔄 Refresh Data
+          Refresh Data
         </button>
 
         {(jabatanStatus.status === 'warning' ||
@@ -177,7 +177,7 @@ const TunjanganDisplay = ({
             onClick={() => alert('Silakan hubungi HR/Finance untuk memverifikasi data tunjangan Anda.')}
             title="Laporkan masalah tunjangan"
           >
-            📊 Laporkan Masalah
+            Laporkan Masalah
           </button>
         )}
       </div>

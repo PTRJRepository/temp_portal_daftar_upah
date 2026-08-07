@@ -6,6 +6,7 @@
  * Uses the payroll data API to display tax-focused columns
  */
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { AlertTriangle } from 'lucide-react'
 import { getLockedRawTree } from '../services/lockedDivisionService'
 import { compareEmpCodeValues } from '../utils/employeeSort'
 
@@ -249,7 +250,7 @@ export default function PayrollTaxMatrix({ token, gangCodes, month, year, divisi
     if (error) {
         return (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', flexDirection: 'column', gap: '0.5rem' }}>
-                <div style={{ fontSize: '2rem' }}>⚠️</div>
+                <div style={{ color: '#f59e0b' }}><AlertTriangle size={32} strokeWidth={1.5} /></div>
                 <div style={{ color: '#dc2626', fontWeight: 600 }}>Error</div>
                 <div style={{ color: '#64748b', fontSize: '0.875rem' }}>{error}</div>
                 <button onClick={fetchData} style={{ marginTop: '0.5rem', padding: '6px 16px', background: '#dc2626', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}>
@@ -281,7 +282,6 @@ export default function PayrollTaxMatrix({ token, gangCodes, month, year, divisi
             {/* Header Controls */}
             <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', background: '#fff' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '1.1rem' }}>💰</span>
                     <span style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.95rem' }}>Detail Pajak Karyawan</span>
                 </div>
 
@@ -585,7 +585,7 @@ export default function PayrollTaxMatrix({ token, gangCodes, month, year, divisi
                             onClick={() => setShowPekerjaDetail(false)}
                             style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1rem', padding: '0 4px' }}
                         >
-                            ✕
+                            ×
                         </button>
                     </div>
                     <div style={{ fontSize: '0.7rem', color: '#64748b', marginBottom: '0.5rem' }}>

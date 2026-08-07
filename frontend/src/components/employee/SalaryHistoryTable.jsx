@@ -144,7 +144,7 @@ export default function SalaryHistoryTable({ empCode, months = 12, onPeriodClick
     if (error) {
         return (
             <div className="sht-table-container sht-table-error">
-                <p>⚠ {error}</p>
+                <p>{error}</p>
             </div>
         );
     }
@@ -152,7 +152,7 @@ export default function SalaryHistoryTable({ empCode, months = 12, onPeriodClick
     if (!historyData.length) {
         return (
             <div className="sht-table-container sht-table-empty">
-                <p>📭 No salary history data available</p>
+                <p>No salary history data available</p>
             </div>
         );
     }
@@ -173,15 +173,15 @@ export default function SalaryHistoryTable({ empCode, months = 12, onPeriodClick
         <div className="sht-table-container">
             <div className="sht-table-toolbar">
                 <div className="sht-table-info">
-                    📊 {historyData.length} periode dimuat — klik baris untuk melihat detail
+                    {historyData.length} periode dimuat · klik baris untuk melihat detail
                 </div>
                 <div className="sht-column-toggles">
                     {Object.entries({
-                        absensi: '📋 Absensi',
-                        tunjangan: '🎁 Tunjangan',
-                        potongan: '📉 Potongan Detail',
-                        pajak: '🏛️ Pajak',
-                        wages: '💰 Wages'
+                        absensi: 'Absensi',
+                        tunjangan: 'Tunjangan',
+                        potongan: 'Potongan Detail',
+                        pajak: 'Pajak',
+                        wages: 'Wages'
                     }).map(([key, label]) => (
                         <button
                             key={key}
@@ -465,14 +465,14 @@ function ExpandedPayslipDetail({ row, fmt, fmtCurrency }) {
         <div className="sht-expanded-detail">
             {/* Period Header */}
             <div className="sht-detail-header">
-                <h4>📋 Detail Daftar Upah — {row.period_label}</h4>
+                <h4>Detail Daftar Upah · {row.period_label}</h4>
                 <span className="sht-detail-gang">{row.gang_code} • {row.nama || row.emp_name || '-'}</span>
             </div>
 
             <div className="sht-detail-columns">
                 {/* LEFT: PENERIMAAN */}
                 <div className="sht-detail-col">
-                    <h5 className="sht-col-title sht-col-earnings">💰 PENERIMAAN</h5>
+                    <h5 className="sht-col-title sht-col-earnings">PENERIMAAN</h5>
                     <table className="sht-detail-table">
                         <tbody>
                             <tr>
@@ -536,7 +536,7 @@ function ExpandedPayslipDetail({ row, fmt, fmtCurrency }) {
 
                 {/* RIGHT: POTONGAN */}
                 <div className="sht-detail-col">
-                    <h5 className="sht-col-title sht-col-deductions">📉 POTONGAN</h5>
+                    <h5 className="sht-col-title sht-col-deductions">POTONGAN</h5>
                     <table className="sht-detail-table">
                         <tbody>
                             {potKotorList.length > 0 && (
@@ -582,7 +582,7 @@ function ExpandedPayslipDetail({ row, fmt, fmtCurrency }) {
 
             {/* WAGES COMPARISON */}
             <div className="sht-wages-comparison">
-                <h5>⚖️ Verifikasi Wages (PR_EMPWAGES)</h5>
+                <h5>Verifikasi Wages (PR_EMPWAGES)</h5>
                 {wages ? (
                     <div className="sht-wages-grid">
                         <div className="sht-wages-item">
@@ -633,7 +633,7 @@ function ExpandedPayslipDetail({ row, fmt, fmtCurrency }) {
                     </div>
                 ) : (
                     <div className="sht-wages-empty">
-                        <span>⚠️ Tidak ada data PR_EMPWAGES untuk periode ini</span>
+                        <span>Tidak ada data PR_EMPWAGES untuk periode ini</span>
                     </div>
                 )}
             </div>

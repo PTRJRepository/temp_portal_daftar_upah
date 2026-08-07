@@ -6,6 +6,7 @@
  */
 
 import React from 'react';
+import { CalendarCheck, History, CalendarClock, Calendar } from 'lucide-react';
 import { usePeriodInfo } from '../../hooks/useCurrentPeriod';
 
 export function CurrentPeriodBadge({ month, year, showLabel = true }) {
@@ -18,7 +19,7 @@ export function CurrentPeriodBadge({ month, year, showLabel = true }) {
     const getBadgeConfig = () => {
         if (isCurrentPeriod) {
             return {
-                icon: '📊',
+                icon: <CalendarCheck size={14} />,
                 label: 'Periode Saat Ini',
                 className: 'period-current',
                 bgColor: '#dbeafe',
@@ -28,7 +29,7 @@ export function CurrentPeriodBadge({ month, year, showLabel = true }) {
         }
         if (isHistorical) {
             return {
-                icon: '📜',
+                icon: <History size={14} />,
                 label: 'Data Historis',
                 className: 'period-historical',
                 bgColor: '#fef3c7',
@@ -38,7 +39,7 @@ export function CurrentPeriodBadge({ month, year, showLabel = true }) {
         }
         if (isFuturePeriod) {
             return {
-                icon: '🔮',
+                icon: <CalendarClock size={14} />,
                 label: 'Periode Mendatang',
                 className: 'period-future',
                 bgColor: '#e0e7ff',
@@ -47,7 +48,7 @@ export function CurrentPeriodBadge({ month, year, showLabel = true }) {
             };
         }
         return {
-            icon: '📅',
+            icon: <Calendar size={14} />,
             label: 'Periode',
             className: 'period-default',
             bgColor: '#f3f4f6',
@@ -101,9 +102,9 @@ export function CompactPeriodBadge({ month, year }) {
     const { isCurrentPeriod, isHistorical, periodType } = usePeriodInfo(month, year);
 
     const getConfig = () => {
-        if (isCurrentPeriod) return { icon: '📊', color: '#3b82f6' };
-        if (isHistorical) return { icon: '📜', color: '#f59e0b' };
-        return { icon: '🔮', color: '#8b5cf6' };
+        if (isCurrentPeriod) return { icon: <CalendarCheck size={12} />, color: '#3b82f6' };
+        if (isHistorical) return { icon: <History size={12} />, color: '#f59e0b' };
+        return { icon: <CalendarClock size={12} />, color: '#8b5cf6' };
     };
 
     const config = getConfig();
@@ -175,7 +176,7 @@ export function PeriodSelectorWithBadge({ month, year, onMonthChange, onYearChan
 
             {isHistorical && (
                 <div className="period-notice historical-notice-compact">
-                    <span>📜</span>
+                    <span style={{ display: 'inline-flex' }}><History size={14} /></span>
                     <small>Mode Data Historis - Data diambil dari database history</small>
                 </div>
             )}

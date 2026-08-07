@@ -35,7 +35,7 @@ export default function ReportHubFooter({ onNavigate, month, year }) {
     const withPeriod = (p) => (month && year && !p.includes('operational') ? `${p}${p.includes('?') ? '&' : '?'}month=${month}&year=${year}` : p);
     return (
         <div style={{ ...CARD, marginTop: '1.5rem' }}>
-            <div style={{ ...SECTION_TITLE, marginBottom: 16 }}>Semua Laporan — Pusat Akses</div>
+            <div style={{ ...SECTION_TITLE, marginBottom: 16 }}>Semua Laporan · Pusat Akses</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 18 }}>
                 {GROUPS.map(g => (
                     <div key={g.title}>

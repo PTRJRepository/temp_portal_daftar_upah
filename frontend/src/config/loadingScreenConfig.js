@@ -80,8 +80,8 @@ export const LOADING_SCREEN_CONFIG = {
 
   // Wisdom quotes
   wisdom: [
-    "\"Pendidikan adalah senjata paling powerful yang bisa kamu gunakan untuk mengubah dunia.\" — Nelson Mandela",
-    "\"Sukses adalah kemampuan untuk bangkit dari kegagalan tanpa kehilangan antusiasme.\" — Winston Churchill",
+    "\"Pendidikan adalah senjata paling powerful yang bisa kamu gunakan untuk mengubah dunia.\" - Nelson Mandela",
+    "\"Sukses adalah kemampuan untuk bangkit dari kegagalan tanpa kehilangan antusiasme.\" - Winston Churchill",
     "\"Kerja cerdas, kerja keras, tetap rendah hati.\"",
     "\"Jangan takut melambat, yang penting tetap bergerak maju.\"",
     "\"Kesuksesan adalah perjalanan, bukan destinasi.\"",
@@ -95,10 +95,10 @@ export const LOADING_SCREEN_CONFIG = {
     enabled: true,
     rotateInterval: 4500,
     types: {
-      info: { icon: '💡', label: 'Info' },
-      quote: { icon: '✨', label: 'Motivasi' },
-      fact: { icon: '🌴', label: 'Fakta' },
-      wisdom: { icon: '💭', label: 'Pepatah' }
+      info: { label: 'Info' },
+      quote: { label: 'Motivasi' },
+      fact: { label: 'Fakta' },
+      wisdom: { label: 'Pepatah' }
     }
   },
 

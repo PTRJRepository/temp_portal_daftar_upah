@@ -11,6 +11,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
+import { Eye } from 'lucide-react'
 import { AgGridReact } from 'ag-grid-react'
 import HierHeaderGroup from './common/HierHeaderGroup'
 import SelectedCellStatusBar from './common/SelectedCellStatusBar'
@@ -34,7 +35,7 @@ const formatInteger = (value) => {
 const GangHeaderRenderer = (params) => {
   return (
     <div className="gang-header-segment">
-      🏭 GANG: {params.data.gang_code}
+      GANG: {params.data.gang_code}
     </div>
   )
 }
@@ -147,7 +148,7 @@ export default function LegacyPayrollGrid({
     if (onViewEmployeeDetail && empId) {
       return [
         {
-          name: '📋 Lihat Detail Activity',
+          name: 'Lihat Detail Activity',
           action: () => {
             console.log('[PayrollGrid] Opening detail for:', data)
             onViewEmployeeDetail(data)
@@ -736,7 +737,7 @@ export default function LegacyPayrollGrid({
                 }}
                 title="Lihat Detail Karyawan"
               >
-                👁️
+                <Eye size={14} />
               </button>
             )}
           </div>
@@ -763,7 +764,7 @@ export default function LegacyPayrollGrid({
                 }}
                 title="Lihat Detail Karyawan"
               >
-                👁️
+                <Eye size={14} />
               </button>
             )}
           </div>
@@ -895,9 +896,9 @@ export default function LegacyPayrollGrid({
       {/* Error Message */}
       {error && (
         <div className="error-message">
-          <div className="error-icon">⚠️</div>
+          <div className="error-icon">!</div>
           <div className="error-text">{error}</div>
-          <button onClick={() => setError('')} className="error-close">✕</button>
+          <button onClick={() => setError('')} className="error-close">×</button>
         </div>
       )}
 

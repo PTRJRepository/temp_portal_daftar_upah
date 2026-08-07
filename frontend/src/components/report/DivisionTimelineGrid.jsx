@@ -59,7 +59,7 @@ export default function DivisionTimelineGrid({ rows = [], onDrill, loading }) {
                                     </LineChart>
                                 </ResponsiveContainer>
                             </div>
-                            <div style={{ fontSize: 11, color: C.muted, marginTop: 4 }}>{last != null ? `${fmtCompact(last)}/t` : '—'} · garis putus = rata-rata</div>
+                            <div style={{ fontSize: 11, color: C.muted, marginTop: 4 }}>{last != null ? `${fmtCompact(last)}/t` : '-'} · garis putus = rata-rata</div>
                         </div>
                     );
                 })}

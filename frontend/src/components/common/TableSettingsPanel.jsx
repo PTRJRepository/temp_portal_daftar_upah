@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Settings, Palette, Monitor, RotateCcw } from 'lucide-react';
 import {
     getTablePreferences,
     updateCellColor,
@@ -90,9 +91,9 @@ export default function TableSettingsPanel({ isOpen, onClose, onSettingsChange }
             <div className="table-settings-panel open">
                 {/* Header */}
                 <div className="settings-panel-header">
-                    <h3>⚙️ Pengaturan Tampilan</h3>
+                    <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Settings size={18} /> Pengaturan Tampilan</h3>
                     <button className="settings-panel-close" onClick={onClose}>
-                        ✕
+                        ×
                     </button>
                 </div>
 
@@ -102,13 +103,13 @@ export default function TableSettingsPanel({ isOpen, onClose, onSettingsChange }
                         className={`settings-tab ${activeTab === 'colors' ? 'active' : ''}`}
                         onClick={() => setActiveTab('colors')}
                     >
-                        🎨 Warna
+                        <Palette size={14} style={{ verticalAlign: '-2px' }} /> Warna
                     </button>
                     <button
                         className={`settings-tab ${activeTab === 'display' ? 'active' : ''}`}
                         onClick={() => setActiveTab('display')}
                     >
-                        📺 Tampilan
+                        <Monitor size={14} style={{ verticalAlign: '-2px' }} /> Tampilan
                     </button>
                 </div>
 
@@ -117,7 +118,7 @@ export default function TableSettingsPanel({ isOpen, onClose, onSettingsChange }
                     {activeTab === 'colors' && preferences && (
                         <div className="settings-section">
                             <div className="settings-section-title">
-                                <span className="icon">🎨</span>
+                                <span className="icon"><Palette size={14} /></span>
                                 Warna Kolom Group (Body)
                             </div>
                             <p className="settings-description">
@@ -186,7 +187,7 @@ export default function TableSettingsPanel({ isOpen, onClose, onSettingsChange }
 
                             <div className="settings-actions">
                                 <button className="settings-btn settings-btn-secondary" onClick={handleResetColors}>
-                                    🔄 Reset ke Default
+                                    <RotateCcw size={13} style={{ verticalAlign: '-2px' }} /> Reset ke Default
                                 </button>
                             </div>
                         </div>
@@ -195,7 +196,7 @@ export default function TableSettingsPanel({ isOpen, onClose, onSettingsChange }
                     {activeTab === 'display' && preferences && (
                         <div className="settings-section">
                             <div className="settings-section-title">
-                                <span className="icon">📺</span>
+                                <span className="icon"><Monitor size={14} /></span>
                                 Pengaturan Tampilan
                             </div>
 
@@ -324,7 +325,7 @@ export function SettingsTriggerButton({ onClick }) {
             onClick={onClick}
             title="Pengaturan Tampilan"
         >
-            ⚙️
+            <Settings size={20} />
         </button>
     );
 }

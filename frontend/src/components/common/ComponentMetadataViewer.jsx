@@ -15,12 +15,12 @@ import './ComponentMetadataViewer.css'
 
 // Source badge colors
 const sourceConfig = {
-  'DATABASE_PLANTWARE': { color: '#3b82f6', label: 'Database Plantware', icon: '🗄️' },
-  'DATABASE_VENUS': { color: '#8b5cf6', label: 'Database Venus', icon: '🗄️' },
-  'CALCULATION': { color: '#10b981', label: 'Kalkulasi', icon: '🧮' },
-  'MANUAL': { color: '#f59e0b', label: 'Manual', icon: '✏️' },
-  'DEFAULT': { color: '#6b7280', label: 'Default', icon: '📋' },
-  'CACHE': { color: '#ec4899', label: 'Cache', icon: '⚡' },
+  'DATABASE_PLANTWARE': { color: '#3b82f6', label: 'Database Plantware' },
+  'DATABASE_VENUS': { color: '#8b5cf6', label: 'Database Venus' },
+  'CALCULATION': { color: '#10b981', label: 'Kalkulasi' },
+  'MANUAL': { color: '#f59e0b', label: 'Manual' },
+  'DEFAULT': { color: '#6b7280', label: 'Default' },
+  'CACHE': { color: '#ec4899', label: 'Cache' },
 }
 
 // Confidence level colors
@@ -38,7 +38,7 @@ export default function ComponentMetadataViewer({ component, componentName, expa
   }
 
   const meta = component.meta
-  const sourceInfo = sourceConfig[meta.source] || { color: '#6b7280', label: meta.source, icon: '❓' }
+  const sourceInfo = sourceConfig[meta.source] || { color: '#6b7280', label: meta.source }
   const confidenceInfo = confidenceConfig[meta.confidence_level] || null
 
   return (
@@ -79,7 +79,7 @@ export default function ComponentMetadataViewer({ component, componentName, expa
                 color: 'white',
               }}
             >
-              {sourceInfo.icon} {sourceInfo.label}
+              {sourceInfo.label}
             </span>
           </div>
 
@@ -212,7 +212,7 @@ export function ComponentMetadataTable({ components, title }) {
         <tbody>
           {Object.entries(components).map(([name, component]) => {
             const meta = component?.meta || {}
-            const sourceInfo = sourceConfig[meta.source] || { label: meta.source || '-', icon: '' }
+            const sourceInfo = sourceConfig[meta.source] || { label: meta.source || '-' }
 
             return (
               <tr key={name}>
@@ -226,7 +226,7 @@ export function ComponentMetadataTable({ components, title }) {
                     : JSON.stringify(component?.value)}
                 </td>
                 <td className="component-source-cell">
-                  <span className="mini-source-badge">{sourceInfo.icon} {sourceInfo.label}</span>
+                  <span className="mini-source-badge">{sourceInfo.label}</span>
                 </td>
                 <td className="component-calculation-cell">
                   <span className="calculation-basis">{meta.calculation_basis || '-'}</span>

@@ -95,7 +95,7 @@ export default function HeadcountSection({ data, trends, loading, error, onRetry
                         </LineChart>
                     </ResponsiveContainer>
                 ) : (
-                    <EmptyState title="Tren belum tersedia" message="Data agregasi 12 bulan belum ada — jalankan Aggregation Seeder." />
+                    <EmptyState title="Tren belum tersedia" message="Data agregasi 12 bulan belum ada. Jalankan Aggregation Seeder." />
                 )}
             </div>
 

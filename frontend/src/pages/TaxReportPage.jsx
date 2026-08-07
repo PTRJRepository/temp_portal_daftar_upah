@@ -192,7 +192,7 @@ function MonthlyTaxTab({ token, month, year, setMonth, setYear, division, gang, 
 
     if (error) return (
         <div className="tax-report-empty">
-            <h3>⚠️ Error</h3>
+            <h3>▲ Error</h3>
             <p>{error}</p>
         </div>
     );
@@ -200,7 +200,7 @@ function MonthlyTaxTab({ token, month, year, setMonth, setYear, division, gang, 
     if (!data || data.employees.length === 0) {
         return (
             <div className="tax-report-empty">
-                <h3>📊 Tidak Ada Data</h3>
+                <h3>Tidak Ada Data</h3>
                 <p>Tidak ada data pajak untuk periode yang dipilih.</p>
                 <div style={{ marginTop: '1rem', textAlign: 'left', maxWidth: '500px' }}>
                     <p><strong>Possible reasons:</strong></p>
@@ -244,7 +244,7 @@ function MonthlyTaxTab({ token, month, year, setMonth, setYear, division, gang, 
                                 transition: 'background-color 0.2s'
                             }}
                         >
-                            {exportingJson ? '⏳ Exporting...' : '📤 Export JSON'}
+                            {exportingJson ? 'Exporting...' : 'Export JSON'}
                         </button>
                         <button
                             onClick={handleDownloadExcel}
@@ -275,9 +275,9 @@ function MonthlyTaxTab({ token, month, year, setMonth, setYear, division, gang, 
             {data && (
                 <div className={`tax-data-source-indicator ${data.data_source === 'current' ? 'source-current' : 'source-history'}`}>
                     {data.data_source === 'current' ? (
-                        <>🟢 <strong>PERIODE AKTIF (CURRENT)</strong> — Data diambil langsung dari database original (live)</>
+                        <><strong>PERIODE AKTIF (CURRENT)</strong> · Data diambil langsung dari database original (live)</>
                     ) : (
-                        <>📦 <strong>PERIODE HISTORY</strong> — Data diambil dari snapshot history database{data.snapshot_version ? ` (v${data.snapshot_version})` : ''}</>
+                        <><strong>PERIODE HISTORY</strong> · Data diambil dari snapshot history database{data.snapshot_version ? ` (v${data.snapshot_version})` : ''}</>
                     )}
                 </div>
             )}
@@ -544,7 +544,7 @@ function AnnualTaxTab({ token, month, year, setMonth, setYear, division, gang, g
 
     if (error) return (
         <div className="tax-report-empty">
-            <h3>⚠️ Error</h3>
+            <h3>▲ Error</h3>
             <p>{error}</p>
         </div>
     );
@@ -566,7 +566,7 @@ function AnnualTaxTab({ token, month, year, setMonth, setYear, division, gang, g
                 <>
                     {/* Laporan Pajak Tahunan - Single Table Structure */}
                     <h3 className="tax-report-section-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <DollarSign size={20} /> Laporan Pajak Tahunan — {year}
+                        <DollarSign size={20} /> Laporan Pajak Tahunan · {year}
                     </h3>
                     {/* Sub-tab Navigation */}
                     <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', borderBottom: '1px solid #e2e8f0' }}>
@@ -831,7 +831,7 @@ function AstekBpjsTab({ token, month, year, setMonth, setYear, division, gang, g
 
     if (error) return (
         <div className="tax-report-empty">
-            <h3>⚠️ Error</h3>
+            <h3>▲ Error</h3>
             <p>{error}</p>
         </div>
     );
@@ -1033,7 +1033,7 @@ function MonthlyPph21GridTab({ token, month, year, setMonth, setYear, division, 
 
     if (error) return (
         <div className="tax-report-empty">
-            <h3>⚠️ Error</h3>
+            <h3>▲ Error</h3>
             <p>{error}</p>
         </div>
     );
@@ -1047,7 +1047,7 @@ function MonthlyPph21GridTab({ token, month, year, setMonth, setYear, division, 
             )}
 
             <div style={{ marginBottom: '0.75rem', fontSize: '0.82rem', color: '#64748b', fontStyle: 'italic' }}>
-                💡 Klik angka PPh21 pada cell untuk melihat detail perhitungan.
+                Klik angka PPh21 pada cell untuk melihat detail perhitungan.
             </div>
 
             {!data || data.employees.length === 0 ? (
@@ -1116,8 +1116,8 @@ function MonthlyPph21GridTab({ token, month, year, setMonth, setYear, division, 
                 <div className="pph21-popup-overlay" onClick={closePopup}>
                     <div className="pph21-popup-modal" onClick={e => e.stopPropagation()}>
                         <div className="pph21-popup-header">
-                            <h3>📊 Detail Perhitungan PPh21</h3>
-                            <button className="pph21-popup-close" onClick={closePopup}>✕</button>
+                            <h3>Detail Perhitungan PPh21</h3>
+                            <button className="pph21-popup-close" onClick={closePopup}>×</button>
                         </div>
 
                         {popupLoading ? (
@@ -1126,7 +1126,7 @@ function MonthlyPph21GridTab({ token, month, year, setMonth, setYear, division, 
                             </div>
                         ) : popupError ? (
                             <div className="pph21-popup-error">
-                                <p>⚠️ {popupError}</p>
+                                <p>▲ {popupError}</p>
                             </div>
                         ) : popupData ? (
                             <div className="pph21-popup-body">
@@ -1160,7 +1160,7 @@ function MonthlyPph21GridTab({ token, month, year, setMonth, setYear, division, 
                                         <tr><th colSpan={2} style={{ textAlign: 'left' }}>Komponen Perhitungan</th></tr>
                                     </thead>
                                     <tbody>
-                                        <tr className="pph21-popup-section-title"><td colSpan={2}>📋 Penghasilan</td></tr>
+                                        <tr className="pph21-popup-section-title"><td colSpan={2}>Penghasilan</td></tr>
                                         <tr><td>Hari Kerja (HK)</td><td className="text-right">{popupData.hk || 0} hari</td></tr>
                                         <tr><td>Upah Dasar</td><td className="text-right">{formatNumber(popupData.upah_dasar || 0)}</td></tr>
                                         <tr><td>Gaji Pokok Ideal <span style={{ color: '#64748b', fontSize: '10px' }}>(HK × UD)</span></td><td className="text-right">{formatNumber((popupData.hk || 0) * (popupData.upah_dasar || 0))}</td></tr>
@@ -1172,17 +1172,17 @@ function MonthlyPph21GridTab({ token, month, year, setMonth, setYear, division, 
                                         <tr><td>Lembur</td><td className="text-right">{formatNumber(popupData.tunjangan_lembur || 0)}</td></tr>
                                         <tr><td>Total Premi</td><td className="text-right">{formatNumber(popupData.total_premi || 0)}</td></tr>
 
-                                        <tr className="pph21-popup-section-title"><td colSpan={2}>🏢 Ditanggung Majikan</td></tr>
+                                        <tr className="pph21-popup-section-title"><td colSpan={2}>Ditanggung Majikan</td></tr>
                                         <tr><td>BPJS Kes Majikan (4%)</td><td className="text-right">{formatNumber(popupData.bpjs_kes_majikan || 0)}</td></tr>
                                         <tr><td>Astek JHT Majikan (0.84%)</td><td className="text-right">{formatNumber(popupData.astek_jht_majikan || 0)}</td></tr>
 
-                                        <tr className="pph21-popup-section-title"><td colSpan={2}>📊 Potongan</td></tr>
+                                        <tr className="pph21-popup-section-title"><td colSpan={2}>Potongan</td></tr>
                                         <tr><td>Pot. SPSI</td><td className="text-right">{formatNumber(popupData.pot_spsi || 0)}</td></tr>
                                         <tr><td>Pot. Koreksi</td><td className="text-right">{formatNumber(popupData.pot_koreksi || 0)}</td></tr>
 
                                         <tr className="pph21-popup-divider"><td colSpan={2}></td></tr>
 
-                                        <tr className="pph21-popup-section-title"><td colSpan={2}>💰 Kalkulasi PPh21 TER</td></tr>
+                                        <tr className="pph21-popup-section-title"><td colSpan={2}>Kalkulasi PPh21 TER</td></tr>
                                         <tr><td>Upah Kotor</td><td className="text-right">{formatNumber(popupData.upah_kotor || 0)}</td></tr>
                                         <tr className="pph21-popup-highlight">
                                             <td><strong>Penghasilan Bruto</strong></td>
@@ -1281,7 +1281,7 @@ function DecemberTaxTab({ token, year, division, gang, gangPrefix, refreshKey })
 
     if (error) return (
         <div className="tax-report-empty">
-            <h3>⚠️ Error</h3>
+            <h3>▲ Error</h3>
             <p>{error}</p>
         </div>
     );
@@ -1292,7 +1292,7 @@ function DecemberTaxTab({ token, year, division, gang, gangPrefix, refreshKey })
                 <h2>Tabulasi Pajak Desember {year}</h2>
                 <div className="tax-report-panel-actions">
                     <button className="tax-report-btn" onClick={loadData}>
-                        🔄 Refresh
+                        Refresh
                     </button>
                     {data && data.employees.length > 0 && (
                         <button
@@ -1494,8 +1494,8 @@ function DecemberTaxTab({ token, year, division, gang, gangPrefix, refreshKey })
                 <div className="pph21-popup-overlay" onClick={closePopup}>
                     <div className="pph21-popup-modal" onClick={e => e.stopPropagation()}>
                         <div className="pph21-popup-header">
-                            <h3>📊 {popupMeta.title}</h3>
-                            <button className="pph21-popup-close" onClick={closePopup}>✕</button>
+                            <h3>{popupMeta.title}</h3>
+                            <button className="pph21-popup-close" onClick={closePopup}>×</button>
                         </div>
 
                         <div className="pph21-popup-body">

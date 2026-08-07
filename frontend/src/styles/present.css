@@ -14,10 +14,14 @@ html.present-mode, html.present-mode body { background: #0C1410 !important; }
 html.present-mode .dashboard-layout-root [data-sidebar],
 html.present-mode .dashboard-layout-root > .no-print,
 html.present-mode .dashboard-layout-main > .no-print { display: none !important; }
+/* Layout root punya inline background cream -> transparan supaya panggung gelap tampil */
+html.present-mode .dashboard-layout-root { background-color: transparent !important; }
 html.present-mode .dashboard-layout-main { margin: 0 !important; padding: 0 !important; width: 100% !important; }
-html.present-mode .dashboard-layout-content { max-width: none !important; padding: 0 !important; height: 100vh; overflow-y: auto; scroll-snap-type: y mandatory; scroll-behavior: smooth; }
-/* Slide panggung */
-html.present-mode .present-slide { min-height: 100vh; scroll-snap-align: start; scroll-snap-stop: always; display: flex; flex-direction: column; justify-content: center; padding: 4vh 6vw; margin: 0; box-sizing: border-box; }
+html.present-mode .dashboard-layout-content { max-width: none !important; padding: 0 !important; height: 100vh; overflow-y: auto; scroll-snap-type: y proximity; scroll-behavior: smooth; }
+/* Slide panggung. justify-content: safe center -> bila konten slide lebih tinggi dari
+   viewport, flex fallback ke flex-start sehingga header slide tidak terpotong di atas layar.
+   Snap proximity (bukan mandatory) supaya slide tinggi tetap bisa di-scroll bebas. */
+html.present-mode .present-slide { min-height: 100vh; scroll-snap-align: start; display: flex; flex-direction: column; justify-content: safe center; padding: 4vh 6vw; margin: 0; box-sizing: border-box; }
 html.present-mode .present-slide-header { background: transparent; border: none; border-left: 4px solid #4CAF7D; border-radius: 0; padding: 0 0 0 20px; margin-bottom: 3vh; }
 html.present-mode .present-slide-num { color: #4CAF7D; font-size: clamp(1.4rem, 2vw, 2rem); }
 html.present-mode .present-slide-header h2 { color: #F3F1E8; font-size: clamp(1.8rem, 3.2vw, 3rem); }
@@ -26,6 +30,20 @@ html.present-mode .present-slide-kicker { color: #93A596; }
 /* Kartu ber-inline-style terang sengaja dibiarkan terang: kartu paper "mengapung"
    di atas panggung gelap. Hanya teks langsung di body slide yang disesuaikan. */
 html.present-mode .present-slide-body { color: #E8E6DC; }
+/* Wrapper halaman full-bleed menutupi panggung gelap -> dinetralkan.
+   Pola inline: page root / ReportBody selalu punya min-height:100%|100vh + background terang.
+   Pola class: .cpts-page (var --c-pageBg), .srn-app-container / .srn-page-container (var --srn-bg).
+   Aman untuk masthead ReportHero & kartu (tidak punya min-height:100). */
+html.present-mode div[style*="min-height: 100"][style*="background"] { background-color: transparent !important; }
+html.present-mode .cpts-page, html.present-mode .srn-app-container, html.present-mode .srn-page-container { background: transparent !important; }
+/* Root DetailedSalaryAnalysisPage: inline background-color #EDF3EC (height:100%, bukan min-height) */
+html.present-mode div[style*="background-color: rgb(237, 243, 236)"] { background-color: transparent !important; }
+/* Slide di dalam kertas cetak putih (mis. High Earners .wsp-paper): kertas tetap putih
+   mengapung di panggung, tapi header slide kembali ke tinta gelap agar terbaca. */
+html.present-mode .wsp-paper .present-slide-header h2 { color: #15211A; }
+html.present-mode .wsp-paper .present-slide-header p { color: #3D4A41; }
+html.present-mode .wsp-paper .present-slide-num { color: #1F6F43; }
+html.present-mode .wsp-paper .present-slide-kicker { color: #6E7A70; }
 /* Keterbacaan chart recharts di latar gelap: CSS fill mengalahkan presentation attribute */
 html.present-mode .recharts-cartesian-axis-tick text { fill: #93A596; }
 html.present-mode .recharts-cartesian-grid line { stroke: #223528; }

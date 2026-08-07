@@ -12,11 +12,11 @@ const getBackendURL = () => {
   if (mode === 'direct') {
     const directUrl = import.meta.env?.VITE_BACKEND_URL
       || `${window.location.protocol}//${window.location.hostname}:8002`
-    console.log('🔗 API base mode: DIRECT ->', directUrl)
+    console.log('API base mode: DIRECT ->', directUrl)
     return directUrl
   }
   if (mode === 'proxy') {
-    console.log('🔗 API base mode: PROXY (relative)')
+    console.log('API base mode: PROXY (relative)')
     return ''
   }
 
@@ -27,7 +27,7 @@ const getBackendURL = () => {
 
   // 1.5. Explicit proxy mode from environment (dev:proxy script)
   if (import.meta.env?.VITE_PROXY_MODE === 'true') {
-    console.log('🔀 Explicit proxy mode enabled via VITE_PROXY_MODE, using relative path /backend/upah')
+    console.log('Explicit proxy mode enabled via VITE_PROXY_MODE, using relative path /backend/upah')
     return '/backend/upah'
   }
 
@@ -37,7 +37,7 @@ const getBackendURL = () => {
   if (isProxyGateway) {
     // Use relative path that goes through proxy gateway
     // Proxy routes: /backend/upah -> localhost:8002
-    console.log('🔀 Proxy gateway detected, using relative path /backend/upah')
+    console.log('Proxy gateway detected, using relative path /backend/upah')
     return '/backend/upah'
   }
 
@@ -45,15 +45,15 @@ const getBackendURL = () => {
   // This allows requests to go through the configured Proxy (Vite or Nginx)
   // which is safer and avoids CORS/host binding issues.
   // The Vite proxy is configured to forward /auth, /payroll, etc. to the backend.
-  console.log('🔗 using relative backend path (via proxy)')
+  console.log('using relative backend path (via proxy)')
   return ''
 }
 
 const _url = getBackendURL()
 axios.defaults.baseURL = _url
 
-console.log('🔗 HTTP Setup - Backend URL:', _url)
-console.log('🌐 Current Frontend Host:', window.location.hostname)
+console.log('HTTP Setup - Backend URL:', _url)
+console.log('Current Frontend Host:', window.location.hostname)
 
 // Enable credentials for all requests (important for cookies)
 axios.defaults.withCredentials = true

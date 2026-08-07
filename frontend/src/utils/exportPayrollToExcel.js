@@ -1061,7 +1061,7 @@ async function exportPayrollSingleSheetToExcel(rows, columnDefs, grandTotal, met
             worksheet.mergeCells(startRowNum, 1, startRowNum, enhancedColumnDefs.length);
 
             const cell = excelRow.getCell(1);
-            cell.value = `🏭 GANG: ${row.gang_code}`;
+            cell.value = `GANG: ${row.gang_code}`;
             cell.font = { bold: true, size: 11, color: { argb: '1B5E20' } };
             cell.fill = {
                 type: 'pattern',

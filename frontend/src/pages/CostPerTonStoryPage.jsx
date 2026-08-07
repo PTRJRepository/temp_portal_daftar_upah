@@ -20,6 +20,25 @@ const fmtCompact = (v) => {
     return `Rp ${n.toLocaleString('id-ID')}`;
 };
 const fmtNum = (v, d = 0) => (v == null ? '-' : Number(v).toLocaleString('id-ID', { maximumFractionDigits: d }));
+const fmtPercent = (v, d = 1) => (v == null || Number.isNaN(Number(v)) ? '-' : `${Number(v).toLocaleString('id-ID', { minimumFractionDigits: d, maximumFractionDigits: d })}%`);
+// Label ringkas per segment stacked bar komposisi: 145.000 → "145k", 850 → "850".
+const fmtSeg = (v) => {
+    if (v == null || Number(v) === 0) return '';
+    const n = Number(v);
+    if (n >= 10000) return `${(n / 1000).toFixed(0)}k`;
+    if (n >= 1000) return `${(n / 1000).toFixed(1).replace(/\.0$/, '')}k`;
+    return n.toFixed(0);
+};
+// Label di dalam blok segment — tampil hanya jika segment cukup lebar (>= 44px).
+const StackedSegLabel = (props) => {
+    const { x, y, width, height, value } = props;
+    if (!width || width < 44 || value == null || Number(value) === 0) return null;
+    return (
+        <text x={x + width / 2} y={y + height / 2} dy="0.32em" textAnchor="middle" fill="#fff" fontSize={11} fontWeight={700} style={{ pointerEvents: 'none' }}>
+            {fmtSeg(value)}
+        </text>
+    );
+};
 
 // Count-up animation
 function CountUp({ value, format = fmtCompact, duration = 1200 }) {
@@ -131,6 +150,21 @@ export default function CostPerTonStoryPage() {
         })();
     }, [token]);
 
+    // Tanpa pilihan bulan/tahun di URL → lompat langsung ke periode TERAKHIR yang tersedia
+    // (available-periods urut DESC: indeks 0 = terbaru), bukan default Januari 2026.
+    const hasPeriodParam = searchParams.has('month') && searchParams.has('year');
+    const [periodAutoJumped, setPeriodAutoJumped] = useState(false);
+    useEffect(() => {
+        if (!hasPeriodParam && periods.length > 0 && !periodAutoJumped) {
+            const latest = periods[0];
+            const n = new URLSearchParams(searchParams);
+            n.set('month', String(latest.month));
+            n.set('year', String(latest.year));
+            setSearchParams(n, { replace: true });
+            setPeriodAutoJumped(true);
+        }
+    }, [periods, hasPeriodParam, periodAutoJumped, searchParams, setSearchParams]);
+
     const load = useCallback(async () => {
         setLoading(true); setError(null);
         try {
@@ -182,30 +216,58 @@ export default function CostPerTonStoryPage() {
             return { ...(src || { division_code: code }), total_wage: a.wage, total_ot: a.lembur, total_lembur: a.lembur, total_premi: a.premi, total_hk: a.hk, headcount: a.hc, total_tonase: tonase };
         });
     }, [data, gangRows, gangTypes]);
-    const trends = data?.trends || [];
-    const currTrend = trends[trends.length - 1] || {};
-    const prevTrend = trends[trends.length - 2] || {};
+    // History estate yang IKUT gang filter: dibangun dari state `trend` (division-cost-trend
+    // dikirim gang_types), bukan data.trends executive-summary yang unfiltered. Ini bikin
+    // kartu "Cost per Ton" (overallCpt), "% vs lalu", dan grafik Riwayat selalu sejalan
+    // dengan pill Panen/Transport/Perawatan.
+    const filteredHistory = useMemo(() => {
+        const rows = trend && trend.length > 0 ? trend : (data?.trends || []);
+        const byPeriod = new Map();
+        for (const r of rows) {
+            const m = Number(r.month || r.period_month) || 0;
+            const y = Number(r.year || r.period_year) || 0;
+            const k = `${y}-${String(m).padStart(2, '0')}`;
+            if (!byPeriod.has(k)) byPeriod.set(k, { period: r.period, year: y, month: m, total_wage: 0, total_tonase: 0, total_hk: 0 });
+            const p = byPeriod.get(k);
+            const ton = Number(r.tonase ?? r.total_tonase) || 0;
+            // Hanya wage dari divisi yang BENAR-BENAR memproduksi tonase (tonase > 0) —
+            // mirror divsWithTon di KPI. Tanpa ini, wage divisi tanpa tonase (mis. IJL/NRS/WKS)
+            // ikut terhitung dan cost/ton grafik meleset tinggi (mis. Sep 2025: 360.106 vs 267.959).
+            if (ton > 0) p.total_wage += Number(r.wage ?? r.total_wage) || 0;
+            p.total_tonase += ton;
+            p.total_hk += Number(r.hk ?? r.total_hk) || 0;
+        }
+        return [...byPeriod.values()]
+            .sort((a, b) => a.year - b.year || a.month - b.month)
+            .map(p => ({ ...p, cost_per_ton: p.total_tonase > 0 ? p.total_wage / p.total_tonase : null }));
+    }, [trend, data]);
+    const currTrend = filteredHistory[filteredHistory.length - 1] || {};
+    const prevTrend = filteredHistory[filteredHistory.length - 2] || {};
 
     const divsWithTon = useMemo(() => breakdown.filter(d => Number(d.total_tonase) > 0), [breakdown]);
+    // Divisi ber-tonase yang belum punya data upah (upah_available=0): tonase tetap dihitung,
+    // tapi dikecualikan dari cost/ton (wage 0 / tonase = salah tafsir).
+    const divsWithUpah = useMemo(() => divsWithTon.filter(d => d.upah_available !== 0), [divsWithTon]);
+    const missingWageDivs = useMemo(() => divsWithTon.filter(d => d.upah_available === 0), [divsWithTon]);
     const meanCpt = useMemo(() => benchmarkMean(breakdown), [breakdown]);
-    const cptValues = useMemo(() => divsWithTon.map(d => costPerTon(d)).filter(v => v != null), [divsWithTon]);
+    const cptValues = useMemo(() => divsWithUpah.map(d => costPerTon(d)).filter(v => v != null), [divsWithUpah]);
     const minCpt = cptValues.length ? Math.min(...cptValues) : null;
     const maxCpt = cptValues.length ? Math.max(...cptValues) : null;
 
-    const totalWage = divsWithTon.reduce((s, d) => s + Number(d.total_wage || 0), 0);
-    const totalTonase = divsWithTon.reduce((s, d) => s + Number(d.total_tonase || 0), 0);
+    const totalWage = divsWithUpah.reduce((s, d) => s + Number(d.total_wage || 0), 0);
+    const totalTonase = divsWithUpah.reduce((s, d) => s + Number(d.total_tonase || 0), 0);
     const overallCpt = totalTonase > 0 ? totalWage / totalTonase : null;
     const overallDelta = deltaPct({ total_wage: currTrend.total_wage, total_tonase: currTrend.total_tonase }, { total_wage: prevTrend.total_wage, total_tonase: prevTrend.total_tonase });
 
     // Act 5: anomali - join breakdown with prev breakdown via trends not available per-div; use overall delta + per-div current cpt vs mean
     const anomali = useMemo(() => {
         if (!meanCpt) return [];
-        return divsWithTon.map(d => {
+        return divsWithUpah.map(d => {
             const cpt = costPerTon(d);
             const diff = ((cpt - meanCpt) / meanCpt) * 100;
             return { code: d.division_code, cpt, diff, tonase: d.total_tonase, hk: d.total_hk };
         }).sort((a, b) => b.diff - a.diff);
-    }, [divsWithTon, meanCpt]);
+    }, [divsWithUpah, meanCpt]);
 
     // scroll spy for active act
     useEffect(() => {
@@ -284,6 +346,12 @@ export default function CostPerTonStoryPage() {
                             <div className="cpts-hero-card" onClick={() => setHeroDrill(v => v === 'tonase' ? null : 'tonase')} style={{ cursor: 'pointer' }} title="Klik untuk uraian per divisi"><div className="accent" style={{ background: 'var(--c-leafLight)' }} /><div className="lbl">Tonase TBS</div><div className="big"><CountUp value={totalTonase} format={(v) => `${fmtNum(v, 1)} t`} /></div><div className="sub">dari mill supplier · klik uraian</div></div>
                         </div>
                         {heroDrill && <HeroBreakdown mode={heroDrill} breakdown={divsWithTon} gangRows={gangRows} gangTypes={gangTypes} meanCpt={meanCpt} onClose={() => setHeroDrill(null)} onPickDivision={(code) => { setHeroDrill(null); setDrill(code); setTimeout(() => drillRef.current?.scrollIntoView({ behavior: 'smooth' }), 80); }} />}
+                        {missingWageDivs.length > 0 && (
+                            <div style={{ marginTop: 16, padding: '11px 14px', background: '#FBF1DE', border: '1px solid #EDD9B4', borderLeft: `4px solid var(--c-warn)`, borderRadius: 10, fontSize: 13, color: 'var(--c-ink2)', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                                <span style={{ fontWeight: 800, color: 'var(--c-warn)' }}>⚠</span>
+                                <span><b>{missingWageDivs.length} divisi memproduksi tonase tapi data upah belum masuk</b> ({missingWageDivs.map(d => d.division_code).join(', ')}). Tonase tetap dihitung; cost/ton dihitung dari divisi yang sudah punya upah.</span>
+                            </div>
+                        )}
                         <div className="cpts-hero-punch">
                             {overallDelta == null
                                 ? `Setiap ton TBS bulan ini keluar ${fmtCompact(overallCpt)}. Belum ada pembanding bulan lalu.`
@@ -293,13 +361,13 @@ export default function CostPerTonStoryPage() {
                         </div>
 
                         {/* History: total cost/ton + tonase movement across months */}
-                        {trends.length > 1 && (
+                        {filteredHistory.length > 1 && (
                             <div style={{ marginTop: 24, background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: 16, padding: '20px 20px 12px', boxShadow: '0 1px 2px rgba(18,36,26,.05), 0 6px 18px rgba(18,36,26,.08)' }}>
-                                <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--c-leafMid)', marginBottom: 4 }}>Riwayat {trends.length} Bulan</div>
-                                <div style={{ fontSize: 13, color: 'var(--c-text2)', marginBottom: 12 }}>Garis cokelat = cost/ton (kiri) · Garis hijau = tonase TBS (kanan)</div>
+                                <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--c-leafMid)', marginBottom: 4 }}>Riwayat {filteredHistory.length} Bulan</div>
+                                <div style={{ fontSize: 13, color: 'var(--c-text2)', marginBottom: 12 }}>Garis cokelat = cost/ton (kiri) · Garis hijau = tonase TBS (kanan) · Upah yang dihitung: <strong>{gangTypes.map(t => GANG_TYPE_LABEL[t]).join(' + ')}</strong></div>
                                 <div style={{ height: 280 }}>
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <ComposedChart data={trends} margin={{ top: 8, right: 36, left: 0, bottom: 0 }}>
+                                        <ComposedChart data={filteredHistory} margin={{ top: 8, right: 36, left: 0, bottom: 0 }}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#DFE8E0" />
                                             <XAxis dataKey="period" tick={{ fontSize: 11, fill: '#7C8B80' }} />
                                             <YAxis yAxisId="l" tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11, fill: '#7C5A2B' }} />
@@ -323,25 +391,109 @@ export default function CostPerTonStoryPage() {
             </PresentSlide>
 
             {/* ACT 2 - treemap */}
-            <Act id="act2" num="02" title="Dari mana datangnya tonase?" lede="Setiap blok = satu divisi, ukuran proporsional tonase, warna = cost/ton (hijau murah → merah mahal). Garis rata-rata = benchmark estate. Klik blok untuk bedah.">
-                {divsWithTon.length === 0 ? <EmptyState title="Tonase belum aktif" message="Tidak ada divisi dengan tonase > 0 di periode ini." /> : (
-                    <>
+            <Act id="act2" num="02" title="Dari mana datangnya tonase?" lede="Setiap blok = satu divisi, ukuran proporsional tonase, warna = cost/ton (hijau murah → merah mahal). Hover blok untuk detail · Klik blok untuk bedah.">
+                {divsWithTon.length === 0 ? <EmptyState title="Tonase belum aktif" message="Tidak ada divisi dengan tonase > 0 di periode ini." /> : (() => {
+                    // Ranking cost/ton: 1 = termahal (merah pekat), terakhir = termurah (hijau).
+                    // Divisi ber-tonase tanpa data upah (upah_available=0) dikeluarkan dari ranking
+                    // cost/ton (cpt=0 menyesatkan) tapi tonasenya tetap tampil di treemap.
+                    const ranked = divsWithTon
+                        .map(d => ({ d, cpt: d.upah_available === 0 ? null : costPerTon(d), ton: Number(d.total_tonase) || 0, hk: Number(d.total_hk) || 0 }))
+                        .filter(x => x.cpt != null && x.ton > 0)
+                        .sort((a, b) => b.cpt - a.cpt);
+                    const totalTon = ranked.reduce((s, x) => s + x.ton, 0);
+                    const worst = ranked.slice(0, 3);
+                    const best = ranked.slice(-3).reverse();
+                    return (
+                        <>
                         <div className="cpts-treemap-wrap">
                             <ResponsiveContainer width="100%" height="100%">
-                                <Treemap data={divsWithTon.map(d => ({ name: d.division_code, size: Number(d.total_tonase), cpt: costPerTon(d) }))} dataKey="size" stroke="#fff" content={<TreemapCell minCpt={minCpt} maxCpt={maxCpt} onClick={openDrill} />} />
+                                <Treemap
+                                    data={ranked.map((x, i) => ({
+                                        name: x.d.division_code,
+                                        size: x.ton,
+                                        cpt: x.cpt,
+                                        rank: i + 1,
+                                        hk: x.hk,
+                                        share: totalTon > 0 ? (x.ton / totalTon) * 100 : 0
+                                    }))}
+                                    dataKey="size" stroke="#fff" content={<TreemapCell minCpt={minCpt} maxCpt={maxCpt} onClick={openDrill} />}>
+                                    <Tooltip content={({ payload }) => {
+                                        const p = payload?.[0]?.payload;
+                                        if (!p) return null;
+                                        return (
+                                            <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: 10, padding: '10px 12px', fontSize: 12, boxShadow: '0 8px 24px rgba(18,36,26,.12)' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, marginBottom: 6 }}>
+                                                    <span style={{ width: 10, height: 10, borderRadius: 3, background: heatColor(p.cpt, minCpt, maxCpt), flexShrink: 0 }} />
+                                                    {p.name} <span style={{ color: 'var(--c-muted)', fontSize: 11 }}>#{p.rank}</span>
+                                                </div>
+                                                <div>Cost/Ton: <strong>{fmtCompact(p.cpt)}</strong> {p.rank <= 3 && <span style={{ color: 'var(--c-red)' }}>▲ termahal</span>}</div>
+                                                <div>Tonase: <strong>{fmtNum(p.size, 1)} t</strong> ({fmtPercent(p.share)} total)</div>
+                                                <div style={{ color: 'var(--c-muted)' }}>HK: {fmtNum(p.hk, 0)} · klik untuk bedah</div>
+                                            </div>
+                                        );
+                                    }} />
+                                </Treemap>
                             </ResponsiveContainer>
                         </div>
-                        <div className="cpts-legend"><span>Murah</span><span className="bar"><i style={{ background: '#1F6F43' }} /><i style={{ background: '#B45309' }} /><i style={{ background: '#B3392E' }} /></span><span>Mahal</span>{meanCpt != null && <span style={{ marginLeft: 16, fontWeight: 700 }}>Rata-rata: {fmtCompact(meanCpt)}/t</span>}</div>
-                    </>
-                )}
+
+                        {/* Legenda warna: gradien min→max cost/ton + arti tiap warna + rata-rata */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12, color: 'var(--c-text2)', marginTop: 14, flexWrap: 'wrap' }}>
+                            <span style={{ fontWeight: 700 }}>Murah</span>
+                            <span style={{ display: 'flex', width: 160, height: 10, borderRadius: 5, overflow: 'hidden', border: '1px solid var(--c-border)' }}>
+                                <i style={{ flex: '1 1 0', background: '#1F6F43', display: 'block' }} />
+                                <i style={{ flex: '1 1 0', background: '#B45309', display: 'block' }} />
+                                <i style={{ flex: '1 1 0', background: '#B3392E', display: 'block' }} />
+                            </span>
+                            <span style={{ fontWeight: 700 }}>Mahal</span>
+                            {minCpt != null && maxCpt != null && (
+                                <span style={{ fontSize: 11, color: 'var(--c-muted)', display: 'flex', alignItems: 'baseline', gap: 10 }}>
+                                    <span style={{ color: '#1F6F43', fontWeight: 800 }}>{fmtNum(minCpt, 0)}/t</span>
+                                    <span style={{ color: '#B45309', fontWeight: 700 }}>{fmtNum((minCpt + maxCpt) / 2, 0)}/t</span>
+                                    <span style={{ color: '#B3392E', fontWeight: 800 }}>{fmtNum(maxCpt, 0)}/t</span>
+                                </span>
+                            )}
+                            {meanCpt != null && <span style={{ marginLeft: 'auto', fontWeight: 800, color: 'var(--c-ink)' }}>Rata-rata: {fmtCompact(meanCpt)}/t</span>}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', fontSize: 11, color: 'var(--c-muted)', marginTop: 8, lineHeight: 1.6 }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><i style={{ width: 12, height: 12, borderRadius: 3, background: '#1F6F43', display: 'inline-block' }} /> Hijau = cost/ton di bawah rata-rata (murah / efisien)</span>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><i style={{ width: 12, height: 12, borderRadius: 3, background: '#B45309', display: 'inline-block' }} /> Kuning = sekitar rata-rata</span>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><i style={{ width: 12, height: 12, borderRadius: 3, background: '#B3392E', display: 'inline-block' }} /> Merah = cost/ton di atas rata-rata (mahal · perlu perhatian)</span>
+                        </div>
+
+                        {/* Ranking di dalam blok komposisi */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginTop: 16 }}>
+                            <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: 12, padding: '12px 14px' }}>
+                                <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--c-red)', marginBottom: 8 }}>Cost/Ton Termahal</div>
+                                {worst.map(x => (
+                                    <div key={x.d.division_code} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0', fontSize: 12.5 }}>
+                                        <span style={{ width: 10, height: 10, borderRadius: 3, background: heatColor(x.cpt, minCpt, maxCpt), flexShrink: 0 }} />
+                                        <span style={{ fontWeight: 800 }}>{x.d.division_code}</span>
+                                        <span style={{ marginLeft: 'auto', color: 'var(--c-muted)' }}>{fmtCompact(x.cpt)}/t</span>
+                                    </div>
+                                ))}
+                            </div>
+                            <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: 12, padding: '12px 14px' }}>
+                                <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#1F6F43', marginBottom: 8 }}>Cost/Ton Termurah</div>
+                                {best.map(x => (
+                                    <div key={x.d.division_code} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0', fontSize: 12.5 }}>
+                                        <span style={{ width: 10, height: 10, borderRadius: 3, background: heatColor(x.cpt, minCpt, maxCpt), flexShrink: 0 }} />
+                                        <span style={{ fontWeight: 800 }}>{x.d.division_code}</span>
+                                        <span style={{ marginLeft: 'auto', color: 'var(--c-muted)' }}>{fmtCompact(x.cpt)}/t</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        </>
+                    );
+                })()}
             </Act>
 
             {/* ACT 3 - dekomposisi */}
             <Act id="act3" num="03" title="Kenapa cost/ton naik?" lede={`Upah kotor gang ${gangTypes.map(t => GANG_TYPE_LABEL[t]).join(' + ')} diurai jadi gaji pokok, lembur, premi, dinormalisasi per ton TBS divisi. Divisi yang mahal karena lembur = cerita operasional berbeda dari yang mahal karena premi.`}>
-                {divsWithTon.length === 0 ? <EmptyState title="Tonase belum aktif" message="Dekomposisi butuh tonase > 0." /> : (
+                {divsWithUpah.length === 0 ? <EmptyState title="Tonase belum aktif" message="Dekomposisi butuh divisi dengan upah + tonase > 0." /> : (
                     <div className="cpts-decomp-wrap">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={divsWithTon.map(d => {
+                            <BarChart data={divsWithUpah.map(d => {
                                 const dec = decomposeCost(d); const ton = Number(d.total_tonase);
                                 return { name: d.division_code, ton, GajiPokok: dec.gajiPokok / ton, Lembur: dec.lembur / ton, Premi: dec.premi / ton, totGaji: dec.gajiPokok, totLembur: dec.lembur, totPremi: dec.premi };
                             }).sort((a, b) => (b.GajiPokok + b.Lembur + b.Premi) - (a.GajiPokok + a.Lembur + a.Premi))} layout="vertical" margin={{ left: 30, right: 20 }}>
@@ -369,9 +521,15 @@ export default function CostPerTonStoryPage() {
                                     );
                                 }} contentStyle={{ borderRadius: 10, border: '1px solid #DFE8E0', fontSize: 13 }} />
                                 <Legend />
-                                <Bar dataKey="GajiPokok" name="Gaji Pokok / ton" stackId="a" fill="#1F6F43" onClick={(p) => setAct3Drill({ division: p.name, component: 'GajiPokok' })} style={{ cursor: 'pointer' }} />
-                                <Bar dataKey="Lembur" name="Lembur / ton" stackId="a" fill="#B45309" onClick={(p) => setAct3Drill({ division: p.name, component: 'Lembur' })} style={{ cursor: 'pointer' }} />
-                                <Bar dataKey="Premi" name="Premi / ton" stackId="a" fill="#7C5A2B" radius={[0, 4, 4, 0]} onClick={(p) => setAct3Drill({ division: p.name, component: 'Premi' })} style={{ cursor: 'pointer' }} />
+                                <Bar dataKey="GajiPokok" name="Gaji Pokok / ton" stackId="a" fill="#1F6F43" onClick={(p) => setAct3Drill({ division: p.name, component: 'GajiPokok' })} style={{ cursor: 'pointer' }}>
+                                    <LabelList dataKey="GajiPokok" content={<StackedSegLabel />} />
+                                </Bar>
+                                <Bar dataKey="Lembur" name="Lembur / ton" stackId="a" fill="#B45309" onClick={(p) => setAct3Drill({ division: p.name, component: 'Lembur' })} style={{ cursor: 'pointer' }}>
+                                    <LabelList dataKey="Lembur" content={<StackedSegLabel />} />
+                                </Bar>
+                                <Bar dataKey="Premi" name="Premi / ton" stackId="a" fill="#7C5A2B" radius={[0, 4, 4, 0]} onClick={(p) => setAct3Drill({ division: p.name, component: 'Premi' })} style={{ cursor: 'pointer' }}>
+                                    <LabelList dataKey="Premi" content={<StackedSegLabel />} />
+                                </Bar>
                             </BarChart>
                         </ResponsiveContainer>
                         <div style={{ fontSize: 11, color: '#7C8B80', marginTop: 6 }}>Klik segmen bar untuk uraian per gang.</div>
@@ -384,7 +542,7 @@ export default function CostPerTonStoryPage() {
 
             {/* ACT 4 - scatter efisiensi */}
             <Act id="act4" num="04" title="Siapa efisien?" lede="Sumbu X = produktivitas (ton/HK), Y = cost/ton. Kuadran kanan-bawah = bintang (produktif & murah), kiri-atas = butuh perhatian. Klik titik untuk bedah.">
-                {divsWithTon.length === 0 ? <EmptyState title="Tonase belum aktif" message="Scatter butuh tonase > 0." /> : (
+                {divsWithUpah.length === 0 ? <EmptyState title="Tonase belum aktif" message="Scatter butuh divisi dengan upah + tonase > 0." /> : (
                     <>
                     <div className="cpts-scatter-wrap">
                         <ResponsiveContainer width="100%" height="100%">
@@ -394,8 +552,8 @@ export default function CostPerTonStoryPage() {
                                 <YAxis type="number" dataKey="cpt" name="Cost/Ton" tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11, fill: '#7C8B80' }} label={{ value: 'Cost/Ton', angle: -90, position: 'insideLeft', fontSize: 12, fill: '#46584C' }} />
                                 <Tooltip cursor={{ strokeDasharray: '3 3' }} formatter={(v, n) => [n === 'cpt' ? fmtIDR(v) : `${fmtNum(v, 2)} t/HK`, n === 'cpt' ? 'Cost/Ton' : 'Produktivitas']} contentStyle={{ borderRadius: 10, border: '1px solid #DFE8E0', fontSize: 13 }} />
                                 {meanCpt != null && <ReferenceLine y={meanCpt} stroke="#B3392E" strokeDasharray="6 4" strokeWidth={1.5} label={{ value: `rata-rata ${fmtCompact(meanCpt)}/t`, position: 'insideTopRight', fontSize: 11, fontWeight: 700, fill: '#B3392E' }} />}
-                                <Scatter data={divsWithTon.map(d => ({ name: d.division_code, prod: productivity(d), cpt: costPerTon(d) })).filter(p => p.cpt != null)} fill="#1F6F43" onClick={(p) => openDrill(p.name)}>
-                                    {divsWithTon.map((d, i) => <Cell key={i} fill={(() => { const p = productivity(d); const c = costPerTon(d); const eff = p != null && meanCpt != null && c < meanCpt && p > (totalTonase / divsWithTon.reduce((s, x) => s + Number(x.total_hk || 0), 0)); return eff ? '#1F6F43' : (c > meanCpt ? '#B3392E' : '#B45309'); })()} />)}
+                                <Scatter data={divsWithUpah.map(d => ({ name: d.division_code, prod: productivity(d), cpt: costPerTon(d) })).filter(p => p.cpt != null)} fill="#1F6F43" onClick={(p) => openDrill(p.name)}>
+                                    {divsWithUpah.map((d, i) => <Cell key={i} fill={(() => { const p = productivity(d); const c = costPerTon(d); const eff = p != null && meanCpt != null && c < meanCpt && p > (totalTonase / divsWithUpah.reduce((s, x) => s + Number(x.total_hk || 0), 0)); return eff ? '#1F6F43' : (c > meanCpt ? '#B3392E' : '#B45309'); })()} />)}
                                     <LabelList dataKey="name" position="top" style={{ fontSize: 10, fontWeight: 700, fill: '#46584C' }} />
                                 </Scatter>
                             </ScatterChart>
@@ -403,10 +561,10 @@ export default function CostPerTonStoryPage() {
                     </div>
                     {/* Legend per titik: divisi mana di posisi mana */}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 8, marginTop: 12, fontSize: 12 }}>
-                        {divsWithTon.map(d => {
+                        {divsWithUpah.map(d => {
                             const c = costPerTon(d); const p = productivity(d);
                             if (c == null || p == null) return null;
-                            const eff = p != null && meanCpt != null && c < meanCpt && p > (totalTonase / divsWithTon.reduce((s, x) => s + Number(x.total_hk || 0), 0));
+                            const eff = p != null && meanCpt != null && c < meanCpt && p > (totalTonase / divsWithUpah.reduce((s, x) => s + Number(x.total_hk || 0), 0));
                             const over = meanCpt != null && c > meanCpt;
                             const color = eff ? '#1F6F43' : (over ? '#B3392E' : '#B45309');
                             const status = eff ? 'Bintang' : (over ? 'Perlu perhatian' : 'Rata-rata');
@@ -462,6 +620,14 @@ export default function CostPerTonStoryPage() {
                                     <span className="cpts-move-pill bad">Memburuk {buckets.worsening.length}</span>
                                     <span className="cpts-move-pill flat">Datar {buckets.flat.length}</span>
                                 </div>
+                                {/* Legenda warna panel: garis = gerak cost/ton, bar abu = tonase. Warna garis mengikuti arah gerak. */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', fontSize: 11, color: 'var(--c-muted)', marginBottom: 10 }}>
+                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><i style={{ width: 18, height: 3, borderRadius: 2, background: 'var(--c-upah)', display: 'inline-block' }} /> Membaik (cost/ton turun)</span>
+                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><i style={{ width: 18, height: 3, borderRadius: 2, background: 'var(--c-red)', display: 'inline-block' }} /> Memburuk (cost/ton naik)</span>
+                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><i style={{ width: 18, height: 3, borderRadius: 2, background: 'var(--c-leafMid)', display: 'inline-block' }} /> Datar</span>
+                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><i style={{ width: 10, height: 8, borderRadius: 2, background: '#5E9C7B', opacity: 0.85, display: 'inline-block' }} /> Tonase TBS</span>
+                                    <span style={{ marginLeft: 'auto', color: 'var(--c-muted)' }}>Hover panel untuk detail per bulan</span>
+                                </div>
                                 <div className="cpts-trend-grid">
                                     {panels.map(d => {
                                         const pts = d.series.map(s => ({ periodLabel: s.periodLabel, cost_per_ton: s.cost_per_ton, tonase: s.tonase > 0 ? s.tonase : null }));
@@ -482,11 +648,21 @@ export default function CostPerTonStoryPage() {
                                                         <XAxis dataKey="periodLabel" tick={{ fontSize: 9, fill: 'var(--c-muted)' }} interval="preserveStartEnd" tickLine={false} axisLine={false} />
                                                         <YAxis yAxisId="cpt" tick={{ fontSize: 9, fill: 'var(--c-muted)' }} tickFormatter={v => `${Math.round(v / 1000)}k`} tickLine={false} axisLine={false} width={28} domain={['auto', 'auto']} />
                                                         <YAxis yAxisId="ton" orientation="right" hide domain={[0, dataMax => Math.ceil(dataMax * 1.25)]} />
-                                                        <Tooltip formatter={(v, name) => v != null ? (name === 'tonase' ? `${fmtNum(v, 1)} t` : fmtCompact(v) + '/t') : '-'} labelStyle={{ color: 'var(--c-ink)', fontWeight: 700 }} contentStyle={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: 8, fontSize: 11 }} />
+                                                        <Tooltip content={({ payload, label }) => {
+                                                            const p = payload?.[0]?.payload;
+                                                            if (!p) return null;
+                                                            return (
+                                                                <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: 8, fontSize: 11, padding: '8px 10px', boxShadow: '0 6px 18px rgba(18,36,26,.12)' }}>
+                                                                    <div style={{ fontWeight: 800, marginBottom: 4 }}>{label}</div>
+                                                                    <div>Cost/Ton: <strong>{p.cost_per_ton != null ? `${fmtCompact(p.cost_per_ton)}/t` : '-'}</strong></div>
+                                                                    <div>Tonase: <strong>{p.tonase != null ? `${fmtNum(p.tonase, 1)} t` : '-'}</strong></div>
+                                                                </div>
+                                                            );
+                                                        }} />
                                                         <ReferenceLine yAxisId="cpt" y={latest} stroke="var(--c-border)" strokeDasharray="2 2" />
                                                         {(() => { const vals = valid.map(p => p.cost_per_ton); const divMean = vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : null; return divMean != null ? <ReferenceLine yAxisId="cpt" y={divMean} stroke="var(--c-muted)" strokeDasharray="4 4" strokeWidth={1} label={{ value: `rata-rata ${fmtCompact(divMean)}/t`, position: 'insideTopRight', fontSize: 9, fill: 'var(--c-muted)' }} /> : null; })()}
                                                         <Bar yAxisId="ton" dataKey="tonase" name="tonase" fill="#5E9C7B" opacity={0.85} radius={[3, 3, 0, 0]} isAnimationActive={false} />
-                                                        <Line yAxisId="cpt" type="monotone" dataKey="cost_per_ton" stroke={`var(--c-${tone === 'good' ? 'upah' : tone === 'bad' ? 'red' : 'leafMid'})`} strokeWidth={2.5} dot={{ r: 2 }} connectNulls isAnimationActive={false} />
+                                                        <Line yAxisId="cpt" type="monotone" dataKey="cost_per_ton" stroke={`var(--c-${tone === 'good' ? 'upah' : tone === 'bad' ? 'red' : 'leafMid'})`} strokeWidth={2.5} dot={{ r: 2 }} connectNulls animationDuration={600} animationEasing="ease-out" />
                                                     </ComposedChart>
                                                 </ResponsiveContainer>
                                             </div>
@@ -508,7 +684,7 @@ export default function CostPerTonStoryPage() {
                             <img className="cpts-print-logo" src={`${import.meta.env.BASE_URL || '/'}images/rebinmas.webp`} alt="PT. Rebinmas Jaya" />
                             <div>
                                 <div className="cpts-print-company">PT. REBINMAS JAYA</div>
-                                <div className="cpts-print-title">Laporan Cost per Ton — Story</div>
+                                <div className="cpts-print-title">Laporan Cost per Ton · Story</div>
                                 <div className="cpts-print-sub">Periode {periodLabel} · Upah {gangTypes.map(t => GANG_TYPE_LABEL[t]).join(' + ')} · Dicetak {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
                             </div>
                         </div>
@@ -534,7 +710,7 @@ export default function CostPerTonStoryPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {[...divsWithTon].sort((a, b) => costPerTon(b) - costPerTon(a)).map(d => {
+                                {[...divsWithUpah].sort((a, b) => costPerTon(b) - costPerTon(a)).map(d => {
                                     const dec = decomposeCost(d); const ton = Number(d.total_tonase);
                                     const cpt = costPerTon(d); const prod = productivity(d);
                                     const vsMean = cpt != null && meanCpt != null ? (cpt - meanCpt) / meanCpt * 100 : null;
@@ -557,24 +733,24 @@ export default function CostPerTonStoryPage() {
                             </tbody>
                             <tfoot>
                                 <tr>
-                                    <td>TOTAL {divsWithTon.length} DIVISI</td>
+                                    <td>TOTAL {divsWithUpah.length} DIVISI</td>
                                     <td style={{ textAlign: 'right' }}>{fmtNum(totalTonase, 1)}</td>
                                     <td style={{ textAlign: 'right', fontWeight: 800 }}>{fmtCompact(totalWage)}</td>
-                                    <td style={{ textAlign: 'right' }}>{totalTonase > 0 ? fmtCompact(divsWithTon.reduce((s, d) => { const dec = decomposeCost(d); return s + dec.gajiPokok; }, 0) / totalTonase) : '-'}</td>
-                                    <td style={{ textAlign: 'right' }}>{totalTonase > 0 ? fmtCompact(divsWithTon.reduce((s, d) => s + Number(d.total_lembur || 0), 0) / totalTonase) : '-'}</td>
-                                    <td style={{ textAlign: 'right' }}>{totalTonase > 0 ? fmtCompact(divsWithTon.reduce((s, d) => s + Number(d.total_premi || 0), 0) / totalTonase) : '-'}</td>
+                                    <td style={{ textAlign: 'right' }}>{totalTonase > 0 ? fmtCompact(divsWithUpah.reduce((s, d) => { const dec = decomposeCost(d); return s + dec.gajiPokok; }, 0) / totalTonase) : '-'}</td>
+                                    <td style={{ textAlign: 'right' }}>{totalTonase > 0 ? fmtCompact(divsWithUpah.reduce((s, d) => s + Number(d.total_lembur || 0), 0) / totalTonase) : '-'}</td>
+                                    <td style={{ textAlign: 'right' }}>{totalTonase > 0 ? fmtCompact(divsWithUpah.reduce((s, d) => s + Number(d.total_premi || 0), 0) / totalTonase) : '-'}</td>
                                     <td style={{ textAlign: 'right', fontWeight: 800 }}>{overallCpt != null ? fmtCompact(overallCpt) : '-'}</td>
                                     <td style={{ textAlign: 'right' }}>-</td>
-                                    <td style={{ textAlign: 'right' }}>{totalTonase > 0 ? fmtNum(totalTonase / (divsWithTon.reduce((s, d) => s + Number(d.total_hk || 0), 0) || 1), 3) : '-'}</td>
-                                    <td style={{ textAlign: 'right' }}>{fmtNum(divsWithTon.reduce((s, d) => s + Number(d.total_hk || 0), 0))}</td>
-                                    <td style={{ textAlign: 'right' }}>{fmtNum(divsWithTon.reduce((s, d) => s + Number(d.headcount || 0), 0))}</td>
+                                    <td style={{ textAlign: 'right' }}>{totalTonase > 0 ? fmtNum(totalTonase / (divsWithUpah.reduce((s, d) => s + Number(d.total_hk || 0), 0) || 1), 3) : '-'}</td>
+                                    <td style={{ textAlign: 'right' }}>{fmtNum(divsWithUpah.reduce((s, d) => s + Number(d.total_hk || 0), 0))}</td>
+                                    <td style={{ textAlign: 'right' }}>{fmtNum(divsWithUpah.reduce((s, d) => s + Number(d.headcount || 0), 0))}</td>
                                 </tr>
                             </tfoot>
                         </table>
                     </div>
                     <div className="cpts-print-page">
                         <div className="cpts-print-title">Uraian Gang per Divisi</div>
-                        <div className="cpts-print-sub">Semua gang sesuai jenis terpilih ({gangTypes.map(t => GANG_TYPE_LABEL[t]).join(' + ')}) — kolom komprehensif upah kotor, lembur, premi, HK, headcount, cost/HK</div>
+                        <div className="cpts-print-sub">Semua gang sesuai jenis terpilih ({gangTypes.map(t => GANG_TYPE_LABEL[t]).join(' + ')}) · kolom komprehensif upah kotor, lembur, premi, HK, headcount, cost/HK</div>
                         {divsWithTon.map(d => {
                             const gs = (gangRows || []).filter(g => String(g.division_code).toUpperCase() === String(d.division_code).toUpperCase() && gangTypes.includes(g.gang_type));
                             if (gs.length === 0) return null;
@@ -616,10 +792,10 @@ export default function CostPerTonStoryPage() {
                     <div className="cpts-print-page">
                         <div className="cpts-print-title">Definisi & Catatan</div>
                         <ul className="cpts-print-notes">
-                            <li><b>Cost/Ton</b> = upah kotor (gang jenis terpilih) ÷ tonase TBS divisi. Tonase = properti divisi dari mill supplier PTRJ01-09 internal — tidak valid per gang.</li>
+                            <li><b>Cost/Ton</b> = upah kotor (gang jenis terpilih) ÷ tonase TBS divisi. Tonase = properti divisi dari mill supplier PTRJ01-09 internal, tidak valid per gang.</li>
                             <li><b>Produktivitas</b> = tonase ÷ HK (ton per hari kerja). Efisien = produktivitas di atas rata-rata dan cost/ton di bawah rata-rata estate.</li>
                             <li><b>Komposisi per ton</b> = gaji pokok, lembur, dan premi di-normalisasi per ton TBS; dipakai menelusuri penyebab naik/turun cost/ton.</li>
-                            <li><b>Anomali</b> = divisi dengan cost/ton di atas rata-rata estate, urut paling menyimpang — prioritas review operasional.</li>
+                            <li><b>Anomali</b> = divisi dengan cost/ton di atas rata-rata estate, urut paling menyimpang. Prioritas review operasional.</li>
                             <li><b>Upah yang dihitung</b> = gaji pokok + tunjangan + premi untuk gang jenis {gangTypes.map(t => GANG_TYPE_LABEL[t]).join(' + ')} pada periode {periodLabel}.</li>
                             <li><b>Sumber</b>: executive-summary + cost-hk-comparison (agregasi snapshot payroll periode berjalan).</li>
                         </ul>
@@ -849,16 +1025,17 @@ const Act = ({ id, num, title, lede, children }) => {
 };
 
 const TreemapCell = (props) => {
-    const { x, y, width, height, name, cpt, minCpt, maxCpt, onClick } = props;
+    const { x, y, width, height, name, cpt, rank, share, minCpt, maxCpt, onClick } = props;
+    const [hover, setHover] = useState(false);
     if (width < 1 || height < 1) return null;
     const fill = heatColor(cpt, minCpt, maxCpt);
     return (
-        <g onClick={() => onClick && onClick(name)} style={{ cursor: 'pointer' }}>
-            <rect x={x} y={y} width={width} height={height} stroke="#fff" strokeWidth={3} fill={fill} />
-            {width > 60 && height > 30 && (
+        <g onClick={() => onClick && onClick(name)} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} style={{ cursor: 'pointer' }}>
+            <rect x={x} y={y} width={width} height={height} stroke={hover ? '#12241A' : '#fff'} strokeWidth={hover ? 4 : 3} fill={fill} style={{ transition: 'stroke .12s' }} />
+            {width > 46 && height > 26 && (
                 <>
-                    <text x={x + 8} y={y + 22} fill="#fff" fontSize={14} fontWeight={800}>{name}</text>
-                    <text x={x + 8} y={y + 40} fill="rgba(255,255,255,0.85)" fontSize={10} fontWeight={600}>{cpt != null ? `${Math.round(cpt / 1000)}k/t` : ''}</text>
+                    <text x={x + 9} y={y + 26} fill="#fff" fontSize={18} fontWeight={800}>{name}</text>
+                    <text x={x + 9} y={y + 50} fill="#fff" fontSize={16} fontWeight={700} stroke="rgba(18,36,26,0.3)" strokeWidth={0.6}>{cpt != null ? `${Math.round(cpt / 1000)}k/t` : ''}{share != null ? ` · ${fmtPercent(share)}` : ''}</text>
                 </>
             )}
         </g>

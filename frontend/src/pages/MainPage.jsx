@@ -13,6 +13,7 @@ import WagesSummaryRebinmasPage from './WagesSummaryRebinmasPage'
 import WagesSummaryIJLPage from './WagesSummaryIJLPage'
 import AnalysisReportPage from './AnalysisReportPage'
 import AggregationSeederPage from './AggregationSeederPage'
+import { Settings, ClipboardList, BarChart3, Users, CalendarDays, Banknote, Check, Lock, LockOpen, LogOut, MousePointerClick } from 'lucide-react'
 import PayrollAnalysisPage from './PayrollAnalysisPage'
 import GangAttendanceMatrix from '../components/GangAttendanceMatrix'
 import GangOvertimeMatrix from '../components/GangOvertimeMatrix'
@@ -829,7 +830,7 @@ export default function MainPage({ lockedDiv = null }) {
                 alignItems: 'center',
                 gap: '0.5rem'
               }}>
-                <span style={{ fontSize: '1.25rem' }}>⚙️</span> FILTER PARAMETER
+                <span style={{ display: 'flex', color: '#64748b' }}><Settings size={20} /></span> FILTER PARAMETER
               </h2>
 
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2.5rem', alignItems: 'flex-start' }}>
@@ -971,12 +972,12 @@ export default function MainPage({ lockedDiv = null }) {
                         <>
                           {/* "SEMUA GANG" option — only show when NO group filter is active */}
                           {!gangPrefix && (
-                            <option value="ALL">🌐 SEMUA GANG – Seluruh Divisi</option>
+                            <option value="ALL">SEMUA GANG – Seluruh Divisi</option>
                           )}
                           {/* When group filter IS active, show "SEMUA GANG DALAM GROUP X" option */}
                           {gangPrefix && (
                             <option value="ALL">
-                              🌐 SEMUA GANG – Group {gangPrefix} ({filteredGangs.length} gang)
+                              SEMUA GANG – Group {gangPrefix} ({filteredGangs.length} gang)
                             </option>
                           )}
                           {/* Individual gang options — always filtered by gangPrefix */}
@@ -990,7 +991,7 @@ export default function MainPage({ lockedDiv = null }) {
                     </select>
                     {division && gang === 'ALL' && (
                       <div style={{ fontSize: '0.75rem', color: '#16a34a', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <span>✅</span> {gangPrefix ? `Menampilkan seluruh karyawan Group ${gangPrefix}` : `Menampilkan seluruh karyawan divisi ${division}`}
+                        <Check size={14} /> {gangPrefix ? `Menampilkan seluruh karyawan Group ${gangPrefix}` : `Menampilkan seluruh karyawan divisi ${division}`}
                       </div>
                     )}
                   </div>
@@ -1022,7 +1023,7 @@ export default function MainPage({ lockedDiv = null }) {
               >
                 <div>
                   <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: '#0f172a', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ color: '#0ea5e9' }}>📋</span> Laporan Operasional
+                    <span style={{ color: '#0ea5e9', display: 'flex' }}><ClipboardList size={16} /></span> Laporan Operasional
                   </h3>
                   <p style={{ color: '#64748b', fontSize: '0.9rem', lineHeight: '1.6', marginBottom: '2rem' }}>
                     Akses detail upah harian, perhitungan premi, lembur, dan potongan per karyawan. Data ditampilkan dalam format grid interaktif.
@@ -1083,9 +1084,9 @@ export default function MainPage({ lockedDiv = null }) {
                         background: 'linear-gradient(135deg, #ede9fe, #ddd6fe)',
                         borderRadius: '10px',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '1.5rem'
+                        fontSize: '1.5rem', color: '#7c3aed'
                       }}>
-                        👥
+                        <Users size={24} />
                       </div>
                       <div>
                         <h3 style={{ fontSize: '1.05rem', fontWeight: '700', color: '#0f172a', margin: 0 }}>
@@ -1152,9 +1153,9 @@ export default function MainPage({ lockedDiv = null }) {
                         background: 'linear-gradient(135deg, #dcfce7, #bbf7d0)',
                         borderRadius: '10px',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '1.5rem'
+                        fontSize: '1.5rem', color: '#16a34a'
                       }}>
-                        📅
+                        <CalendarDays size={24} />
                       </div>
                       <div>
                         <h3 style={{ fontSize: '1.05rem', fontWeight: '700', color: '#0f172a', margin: 0 }}>
@@ -1290,9 +1291,9 @@ export default function MainPage({ lockedDiv = null }) {
                         background: 'linear-gradient(135deg, #fee2e2, #fecaca)',
                         borderRadius: '10px',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '1.5rem'
+                        fontSize: '1.5rem', color: '#dc2626'
                       }}>
-                        💰
+                        <Banknote size={24} />
                       </div>
                       <div>
                         <h3 style={{ fontSize: '1.05rem', fontWeight: '700', color: '#0f172a', margin: 0 }}>
@@ -1353,7 +1354,7 @@ export default function MainPage({ lockedDiv = null }) {
                   onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                 >
                   <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: '#0f172a', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ color: '#8b5cf6' }}>📊</span> Laporan Analisis & Summary
+                    <span style={{ color: '#8b5cf6', display: 'flex' }}><BarChart3 size={16} /></span> Laporan Analisis & Summary
                   </h3>
                   <p style={{ color: '#64748b', fontSize: '0.9rem', lineHeight: '1.6', marginBottom: '2rem' }}>
                     Rekapitulasi total upah, laporan financial wages (Rebinmas & IJL), dan analisis komparatif overtime/premi.
@@ -1504,7 +1505,7 @@ export default function MainPage({ lockedDiv = null }) {
                       onMouseOver={(e) => { if (!isSeeding) { e.currentTarget.style.backgroundColor = '#059669'; e.currentTarget.style.color = '#ffffff'; }}}
                       onMouseOut={(e) => { if (!isSeeding) { e.currentTarget.style.backgroundColor = '#10b981'; e.currentTarget.style.color = '#ffffff'; }}}
                     >
-                      {isSeeding ? '⏳ Seeding...' : '🚀 Seed Data'}
+                      {isSeeding ? 'Seeding...' : 'Seed Data'}
                     </button>
 
                     <button
@@ -1660,7 +1661,7 @@ export default function MainPage({ lockedDiv = null }) {
           <div style={{ borderLeft: '1px solid var(--neutral-200)', paddingLeft: '1rem' }}>
             <div style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--primary-900)', lineHeight: 1.1 }}>PT REBINMAS JAYA</div>
             <div style={{ fontSize: '0.7rem', color: 'var(--neutral-500)', letterSpacing: '0.05em', display: 'flex', alignItems: 'center' }}>
-              <span>PAYROLL SYSTEM {isLockedMode && <span style={{ color: '#f59e0b' }}>• 🔒 {division}</span>}</span>
+              <span>PAYROLL SYSTEM {isLockedMode && <span style={{ color: '#f59e0b', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>• <Lock size={12} /> {division}</span>}</span>
 
               {!isHistorical && currentPeriodData && (
                 <span style={{ color: '#10b981', marginLeft: '6px', fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
@@ -1736,7 +1737,7 @@ export default function MainPage({ lockedDiv = null }) {
               alignItems: 'center',
               gap: '0.3rem'
             }}>
-              <span>👥</span>
+              <span style={{ display: 'flex' }}><Users size={14} /></span>
               <span>{rowCount} Karyawan</span>
             </div>
           )}
@@ -1856,7 +1857,7 @@ export default function MainPage({ lockedDiv = null }) {
               }}
               title={isEditMode ? "Matikan Edit Mode" : "Aktifkan Edit Mode"}
             >
-              <span>{isEditMode ? '🔓' : '🔒'}</span>
+              <span style={{ display: 'flex' }}>{isEditMode ? <LockOpen size={14} /> : <Lock size={14} />}</span>
               <span>{isEditMode ? 'Edit Aktif' : 'Edit Mode'}</span>
             </button>
           )}
@@ -1908,7 +1909,7 @@ export default function MainPage({ lockedDiv = null }) {
               }}
               title="Batalkan semua pilihan"
             >
-              <span>✕</span>
+              <span>×</span>
               <span>Batalkan ({selectedEmployees.length})</span>
             </button>
           )}
@@ -1923,7 +1924,7 @@ export default function MainPage({ lockedDiv = null }) {
             style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', height: '36px' }}
             title="Logout"
           >
-            🚪
+            <LogOut size={16} />
           </button>
         </div>
       </div>}
@@ -2008,7 +2009,7 @@ export default function MainPage({ lockedDiv = null }) {
           </div>
         ) : (
           <div className="flex-center h-full flex-col text-neutral-400">
-            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>👆</div>
+            <div style={{ marginBottom: '1rem' }}><MousePointerClick size={48} strokeWidth={1.5} /></div>
             <div>Silakan pilih Divisi dan Gang di menu atas untuk menampilkan data</div>
           </div>
         )}

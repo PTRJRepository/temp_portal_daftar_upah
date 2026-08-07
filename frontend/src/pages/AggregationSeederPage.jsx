@@ -33,6 +33,12 @@ import {
 } from '../services/historyService';
 import '../styles/aggregation-seeder.css';
 
+// Strip emoji/symbol glyphs from backend-provided progress text before display.
+const EMOJI_GLYPH_RE = new RegExp('[' + String.fromCharCode(0x2600) + '-' + String.fromCharCode(0x27BF) + '\\u{1F000}-\\u{1FAFF}' + String.fromCharCode(0xFE0F) + ']', 'gu');
+const stripStep = (s) => String(s ?? '').replace(EMOJI_GLYPH_RE, '').replace(/\s{2,}/g, ' ').trim();
+// Backend marks successful completion with a check emoji (U+2705) in current_step; built via fromCharCode to keep source emoji-free.
+const STEP_OK = new RegExp(String.fromCharCode(0x2705));
+
 const MANUAL_SYNC_ADJUSTMENT_TYPES = ['PREMI', 'POTONGAN_KOTOR', 'POTONGAN_BERSIH', 'AUTO_BUFFER'];
 const MANUAL_SYNC_LIMIT = 5000;
 const MANUAL_SYNC_KNOWN_DIVISIONS = [
@@ -159,8 +165,8 @@ export default function AggregationSeederPage({ onBack, initialMonth, initialYea
     useEffect(() => {
         async function checkConnection() {
             if (!token) {
-                addLog('❌ ERROR: No authentication token found! Please login first.', 'error');
-                addLog('💡 Solution: Login to the payroll application (Port 8002) first, then try again.', 'warn');
+                addLog('ERROR: No authentication token found! Please login first.', 'error');
+                addLog('Solution: Login to the payroll application (Port 8002) first, then try again.', 'warn');
                 setConnectionStatus('error');
                 setHistoryConnectionStatus('error');
                 return;
@@ -168,21 +174,21 @@ export default function AggregationSeederPage({ onBack, initialMonth, initialYea
 
             setConnectionStatus('checking');
             setHistoryConnectionStatus('checking');
-            addLog('🔌 Checking database connections...');
+            addLog('Checking database connections...');
 
             // Check aggregation database
             try {
                 const result = await checkAggregationHealth(token);
                 if (result.success) {
                     setConnectionStatus('connected');
-                    addLog('✅ Aggregation DB connection OK', 'success');
+                    addLog('Aggregation DB connection OK', 'success');
                 } else {
                     setConnectionStatus('error');
-                    addLog(`❌ Aggregation DB connection failed: ${result.message}`, 'error');
+                    addLog(`Aggregation DB connection failed: ${result.message}`, 'error');
                 }
             } catch (e) {
                 setConnectionStatus('error');
-                addLog(`❌ Aggregation DB connection error: ${e.message}`, 'error');
+                addLog(`Aggregation DB connection error: ${e.message}`, 'error');
             }
 
             // Check history database
@@ -191,14 +197,14 @@ export default function AggregationSeederPage({ onBack, initialMonth, initialYea
                 if (result.success) {
                     setHistoryConnectionStatus('connected');
                     const modeDisplay = result.mode || result.run_mode || (result.history_mode ? 'history' : 'realtime');
-                    addLog(`✅ History DB connection OK (${modeDisplay} mode)`, 'success');
+                    addLog(`History DB connection OK (${modeDisplay} mode)`, 'success');
                 } else {
                     setHistoryConnectionStatus('error');
-                    addLog(`❌ History DB connection failed: ${result.message}`, 'error');
+                    addLog(`History DB connection failed: ${result.message}`, 'error');
                 }
             } catch (e) {
                 setHistoryConnectionStatus('error');
-                addLog(`❌ History DB connection error: ${e.message}`, 'error');
+                addLog(`History DB connection error: ${e.message}`, 'error');
             }
 
             // Fetch active database period and set as default
@@ -212,7 +218,7 @@ export default function AggregationSeederPage({ onBack, initialMonth, initialYea
                     if (periodData.month && periodData.year) {
                         if (!initialMonth) setMonth(periodData.month);
                         if (!initialYear) setYear(periodData.year);
-                        addLog(`📅 Database aktif: ${formatMonthName(periodData.month)} ${periodData.year}`);
+                        addLog(`Database aktif: ${formatMonthName(periodData.month)} ${periodData.year}`);
                     }
                 }
             } catch (e) {
@@ -230,10 +236,10 @@ export default function AggregationSeederPage({ onBack, initialMonth, initialYea
                 const result = await fetchAggregationDivisions(token);
                 if (result.success && result.divisions?.length > 0) {
                     setDivisions(['ALL', ...result.divisions]);
-                    addLog(`✅ Loaded ${result.divisions.length} divisions`);
+                    addLog(`Loaded ${result.divisions.length} divisions`);
                 }
             } catch (e) {
-                addLog(`⚠️ Failed to load divisions: ${e.message}`, 'warn');
+                addLog(`Failed to load divisions: ${e.message}`, 'warn');
             }
         }
         loadDivisions();
@@ -243,18 +249,18 @@ export default function AggregationSeederPage({ onBack, initialMonth, initialYea
     const handleRunSeeder = async () => {
         if (isRunning || isAutoBufferSeeding || isManualSyncSeeding) return;
         if (connectionStatus !== 'connected') {
-            addLog('❌ Database not connected. Cannot run seeder.', 'error');
+            addLog('Database not connected. Cannot run seeder.', 'error');
             return;
         }
 
         setIsRunning(true);
         setLogs([]);
-        addLog('🚀 Starting aggregation seeder...');
-        addLog(`📅 Period: ${formatMonthName(month)} ${year}`);
-        addLog(`📊 Division: ${division === 'ALL' ? 'All Divisions' : division}`);
+        addLog('Starting aggregation seeder...');
+        addLog(`Period: ${formatMonthName(month)} ${year}`);
+        addLog(`Division: ${division === 'ALL' ? 'All Divisions' : division}`);
 
         try {
-            addLog('📡 Fetching data and auto-triggering history seeder (needed for Pajak)...', 'info');
+            addLog('Fetching data and auto-triggering history seeder (needed for Pajak)...', 'info');
             const result = await seedAggregation(
                 token,
                 month,
@@ -265,19 +271,19 @@ export default function AggregationSeederPage({ onBack, initialMonth, initialYea
 
             if (result.success) {
                 addLog('='.repeat(40), 'info');
-                addLog('✅ Seeding complete!', 'success');
-                addLog(`📊 Processed ${result.data?.total_divisions || 0} divisions`);
+                addLog('Seeding complete!', 'success');
+                addLog(`Processed ${result.data?.total_divisions || 0} divisions`);
 
                 if (result.data?.processed) {
                     for (const item of result.data.processed) {
-                        addLog(`  ✅ ${item.division}/${item.gang}: ${item.employees_processed} employees`);
+                        addLog(`${item.division}/${item.gang}: ${item.employees_processed} employees`);
                     }
                 }
             } else {
-                addLog(`❌ Seeding failed: ${result.error}`, 'error');
+                addLog(`Seeding failed: ${result.error}`, 'error');
             }
         } catch (e) {
-            addLog(`❌ Error: ${e.message}`, 'error');
+            addLog(`Error: ${e.message}`, 'error');
         } finally {
             setIsRunning(false);
         }
@@ -521,9 +527,9 @@ export default function AggregationSeederPage({ onBack, initialMonth, initialYea
 
         setIsSyncing(true);
         addLog('='.repeat(40), 'info');
-        addLog('🔄 Starting Spreadsheet Sync...', 'info');
-        addLog(`📅 Period: ${formatMonthName(month)} ${year}`);
-        addLog(`📊 Division: ${division === 'ALL' ? 'All Divisions' : division}`);
+        addLog('Starting Spreadsheet Sync...', 'info');
+        addLog(`Period: ${formatMonthName(month)} ${year}`);
+        addLog(`Division: ${division === 'ALL' ? 'All Divisions' : division}`);
 
         try {
             const result = await syncSpreadsheet(
@@ -535,25 +541,25 @@ export default function AggregationSeederPage({ onBack, initialMonth, initialYea
             );
 
             if (result.success) {
-                addLog('✅ Spreadsheet Sync complete!', 'success');
+                addLog('Spreadsheet Sync complete!', 'success');
                 if (result.results) {
                     const synced = result.results.filter(r => r.status === 'SUCCESS').length;
                     const missed = result.results.filter(r => r.status === 'SKIPPED_NO_DATA').length;
                     const failed = result.results.filter(r => r.status === 'FAILED' || r.status === 'ERROR').length;
-                    addLog(`📈 Synced: ${synced}, Miss: ${missed}, Failed: ${failed}`);
+                    addLog(`Synced: ${synced}, Miss: ${missed}, Failed: ${failed}`);
 
                     // Log details for failures
                     result.results
                         .filter(r => r.status === 'FAILED' || r.status === 'ERROR')
                         .forEach(r => {
-                        addLog(`❌ ${r.division}: ${r.error || r.message || 'Unknown error'}`, 'error');
+                        addLog(`${r.division}: ${r.error || r.message || 'Unknown error'}`, 'error');
                     });
                 }
             } else {
-                addLog(`❌ Sync failed: ${result.error}`, 'error');
+                addLog(`Sync failed: ${result.error}`, 'error');
             }
         } catch (e) {
-            addLog(`❌ Sync Error: ${e.message}`, 'error');
+            addLog(`Sync Error: ${e.message}`, 'error');
         } finally {
             setIsSyncing(false);
         }
@@ -561,39 +567,39 @@ export default function AggregationSeederPage({ onBack, initialMonth, initialYea
 
     // View summary
     const handleViewSummary = async () => {
-        addLog(`📋 Loading summary for ${formatMonthName(month)} ${year}...`);
+        addLog(`Loading summary for ${formatMonthName(month)} ${year}...`);
         try {
             const result = await fetchAggregationSummary(token, month, year);
             if (result.success) {
                 setSummaryData(result.summary || []);
                 setGrandTotal(result.grand_total || null);
                 setShowSummary(true);
-                addLog(`✅ Loaded ${result.summary?.length || 0} division records`, 'success');
+                addLog(`Loaded ${result.summary?.length || 0} division records`, 'success');
             } else {
-                addLog(`❌ Failed to load summary: ${result.error}`, 'error');
+                addLog(`Failed to load summary: ${result.error}`, 'error');
             }
         } catch (e) {
-            addLog(`❌ Error: ${e.message}`, 'error');
+            addLog(`Error: ${e.message}`, 'error');
         }
     };
 
     // Check status
     const handleCheckStatus = async () => {
-        addLog(`🔍 Checking status for ${formatMonthName(month)} ${year}...`);
+        addLog(`Checking status for ${formatMonthName(month)} ${year}...`);
         try {
             const result = await fetchAggregationStatus(token, month, year);
             if (result.success) {
-                addLog(`📊 Total gangs seeded: ${result.total_gangs}`);
+                addLog(`Total gangs seeded: ${result.total_gangs}`);
                 if (result.divisions?.length > 0) {
                     for (const div of result.divisions) {
                         addLog(`  • ${div.division_code}: ${div.gang_count} gangs`);
                     }
                 } else {
-                    addLog('⚠️ No data found for this period', 'warn');
+                    addLog('No data found for this period', 'warn');
                 }
             }
         } catch (e) {
-            addLog(`❌ Error: ${e.message}`, 'error');
+            addLog(`Error: ${e.message}`, 'error');
         }
     };
 
@@ -603,14 +609,14 @@ export default function AggregationSeederPage({ onBack, initialMonth, initialYea
 
         // Check authentication first
         if (!token) {
-            addLog('❌ ERROR: Not authenticated!', 'error');
-            addLog('💡 Please login to the payroll application first (Port 8002)', 'warn');
-            alert('⚠️ Anda belum login!\n\nSilakan login ke aplikasi payroll di Port 8002 terlebih dahulu, kemudian coba lagi.');
+            addLog('ERROR: Not authenticated!', 'error');
+            addLog('Please login to the payroll application first (Port 8002)', 'warn');
+            alert('Anda belum login!\n\nSilakan login ke aplikasi payroll di Port 8002 terlebih dahulu, kemudian coba lagi.');
             return;
         }
 
         if (historyConnectionStatus !== 'connected') {
-            addLog('❌ History database not connected. Cannot run history seeder.', 'error');
+            addLog('History database not connected. Cannot run history seeder.', 'error');
             return;
         }
 
@@ -623,23 +629,23 @@ export default function AggregationSeederPage({ onBack, initialMonth, initialYea
             (month <= currentDate.getMonth() + 1 && year === currentDate.getFullYear());
 
         if (historySeederType === 'PAYROLL' && isCurrentPeriod) {
-            const confirmMsg = `⚠️ Anda sedang mencoba menyimpan data untuk periode berjalan (${formatMonthName(month)} ${year}).\n\nData payroll untuk periode berjalan mungkin belum lengkap di database mentah.\n\nRekomendasi:\n1. Gunakan mode 'ALL' untuk menyimpan semua data (payroll + HR)\n2. Atau tunggu hingga akhir periode untuk hasil yang lebih akurat\n\nLanjutkan juga?`;
+            const confirmMsg = `Anda sedang mencoba menyimpan data untuk periode berjalan (${formatMonthName(month)} ${year}).\n\nData payroll untuk periode berjalan mungkin belum lengkap di database mentah.\n\nRekomendasi:\n1. Gunakan mode 'ALL' untuk menyimpan semua data (payroll + HR)\n2. Atau tunggu hingga akhir periode untuk hasil yang lebih akurat\n\nLanjutkan juga?`;
             if (!window.confirm(confirmMsg)) {
-                addLog('⚠️ Seed dibatalkan oleh pengguna', 'warn');
+                addLog('Seed dibatalkan oleh pengguna', 'warn');
                 return;
             }
         }
 
         setIsHistoryRunning(true);
         addLog('='.repeat(40), 'info');
-        addLog('🚀 Starting HISTORY seeder (terpisah)...');
-        addLog(`📅 Period: ${formatMonthName(month)} ${year}`);
-        addLog(`📊 Division: ${division === 'ALL' ? 'All Divisions' : division}`);
-        addLog(`🔧 Mode: ${historySeederType}`);
+        addLog('Starting HISTORY seeder (terpisah)...');
+        addLog(`Period: ${formatMonthName(month)} ${year}`);
+        addLog(`Division: ${division === 'ALL' ? 'All Divisions' : division}`);
+        addLog(`Mode: ${historySeederType}`);
 
         // Show helpful message for first-time users
         if (historySeederType === 'PAYROLL' && division === 'ALL') {
-            addLog('💡 Tip: Untuk seeding pertama, coba dengan division spesifik terlebih dahulu', 'info');
+            addLog('Tip: Untuk seeding pertama, coba dengan division spesifik terlebih dahulu', 'info');
         }
 
         try {
@@ -655,7 +661,7 @@ export default function AggregationSeederPage({ onBack, initialMonth, initialYea
                         const p = progress;
                         // Only log every 5th progress update to avoid log spam
                         if (progressCount % 5 === 0) {
-                            const statusMsg = `⏳ [${p.current_division || '...'}] Gangs: ${p.gangs_done}/${p.gangs_total} | Emp: ${p.employees_processed} | ${p.current_step}`;
+                            const statusMsg = `[${p.current_division || '...'}] Gangs: ${p.gangs_done}/${p.gangs_total} | Emp: ${p.employees_processed} | ${stripStep(p.current_step)}`;
                             if (statusMsg !== lastStatus) {
                                 addLog(statusMsg, 'debug');
                                 lastStatus = statusMsg;
@@ -679,12 +685,12 @@ export default function AggregationSeederPage({ onBack, initialMonth, initialYea
 
             if (result.success) {
                 addLog('='.repeat(40), 'info');
-                addLog(`✅ History seeding complete! Mode: ${historySeederType}`, 'success');
-                addLog(`📊 Total employees: ${result.data?.total_employees || 0}`);
+                addLog(`History seeding complete! Mode: ${historySeederType}`, 'success');
+                addLog(`Total employees: ${result.data?.total_employees || 0}`);
 
                 const records = result.data?.records_inserted;
                 if (records) {
-                    addLog(`📋 Records inserted:`);
+                    addLog(`Records inserted:`);
                     if (records.master !== undefined) addLog(`  • Master: ${records.master}`);
                     if (records.detail !== undefined) addLog(`  • Detail: ${records.detail}`);
                     if (records.taskreg !== undefined) addLog(`  • Taskreg: ${records.taskreg}`);
@@ -695,22 +701,22 @@ export default function AggregationSeederPage({ onBack, initialMonth, initialYea
                 }
 
                 if (result.data?.history_id) {
-                    addLog(`🔑 History ID: ${result.data.history_id}`);
+                    addLog(`History ID: ${result.data.history_id}`);
                 }
 
                 // Success feedback
                 if (result.data?.total_employees === 0) {
-                    addLog('⚠️ Perhatian: 0 employees diproses. Periksa apakah data exists untuk periode ini.', 'warn');
+                    addLog('Perhatian: 0 employees diproses. Periksa apakah data exists untuk periode ini.', 'warn');
                 }
             } else {
-                addLog(`❌ History seeding failed: ${result.error || 'Unknown error'}`, 'error');
+                addLog(`History seeding failed: ${result.error || 'Unknown error'}`, 'error');
                 if (result.errors?.length > 0) {
                     result.errors.forEach(err => {
                         addLog(`  • ${err}`, 'error');
                         // Provide helpful suggestions based on error type
                         if (err.includes('No payroll data found')) {
-                            addLog('💡 Saran: Coba gunakan mode ALL_HR atau ALL untuk menyimpan data HR saja', 'info');
-                            addLog('💡 Atau pastikan data payroll sudah ada di database mentah (PR_GANGLN_ARC)', 'info');
+                            addLog('Saran: Coba gunakan mode ALL_HR atau ALL untuk menyimpan data HR saja', 'info');
+                            addLog('Atau pastikan data payroll sudah ada di database mentah (PR_GANGLN_ARC)', 'info');
                         }
                     });
                 }
@@ -720,7 +726,7 @@ export default function AggregationSeederPage({ onBack, initialMonth, initialYea
             const detailedErrors = Array.isArray(backendError?.errors) ? backendError.errors : [];
             const primaryError = backendError?.error || backendError?.message || e.message || 'Unknown error';
 
-            addLog(`❌ Error: ${primaryError}`, 'error');
+            addLog(`Error: ${primaryError}`, 'error');
             detailedErrors.forEach(err => addLog(`  • ${err}`, 'error'));
 
             if (backendError?.details && !detailedErrors.length) {
@@ -728,7 +734,7 @@ export default function AggregationSeederPage({ onBack, initialMonth, initialYea
             }
 
             if (primaryError?.includes('Unable to connect')) {
-                addLog('💡 Error koneksi database. Pastikan SQL Gateway dan database server berjalan.', 'error');
+                addLog('Error koneksi database. Pastikan SQL Gateway dan database server berjalan.', 'error');
             }
         } finally {
             setIsHistoryRunning(false);
@@ -737,24 +743,24 @@ export default function AggregationSeederPage({ onBack, initialMonth, initialYea
 
     // Force reset stuck seeder
     const handleResetSeeder = async () => {
-        if (!window.confirm('⚠️ Apakah Anda yakin ingin mereset seeder yang sedang berjalan?\n\nIni akan membatalkan proses seeding yang sedang berjalan dan memungkinkan Anda untuk memulai ulang.')) {
+        if (!window.confirm('Apakah Anda yakin ingin mereset seeder yang sedang berjalan?\n\nIni akan membatalkan proses seeding yang sedang berjalan dan memungkinkan Anda untuk memulai ulang.')) {
             return;
         }
 
         addLog('='.repeat(40), 'info');
-        addLog('🔄 Force resetting History Seeder...', 'warn');
+        addLog('Force resetting History Seeder...', 'warn');
 
         try {
             const result = await resetSeeder(token, 'Manual reset from UI by user');
             if (result.success) {
-                addLog('✅ Seeder has been reset successfully', 'success');
-                addLog(`📝 Reason: ${result.reason || 'Manual reset'}`, 'info');
+                addLog('Seeder has been reset successfully', 'success');
+                addLog(`Reason: ${result.reason || 'Manual reset'}`, 'info');
                 setSeederProgress(null);
             } else {
-                addLog(`❌ Failed to reset seeder: ${result.error}`, 'error');
+                addLog(`Failed to reset seeder: ${result.error}`, 'error');
             }
         } catch (e) {
-            addLog(`❌ Reset error: ${e.message}`, 'error');
+            addLog(`Reset error: ${e.message}`, 'error');
         }
     };
 
@@ -767,32 +773,32 @@ export default function AggregationSeederPage({ onBack, initialMonth, initialYea
     const handlePreviewPtkp = async () => {
         if (isPtkpRunning) return;
         if (historyConnectionStatus !== 'connected') {
-            addLog('❌ History DB not connected. Cannot preview PTKP.', 'error');
+            addLog('History DB not connected. Cannot preview PTKP.', 'error');
             return;
         }
 
         setIsPtkpRunning(true);
         setPtkpOperation('rice-preview');
         addLog('='.repeat(40), 'info');
-        addLog(`🔍 Previewing PTKP Update for Year ${year}...`);
+        addLog(`Previewing PTKP Update for Year ${year}...`);
 
         try {
             const res = await previewPtkpTax(token, year);
             if (res.success) {
                 const { total_employees, existing_records, distribution } = res.data;
-                addLog(`✅ Preview successful`, 'success');
-                addLog(`👥 Total Karyawan Aktif: ${total_employees}`);
-                addLog(`📂 Data Lama di Tabel: ${existing_records}`);
+                addLog(`Preview successful`, 'success');
+                addLog(`Total Karyawan Aktif: ${total_employees}`);
+                addLog(`Data Lama di Tabel: ${existing_records}`);
 
-                addLog('📊 Distribusi PTKP Baru:');
+                addLog('Distribusi PTKP Baru:');
                 Object.entries(distribution).forEach(([ptkp, count]) => {
                     addLog(`   • Status ${ptkp}: ${count} Karyawan`);
                 });
             } else {
-                addLog(`❌ Preview failed: ${res.error}`, 'error');
+                addLog(`Preview failed: ${res.error}`, 'error');
             }
         } catch (e) {
-            addLog(`❌ Preview error: ${e.message}`, 'error');
+            addLog(`Preview error: ${e.message}`, 'error');
         } finally {
             setIsPtkpRunning(false);
             setPtkpOperation(null);
@@ -857,7 +863,7 @@ export default function AggregationSeederPage({ onBack, initialMonth, initialYea
     const handleRunPtkpUpdate = async () => {
         if (isPtkpRunning) return;
         if (historyConnectionStatus !== 'connected') {
-            addLog('❌ History DB not connected. Cannot update PTKP.', 'error');
+            addLog('History DB not connected. Cannot update PTKP.', 'error');
             return;
         }
 
@@ -868,24 +874,24 @@ export default function AggregationSeederPage({ onBack, initialMonth, initialYea
         setIsPtkpRunning(true);
         setPtkpOperation('update');
         addLog('='.repeat(40), 'info');
-        addLog(`🚀 Starting PTKP Update for Year ${year}...`);
+        addLog(`Starting PTKP Update for Year ${year}...`);
 
         try {
             const res = await updatePtkpTax(token, year);
             if (res.success) {
                 const { records_inserted, records_updated, records_skipped } = res.data;
-                addLog(`✅ Update PTKP Selesai!`, 'success');
-                addLog(`📋 Inserted: ${records_inserted}`);
-                addLog(`🔄 Updated: ${records_updated}`);
-                addLog(`⏭️ Skipped: ${records_skipped}`);
+                addLog(`Update PTKP Selesai!`, 'success');
+                addLog(`Inserted: ${records_inserted}`);
+                addLog(`Updated: ${records_updated}`);
+                addLog(`Skipped: ${records_skipped}`);
             } else {
-                addLog(`❌ Update PTKP failed: ${res.error}`, 'error');
+                addLog(`Update PTKP failed: ${res.error}`, 'error');
                 if (res.errors?.length > 0) {
                     res.errors.forEach(err => addLog(`   • ${err}`, 'error'));
                 }
             }
         } catch (e) {
-            addLog(`❌ Update error: ${e.message}`, 'error');
+            addLog(`Update error: ${e.message}`, 'error');
         } finally {
             setIsPtkpRunning(false);
             setPtkpOperation(null);
@@ -912,15 +918,15 @@ export default function AggregationSeederPage({ onBack, initialMonth, initialYea
                         </button>
                     )}
                     <div className="agg-title-block">
-                        <h1 className="agg-title">📊 Aggregation Seeder</h1>
+                        <h1 className="agg-title">Aggregation Seeder</h1>
                         <p className="agg-subtitle">Seed payroll aggregation data to extend_db_ptrj</p>
                     </div>
                 </div>
                 <div className="agg-header-right">
                     <span className={`agg-connection-badge ${connectionStatus}`}>
-                        {connectionStatus === 'connected' && '✅ Connected'}
-                        {connectionStatus === 'checking' && '🔄 Checking...'}
-                        {connectionStatus === 'error' && '❌ Disconnected'}
+                        {connectionStatus === 'connected' && 'Connected'}
+                        {connectionStatus === 'checking' && 'Checking...'}
+                        {connectionStatus === 'error' && 'Disconnected'}
                     </span>
                 </div>
             </div>
@@ -993,7 +999,7 @@ export default function AggregationSeederPage({ onBack, initialMonth, initialYea
                         disabled={isRunning || isAutoBufferSeeding || isManualSyncSeeding || connectionStatus !== 'connected'}
                         className="agg-btn agg-btn-primary"
                     >
-                        {isRunning ? '⏳ Running...' : '🚀 Run Seeder'}
+                        {isRunning ? 'Running...' : 'Run Seeder'}
                     </button>
 
                     <button
@@ -1002,7 +1008,7 @@ export default function AggregationSeederPage({ onBack, initialMonth, initialYea
                         className="agg-btn"
                         style={{ backgroundColor: '#f59e0b', borderColor: '#d97706', color: 'white', marginTop: '8px' }}
                     >
-                        {isAutoBufferSeeding ? 'â³ Seeding Auto Buffer...' : 'ðŸ§ª Seed Auto Buffer -> Manual Adj'}
+                        {isAutoBufferSeeding ? 'Seeding Auto Buffer...' : 'Seed Auto Buffer -> Manual Adj'}
                     </button>
 
                     <button
@@ -1020,7 +1026,7 @@ export default function AggregationSeederPage({ onBack, initialMonth, initialYea
                         className="agg-btn agg-btn-success"
                         style={{ backgroundColor: '#10b981', borderColor: '#059669', color: 'white', marginTop: '8px' }}
                     >
-                        {isSyncing ? '⏳ Syncing...' : 'sheets Sync to Spreadsheet'}
+                        {isSyncing ? 'Syncing...' : 'Sync to Spreadsheet'}
                     </button>
 
                     <button
@@ -1028,7 +1034,7 @@ export default function AggregationSeederPage({ onBack, initialMonth, initialYea
                         disabled={isRunning || isSyncing || isAutoBufferSeeding || isManualSyncSeeding}
                         className="agg-btn agg-btn-secondary"
                     >
-                        🔍 Check Status
+                        Check Status
                     </button>
 
                     <button
@@ -1036,12 +1042,12 @@ export default function AggregationSeederPage({ onBack, initialMonth, initialYea
                         disabled={isRunning || isAutoBufferSeeding || isManualSyncSeeding}
                         className="agg-btn agg-btn-secondary"
                     >
-                        📈 View Summary
+                        View Summary
                     </button>
 
                     <hr className="agg-divider" />
 
-                    <h3 className="agg-panel-subtitle" style={{ marginTop: '20px', fontSize: '14px', color: '#6b7280' }}>⚙️ History Operations</h3>
+                    <h3 className="agg-panel-subtitle" style={{ marginTop: '20px', fontSize: '14px', color: '#6b7280' }}>History Operations</h3>
 
                     <div className="agg-form-group">
                         <label>History Seeder Type</label>
@@ -1058,19 +1064,19 @@ export default function AggregationSeederPage({ onBack, initialMonth, initialYea
                         </select>
                         <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '6px', lineHeight: '1.5', padding: '8px', backgroundColor: '#f9fafb', borderRadius: '4px', border: '1px solid #e5e7eb' }}>
                             {historySeederType === 'PAYROLL' && (
-                                <span>📋 <strong>Payroll & Transactions</strong> — Menyimpan snapshot lengkap daftar upah ke tabel history (header + detail). Termasuk gaji pokok, tunjangan, potongan, lembur, dan panen. <em>Proses ini membutuhkan waktu ±2-5 menit untuk seluruh divisi.</em></span>
+                                <span><strong>Payroll & Transactions</strong>: Menyimpan snapshot lengkap daftar upah ke tabel history (header + detail). Termasuk gaji pokok, tunjangan, potongan, lembur, dan panen. <em>Proses ini membutuhkan waktu ±2-5 menit untuk seluruh divisi.</em></span>
                             )}
                             {historySeederType === 'EMPLOYEE_HR' && (
-                                <span>👤 <strong>Data Karyawan</strong> — Menyimpan data master karyawan (NIK, nama, jabatan, divisi, tanggal masuk). Digunakan untuk profil HR dan career tracking.</span>
+                                <span><strong>Data Karyawan</strong>: Menyimpan data master karyawan (NIK, nama, jabatan, divisi, tanggal masuk). Digunakan untuk profil HR dan career tracking.</span>
                             )}
                             {historySeederType === 'GANG_HR' && (
-                                <span>👥 <strong>Data Kemandoran</strong> — Menyimpan struktur gang/kemandoran dan relasinya ke divisi.</span>
+                                <span><strong>Data Kemandoran</strong>: Menyimpan struktur gang/kemandoran dan relasinya ke divisi.</span>
                             )}
                             {historySeederType === 'ALL_HR' && (
-                                <span>🏢 <strong>Semua Data HR</strong> — Menjalankan seed Employee + Gang sekaligus. Tidak termasuk data payroll/upah.</span>
+                                <span><strong>Semua Data HR</strong>: Menjalankan seed Employee + Gang sekaligus. Tidak termasuk data payroll/upah.</span>
                             )}
                             {historySeederType === 'ALL' && (
-                                <span>⚡ <strong>Semua Data</strong> — Menjalankan Payroll + Employee + Gang sekaligus. <em>Proses terlama, bisa memakan waktu ±5-10 menit.</em></span>
+                                <span><strong>Semua Data</strong>: Menjalankan Payroll + Employee + Gang sekaligus. <em>Proses terlama, bisa memakan waktu ±5-10 menit.</em></span>
                             )}
                         </div>
                     </div>
@@ -1086,11 +1092,11 @@ export default function AggregationSeederPage({ onBack, initialMonth, initialYea
                             fontSize: '12px'
                         }}>
                             <div style={{ fontWeight: 600, color: '#6d28d9', marginBottom: '6px' }}>
-                                🔄 {seederProgress.current_step}
+                                {stripStep(seederProgress.current_step)}
                             </div>
                             {seederProgress.current_division && (
                                 <div style={{ color: '#7c3aed', marginBottom: '4px' }}>
-                                    📍 Divisi: {seederProgress.current_division} | Periode: {seederProgress.period}
+                                    Divisi: {seederProgress.current_division} | Periode: {seederProgress.period}
                                 </div>
                             )}
                             {seederProgress.gangs_total > 0 && (
@@ -1107,7 +1113,7 @@ export default function AggregationSeederPage({ onBack, initialMonth, initialYea
                                     </div>
                                     <div style={{ color: '#6b7280' }}>
                                         Gang: {seederProgress.gangs_done}/{seederProgress.gangs_total}
-                                        {seederProgress.current_gang && ` — ${seederProgress.current_gang}`}
+                                        {seederProgress.current_gang && ` · ${seederProgress.current_gang}`}
                                     </div>
                                 </>
                             )}
@@ -1118,11 +1124,11 @@ export default function AggregationSeederPage({ onBack, initialMonth, initialYea
                     {seederProgress && !seederProgress.is_running && seederProgress.current_step && seederProgress.current_step !== 'idle' && !isHistoryRunning && (
                         <div style={{
                             padding: '8px 12px', borderRadius: '6px', marginTop: '8px', fontSize: '12px',
-                            backgroundColor: seederProgress.current_step.includes('✅') ? '#ecfdf5' : '#fef2f2',
-                            border: `1px solid ${seederProgress.current_step.includes('✅') ? '#a7f3d0' : '#fecaca'}`,
-                            color: seederProgress.current_step.includes('✅') ? '#065f46' : '#991b1b'
+                            backgroundColor: STEP_OK.test(seederProgress.current_step) ? '#ecfdf5' : '#fef2f2',
+                            border: `1px solid ${STEP_OK.test(seederProgress.current_step) ? '#a7f3d0' : '#fecaca'}`,
+                            color: STEP_OK.test(seederProgress.current_step) ? '#065f46' : '#991b1b'
                         }}>
-                            {seederProgress.current_step}
+                            {stripStep(seederProgress.current_step)}
                         </div>
                     )}
 
@@ -1138,7 +1144,7 @@ export default function AggregationSeederPage({ onBack, initialMonth, initialYea
                         }}
                         title="Simpan data lengkap ke history tables (terpisah dari aggregation)"
                     >
-                        {isHistoryRunning ? '⏳ Saving History...' : '💾 Save to History'}
+                        {isHistoryRunning ? 'Saving History...' : 'Save to History'}
                     </button>
 
                     {/* Reset Button - Show only when seeder is stuck or running */}
@@ -1155,13 +1161,13 @@ export default function AggregationSeederPage({ onBack, initialMonth, initialYea
                             }}
                             title="Force reset seeder yang sedang berjalan (untuk stuck seeder)"
                         >
-                            ⚠️ Reset Stuck Seeder
+                            Reset Stuck Seeder
                         </button>
                     )}
 
                     <hr className="agg-divider" />
 
-                    <h3 className="agg-panel-subtitle" style={{ marginTop: '20px', fontSize: '14px', color: '#6b7280' }}>💳 Master PTKP Operations</h3>
+                    <h3 className="agg-panel-subtitle" style={{ marginTop: '20px', fontSize: '14px', color: '#6b7280' }}>Master PTKP Operations</h3>
                     <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '6px', lineHeight: '1.5', padding: '8px', backgroundColor: '#fdf4ff', borderRadius: '4px', border: '1px solid #fbcfe8', marginBottom: '12px' }}>
                         Update dan kalkulasi status Penghasilan Tidak Kena Pajak (PTKP) tahunan berdasarkan Data Karyawan. Update ini dipengaruhi oleh 'Tahun' yang dipilih di parameter atas.
                     </div>
@@ -1179,7 +1185,7 @@ export default function AggregationSeederPage({ onBack, initialMonth, initialYea
                             }}
                             title="Preview data karyawan dan distribusi PTKP pajak (Tidak mengubah database)"
                         >
-                            {isPtkpRunning && ptkpOperation === 'rice-preview' ? '⏳ Previewing...' : '🔍 Preview PTKP'}
+                            {isPtkpRunning && ptkpOperation === 'rice-preview' ? 'Previewing...' : 'Preview PTKP'}
                         </button>
 
                         <button
@@ -1209,7 +1215,7 @@ export default function AggregationSeederPage({ onBack, initialMonth, initialYea
                             }}
                             title="Update Master PTKP untuk seluruh karyawan di tahun yang dipilih"
                         >
-                            {isPtkpRunning && ptkpOperation === 'update' ? '⏳ Updating...' : '📝 Execute PTKP Update'}
+                            {isPtkpRunning && ptkpOperation === 'update' ? 'Updating...' : 'Execute PTKP Update'}
                         </button>
                     </div>
 
@@ -1219,7 +1225,7 @@ export default function AggregationSeederPage({ onBack, initialMonth, initialYea
                         onClick={handleClearLogs}
                         className="agg-btn agg-btn-outline"
                     >
-                        🗑️ Clear Log
+                        Clear Log
                     </button>
                 </div>
 

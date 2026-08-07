@@ -18,6 +18,7 @@ import SelectionStats from '../components/common/SelectionStats'
 import DashboardLayout from '../components/layout/DashboardLayout'
 import ReportToolbar from '../components/common/ReportToolbar'
 import GangFilter from '../components/common/GangFilter'
+import { Pencil, History, AlertTriangle, Inbox, User } from 'lucide-react'
 import { GangFilterProvider } from '../context/GangFilterContext'
 import { useGangFilter } from '../context/GangFilterContext'
 import { exportReportToExcelPro } from '../utils/exportReportToExcelPro'
@@ -41,7 +42,7 @@ const GangHeaderRenderer = (params) => {
       fontSize: '13px',
       borderBottom: '1px solid var(--border-color)'
     }}>
-      🏭 {params.data.gang_code}
+      {params.data.gang_code}
     </div>
   )
 }
@@ -933,18 +934,18 @@ function ReportContent({ token, user, month, year, gang_code, division, onLoad, 
                                 colKey: params.column.getId()
                               });
                             }}
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 4px', fontSize: '12px' }}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 4px', fontSize: '12px', display: 'inline-flex', alignItems: 'center' }}
                             title="Edit NIK"
                           >
-                            ✏️
+                            <Pencil size={12} />
                           </button>
                         )}
                         <button
                           onClick={(e) => { e.stopPropagation(); params.context.openNikHistory(params.data.emp_code); }}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 4px', fontSize: '12px', opacity: 0.6 }}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 4px', fontSize: '12px', opacity: 0.6, display: 'inline-flex', alignItems: 'center' }}
                           title="Lihat Riwayat Versi"
                         >
-                          ⏱️
+                          <History size={12} />
                         </button>
                       </div>
                     </div>
@@ -1465,10 +1466,10 @@ function ReportContent({ token, user, month, year, gang_code, division, onLoad, 
                     colKey: params.column.getId()
                   });
                 }}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', fontSize: '11px', marginLeft: '4px' }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', fontSize: '11px', marginLeft: '4px', display: 'inline-flex', alignItems: 'center' }}
                 title={`Edit ${(typeInfo(params) || {}).name || fieldType}`}
               >
-                ✏️
+                <Pencil size={11} />
               </button>
             )}
           </div>
@@ -1641,7 +1642,7 @@ function ReportContent({ token, user, month, year, gang_code, division, onLoad, 
   if (error) return (
     <DashboardLayout title="Report Error">
       <div className="flex-center" style={{ height: '100%', flexDirection: 'column', color: 'var(--danger-700)' }}>
-        <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⚠️</div>
+        <div style={{ marginBottom: '1rem' }}><AlertTriangle size={32} strokeWidth={1.5} /></div>
         <div>{error}</div>
         <button className="btn btn-secondary" onClick={() => window.location.reload()} style={{ marginTop: '1rem' }}>Reload</button>
       </div>
@@ -1722,7 +1723,7 @@ function ReportContent({ token, user, month, year, gang_code, division, onLoad, 
               }}
               title={editModePendapatan ? 'Nonaktifkan edit Pendapatan Lainnya' : 'Aktifkan edit Pendapatan Lainnya'}
             >
-              💰 {editModePendapatan ? 'Pend. Lainnya ON' : 'Pend. Lainnya'}
+              {editModePendapatan ? 'Pend. Lainnya ON' : 'Pend. Lainnya'}
             </button>
             {editModePendapatan && (
               <button
@@ -1833,7 +1834,7 @@ function ReportContent({ token, user, month, year, gang_code, division, onLoad, 
         <React.Fragment>
           {(!loading && dataReady && rows.length === 0 && finalGangCode && !error) ? (
             <div className="flex-center" style={{ height: '300px', flexDirection: 'column' }}>
-              <div style={{ fontSize: '3rem' }}>📭</div>
+              <div style={{ color: '#cbd5e1' }}><Inbox size={48} strokeWidth={1.5} /></div>
               <h3>Data Belum Tersedia</h3>
             </div>
           ) : dataReady ? (
@@ -1903,7 +1904,7 @@ function ReportContent({ token, user, month, year, gang_code, division, onLoad, 
       ) : (
         // 'employee' view mode - show simple employee list
         <div style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>👤</div>
+          <div style={{ marginBottom: '1rem', color: '#cbd5e1' }}><User size={48} strokeWidth={1.5} /></div>
           <h3 style={{ color: '#374151' }}>Mode Karyawan</h3>
           <p>Fitur daftar karyawan individu sedang dalam pengembangan.</p>
         </div>

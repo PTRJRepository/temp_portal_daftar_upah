@@ -28,7 +28,7 @@ export default function CostStructureSection({ costData, trends, gangBreakdown, 
         return (
             <EmptyState
                 title="Struktur biaya belum tersedia"
-                message={error ? `Gagal memuat: ${error}` : 'Data agregasi belum tersedia untuk periode ini — jalankan Aggregation Seeder.'}
+                message={error ? `Gagal memuat: ${error}` : 'Data agregasi belum tersedia untuk periode ini. Jalankan Aggregation Seeder.'}
                 actionLabel="Muat Ulang"
                 onAction={onRetry}
             />
@@ -67,7 +67,7 @@ export default function CostStructureSection({ costData, trends, gangBreakdown, 
                         </AreaChart>
                     </ResponsiveContainer>
                 ) : (
-                    <EmptyState title="Tren belum tersedia" message="Data agregasi 12 bulan belum ada — jalankan Aggregation Seeder." />
+                    <EmptyState title="Tren belum tersedia" message="Data agregasi 12 bulan belum ada. Jalankan Aggregation Seeder." />
                 )}
             </div>
 

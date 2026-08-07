@@ -93,7 +93,7 @@ export default function SalaryHistoryTimeline({ empCode, months = 12 }) {
     if (error) {
         return (
             <div className="sht-container sht-error">
-                <span className="sht-error-icon">⚠</span>
+                <span className="sht-error-icon">!</span>
                 <p>{error}</p>
             </div>
         );
@@ -103,19 +103,18 @@ export default function SalaryHistoryTimeline({ empCode, months = 12 }) {
     if (!historyData || historyData.length === 0) {
         return (
             <div className="sht-container sht-empty">
-                <span className="sht-empty-icon">📭</span>
+                
                 <p>Tidak ada data riwayat gaji</p>
             </div>
         );
     }
 
     // Detail Section Component
-    const DetailSection = ({ periodKey, sectionKey, title, icon, color, children }) => {
+    const DetailSection = ({ periodKey, sectionKey, title, color, children }) => {
         const isOpen = isSectionExpanded(periodKey, sectionKey);
         return (
             <div className={`sht-detail-section sht-section-${color}`}>
                 <div className="sht-section-header" onClick={() => toggleSection(periodKey, sectionKey)}>
-                    <span className="sht-section-icon">{icon}</span>
                     <span className="sht-section-title">{title}</span>
                     <span className={`sht-section-chevron ${isOpen ? 'open' : ''}`}>▶</span>
                 </div>
@@ -231,7 +230,7 @@ export default function SalaryHistoryTimeline({ empCode, months = 12 }) {
                             {isExpanded && (
                                 <div className="sht-card-body">
                                     {/* === ABSENSI === */}
-                                    <DetailSection periodKey={periodKey} sectionKey="absensi" title="Absensi" icon="📋" color="blue">
+                                    <DetailSection periodKey={periodKey} sectionKey="absensi" title="Absensi" color="blue">
                                         <Row label="Jumlah HK" value={item.jumlah_hk} />
                                         <Row label="Hari Kerja (efektif)" value={item.hari_kerja} />
                                         <Row label="Total Jam Kerja" value={item.total_jam_kerja} />
@@ -242,7 +241,7 @@ export default function SalaryHistoryTimeline({ empCode, months = 12 }) {
                                     </DetailSection>
 
                                     {/* === PENGGAJIAN === */}
-                                    <DetailSection periodKey={periodKey} sectionKey="penggajian" title="Penggajian" icon="💰" color="green">
+                                    <DetailSection periodKey={periodKey} sectionKey="penggajian" title="Penggajian" color="green">
                                         <Row label="Upah Dasar (payrate)" value={item.upah_dasar} isRate />
                                         <Row label="Gaji Pokok Ideal (rate × HK)" value={item.gaji_pokok_ideal} isMuted />
                                         <Row label="Gaji Pokok Aktual" value={item.gaji_pokok_aktual || item.gaji_pokok} />
@@ -251,7 +250,7 @@ export default function SalaryHistoryTimeline({ empCode, months = 12 }) {
                                     </DetailSection>
 
                                     {/* === TUNJANGAN === */}
-                                    <DetailSection periodKey={periodKey} sectionKey="tunjangan" title="Tunjangan" icon="🎁" color="teal">
+                                    <DetailSection periodKey={periodKey} sectionKey="tunjangan" title="Tunjangan" color="teal">
                                         <Row label="Beras (rate)" value={item.beras_rate} isRate />
                                         <Row label="Beras (jumlah)" value={item.beras_jumlah} />
                                         <Row label="Jabatan (rate)" value={item.jabatan_rate} isRate />
@@ -263,14 +262,14 @@ export default function SalaryHistoryTimeline({ empCode, months = 12 }) {
                                     </DetailSection>
 
                                     {/* === LEMBUR === */}
-                                    <DetailSection periodKey={periodKey} sectionKey="lembur" title="Lembur" icon="⏰" color="orange">
+                                    <DetailSection periodKey={periodKey} sectionKey="lembur" title="Lembur" color="orange">
                                         <Row label="Jam Lembur" value={item.lembur_jam} />
                                         <Row label="Rate Lembur" value={item.lembur_rate} isRate />
                                         <Row label="Jumlah Lembur" value={item.lembur_jumlah} isTotal />
                                     </DetailSection>
 
                                     {/* === PREMI === */}
-                                    <DetailSection periodKey={periodKey} sectionKey="premi" title="Premi" icon="🏆" color="purple">
+                                    <DetailSection periodKey={periodKey} sectionKey="premi" title="Premi" color="purple">
                                         <Row label="Brondol" value={item.premi_brondol} />
                                         {item.premi_pph > 0 && <Row label="PPH (penambah)" value={item.premi_pph} />}
                                         {/* Dynamic premi fields */}
@@ -284,7 +283,7 @@ export default function SalaryHistoryTimeline({ empCode, months = 12 }) {
 
                                     {/* === POTONGAN UPAH KOTOR === */}
                                     {(item.pot_koreksi > 0 || item.premi_koreksi > 0) && (
-                                        <DetailSection periodKey={periodKey} sectionKey="pot_kotor" title="Potongan Upah Kotor" icon="✂️" color="amber">
+                                        <DetailSection periodKey={periodKey} sectionKey="pot_kotor" title="Potongan Upah Kotor" color="amber">
                                             <Row label="Koreksi" value={item.pot_koreksi || item.premi_koreksi} isNegative />
                                             {item.potongan_upah_kotor_details && Object.entries(item.potongan_upah_kotor_details)
                                                 .filter(([k]) => k !== 'total' && k !== 'koreksi')
@@ -295,7 +294,7 @@ export default function SalaryHistoryTimeline({ empCode, months = 12 }) {
                                     )}
 
                                     {/* === POTONGAN UPAH BERSIH === */}
-                                    <DetailSection periodKey={periodKey} sectionKey="potongan" title="Potongan Upah Bersih" icon="📉" color="red">
+                                    <DetailSection periodKey={periodKey} sectionKey="potongan" title="Potongan Upah Bersih" color="red">
                                         <Row label="SPSI" value={item.pot_spsi} isNegative />
                                         <Row label="PPH21" value={item.pot_pph21} isNegative />
                                         <Row label="ASTEK Pekerja" value={item.pot_astek_pekerja || item.pot_astek} isNegative />
@@ -310,7 +309,7 @@ export default function SalaryHistoryTimeline({ empCode, months = 12 }) {
                                     </DetailSection>
 
                                     {/* === PAJAK PPH21 === */}
-                                    <DetailSection periodKey={periodKey} sectionKey="pajak" title="PPH21 TER" icon="🏛️" color="slate">
+                                    <DetailSection periodKey={periodKey} sectionKey="pajak" title="PPH21 TER" color="slate">
                                         <Row label="Status PTKP" value={item.status_ptkp || '-'} />
                                         <Row label="Kategori TER" value={item.kategori_ter || '-'} />
                                         <Row label="Penghasilan Bruto" value={item.penghasilan_bruto} />
@@ -338,7 +337,7 @@ export default function SalaryHistoryTimeline({ empCode, months = 12 }) {
                                             </div>
                                         )}
                                         <div className="sht-final-row sht-final-net">
-                                            <span>💵 Upah Bersih</span>
+                                            <span>Upah Bersih</span>
                                             <span>{fmt(item.upah_bersih)}</span>
                                         </div>
                                     </div>

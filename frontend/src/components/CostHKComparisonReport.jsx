@@ -264,10 +264,10 @@ export default function CostHKComparisonReport({ initialMonth, initialYear }) {
                         onChange={(e) => setGangTypeFilter(e.target.value)}
                     >
                         <option value="ALL">Semua Tipe Gang</option>
-                        <option value="harvesting">🌾 Panen (Harvesting)</option>
-                        <option value="transport">🚛 Transport</option>
-                        <option value="maintenance">🔧 Maintenance</option>
-                        <option value="uncategorized">📋 Lainnya</option>
+                        <option value="harvesting">Panen (Harvesting)</option>
+                        <option value="transport">Transport</option>
+                        <option value="maintenance">Maintenance</option>
+                        <option value="uncategorized">Lainnya</option>
                     </select>
 
                     {/* Gang Multi-select */}
@@ -316,10 +316,10 @@ export default function CostHKComparisonReport({ initialMonth, initialYear }) {
                 {/* Action Buttons */}
                 <div className="cost-hk-actions">
                     <button className="cost-hk-btn cost-hk-btn-primary" onClick={handlePrint}>
-                        🖨️ Print Report
+                        Print Report
                     </button>
                     <button className="cost-hk-btn cost-hk-btn-secondary" onClick={handleExport}>
-                        📊 Export CSV
+                        Export CSV
                     </button>
                 </div>
             </div>

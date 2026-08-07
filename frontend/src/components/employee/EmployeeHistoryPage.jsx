@@ -38,11 +38,11 @@ export default function EmployeeHistoryPage({
     }, [isHistorical, activeTab]);
 
     const tabs = [
-        { id: 'current', label: '📋 Periode Ini', visible: true },
-        { id: 'history', label: '📜 Riwayat Gaji', visible: true },
-        { id: 'history_table', label: '📊 Tabel Gaji', visible: true },
-        { id: 'trends', label: '📈 Tren & Statistik', visible: true },
-        { id: 'comparison', label: '⚖️ Perbandingan', visible: true }
+        { id: 'current', label: 'Periode Ini', visible: true },
+        { id: 'history', label: 'Riwayat Gaji', visible: true },
+        { id: 'history_table', label: 'Tabel Gaji', visible: true },
+        { id: 'trends', label: 'Tren & Statistik', visible: true },
+        { id: 'comparison', label: 'Perbandingan', visible: true }
     ];
 
     return (
@@ -57,9 +57,9 @@ export default function EmployeeHistoryPage({
                     <p className="emp-code">{empCode}</p>
                     <div className="period-badges">
                         <span className={`period-badge period-${periodType}`}>
-                            {periodType === 'current' && '📊 Periode Saat Ini'}
-                            {periodType === 'historical' && '📜 Data Historis'}
-                            {periodType === 'future' && '🔮 Periode Mendatang'}
+                            {periodType === 'current' && 'Periode Saat Ini'}
+                            {periodType === 'historical' && 'Data Historis'}
+                            {periodType === 'future' && 'Periode Mendatang'}
                         </span>
                         <span className="period-display">
                             {getMonthName(month)} {year}
@@ -89,7 +89,7 @@ export default function EmployeeHistoryPage({
                     <div className="tab-pane">
                         {isHistorical ? (
                             <div className="historical-notice">
-                                <p>ℹ️ Anda sedang melihat data historis untuk {getMonthName(month)} {year}.</p>
+                                <p>Anda sedang melihat data historis untuk {getMonthName(month)} {year}.</p>
                                 <p>Gunakan tab "Riwayat Gaji" untuk melihat daftar lengkap semua periode.</p>
                             </div>
                         ) : null}

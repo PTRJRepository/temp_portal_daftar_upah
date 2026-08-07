@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
+import { Search } from 'lucide-react'
 import '../../styles/theme.css'
 
 /**
@@ -158,7 +159,7 @@ export default function GangFilter({
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span style={{ fontSize: '1.2rem' }}>🔍</span>
+          <span style={{ display: 'inline-flex', color: 'var(--text-muted, #64748b)' }}><Search size={20} /></span>
           <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-main)' }}>Filter Data Gang</h3>
           {getActiveFiltersCount() > 0 && (
             <span style={{

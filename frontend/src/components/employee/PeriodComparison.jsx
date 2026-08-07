@@ -75,7 +75,7 @@ export function PeriodComparison({ empCode }) {
 
     return (
         <div className="period-comparison">
-            <h3>⚖️ Perbandingan Periode</h3>
+            <h3>Perbandingan Periode</h3>
 
             {/* Period Selectors */}
             <div className="period-selectors">
@@ -113,7 +113,7 @@ export function PeriodComparison({ empCode }) {
 
             {error && (
                 <div className="comparison-error">
-                    <p>❌ {error}</p>
+                    <p>{error}</p>
                 </div>
             )}
         </div>

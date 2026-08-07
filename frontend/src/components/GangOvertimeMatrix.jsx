@@ -6,6 +6,7 @@
  * Data sourced from PR_TASKREGLN / PR_TASKREGLN_ARC where OT = 1
  */
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { Clock, Printer } from 'lucide-react'
 import { getGangOvertimeMatrix } from '../services/employeeDetailService'
 import { printReport } from '../utils/printPageSetup'
 
@@ -95,12 +96,12 @@ export default function GangOvertimeMatrix({
         return (
             <div className="gom-container">
                 <div className="gom-header">
-                    <h2>⏰ Matrix Lembur Gang</h2>
+                    <h2>Matrix Lembur Gang</h2>
                     <span className="gom-period">{MONTHS[month - 1]} {year}</span>
                     {division && <span className="gom-division-badge">{division}</span>}
                 </div>
                 <div className="gom-empty-state">
-                    <div className="gom-empty-icon">📊</div>
+                    <div className="gom-empty-icon"><Clock size={40} strokeWidth={1.5} /></div>
                     <h3>Matrix Lembur Belum Tersedia</h3>
                     <p>Data daftar upah sedang dimuat atau belum tersedia untuk periode ini.</p>
                 </div>
@@ -144,7 +145,7 @@ export default function GangOvertimeMatrix({
                 </div>
                 <div className="gom-header-right">
                     <button onClick={handlePrint} className="gom-print-btn" title="Cetak Matrix Lembur">
-                        🖨️ Print
+                        <Printer size={14} style={{ verticalAlign: '-2px' }} /> Print
                     </button>
                     {meta.execution_time_ms && (
                         <span className="gom-meta">

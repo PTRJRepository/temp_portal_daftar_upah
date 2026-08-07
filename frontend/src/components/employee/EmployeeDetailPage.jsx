@@ -4,6 +4,7 @@
  * followed by Attendance and Overtime matrices
  */
 import React, { useState, useEffect } from 'react'
+import { Clock, XCircle, Pencil, History, AlertTriangle, AlertCircle, Printer, RotateCcw } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { getEmployeeCheckroll } from '../../services/employeeDetailService'
 import LoadingScreen from '../common/LoadingScreen'
@@ -244,7 +245,7 @@ export default function EmployeeDetailPage({
         return (
             <div className="payslip-wrapper" style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <div className="error-screen" style={{ textAlign: 'center', padding: '3rem', backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', maxWidth: '600px' }}>
-                    <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>{isHistoricalMissing && isSeedingRelated ? '⏳' : '❌'}</div>
+                    <div style={{ marginBottom: '1rem', color: isHistoricalMissing && isSeedingRelated ? '#b45309' : '#dc2626' }}>{isHistoricalMissing && isSeedingRelated ? <Clock size={56} strokeWidth={1.5} /> : <XCircle size={56} strokeWidth={1.5} />}</div>
                     <h2 style={{ color: '#1e293b', marginBottom: '1rem' }}>
                         {isHistoricalMissing && isSeedingRelated ? 'Data Periode Lalu Tidak Tersedia' : 'Gagal Memuat Data'}
                     </h2>
@@ -255,7 +256,7 @@ export default function EmployeeDetailPage({
                     </p>
                     {isHistoricalMissing && isSeedingRelated && (
                         <div style={{ textAlign: 'left', backgroundColor: '#fef3c7', padding: '1.5rem', borderRadius: '8px', border: '1px solid #f59e0b', marginBottom: '2rem' }}>
-                            <p style={{ color: '#92400e', fontWeight: '600', marginBottom: '0.5rem' }}>⚠️ Mengapa ini terjadi?</p>
+                            <p style={{ color: '#92400e', fontWeight: '600', marginBottom: '0.5rem' }}>Mengapa ini terjadi?</p>
                             <p style={{ color: '#78350f', lineHeight: '1.6', fontSize: '0.9rem' }}>
                                 Database utama (<code>db_ptrj</code>) hanya menyimpan data operasional untuk <strong>bulan yang sedang berjalan</strong>. 
                                 Untuk periode yang sudah lewat, data harus di-seed (disalin) ke database historis (<code>extend_db_ptrj</code>) terlebih dahulu.
@@ -454,8 +455,8 @@ export default function EmployeeDetailPage({
                         <span className="separator">:</span>
                         <span className="value bold" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             {empCode} / {empInfo.actual_nik || '-'}
-                            <button onClick={e => { e.stopPropagation(); handleEditNik(empInfo); }} style={{ background: 'none', border: '1px solid #e2e8f0', cursor: 'pointer', fontSize: '10px', padding: '2px 4px', borderRadius: '4px', backgroundColor: 'white' }} title="Edit NIK">✏️ Edit</button>
-                            <button onClick={e => { e.stopPropagation(); openNikHistory(); }} style={{ background: 'none', border: '1px solid #e2e8f0', cursor: 'pointer', fontSize: '10px', padding: '2px 4px', borderRadius: '4px', backgroundColor: 'white' }} title="Riwayat Versi NIK">⏱️ Riwayat</button>
+                            <button onClick={e => { e.stopPropagation(); handleEditNik(empInfo); }} style={{ background: 'none', border: '1px solid #e2e8f0', cursor: 'pointer', fontSize: '10px', padding: '2px 4px', borderRadius: '4px', backgroundColor: 'white', display: 'inline-flex', alignItems: 'center', gap: '3px' }} title="Edit NIK"><Pencil size={10} /> Edit</button>
+                            <button onClick={e => { e.stopPropagation(); openNikHistory(); }} style={{ background: 'none', border: '1px solid #e2e8f0', cursor: 'pointer', fontSize: '10px', padding: '2px 4px', borderRadius: '4px', backgroundColor: 'white', display: 'inline-flex', alignItems: 'center', gap: '3px' }} title="Riwayat Versi NIK"><History size={10} /> Riwayat</button>
                         </span>
                     </div>
                     <div className="info-row">
@@ -649,7 +650,7 @@ export default function EmployeeDetailPage({
                         })
                     }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <span style={{ fontSize: '28px' }}>{getNum('koreksi_hk') < 0 ? '⚠️' : '🔴'}</span>
+                            <span style={{ display: 'inline-flex' }}>{getNum('koreksi_hk') < 0 ? <AlertTriangle size={28} /> : <AlertCircle size={28} />}</span>
                             <div style={{ flex: 1 }}>
                                 <div style={{ fontWeight: 'bold', fontSize: '16px', marginBottom: '4px' }}>
                                     {getNum('koreksi_hk') < 0
@@ -676,7 +677,7 @@ export default function EmployeeDetailPage({
                                 marginTop: '4px'
                             }}>
                                 <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '8px', color: '#dc2626' }}>
-                                    📅 Detail {data.shortage_details.length} Hari Kurang Jam (Total: {(data.shortage_total_hours || 0).toFixed(1)} jam):
+                                    Detail {data.shortage_details.length} Hari Kurang Jam (Total: {(data.shortage_total_hours || 0).toFixed(1)} jam):
                                 </div>
                                 <div style={{ display: 'grid', gap: '6px', maxHeight: '200px', overflowY: 'auto' }}>
                                     {data.shortage_details.map((detail, idx) => (
@@ -712,7 +713,7 @@ export default function EmployeeDetailPage({
                                 marginTop: '4px'
                             }}>
                                 <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '8px', color: '#ea580c' }}>
-                                    🔴 Detail {data.excess_details.length} Hari Jam Lebih (Total: +{(data.excess_total_hours || 0).toFixed(1)} jam):
+                                    Detail {data.excess_details.length} Hari Jam Lebih (Total: +{(data.excess_total_hours || 0).toFixed(1)} jam):
                                 </div>
                                 <div style={{ display: 'grid', gap: '6px', maxHeight: '200px', overflowY: 'auto' }}>
                                     {data.excess_details.map((detail, idx) => (
@@ -744,7 +745,7 @@ export default function EmployeeDetailPage({
                 {/* Attendance Matrix */}
                 <div className="matrix-card">
                     <div className="matrix-header gradient-header-blue">
-                        <h3>📅 Matriks Kehadiran</h3>
+                        <h3>Matriks Kehadiran</h3>
                         <div className="legend">
                             {[
                                 { key: 'hadir', label: 'Hadir' },
@@ -791,12 +792,12 @@ export default function EmployeeDetailPage({
                                     cellBg = '#fee2e2'
                                     cellColor = '#b91c1c'
                                     cellBorder = '2px solid #ef4444'
-                                    hkIcon = '⚠️'
+                                    hkIcon = '▲'
                                 } else if (isExcess) {
                                     cellBg = '#fff7ed'
                                     cellColor = '#9a3412'
                                     cellBorder = '2px solid #f97316'
-                                    hkIcon = '🔴'
+                                    hkIcon = '●'
                                 }
 
                                 const shortage = isShort ? (targetHours - hours).toFixed(1) : 0
@@ -812,7 +813,7 @@ export default function EmployeeDetailPage({
                                             border: cellBorder,
                                             cursor: 'pointer'
                                         }}
-                                        title={`Tanggal ${day}: ${dayData.status}${dayData.remarks ? ` - ${dayData.remarks}` : ''}\nJam: ${hours} / Target: ${targetHours}\nAmount: Rp ${formatCurrency(amount)}${isShort ? `\n⚠️ Kurang ${shortage} Jam` : ''}${isExcess ? `\n🔴 Lebih ${excess} Jam` : ''}`}
+                                        title={`Tanggal ${day}: ${dayData.status}${dayData.remarks ? ` - ${dayData.remarks}` : ''}\nJam: ${hours} / Target: ${targetHours}\nAmount: Rp ${formatCurrency(amount)}${isShort ? `\n▲ Kurang ${shortage} Jam` : ''}${isExcess ? `\n● Lebih ${excess} Jam` : ''}`}
                                     >
                                         <div className="calendar-date">{day}</div>
                                         <div className="calendar-status">
@@ -821,8 +822,8 @@ export default function EmployeeDetailPage({
                                         {hours > 0 && (
                                             <div style={{ fontSize: '0.6rem', marginTop: '1px', fontWeight: 'bold' }}>
                                                 {hours}j
-                                                {isShort && <span style={{ color: '#dc2626' }}> ⚠️</span>}
-                                                {isExcess && <span style={{ color: '#ea580c' }}> 🔴</span>}
+                                                {isShort && <span style={{ color: '#dc2626' }}> ▲</span>}
+                                                {isExcess && <span style={{ color: '#ea580c' }}> ●</span>}
                                             </div>
                                         )}
                                         {/* Show amount for ALL days with data, not just non-shortage */}
@@ -902,7 +903,7 @@ export default function EmployeeDetailPage({
                 {attendance.list && attendance.list.length > 0 && (
                     <div className="matrix-card" style={{ marginTop: '1rem' }}>
                         <div className="matrix-header" style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                            <h3 style={{ color: '#0f172a', fontSize: '1rem' }}>📋 Rincian Aktivitas Harian (Regular)</h3>
+                            <h3 style={{ color: '#0f172a', fontSize: '1rem' }}>Rincian Aktivitas Harian (Regular)</h3>
                             <div className="overtime-total">
                                 Total: <strong>{formatCurrency(attendance.list.reduce((sum, item) => sum + (item.amount || 0), 0))}</strong>
                             </div>
@@ -932,15 +933,15 @@ export default function EmployeeDetailPage({
                                             const itemIsExcess = item.hours > itemTargetHours && !itemIsSunday && item.status === 'hadir'
 
                                             let rowBg = undefined
-                                            let hkStatusIcon = '✅'
+                                            let hkStatusIcon = 'OK'
                                             if (itemIsShort) {
                                                 rowBg = '#fef2f2'
-                                                hkStatusIcon = '⚠️'
+                                                hkStatusIcon = '▲'
                                             } else if (itemIsExcess) {
                                                 rowBg = '#fff7ed'
-                                                hkStatusIcon = '🔴'
+                                                hkStatusIcon = '●'
                                             } else if (item.status !== 'hadir') {
-                                                hkStatusIcon = '—'
+                                                hkStatusIcon = '-'
                                             }
 
                                             return (
@@ -969,8 +970,8 @@ export default function EmployeeDetailPage({
                                                         color: itemIsShort ? '#dc2626' : (itemIsExcess ? '#ea580c' : undefined)
                                                     }}>
                                                         {item.hours > 0 ? item.hours : '-'}
-                                                        {itemIsShort && <span style={{ fontSize: '10px' }}> ⚠️</span>}
-                                                        {itemIsExcess && <span style={{ fontSize: '10px' }}> 🔴</span>}
+                                                        {itemIsShort && <span style={{ fontSize: '10px' }}> ▲</span>}
+                                                        {itemIsExcess && <span style={{ fontSize: '10px' }}> ●</span>}
                                                     </td>
                                                     <td style={{ textAlign: 'right', color: '#64748b' }}>
                                                         {item.rate > 0 ? formatCurrency(item.rate) : '-'}
@@ -1044,7 +1045,7 @@ export default function EmployeeDetailPage({
                     {/* Overtime List Detail - Per Transaksi */}
                     {overtimeTransactions.length > 0 && (
                         <div className="overtime-list">
-                            <h4>📋 Rincian Lembur Per Transaksi</h4>
+                            <h4>Rincian Lembur Per Transaksi</h4>
                             <div className="overtime-upj-help">
                                 <div className="overtime-upj-title">UPJ (Upah Per Jam)</div>
                                 <p>
@@ -1173,7 +1174,7 @@ export default function EmployeeDetailPage({
                 {harvest && harvest.length > 0 && (
                     <div className="matrix-card">
                         <div className="matrix-header gradient-header-orange">
-                            <h3>🌴 Matriks Panen</h3>
+                            <h3>Matriks Panen</h3>
                             <div className="overtime-total">
                                 Total: <strong>{formatCurrency(harvest.reduce((sum, h) => sum + (h.TotalWeight || 0), 0))}</strong> Kg / <strong>{formatCurrency(harvest.reduce((sum, h) => sum + (h.TotalBunches || 0), 0))}</strong> Jjg
                             </div>
@@ -1245,7 +1246,7 @@ export default function EmployeeDetailPage({
             {/* ACTION BUTTONS (No Print) */}
             <div className="action-buttons no-print">
                 <button onClick={onBack} className="btn btn-secondary">Tutup / Kembali</button>
-                <button onClick={() => printReport({ orientation: 'portrait', margin: '5mm' })} className="btn btn-primary">🖨️ Cetak Slip Gaji</button>
+                <button onClick={() => printReport({ orientation: 'portrait', margin: '5mm' })} className="btn btn-primary"><Printer size={14} style={{ verticalAlign: '-2px' }} /> Cetak Slip Gaji</button>
             </div>
 
             {/* History Modal for NIK */}
@@ -1275,7 +1276,7 @@ export default function EmployeeDetailPage({
                                                 <span style={{ fontWeight: 700, color: '#0f172a' }}>{h.new_value}</span>
                                             </div>
                                             {index === 0 && (
-                                                <button onClick={handleRollbackNik} style={{ padding: '4px 8px', fontSize: '0.75rem', backgroundColor: '#fee2e2', color: '#ef4444', border: '1px solid #fca5a5', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}>🗑️ Rollback</button>
+                                                <button onClick={handleRollbackNik} style={{ padding: '4px 8px', fontSize: '0.75rem', backgroundColor: '#fee2e2', color: '#ef4444', border: '1px solid #fca5a5', borderRadius: '4px', cursor: 'pointer', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '3px' }}><RotateCcw size={11} /> Rollback</button>
                                             )}
                                         </div>
                                         <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '8px' }}>Oleh: {h.changed_by}</div>

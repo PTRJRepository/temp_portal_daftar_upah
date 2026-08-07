@@ -303,7 +303,7 @@ export async function exportReportToExcelPro(rows, colDefsOriginal, meta) {
             worksheet.mergeCells(excelRow.number, 1, excelRow.number, flatCols.length);
 
             const cell = excelRow.getCell(1);
-            cell.value = `🏭 DATA GANG: ${row.gang_code}`;
+            cell.value = `DATA GANG: ${row.gang_code}`;
             cell.font = { bold: true, size: 11, color: { argb: '0f172a' } };
             cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.gangHeader } };
             cell.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };

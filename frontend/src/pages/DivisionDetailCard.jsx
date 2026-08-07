@@ -126,7 +126,7 @@ export default function DivisionDetailCard({ division, data, loading, onBack, in
                         fontSize: '1rem'
                     }}
                 >
-                    📊 Overview
+                    Overview
                 </button>
                 <button
                     onClick={() => setActiveTab('employees')}
@@ -143,7 +143,7 @@ export default function DivisionDetailCard({ division, data, loading, onBack, in
                         fontSize: '1rem'
                     }}
                 >
-                    👥 Employee Details
+                    Employee Details
                 </button>
             </div>
 
@@ -152,7 +152,7 @@ export default function DivisionDetailCard({ division, data, loading, onBack, in
                     {/* Gang Breakdown */}
                     <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
                         <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#334155', marginBottom: '1.5rem' }}>
-                            👥 Gang Breakdown ({data.gangs?.length || 0})
+                            Gang Breakdown ({data.gangs?.length || 0})
                         </h3>
                         <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
                             <table style={{ width: '100%', fontSize: '0.9rem', borderCollapse: 'collapse' }}>
@@ -188,7 +188,7 @@ export default function DivisionDetailCard({ division, data, loading, onBack, in
                     {/* Premi Analysis */}
                     <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
                         <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#334155', marginBottom: '1.5rem' }}>
-                            💰 Premi Composition
+                            Premi Composition
                         </h3>
                         {data.premi && data.premi.length > 0 ? (
                             <>
@@ -389,7 +389,7 @@ export default function DivisionDetailCard({ division, data, loading, onBack, in
                                 <div style={{ fontSize: '1.25rem', fontWeight: '800', color: '#1e293b' }}>{selectedEmp.name}</div>
                                 <div style={{ fontSize: '0.85rem', color: '#64748b' }}>{selectedEmp.new_nik || selectedEmp.nik} · {selectedEmp.gang} · {selectedEmp.role}</div>
                             </div>
-                            <button onClick={() => setSelectedEmp(null)} style={{ border: 'none', background: '#f1f5f9', borderRadius: '8px', width: '32px', height: '32px', cursor: 'pointer', fontSize: '1rem', color: '#64748b' }}>✕</button>
+                            <button onClick={() => setSelectedEmp(null)} style={{ border: 'none', background: '#f1f5f9', borderRadius: '8px', width: '32px', height: '32px', cursor: 'pointer', fontSize: '1rem', color: '#64748b' }}>×</button>
                         </div>
                         <div style={{ padding: '1.5rem' }}>
                             {(() => {

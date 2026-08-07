@@ -1,4 +1,5 @@
 import React from 'react';
+import { RefreshCw, AlertTriangle } from 'lucide-react';
 
 /**
  * ErrorBoundary — Catches render errors in lazy-loaded pages.
@@ -66,7 +67,7 @@ class ErrorBoundary extends React.Component {
                             margin: '0 auto 1.5rem',
                             fontSize: '28px'
                         }}>
-                            {isChunkError ? '🔄' : '⚠️'}
+                            {isChunkError ? <RefreshCw size={28} /> : <AlertTriangle size={28} />}
                         </div>
 
                         {/* Title */}
@@ -113,7 +114,7 @@ class ErrorBoundary extends React.Component {
                                 onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
                                 onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#3b82f6'}
                             >
-                                🔄 Coba Lagi
+                                <RefreshCw size={16} /> Coba Lagi
                             </button>
 
                             <button

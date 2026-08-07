@@ -98,7 +98,7 @@ export default function CostPerTonPanel({ trends = [], divisionRows = [], title 
                         {insights.map((ins, i) => {
                             const palette = ins.tone === 'bad' ? { bg: '#FBE9E6', bd: '#F0CFC9', fg: C.potongan, ic: '▲' }
                                 : ins.tone === 'good' ? { bg: '#E4F4EB', bd: '#C4E6D2', fg: C.premi, ic: '▼' }
-                                : ins.tone === 'empty' ? { bg: C.warnBg, bd: '#EDD9B4', fg: C.lembur, ic: '⚠' }
+                                : ins.tone === 'empty' ? { bg: C.warnBg, bd: '#EDD9B4', fg: C.lembur, ic: '▲' }
                                 : { bg: '#EAF1FB', bd: '#CBDCF1', fg: '#2C5AA0', ic: 'ℹ' };
                             return (
                                 <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, background: palette.bg, border: `1px solid ${palette.bd}`, borderRadius: 10, padding: '9px 12px', fontSize: 13, color: palette.fg, fontWeight: 600, lineHeight: 1.45 }}>
@@ -111,7 +111,7 @@ export default function CostPerTonPanel({ trends = [], divisionRows = [], title 
                     {/* Trend chart */}
                     {ntrends.length > 1 && (
                         <div style={{ marginBottom: ranked.length ? 18 : 0 }}>
-                            <div style={{ fontSize: 12, fontWeight: 700, color: C.text2, marginBottom: 8 }}>Tren — Upah Kotor (bar) vs Cost/Ton (garis)</div>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: C.text2, marginBottom: 8 }}>Tren · Upah Kotor (bar) vs Cost/Ton (garis)</div>
                             <div style={{ height: 260 }}>
                                 <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={180}>
                                     <ComposedChart data={ntrends} margin={{ top: 8, right: 36, left: 0, bottom: 0 }}>
@@ -146,7 +146,7 @@ const RankCard = ({ title, rows, tone }) => {
     return (
         <div style={{ background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 12, padding: '14px 16px' }}>
             <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: bad ? C.potongan : C.premi, marginBottom: 10 }}>{title}</div>
-            {rows.length === 0 ? <div style={{ fontSize: 12, color: C.muted }}>—</div> : rows.map(r => (
+            {rows.length === 0 ? <div style={{ fontSize: 12, color: C.muted }}>-</div> : rows.map(r => (
                 <div key={r.division_code} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderTop: `1px solid ${C.border}`, fontSize: 13 }}>
                     <span style={{ fontWeight: 700, color: C.text }}>{r.division_code}</span>
                     <span style={{ fontVariantNumeric: 'tabular-nums', color: bad ? C.potongan : C.premi, fontWeight: 700 }}>{fmtCompact(r.cpt)}/t</span>

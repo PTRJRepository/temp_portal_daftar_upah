@@ -142,7 +142,7 @@ export default function ComponentMetadataTestPage() {
   return (
     <div className="component-metadata-test-page">
       <div className="test-header">
-        <h1>🧪 Component Metadata Test Page</h1>
+        <h1> Component Metadata Test Page</h1>
         <p>Testing unified payroll component architecture with metadata</p>
       </div>
 
@@ -188,28 +188,28 @@ export default function ComponentMetadataTestPage() {
           className="btn btn-primary"
           disabled={loading}
         >
-          {loading && activeTab === 'payroll' ? 'Loading...' : '📊 Fetch Payroll with Components'}
+          {loading && activeTab === 'payroll' ? 'Loading...' : ' Fetch Payroll with Components'}
         </button>
         <button
           onClick={handleFetchRegistry}
           className="btn btn-secondary"
           disabled={loading}
         >
-          {loading && activeTab === 'registry' ? 'Loading...' : '📋 Fetch Registry'}
+          {loading && activeTab === 'registry' ? 'Loading...' : ' Fetch Registry'}
         </button>
       </div>
 
       {/* Error Display */}
       {error && (
         <div className="error-message">
-          ❌ {error}
+           {error}
         </div>
       )}
 
       {/* Registry Tab */}
       {activeTab === 'registry' && registry && (
         <div className="test-section">
-          <h2>📋 Component Registry Status</h2>
+          <h2> Component Registry Status</h2>
           <div className="registry-info">
             <div className="info-item">
               <span className="info-label">Total Components:</span>
@@ -243,7 +243,7 @@ export default function ComponentMetadataTestPage() {
       {/* Payroll with Components Tab */}
       {activeTab === 'payroll' && payrollWithComponents && (
         <div className="test-section">
-          <h2>📊 Payroll Data with Component Metadata</h2>
+          <h2> Payroll Data with Component Metadata</h2>
 
           {payrollWithComponents.summary && (
             <div className="payroll-summary">
@@ -288,7 +288,7 @@ export default function ComponentMetadataTestPage() {
       {/* Employee Components Tab */}
       {activeTab === 'employee' && selectedEmployee && employeeComponents && (
         <div className="test-section">
-          <h2>👤 Component Breakdown: {selectedEmployee.nama || selectedEmployee.EmpName}</h2>
+          <h2> Component Breakdown: {selectedEmployee.nama || selectedEmployee.EmpName}</h2>
           <p className="employee-subtitle">NIK: {selectedEmployee.nik || selectedEmployee.NIK}</p>
 
           <button
@@ -301,7 +301,7 @@ export default function ComponentMetadataTestPage() {
           {/* Display all components with metadata */}
           {employeeComponents.gaji_pokok && (
             <div className="component-section">
-              <h3>💵 Gaji Pokok (Basic Salary)</h3>
+              <h3> Gaji Pokok (Basic Salary)</h3>
               <ComponentMetadataViewer
                 component={employeeComponents.gaji_pokok}
                 componentName="gaji_pokok"
@@ -312,7 +312,7 @@ export default function ComponentMetadataTestPage() {
 
           {employeeComponents.lembur && (
             <div className="component-section">
-              <h3>⏰ Lembur (Overtime)</h3>
+              <h3> Lembur (Overtime)</h3>
               <ComponentMetadataViewer
                 component={employeeComponents.lembur}
                 componentName="lembur"
@@ -323,7 +323,7 @@ export default function ComponentMetadataTestPage() {
 
           {employeeComponents.premi && (
             <div className="component-section">
-              <h3>💰 Premi (Premium)</h3>
+              <h3> Premi (Premium)</h3>
               <ComponentMetadataViewer
                 component={employeeComponents.premi}
                 componentName="premi"
@@ -334,7 +334,7 @@ export default function ComponentMetadataTestPage() {
 
           {employeeComponents.tunjangan && (
             <div className="component-section">
-              <h3>🎁 Tunjangan (Allowances)</h3>
+              <h3> Tunjangan (Allowances)</h3>
               <ComponentMetadataViewer
                 component={employeeComponents.tunjangan}
                 componentName="tunjangan"
@@ -345,7 +345,7 @@ export default function ComponentMetadataTestPage() {
 
           {employeeComponents.potongan && (
             <div className="component-section">
-              <h3>✂️ Potongan (Deductions)</h3>
+              <h3> Potongan (Deductions)</h3>
               <ComponentMetadataViewer
                 component={employeeComponents.potongan}
                 componentName="potongan"
@@ -356,7 +356,7 @@ export default function ComponentMetadataTestPage() {
 
           {employeeComponents.pph21_ter && (
             <div className="component-section">
-              <h3>🧾 PPH21 TER (Tax)</h3>
+              <h3> PPH21 TER (Tax)</h3>
               <ComponentMetadataViewer
                 component={employeeComponents.pph21_ter}
                 componentName="pph21_ter"
@@ -367,7 +367,7 @@ export default function ComponentMetadataTestPage() {
 
           {/* Component Table View */}
           <div className="component-section">
-            <h3>📋 Component Summary Table</h3>
+            <h3> Component Summary Table</h3>
             <ComponentMetadataTable
               components={employeeComponents}
               title="All Components Summary"

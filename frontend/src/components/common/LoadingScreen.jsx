@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
+import { Check } from 'lucide-react'
 import { getBasePath } from '../../utils/prodModeUtils'
 import {
   initializeLocationData,
@@ -280,7 +281,7 @@ export default function LoadingScreen({
             return (
               <div key={`${logMsg}-${index}`} className="loading-log-item">
                 <span className={`log-icon ${isLast ? 'processing' : 'completed'}`}>
-                  {isLast ? '●' : '✓'}
+                  {isLast ? '●' : <Check size={12} />}
                 </span>
                 <span>{logMsg}</span>
               </div>

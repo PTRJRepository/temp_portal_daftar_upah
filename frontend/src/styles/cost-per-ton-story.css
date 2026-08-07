@@ -126,12 +126,17 @@
 
 @media print {
     .cpts-sticky-bar, .cpts-act-nav { display: none; }
-    /* Dek interaktif (chart + uraian klik) tidak dicetak; cetakan = lampiran tabel rapi */
-    .cpts-interactive { display: none !important; }
+    /* Layar interaktif tetap dicetak INI: chart diskala penuh ke lebar halaman (anti kepotong),
+       tiap act jadi 1 halaman rapi, dan lampiran tabel menyusul sebagai lampiran data. */
     .cpts-drill-panel { display: none !important; }
-    /* Chart recharts tidak dicetak (sering kepotong); data tetap lengkap via tabel */
-    .cpts-page .recharts-responsive-container, .cpts-page .recharts-wrapper { display: none !important; }
+    .cpts-act { opacity: 1 !important; transform: none !important; page-break-after: always; page-break-inside: auto; padding: 12pt 4pt; }
     .cpts-page { background: #fff !important; }
+    /* Chart recharts: skala ke lebar halaman, jaga rasio, jangan disobek antar halaman */
+    .cpts-page .recharts-responsive-container { width: 100% !important; max-width: 100% !important; height: auto !important; }
+    .cpts-page .recharts-wrapper { width: 100% !important; max-width: 100% !important; height: auto !important; overflow: visible !important; page-break-inside: avoid !important; }
+    .cpts-page .recharts-surface { display: block !important; width: 100% !important; height: auto !important; max-width: 100% !important; max-height: none !important; }
+    .cpts-page .cpts-trend-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 10pt !important; }
+    .cpts-page .cpts-trend-panel { page-break-inside: avoid !important; }
     .cpts-print-detail { page-break-before: always; }
     .cpts-print-page { page-break-inside: avoid; }
     .cpts-print-gankset { page-break-inside: avoid; margin-bottom: 8px; }

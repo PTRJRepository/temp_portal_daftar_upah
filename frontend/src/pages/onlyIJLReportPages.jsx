@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import { fetchAllDivisionsTotals, fetchAvailablePeriods, fetchComparisonSummary } from '../services/summaryReportService';
 import ImpactReportPage from './ImpactReportPage';
 import { printReport } from '../utils/printPageSetup';
+import { ClipboardList } from 'lucide-react';
 import '../styles/wages-summary-professional.css';
 
 export default function WagesSummaryRebinmasPage({ onBack }) {
@@ -715,7 +716,7 @@ export default function WagesSummaryRebinmasPage({ onBack }) {
                                             {summaryData.length === 0 ? (
                                                 <tr>
                                                     <td colSpan="10" style={{ textAlign: 'center', padding: '4rem', color: '#64748b' }}>
-                                                        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📋</div>
+                                                        <div style={{ marginBottom: '1rem', color: '#cbd5e1' }}><ClipboardList size={48} strokeWidth={1.5} /></div>
                                                         <div>Tidak ada data tersedia untuk periode ini</div>
                                                     </td>
                                                 </tr>

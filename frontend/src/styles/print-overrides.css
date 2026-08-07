@@ -75,11 +75,154 @@
        PRINT-EXPAND: reveal click-hidden report content
        (dipakai SalaryAnalysisPage, CostPerTonStoryPage, TonaseAnalysis)
        ============================================ */
+
+    /* --- SalaryAnalysisPage: tata ulang cetak (bukan "layar dipaksa muat kertas") ---
+       Prinsip: kertas = dokumen ledger datar. Kartu layar (shadow, warna, rounded)
+       diratakan jadi baris/tabel, grid multi-kolom ditumpuk, furniture slide dibuang. */
+
+    /* ReportBody latar krem → putih di kertas; padding layar dibuang (kertas punya margin @page) */
+    html.print-expanded div[style*="background: rgb(240, 238, 230)"],
+    html.print-expanded div[style*="#F0EEE6" i] { background: #fff !important; }
+
+    /* Hero laporan: padding layar besar → blok judul rapat; badge periode jadi teks biasa */
+    html.print-expanded .sal-hero {
+        padding: 0 0 10pt 0 !important;
+        background: #fff !important;
+        border-bottom: 1.5pt solid #15211A !important;
+    }
+    html.print-expanded .sal-hero h1 { font-size: 16pt !important; }
+    html.print-expanded .sal-hero p { font-size: 9pt !important; margin-top: 2pt !important; }
+    html.print-expanded .sal-hero span[style*="font-variant-numeric"] {
+        border: none !important;
+        padding: 0 !important;
+        font-size: 9pt !important;
+        background: none !important;
+    }
+
+    /* Slide chrome: header jadi heading section ledger, nomor & "Slide 0X" dibuang */
+    html.print-expanded .present-slide { margin-bottom: 14pt !important; }
+    html.print-expanded .present-slide-header {
+        padding: 0 0 4pt 0 !important;
+        margin: 0 0 8pt 0 !important;
+        background: none !important;
+        border: none !important;
+        border-bottom: 1pt solid #15211A !important;
+        border-radius: 0 !important;
+    }
+    html.print-expanded .present-slide-num,
+    html.print-expanded .present-slide-kicker { display: none !important; }
+    html.print-expanded .present-slide-header h2 { font-size: 12pt !important; }
+    html.print-expanded .present-slide-header p { font-size: 8.5pt !important; margin-top: 1pt !important; }
+
+    /* Section/Section card: shadow+radius+padding layar → blok datar */
+    html.print-expanded .present-slide-body > div,
+    html.print-expanded .sal-print-appendix > div { box-shadow: none !important; }
+
+    /* Page-break: judul slide jangan yatim di bawah halaman; section jangan kepotong */
+    html.print-expanded .present-slide-header { page-break-after: avoid !important; }
+    html.print-expanded .present-slide-body > div { page-break-inside: auto !important; }
+    html.print-expanded .present-slide-body div[style*="border-radius: 10px"] {
+        page-break-inside: avoid !important;
+    }
+
+    /* Grid 2-kolom layar (komposisi | roster, komponen | ranking) → tumpuk vertikal */
+    html.print-expanded .present-slide-body div[style*="grid-template-columns: minmax(0, 340px)"],
+    html.print-expanded .present-slide-body div[style*="grid-template-columns: repeat(auto-fit, minmax(420px"],
+    html.print-expanded .present-slide-body div[style*="grid-template-columns: repeat(auto-fit, minmax(340px"] {
+        display: block !important;
+    }
+    html.print-expanded .present-slide-body div[style*="grid-template-columns"] > * {
+        margin-bottom: 10pt !important;
+    }
+    /* KPI cards (grid auto-fit 180px) → 4 kolom fix, isi kartu flat */
+    html.print-expanded .present-slide-body div[style*="repeat(auto-fit, minmax(180px"] {
+        display: grid !important;
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        gap: 6pt !important;
+    }
+    /* Work-type cards (auto-fit 200px) → 4 kolom fix */
+    html.print-expanded .present-slide-body div[style*="repeat(auto-fit, minmax(200px"] {
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        gap: 6pt !important;
+    }
+    /* Overtime earners (auto-fit 150/170px) → 6 kolom kompak */
+    html.print-expanded .present-slide-body div[style*="repeat(auto-fill, minmax(150px"],
+    html.print-expanded .present-slide-body div[style*="repeat(auto-fill, minmax(170px"] {
+        grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+        gap: 4pt !important;
+    }
+    /* Top earners (auto-fill 185px) → 5 kolom */
+    html.print-expanded .present-slide-body div[style*="repeat(auto-fill, minmax(185px"] {
+        grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+        gap: 4pt !important;
+    }
+    /* Gang cards (auto-fill 160px) → 6 kolom */
+    html.print-expanded .present-slide-body div[style*="repeat(auto-fill, minmax(160px"] {
+        grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+        gap: 4pt !important;
+    }
+
+    /* KPI cards: flat (border hairline, tanpa shadow) */
+    html.print-expanded div[style*="minmax(180px, 1fr)"] > div {
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        padding: 6pt 8pt !important;
+    }
+    /* Font metric besar layar → angka cetak wajar */
+    html.print-expanded div[style*="minmax(180px, 1fr)"] > div > div[style*="font-size: 25px"],
+    html.print-expanded div[style*="minmax(180px, 1fr)"] > div > div[style*="font-size: 26px"] {
+        font-size: 14pt !important;
+    }
+
+    /* Roster scroll container (screen) → bebas di kertas */
+    html.print-expanded .sal-roster-scroll {
+        max-height: none !important;
+        overflow: visible !important;
+        padding-right: 0 !important;
+    }
+    /* Gang group header: ulangi rapi, jangan sticky di kertas */
+    html.print-expanded .sal-gang-group { page-break-inside: auto !important; }
+    html.print-expanded .sal-gang-group > div:first-child {
+        position: static !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        page-break-after: avoid !important;
+    }
+    /* Roster cards → grid kompak 5 kolom, kartu flat */
     html.print-expanded [class*="sal-roster-grid"] {
         max-height: none !important;
         overflow: visible !important;
-        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+        gap: 4pt !important;
     }
+    html.print-expanded [class*="sal-roster-grid"] > div {
+        box-shadow: none !important;
+        border-radius: 4pt !important;
+        padding: 4pt 6pt !important;
+        page-break-inside: avoid !important;
+    }
+    /* progress bar mini di kartu roster: tak bermakna di kertas */
+    html.print-expanded [class*="sal-roster-grid"] > div > div[style*="height: 4px"] {
+        display: none !important;
+    }
+
+    /* Kartu lembur/top-earner/work-type: flat, hindari potong antar-halaman */
+    html.print-expanded div[style*="minmax(150px, 1fr)"] > div,
+    html.print-expanded div[style*="minmax(170px, 1fr)"] > div,
+    html.print-expanded div[style*="minmax(185px, 1fr)"] > div,
+    html.print-expanded div[style*="minmax(200px, 1fr)"] > div,
+    html.print-expanded div[style*="minmax(160px, 1fr)"] > div {
+        box-shadow: none !important;
+        page-break-inside: avoid !important;
+    }
+
+    /* Chart: jangan terpotong di tengah halaman */
+    html.print-expanded .recharts-responsive-container {
+        page-break-inside: avoid !important;
+    }
+    /* Scatter HK-vs-upah padat; beri halaman sendiri bila perlu */
+    html.print-expanded .recharts-wrapper { page-break-inside: avoid !important; }
+
     html.print-expanded .sal-drawer-print {
         page-break-inside: avoid !important;
     }
@@ -116,6 +259,25 @@
     /* Lampiran analisis gaji: tabel distribusi rapi */
     html.print-expanded .sal-print-appendix {
         page-break-before: always;
+        max-width: none !important;
+        padding: 0 !important;
+    }
+    /* Judul lampiran: heading ledger, bukan subtitle layar */
+    html.print-expanded .sal-print-appendix .cpts-print-title {
+        font-size: 13pt !important;
+        border-bottom: 1.5pt solid #15211A;
+        padding-bottom: 4pt;
+        margin-bottom: 4pt;
+    }
+    html.print-expanded .sal-print-appendix .cpts-print-sub {
+        font-size: 8.5pt !important;
+        margin-bottom: 10pt !important;
+    }
+    /* Definisi: list normal (ul), bukan div dengan <li> liar */
+    html.print-expanded .sal-print-appendix .cpts-print-notes {
+        font-size: 8.5pt !important;
+        line-height: 1.55 !important;
+        padding-left: 14pt !important;
     }
     html.print-expanded .sal-print-appendix table {
         width: 100% !important;
@@ -138,4 +300,48 @@
     html.print-expanded .sal-print-appendix tr {
         page-break-inside: avoid !important;
     }
+    html.print-expanded .sal-print-appendix thead {
+        display: table-header-group !important; /* header ulang tiap halaman */
+    }
+    /* Drawer payslip inline (mode cetak): border tegas, header hijau solid */
+    html.print-expanded .sal-drawer-print > div:first-child {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* ============================================
+       CHART (recharts) DICETAK: skala penuh ke lebar halaman.
+       Berlaku global — semua laporan (cost/ton, tonase, executive, wages,
+       analysis, impact, dll) mencetak grafiknya tanpa kepotong.
+       ============================================ */
+    .recharts-responsive-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+    }
+    .recharts-wrapper {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+    .recharts-surface {
+        display: block !important;
+        width: 100% !important;
+        height: auto !important;
+        max-width: 100% !important;
+        max-height: none !important;
+    }
+    .recharts-legend-wrapper,
+    .recharts-default-legend {
+        page-break-inside: avoid !important;
+    }
+    /* Bungkus chart tinggi inline (height: 26x/32x px) → jangan disobek antar halaman */
+    div[style*="height: 2"],
+    div[style*="height: 3"] {
+        page-break-inside: avoid !important;
+    }
+
 }

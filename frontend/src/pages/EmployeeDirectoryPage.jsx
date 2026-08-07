@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { buildAppPath } from '../utils/prodModeUtils';
 import LoadingScreen from '../components/common/LoadingScreen';
 import AgGridWrapper from '../components/common/AgGridWrapper';
+import { Search, Inbox, Users } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8002';
 
@@ -300,7 +301,7 @@ export default function EmployeeDirectoryPage() {
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1rem' }}>
                     <div style={{ flex: 1, position: 'relative' }}>
                         <span style={{ position: 'absolute', left: '12px', top: '10px', color: '#94a3b8' }}>
-                            🔍
+                            <Search size={16} />
                         </span>
                         <input
                             type="text"
@@ -424,7 +425,7 @@ export default function EmployeeDirectoryPage() {
                             </div>
                         ) : (
                             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
-                                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📭</div>
+                                <div style={{ marginBottom: '1rem' }}><Inbox size={48} strokeWidth={1.5} /></div>
                                 <h3>Data tidak ditemukan</h3>
                                 <p>Coba gunakan kata kunci pencarian yang lain atau ubah filter.</p>
                             </div>
@@ -432,7 +433,7 @@ export default function EmployeeDirectoryPage() {
                     </>
                 ) : (
                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
-                        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>👥</div>
+                        <div style={{ marginBottom: '1rem' }}><Users size={48} strokeWidth={1.5} /></div>
                         <h3>Mulai Pencarian</h3>
                         <p>Ketikkan nama atau NIK, atau klik "Cari / Filter" dengan filter yang sudah diatur.</p>
                     </div>

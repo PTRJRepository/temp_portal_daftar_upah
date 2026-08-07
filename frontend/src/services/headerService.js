@@ -81,7 +81,7 @@ export const fetchDynamicHeaders = async (token, month = null, year = null, gang
 
     const fetchTime = Date.now() - startTime
     console.log(`[Headers API] Response received in ${fetchTime}ms`)
-    console.log(`[Headers API] Header structure:`, data ? '✅ Valid' : '❌ Empty')
+    console.log(`[Headers API] Header structure:`, data ? 'Valid' : 'Empty')
 
     // Cache the response
     setCache(headerCache, cacheKey, data)

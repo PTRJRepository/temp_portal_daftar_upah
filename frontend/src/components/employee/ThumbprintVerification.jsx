@@ -5,6 +5,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { Info, Check, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import './ThumbprintVerification.css';
 
@@ -55,7 +56,7 @@ export function ThumbprintVerification({ division, month, year, upahBersih }) {
     if (!thumbprintData) {
         return (
             <div className="thumbprint-verification no-data">
-                <span className="info-icon">ℹ️</span>
+                <span className="info-icon"><Info size={14} /></span>
                 <span>Data thumbprint tidak tersedia untuk periode ini</span>
             </div>
         );
@@ -74,7 +75,7 @@ export function ThumbprintVerification({ division, month, year, upahBersih }) {
     return (
         <div className={`thumbprint-verification ${isMatch ? 'match' : 'mismatch'}`}>
             <div className="verification-header" onClick={() => setShowDetails(!showDetails)}>
-                <span className="verification-icon">{isMatch ? '✅' : '⚠️'}</span>
+                <span className="verification-icon">{isMatch ? <Check size={16} /> : <AlertTriangle size={16} />}</span>
                 <span className="verification-title">Verifikasi Thumbprint Wages</span>
                 <span className="verification-status">
                     {isMatch ? 'COCK' : 'TIDAK COCOK'}
@@ -157,7 +158,7 @@ export function CompactThumbprintBadge({ thumbprintValue, actualValue }) {
 
     return (
         <span className={`compact-thumbprint ${isMatch ? 'match' : 'mismatch'}`} title={`Thumbprint: ${formatRupiah(thumbprintValue)}, Selisih: ${difference < 0 ? '-' : '+'}${formatRupiah(Math.abs(difference))}`}>
-            {isMatch ? '✅' : '⚠️'} Thumbprint: {formatCompact(thumbprintValue)}
+            {isMatch ? 'OK' : '▲'} Thumbprint: {formatCompact(thumbprintValue)}
         </span>
     );
 }

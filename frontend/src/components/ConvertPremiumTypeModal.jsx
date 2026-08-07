@@ -165,7 +165,7 @@ export default function ConvertPremiumTypeModal({
                                     onChange={(e) => setFromName(e.target.value)}
                                     style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #cbd5e1', boxSizing: 'border-box' }}
                                 >
-                                    <option value="">— pilih kolom premi —</option>
+                                    <option value="">- pilih kolom premi -</option>
                                     {(currentColumns || []).filter((c) => c?.type === 'PREMI' && c?.name).map((c) => (
                                         <option key={c.name} value={c.name}>{c.name}</option>
                                     ))}
@@ -182,7 +182,7 @@ export default function ConvertPremiumTypeModal({
                                     onChange={(e) => setToName(e.target.value)}
                                     style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #cbd5e1', boxSizing: 'border-box' }}
                                 >
-                                    <option value="">— pilih definisi target —</option>
+                                    <option value="">- pilih definisi target -</option>
                                     {activePremiumDefs.map((def) => (
                                         <option key={def.adjustment_name} value={def.adjustment_name}>
                                             {def.adjustment_name} ({def.input_type})
@@ -201,7 +201,7 @@ export default function ConvertPremiumTypeModal({
                                     fontSize: 13
                                 }}>
                                     <div style={{ fontWeight: 800, marginBottom: 4 }}>
-                                        {blocked ? '✕ Diblokir' : '✓ Diizinkan'}
+                                        {blocked ? '× Diblokir' : 'Diizinkan'}
                                     </div>
                                     <div>{validation.reason}</div>
                                     {allowed && validation.metadata_action && (

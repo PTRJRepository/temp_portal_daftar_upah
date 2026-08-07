@@ -255,7 +255,7 @@ export const PayrollAggregator = {
     // LOG: Show source data overview
     const gangCount = data.gangs?.length || 0;
     const totalEmpRaw = data.gangs?.reduce((sum, g) => sum + (g.employees?.length || 0), 0) || 0;
-    console.log(`[PayrollAggregator] 📦 flattenData IN | gangs=${gangCount} rawEmployees=${totalEmpRaw}`);
+    console.log(`[PayrollAggregator] flattenData IN | gangs=${gangCount} rawEmployees=${totalEmpRaw}`);
 
     // Check for duplicate NIKs across gangs (causes duplicate rows)
     const nikMap = {};
@@ -273,7 +273,7 @@ export const PayrollAggregator = {
       });
     });
     if (dupNik.length > 0) {
-      console.warn(`[PayrollAggregator] ⚠️ DUPLICATE NIKs found (${dupNik.length}):`, dupNik.slice(0, 5));
+      console.warn(`[PayrollAggregator] DUPLICATE NIKs found (${dupNik.length}):`, dupNik.slice(0, 5));
     }
 
     const flatRows = [];
@@ -297,7 +297,7 @@ export const PayrollAggregator = {
     // Keep this aligned with payrollTotalsCalculator to avoid web/backend drift.
     // ============================================================
     const filteredRows = flatRows.filter(row => (row.jumlah_hk || 0) > 0);
-    console.log(`[PayrollAggregator] 📤 flattenData OUT | flat=${flatRows.length} filtered=${filteredRows.length} (excluded ${flatRows.length - filteredRows.length})`);
+    console.log(`[PayrollAggregator] flattenData OUT | flat=${flatRows.length} filtered=${filteredRows.length} (excluded ${flatRows.length - filteredRows.length})`);
     return filteredRows;
   },
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { XCircle, Pencil, History, RotateCcw } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { getEmployeeCheckroll, getEmployeeHistoricalData } from '../../services/employeeDetailService'
 import LoadingScreen from '../common/LoadingScreen'
@@ -151,7 +152,7 @@ export default function HrInfoPage({
         return (
             <div className="payslip-wrapper" style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <div style={{ textAlign: 'center', padding: '3rem', backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
-                    <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>❌</div>
+                    <div style={{ marginBottom: '1rem', color: '#dc2626' }}><XCircle size={56} strokeWidth={1.5} /></div>
                     <h2 style={{ color: '#1e293b', marginBottom: '1rem' }}>Gagal Memuat Data</h2>
                     <p style={{ color: '#64748b', marginBottom: '2rem' }}>{error}</p>
                     <button onClick={onBack} style={{ padding: '10px 24px', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}>Kembali</button>
@@ -212,12 +213,12 @@ export default function HrInfoPage({
     });
 
     const tabs = [
-        { id: 'profil', label: '👤 Profil' },
-        { id: 'karir', label: '📊 Karir & Mutasi' },
-        { id: 'jabatan', label: '💼 Tunjangan Jabatan' },
-        { id: 'beras', label: '🍚 Tunjangan Beras' },
-        { id: 'gaji', label: '💰 Riwayat Gaji' },
-        { id: 'analisis', label: '📋 Analisis Lengkap' },
+        { id: 'profil', label: 'Profil' },
+        { id: 'karir', label: 'Karir & Mutasi' },
+        { id: 'jabatan', label: 'Tunjangan Jabatan' },
+        { id: 'beras', label: 'Tunjangan Beras' },
+        { id: 'gaji', label: 'Riwayat Gaji' },
+        { id: 'analisis', label: 'Analisis Lengkap' },
     ];
 
     return (
@@ -274,8 +275,8 @@ export default function HrInfoPage({
                         <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span style={{ color: '#94a3b8' }}>NIK:</span>
                             <strong style={{ color: '#0f172a' }}>{empInfo.actual_nik || '-'}</strong>
-                            <button onClick={() => handleEditNik(empInfo)} style={{ background: 'none', border: '1px solid #e2e8f0', cursor: 'pointer', fontSize: '10px', padding: '2px 4px', borderRadius: '4px', backgroundColor: 'white' }} title="Edit NIK">✏️ Edit</button>
-                            <button onClick={openNikHistory} style={{ background: 'none', border: '1px solid #e2e8f0', cursor: 'pointer', fontSize: '10px', padding: '2px 4px', borderRadius: '4px', backgroundColor: 'white' }} title="Riwayat Versi NIK">⏱️ Riwayat</button>
+                            <button onClick={() => handleEditNik(empInfo)} style={{ background: 'none', border: '1px solid #e2e8f0', cursor: 'pointer', fontSize: '10px', padding: '2px 4px', borderRadius: '4px', backgroundColor: 'white', display: 'inline-flex', alignItems: 'center', gap: '3px' }} title="Edit NIK"><Pencil size={10} /> Edit</button>
+                            <button onClick={openNikHistory} style={{ background: 'none', border: '1px solid #e2e8f0', cursor: 'pointer', fontSize: '10px', padding: '2px 4px', borderRadius: '4px', backgroundColor: 'white', display: 'inline-flex', alignItems: 'center', gap: '3px' }} title="Riwayat Versi NIK"><History size={10} /> Riwayat</button>
                         </span>
                         <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ color: '#94a3b8' }}>Divisi:</span> <strong style={{ color: '#0f172a' }}>{empInfo.loc_code || division || '-'}</strong></span>
                         <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ color: '#94a3b8' }}>Gang:</span> <strong style={{ color: '#0f172a' }}>{empInfo.gang_code || '-'}</strong></span>
@@ -328,11 +329,11 @@ export default function HrInfoPage({
                 <div style={card}>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem' }}>
                         <div>
-                            <h3 style={{ margin: '0 0 1rem 0', color: '#0369a1', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '2px solid #bae6fd', paddingBottom: '0.25rem', display: 'inline-block' }}>🏢 Penempatan & Kepegawaian</h3>
+                            <h3 style={{ margin: '0 0 1rem 0', color: '#0369a1', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '2px solid #bae6fd', paddingBottom: '0.25rem', display: 'inline-block' }}>Penempatan & Kepegawaian</h3>
                             <div style={{ display: 'grid', gap: '0.5rem', fontSize: '0.88rem' }}>
                                 {[
                                     ['Divisi / Lokasi', empInfo.loc_code || division || '-'],
-                                    ['Gang', `${empInfo.gang_code || '-'} ${empInfo.gang_description ? `— ${empInfo.gang_description}` : ''}`],
+                                    ['Gang', `${empInfo.gang_code || '-'} ${empInfo.gang_description ? `· ${empInfo.gang_description}` : ''}`],
                                     ['Status', empInfo.status === '1' ? 'Aktif' : empInfo.status === '0' ? 'Non-Aktif' : (empInfo.status || '-')],
                                     ['Tipe Karyawan', empInfo.employee_type || '-'],
                                     ['Tanggal Bergabung', empInfo.join_date ? new Date(empInfo.join_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'],
@@ -349,7 +350,7 @@ export default function HrInfoPage({
                             </div>
                         </div>
                         <div>
-                            <h3 style={{ margin: '0 0 1rem 0', color: '#b45309', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '2px solid #fde68a', paddingBottom: '0.25rem', display: 'inline-block' }}>👤 Data Demografis</h3>
+                            <h3 style={{ margin: '0 0 1rem 0', color: '#b45309', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '2px solid #fde68a', paddingBottom: '0.25rem', display: 'inline-block' }}>Data Demografis</h3>
                             <div style={{ display: 'grid', gap: '0.5rem', fontSize: '0.88rem' }}>
                                 {[
                                     ['Jenis Kelamin', empInfo.jenis_kelamin === 'P' ? 'Perempuan' : empInfo.jenis_kelamin === 'L' ? 'Laki-laki' : '-'],
@@ -373,7 +374,7 @@ export default function HrInfoPage({
             {activeTab === 'karir' && (
                 <div style={card}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                        <h3 style={{ margin: 0, color: '#0f172a', fontSize: '1.25rem', fontWeight: 700 }}>📊 Riwayat Karir & Mutasi Divisi</h3>
+                        <h3 style={{ margin: 0, color: '#0f172a', fontSize: '1.25rem', fontWeight: 700 }}>Riwayat Karir & Mutasi Divisi</h3>
                         <span style={{ fontSize: '0.75rem', padding: '4px 12px', backgroundColor: '#f1f5f9', color: '#475569', borderRadius: 'full', fontWeight: 600, border: '1px solid #e2e8f0' }}>Seeded History DB</span>
                     </div>
                     {historyLoading ? (
@@ -421,7 +422,7 @@ export default function HrInfoPage({
             {/* ==================== TAB: JABATAN ==================== */}
             {activeTab === 'jabatan' && (
                 <div style={card}>
-                    <h3 style={{ margin: '0 0 1.5rem 0', color: '#0f172a', fontSize: '1.25rem', fontWeight: 700 }}>💼 Riwayat Tunjangan Jabatan</h3>
+                    <h3 style={{ margin: '0 0 1.5rem 0', color: '#0f172a', fontSize: '1.25rem', fontWeight: 700 }}>Riwayat Tunjangan Jabatan</h3>
                     {historyLoading ? (
                         <div style={{ textAlign: 'center', padding: '4rem', color: '#64748b' }}>
                             <div className="spinner" style={{ border: '3px solid #e2e8f0', borderTopColor: '#0f172a', borderRadius: '50%', width: '32px', height: '32px', animation: 'spin 1s linear infinite', margin: '0 auto 1rem' }}></div>
@@ -457,7 +458,7 @@ export default function HrInfoPage({
             {/* ==================== TAB: BERAS ==================== */}
             {activeTab === 'beras' && (
                 <div style={card}>
-                    <h3 style={{ margin: '0 0 1.5rem 0', color: '#0f172a', fontSize: '1.25rem', fontWeight: 700 }}>🍚 Riwayat Tunjangan Beras</h3>
+                    <h3 style={{ margin: '0 0 1.5rem 0', color: '#0f172a', fontSize: '1.25rem', fontWeight: 700 }}>Riwayat Tunjangan Beras</h3>
                     {historyLoading ? (
                         <div style={{ textAlign: 'center', padding: '4rem', color: '#64748b' }}>
                             <div className="spinner" style={{ border: '3px solid #e2e8f0', borderTopColor: '#0f172a', borderRadius: '50%', width: '32px', height: '32px', animation: 'spin 1s linear infinite', margin: '0 auto 1rem' }}></div>
@@ -495,7 +496,7 @@ export default function HrInfoPage({
             {/* ==================== TAB: GAJI ==================== */}
             {activeTab === 'gaji' && (
                 <div style={card}>
-                    <h3 style={{ margin: '0 0 1.5rem 0', color: '#0f172a', fontSize: '1.25rem', fontWeight: 700 }}>💰 Riwayat Penggajian (Simple View)</h3>
+                    <h3 style={{ margin: '0 0 1.5rem 0', color: '#0f172a', fontSize: '1.25rem', fontWeight: 700 }}>Riwayat Penggajian (Simple View)</h3>
                     {historyLoading ? (
                         <div style={{ textAlign: 'center', padding: '4rem', color: '#64748b' }}>
                             <div className="spinner" style={{ border: '3px solid #e2e8f0', borderTopColor: '#0f172a', borderRadius: '50%', width: '32px', height: '32px', animation: 'spin 1s linear infinite', margin: '0 auto 1rem' }}></div>
@@ -538,7 +539,7 @@ export default function HrInfoPage({
             {/* ==================== TAB: ANALISIS LENGKAP ==================== */}
             {activeTab === 'analisis' && (
                 <div>
-                    <h3 style={{ margin: '0 0 1.5rem 0', color: '#0f172a', fontSize: '1.25rem', fontWeight: 700 }}>📋 Analisis Daftar Upah Lengkap — Semua Komponen</h3>
+                    <h3 style={{ margin: '0 0 1.5rem 0', color: '#0f172a', fontSize: '1.25rem', fontWeight: 700 }}>Analisis Daftar Upah Lengkap · Semua Komponen</h3>
                     {historyLoading ? (
                         <div style={{ textAlign: 'center', padding: '4rem', color: '#64748b' }}>
                             <div className="spinner" style={{ border: '3px solid #e2e8f0', borderTopColor: '#0f172a', borderRadius: '50%', width: '32px', height: '32px', animation: 'spin 1s linear infinite', margin: '0 auto 1rem' }}></div>
@@ -667,7 +668,7 @@ export default function HrInfoPage({
                                                 <span style={{ fontWeight: 700, color: '#0f172a' }}>{h.new_value}</span>
                                             </div>
                                             {index === 0 && (
-                                                <button onClick={handleRollbackNik} style={{ padding: '4px 8px', fontSize: '0.75rem', backgroundColor: '#fee2e2', color: '#ef4444', border: '1px solid #fca5a5', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}>🗑️ Rollback</button>
+                                                <button onClick={handleRollbackNik} style={{ padding: '4px 8px', fontSize: '0.75rem', backgroundColor: '#fee2e2', color: '#ef4444', border: '1px solid #fca5a5', borderRadius: '4px', cursor: 'pointer', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '3px' }}><RotateCcw size={11} /> Rollback</button>
                                             )}
                                         </div>
                                         <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '8px' }}>Oleh: {h.changed_by}</div>

@@ -247,11 +247,11 @@ export function formatNumber(value) {
 export function getStatusBadge(status) {
     switch (status) {
         case 'MATCH':
-            return { color: '#10b981', bgColor: '#d1fae5', icon: '✓', label: 'Cocok' };
+            return { color: '#10b981', bgColor: '#d1fae5', icon: 'OK', label: 'Cocok' };
         case 'MINOR_DIFF':
-            return { color: '#f59e0b', bgColor: '#fef3c7', icon: '⚠', label: 'Selisih Kecil' };
+            return { color: '#f59e0b', bgColor: '#fef3c7', icon: '▲', label: 'Selisih Kecil' };
         case 'MAJOR_DIFF':
-            return { color: '#ef4444', bgColor: '#fee2e2', icon: '✗', label: 'Selisih Besar' };
+            return { color: '#ef4444', bgColor: '#fee2e2', icon: '×', label: 'Selisih Besar' };
         case 'NO_WAGES':
             return { color: '#6b7280', bgColor: '#f3f4f6', icon: '?', label: 'Tidak Ada Data' };
         default:

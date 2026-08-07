@@ -319,7 +319,7 @@ export default function AggregationSeederModal({ isOpen, onClose, month, year, d
                             fontWeight: 500
                         }}
                     >
-                        {seeding ? 'Processing...' : '🏭 Seed Tonase'}
+                        {seeding ? 'Processing...' : 'Seed Tonase'}
                     </button>
                     <button
                         onClick={handleForceSeed}

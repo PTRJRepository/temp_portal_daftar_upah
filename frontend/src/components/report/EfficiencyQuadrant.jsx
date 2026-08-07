@@ -25,7 +25,7 @@ export default function EfficiencyQuadrant({ breakdown = [], onDrill, movements 
     return (
         <div style={{ ...CARD, marginBottom: '1.5rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, ...SECTION_TITLE, marginBottom: 8 }}>
-                Efisiensi Divisi — Produktivitas vs Cost/Ton <MetricInfo metricKey="cost_per_ton" />
+                Efisiensi Divisi · Produktivitas vs Cost/Ton <MetricInfo metricKey="cost_per_ton" />
             </div>
             <div style={{ fontSize: 12, color: C.text2, marginBottom: 12 }}>
                 Kanan-bawah = bintang (produktif & murah) · kiri-atas = perlu perhatian. Klik titik untuk bedah.

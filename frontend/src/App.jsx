@@ -9,6 +9,7 @@ import { isProdMode, getUserDivision, redirectToExternalLogin, buildAppPath, get
 import { openEmployeeDetailPage } from './utils/employeeDetailNavigation'
 import DashboardLayout from './layouts/DashboardLayout'
 import ReportToolbar from './components/common/ReportToolbar'
+import { LockOpen, Pencil, Wrench } from 'lucide-react'
 import './styles/print-overrides.css'
 
 const MONTHS = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
@@ -704,10 +705,10 @@ const OperationalReportWrapper = () => {
                 backgroundSize: '1em'
               }}
             >
-              <option value="table">💰 Daftar Upah</option>
-              <option value="attendance">📅 Absensi</option>
-              <option value="overtime">⏰ Lembur</option>
-              <option value="employee-directory">👥 Info Karyawan</option>
+              <option value="table">Daftar Upah</option>
+              <option value="attendance">Absensi</option>
+              <option value="overtime">Lembur</option>
+              <option value="employee-directory">Info Karyawan</option>
             </select>
           </div>
 
@@ -727,8 +728,8 @@ const OperationalReportWrapper = () => {
             <select value={gang || ""} onChange={(e) => { const v = e.target.value; setGang(v); if (v !== 'ALL') setGangPrefix(getAsistensi(v) || ''); }} disabled={gangLoading} style={{ height: '30px', padding: '0 24px 0 8px', border: `1px solid ${gang && gang !== 'ALL' ? '#2d6a4f' : '#dee2e6'}`, borderRadius: '4px', fontSize: '0.8rem', backgroundColor: gangLoading ? '#e9ecef' : (gang && gang !== 'ALL' ? '#d4edda' : 'white'), color: gang && gang !== 'ALL' ? '#155724' : '#212529', cursor: gangLoading ? 'wait' : 'pointer', fontWeight: gang && gang !== 'ALL' ? '600' : '500', appearance: 'none', backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236c757d' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.3rem center', backgroundRepeat: 'no-repeat', backgroundSize: '0.8em', maxWidth: '180px' }}>
               {gangLoading ? <option>Memuat...</option> : (
                 <>
-                  <option value="ALL">🌐 Semua Kemandoran</option>
-                  {filteredGangs.map(g => (<option key={g.gang_code} value={g.gang_code}>{g.gang_code} — {g.description || '-'}</option>))}
+                  <option value="ALL">Semua Kemandoran</option>
+                  {filteredGangs.map(g => (<option key={g.gang_code} value={g.gang_code}>{g.gang_code} - {g.description || '-'}</option>))}
                 </>
               )}
             </select>
@@ -765,7 +766,7 @@ const OperationalReportWrapper = () => {
                 boxShadow: isEditMode ? '0 2px 4px rgba(217, 119, 6, 0.3)' : 'none'
               }}
             >
-              <span>{isEditMode ? '🔓' : '✏️'}</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center' }}>{isEditMode ? <LockOpen size={14} /> : <Pencil size={14} />}</span>
               {isEditMode ? 'Edit Aktif' : (manualEditAllowed ? 'Mode Edit' : 'Edit Diblokir')}
             </button>
           </div>
@@ -819,7 +820,7 @@ const OperationalReportWrapper = () => {
               }}
               title="Toolbar Actions"
             >
-              🛠️ Actions ▾
+              <Wrench size={14} style={{ verticalAlign: '-2px' }} /> Actions ▾
             </button>
             
             {isActionsOpen && (
@@ -896,7 +897,7 @@ const OperationalReportWrapper = () => {
                 {openActionSubmenu === 'settings' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', padding: '4px 0 0 8px', borderLeft: '2px solid #e2e8f0' }}>
                 <button onClick={handleSeedData} disabled={isSeeding} style={{ textAlign: 'left', padding: '0.5rem', borderRadius: '4px', border: 'none', background: isSeeding ? '#fef3c7' : 'transparent', color: isSeeding ? '#92400e' : '#334155', cursor: isSeeding ? 'wait' : 'pointer', display: 'flex', gap: '8px', alignItems: 'center' }} title="Memuat Ulang / Seed Data Sesuai Pilihan Layar">
-                  {isSeeding ? '⏳ Seeding...' : '🌱 Seed Data UI'}
+                  {isSeeding ? 'Seeding...' : 'Seed Data UI'}
                 </button>
                 
                 {/* Column Toggles Portal Target */}
@@ -925,7 +926,7 @@ const OperationalReportWrapper = () => {
                   }}
                   title={isHistoricalPeriod ? 'Periode historis otomatis memakai History DB' : 'Ganti antara Database History & Origin'}
                 >
-                  {isHistoricalPeriod ? '📚 Mode: History DB (Auto)' : (effectiveUseHistoryDb ? '📚 Mode: History DB' : '⚡ Mode: Origin DB')}
+                  {isHistoricalPeriod ? 'Mode: History DB (Auto)' : (effectiveUseHistoryDb ? 'Mode: History DB' : 'Mode: Origin DB')}
                 </button>
 
                 {effectiveUseHistoryDb && (

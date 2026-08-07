@@ -62,7 +62,7 @@ export default function CellInspector({ cell, onClose }) {
     <div className="fixed right-0 top-0 h-full w-96 bg-white shadow-2xl border-l border-gray-200 p-4 overflow-y-auto z-50">
       <div className="flex justify-between items-center mb-4 border-b pb-2">
         <h2 className="text-lg font-bold text-gray-800">Cell Inspector</h2>
-        <button onClick={onClose} className="text-gray-500 hover:text-red-500 font-bold">✕</button>
+        <button onClick={onClose} className="text-gray-500 hover:text-red-500 font-bold">×</button>
       </div>
 
       {/* Identity */}
@@ -92,7 +92,7 @@ export default function CellInspector({ cell, onClose }) {
             {/* Verification Status */}
             {verification && (
                 <div className={`mt-3 p-2 rounded text-sm font-bold ${verification.match ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                    {verification.match ? '✅ Calculation Verified' : `❌ Mismatch (Diff: ${verification.diff})`}
+                    {verification.match ? 'Calculation Verified' : `Mismatch (Diff: ${verification.diff})`}
                     {!verification.match && (
                         <div className="font-normal text-xs mt-1">
                             Expected: {formatVal(verification.calculated)}
@@ -152,7 +152,7 @@ export default function CellInspector({ cell, onClose }) {
       {/* Component Metadata (New Unified Architecture) */}
       {data.components && Object.keys(data.components).length > 0 && (
         <div className="mb-6 border-t pt-4">
-          <h3 className="font-bold text-gray-700 mb-2">📊 Component Metadata</h3>
+          <h3 className="font-bold text-gray-700 mb-2">Component Metadata</h3>
           <p className="text-xs text-gray-500 mb-2">PayrollComponent structure with metadata from unified architecture</p>
           {Object.entries(data.components).map(([compName, compData]) => (
             <div key={compName} className="mb-2">

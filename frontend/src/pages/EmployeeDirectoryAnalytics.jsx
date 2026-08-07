@@ -2,17 +2,18 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useAuth } from '../context/AuthContext';
 import { buildAppPath } from '../utils/prodModeUtils';
 import AgGridWrapper from '../components/common/AgGridWrapper';
+import { Users, User, UserCheck, Cake, Calendar, Church, Home, Search } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8002';
 
 // Religion visual config
 const RELIGION_COLORS = {
-    ISLAM: { bg: '#dbeafe', border: '#93c5fd', text: '#1e40af', icon: '🕌' },
-    KRISTEN: { bg: '#fce7f3', border: '#f9a8d4', text: '#9d174d', icon: '✝️' },
-    KATHOLIK: { bg: '#fef3c7', border: '#fcd34d', text: '#92400e', icon: '⛪' },
-    HINDU: { bg: '#fee2e2', border: '#fca5a5', text: '#991b1b', icon: '🪔' },
-    BUDHA: { bg: '#fff7ed', border: '#fdba74', text: '#9a3412', icon: '☸️' },
-    KONGHUCU: { bg: '#f0fdf4', border: '#86efac', text: '#166534', icon: '📿' },
+    ISLAM: { bg: '#dbeafe', border: '#93c5fd', text: '#1e40af' },
+    KRISTEN: { bg: '#fce7f3', border: '#f9a8d4', text: '#9d174d' },
+    KATHOLIK: { bg: '#fef3c7', border: '#fcd34d', text: '#92400e' },
+    HINDU: { bg: '#fee2e2', border: '#fca5a5', text: '#991b1b' },
+    BUDHA: { bg: '#fff7ed', border: '#fdba74', text: '#9a3412' },
+    KONGHUCU: { bg: '#f0fdf4', border: '#86efac', text: '#166534' },
 };
 
 const DIVISION_CONFIG = {
@@ -158,10 +159,10 @@ function getReligionConfig(religion) {
     if (RELIGION_COLORS[r]) return RELIGION_COLORS[r];
     // Default: hash-based color
     const colors = [
-        { bg: '#f0fdf4', border: '#86efac', text: '#166534', icon: '🏛️' },
-        { bg: '#fef3c7', border: '#fcd34d', text: '#92400e', icon: '🏛️' },
-        { bg: '#f5f3ff', border: '#c4b5fd', text: '#6d28d9', icon: '🏛️' },
-        { bg: '#ecfeff', border: '#a5f3fc', text: '#0e7490', icon: '🏛️' },
+        { bg: '#f0fdf4', border: '#86efac', text: '#166534' },
+        { bg: '#fef3c7', border: '#fcd34d', text: '#92400e' },
+        { bg: '#f5f3ff', border: '#c4b5fd', text: '#6d28d9' },
+        { bg: '#ecfeff', border: '#a5f3fc', text: '#0e7490' },
     ];
     const idx = r.length % colors.length;
     return colors[idx];
@@ -310,7 +311,7 @@ function computeAnalytics(employees) {
 // ============================================================================
 
 // KPI Card
-function KPICard({ title, value, icon, subtitle, accent }) {
+function KPICard({ title, value, Icon, subtitle, accent }) {
     const colors = {
         blue: { bg: '#eff6ff', border: '#bfdbfe', text: '#1d4ed8' },
         green: { bg: '#f0fdf4', border: '#bbf7d0', text: '#166534' },
@@ -324,7 +325,7 @@ function KPICard({ title, value, icon, subtitle, accent }) {
     const c = colors[accent] || colors.blue;
     return (
         <div style={{ background: c.bg, border: `1px solid ${c.border}`, borderRadius: '12px', padding: '0.875rem 1.125rem', display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
-            <span style={{ fontSize: '1.5rem', flexShrink: 0 }}>{icon}</span>
+            <span style={{ flexShrink: 0, display: 'flex', color: c.text }}>{Icon && <Icon size={24} strokeWidth={1.8} />}</span>
             <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: '1.25rem', fontWeight: '700', color: c.text, lineHeight: 1.2 }}>
                     {typeof value === 'number' ? value.toLocaleString('id-ID') : value}
@@ -410,10 +411,10 @@ function EmployeeCard({ emp, onViewProfile }) {
                 </div>
                 <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
                     <span style={{ padding: '2px 6px', borderRadius: '10px', fontSize: '10px', fontWeight: '700', background: emp.jenis_kelamin === 'L' ? '#dbeafe' : '#fce7f3', color: emp.jenis_kelamin === 'L' ? '#1e40af' : '#9d174d' }}>
-                        {emp.jenis_kelamin === 'L' ? '♂' : '♀'}
+                        {emp.jenis_kelamin === 'L' ? 'L' : 'P'}
                     </span>
                     <span style={{ padding: '2px 6px', borderRadius: '10px', fontSize: '10px', fontWeight: '700', background: isActive ? '#dcfce7' : '#fee2e2', color: isActive ? '#166534' : '#991b1b' }}>
-                        {isActive ? '✓' : '✗'}
+                        {isActive ? 'OK' : '×'}
                     </span>
                 </div>
             </div>
@@ -421,7 +422,7 @@ function EmployeeCard({ emp, onViewProfile }) {
             {/* Info badges */}
             <div style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap' }}>
                 <span style={{ padding: '2px 8px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: '600', background: religionConfig.bg, border: `1px solid ${religionConfig.border}`, color: religionConfig.text }}>
-                    {religionConfig.icon} {emp.religion || '-'}
+                    {emp.religion || '-'}
                 </span>
                 <span style={{ padding: '2px 8px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: '700', background: '#eff6ff', border: '1px solid #bfdbfe', color: '#1e40af' }}>
                     {emp.gang_code || '-'}
@@ -436,8 +437,8 @@ function EmployeeCard({ emp, onViewProfile }) {
             {/* Meta: Age + Seniority */}
             {(age !== null || seniority !== null) && (
                 <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.7rem', color: '#94a3b8' }}>
-                    {age !== null && <span>🎂 {age} th</span>}
-                    {seniority !== null && <span>📅 {seniority} th kerja</span>}
+                    {age !== null && <span>{age} th</span>}
+                    {seniority !== null && <span>{seniority} th kerja</span>}
                     {emp.join_date && <span>Masuk: {emp.join_date}</span>}
                 </div>
             )}
@@ -451,7 +452,7 @@ function EmployeeCard({ emp, onViewProfile }) {
                     alignSelf: 'flex-end'
                 }}
             >
-                👤 Profil HR
+                Profil HR
             </button>
         </div>
     );
@@ -496,7 +497,7 @@ function GangGroupCard({ gangCode, count, employees, onClick, active, divisionCo
             </div>
             <div style={{ fontSize: '0.7rem', color: '#94a3b8', display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>♂</span>
+                    <span>Laki-laki</span>
                     <span style={{ color: '#64748b' }}>{malePct}%</span>
                 </div>
                 {avgGaji > 0 && (
@@ -530,8 +531,7 @@ function ReligionStatCard({ religion, count, total, onClick, active }) {
             onMouseOver={e => { if (!active) { e.currentTarget.style.borderColor = config.border; e.currentTarget.style.boxShadow = `0 2px 6px ${config.border}44`; }}}
             onMouseOut={e => { if (!active) { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.04)'; }}}
         >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.375rem' }}>
-                <span style={{ fontSize: '1.1rem' }}>{config.icon}</span>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '0.375rem' }}>
                 <span style={{ background: active ? config.border : '#f1f5f9', color: active ? config.text : '#64748b', fontWeight: '700', fontSize: '0.75rem', padding: '2px 8px', borderRadius: '10px' }}>
                     {count}
                 </span>
@@ -894,7 +894,7 @@ export default function EmployeeDirectoryAnalytics({ defaultView = 'cards', init
             headerName: 'Profil HR', width: 110, pinned: 'right',
             cellRenderer: params => (
                 <button onClick={() => handleViewProfile(params.data)} style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: '600' }}>
-                    👤 Lihat
+                    Lihat
                 </button>
             )
         }
@@ -923,7 +923,7 @@ export default function EmployeeDirectoryAnalytics({ defaultView = 'cards', init
                 {/* Header */}
                 <div style={{ marginBottom: '1.25rem' }}>
                     <h1 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1e293b', margin: 0 }}>
-                        👥 Sistem Manajemen Karyawan Enterprise
+                        Sistem Manajemen Karyawan Enterprise
                     </h1>
                     <p style={{ color: '#64748b', fontSize: '0.875rem', margin: '0.25rem 0 0' }}>
                         Cari karyawan berdasarkan Gang, Agama, atau NIK KTP dengan visualisasi distribusi demografis.
@@ -953,7 +953,7 @@ export default function EmployeeDirectoryAnalytics({ defaultView = 'cards', init
 
                 {/* Empty state card */}
                 <div style={{ flex: 1, background: 'white', borderRadius: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', border: '1px solid #e2e8f0', padding: '3rem', minHeight: '400px' }}>
-                    <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>👥</div>
+                    <div style={{ marginBottom: '1rem', color: '#cbd5e1' }}><Users size={64} strokeWidth={1.2} /></div>
                     <h3 style={{ color: '#334155', marginBottom: '0.5rem' }}>Manajemen Karyawan Terpusat</h3>
                     <p style={{ color: '#94a3b8', fontSize: '0.9rem', textAlign: 'center', maxWidth: '480px', marginBottom: '1.5rem', lineHeight: '1.6' }}>
                         Pilih divisi di atas atau gunakan filter untuk menampilkan data karyawan.
@@ -965,7 +965,7 @@ export default function EmployeeDirectoryAnalytics({ defaultView = 'cards', init
                             disabled={loading}
                             style={{ padding: '10px 24px', background: '#0f172a', color: 'white', border: 'none', borderRadius: '8px', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: '600', fontSize: '0.9rem' }}
                         >
-                            {loading ? '⏳ Memuat...' : '📋 Lihat Semua Karyawan'}
+                            {loading ? 'Memuat...' : 'Lihat Semua Karyawan'}
                         </button>
                     </div>
                     <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -996,7 +996,7 @@ export default function EmployeeDirectoryAnalytics({ defaultView = 'cards', init
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
                     <div>
                         <h1 style={{ fontSize: '1.35rem', fontWeight: '700', color: '#1e293b', margin: 0 }}>
-                            👥 Manajemen Karyawan Enterprise
+                            Manajemen Karyawan Enterprise
                             {division !== 'ALL' && (
                                 <span style={{ fontSize: '0.9rem', fontWeight: '600', color: DIVISION_CONFIG[division]?.color || '#64748b', marginLeft: '0.5rem' }}>
                                     · {DIVISION_CONFIG[division]?.label || division}
@@ -1021,7 +1021,6 @@ export default function EmployeeDirectoryAnalytics({ defaultView = 'cards', init
                                 border: `1px solid ${dataSource === 'history' ? '#fcd34d' : '#86efac'}`,
                                 display: 'flex', alignItems: 'center', gap: '4px'
                             }}>
-                                <span>{dataSource === 'history' ? '📜' : '🗄️'}</span>
                                 <span>{dataSource === 'history' ? 'HISTORY DB' : 'ORIGIN DB'}</span>
                             </div>
                             <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontSize: '0.75rem', color: '#64748b', userSelect: 'none' }}>
@@ -1043,12 +1042,12 @@ export default function EmployeeDirectoryAnalytics({ defaultView = 'cards', init
                                 boxShadow: '0 2px 4px rgba(16, 185, 129, 0.2)'
                             }}
                         >
-                            ➕ Tambah Karyawan
+                            Tambah Karyawan
                         </button>
                         <div style={{ display: 'flex', border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
-                            <button onClick={() => setViewMode('cards')} style={{ ...btnStyle(viewMode === 'cards', '#0f172a', '#f1f5f9'), borderRadius: 0, borderRight: '1px solid #e2e8f0', padding: '6px 14px' }}>🃏 Kartu</button>
-                            <button onClick={() => setViewMode('table')} style={{ ...btnStyle(viewMode === 'table', '#0f172a', '#f1f5f9'), borderRadius: 0, borderRight: '1px solid #e2e8f0', padding: '6px 14px' }}>📋 Tabel</button>
-                            <button onClick={() => setViewMode('analytics')} style={{ ...btnStyle(viewMode === 'analytics', '#0f172a', '#f1f5f9'), borderRadius: 0, padding: '6px 14px' }}>📊 Analisis</button>
+                            <button onClick={() => setViewMode('cards')} style={{ ...btnStyle(viewMode === 'cards', '#0f172a', '#f1f5f9'), borderRadius: 0, borderRight: '1px solid #e2e8f0', padding: '6px 14px' }}>Kartu</button>
+                            <button onClick={() => setViewMode('table')} style={{ ...btnStyle(viewMode === 'table', '#0f172a', '#f1f5f9'), borderRadius: 0, borderRight: '1px solid #e2e8f0', padding: '6px 14px' }}>Tabel</button>
+                            <button onClick={() => setViewMode('analytics')} style={{ ...btnStyle(viewMode === 'analytics', '#0f172a', '#f1f5f9'), borderRadius: 0, padding: '6px 14px' }}>Analisis</button>
                         </div>
                     </div>
                 </div>
@@ -1057,7 +1056,7 @@ export default function EmployeeDirectoryAnalytics({ defaultView = 'cards', init
             {/* Filter Bar */}
             <div style={{ backgroundColor: 'white', padding: '0.875rem 1rem', borderRadius: '10px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', border: '1px solid #e2e8f0', marginBottom: '0.75rem', flexShrink: 0 }}>
                 <div style={{ display: 'flex', gap: '0.625rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.625rem' }}>
-                    <span style={{ color: '#64748b', fontWeight: '600', fontSize: '0.75rem', minWidth: '45px' }}>🔍 Filter:</span>
+                    <span style={{ color: '#64748b', fontWeight: '600', fontSize: '0.75rem', minWidth: '45px' }}>Filter:</span>
 
                     {/* Division Filter - Hidden for kerani users (locked to their division) */}
                     {!isKeraniUser && (
@@ -1114,7 +1113,7 @@ export default function EmployeeDirectoryAnalytics({ defaultView = 'cards', init
                 <div style={{ display: 'flex', gap: '0.625rem', alignItems: 'center' }}>
                     {/* NIK Search with autocomplete */}
                     <div style={{ flex: 1, position: 'relative' }} ref={searchContainerRef}>
-                        <span style={{ position: 'absolute', left: '10px', top: '8px', fontSize: '1rem' }}>🔍</span>
+                        <span style={{ position: 'absolute', left: '10px', top: '8px', color: '#94a3b8', display: 'flex' }}><Search size={16} /></span>
                         <input
                             ref={searchInputRef}
                             type="text"
@@ -1142,7 +1141,7 @@ export default function EmployeeDirectoryAnalytics({ defaultView = 'cards', init
 
                     <button onClick={handleFilteredSearch} disabled={loading}
                         style={{ padding: '8px 18px', backgroundColor: '#0f172a', color: 'white', border: 'none', borderRadius: '6px', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: '600', fontSize: '0.875rem', whiteSpace: 'nowrap' }}>
-                        {loading ? '⏳' : '🔍'} {loading ? 'Memuat...' : 'Cari'}
+                        {loading ? 'Memuat...' : 'Cari'}
                     </button>
 
                     <button onClick={handleFetch} disabled={loading}
@@ -1152,17 +1151,17 @@ export default function EmployeeDirectoryAnalytics({ defaultView = 'cards', init
 
                     <button onClick={handleClearFilters}
                         style={{ padding: '8px 14px', backgroundColor: 'white', color: '#dc2626', border: '1px solid #fecaca', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', fontSize: '0.875rem', whiteSpace: 'nowrap' }}>
-                        ✕ Reset
+                        × Reset
                     </button>
                 </div>
 
                 {/* Active filter chips */}
                 {(gang || religion || gender || status || searchTerm) && (
                     <div style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
-                        {gang && <span style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: '600', background: '#eff6ff', border: '1px solid #bfdbfe', color: '#1e40af', cursor: 'pointer' }} onClick={() => setGang('')}>Gang: {gang} ✕</span>}
-                        {religion && <span style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: '600', background: '#faf5ff', border: '1px solid #e9d5ff', color: '#7e22ce', cursor: 'pointer' }} onClick={() => setReligion('')}>Agama: {religion} ✕</span>}
-                        {gender && <span style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: '600', background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', cursor: 'pointer' }} onClick={() => setGender('')}>Gender: {gender} ✕</span>}
-                        {status && <span style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: '600', background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', cursor: 'pointer' }} onClick={() => setStatus('')}>Status: {status} ✕</span>}
+                        {gang && <span style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: '600', background: '#eff6ff', border: '1px solid #bfdbfe', color: '#1e40af', cursor: 'pointer' }} onClick={() => setGang('')}>Gang: {gang} ×</span>}
+                        {religion && <span style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: '600', background: '#faf5ff', border: '1px solid #e9d5ff', color: '#7e22ce', cursor: 'pointer' }} onClick={() => setReligion('')}>Agama: {religion} ×</span>}
+                        {gender && <span style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: '600', background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', cursor: 'pointer' }} onClick={() => setGender('')}>Gender: {gender} ×</span>}
+                        {status && <span style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: '600', background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', cursor: 'pointer' }} onClick={() => setStatus('')}>Status: {status} ×</span>}
                     </div>
                 )}
             </div>
@@ -1171,7 +1170,7 @@ export default function EmployeeDirectoryAnalytics({ defaultView = 'cards', init
             <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                 {employees.length === 0 ? (
                     <div style={{ flex: 1, background: 'white', borderRadius: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', border: '1px solid #e2e8f0', padding: '3rem' }}>
-                        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔍</div>
+                        <div style={{ marginBottom: '1rem', color: '#cbd5e1' }}><Search size={48} strokeWidth={1.5} /></div>
                         <h3 style={{ color: '#334155', marginBottom: '0.5rem' }}>Tidak ada karyawan ditemukan</h3>
                         <p style={{ color: '#94a3b8', fontSize: '0.875rem' }}>Coba ubah filter pencarian.</p>
                     </div>
@@ -1182,35 +1181,35 @@ export default function EmployeeDirectoryAnalytics({ defaultView = 'cards', init
                     <div style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingRight: '2px' }}>
                         {/* KPI Row */}
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.625rem' }}>
-                            <KPICard title="Total Karyawan" value={analytics.total} icon="👥" accent="blue" />
-                            <KPICard title="Laki-laki" value={analytics.maleCount} icon="♂" accent="blue" subtitle={`${analytics.total > 0 ? ((analytics.maleCount / analytics.total) * 100).toFixed(1) : 0}%`} />
-                            <KPICard title="Perempuan" value={analytics.femaleCount} icon="♀" accent="pink" subtitle={`${analytics.total > 0 ? ((analytics.femaleCount / analytics.total) * 100).toFixed(1) : 0}%`} />
-                            <KPICard title="Karyawan Aktif" value={analytics.activeCount} icon="✓" accent="green" subtitle={`${analytics.total > 0 ? ((analytics.activeCount / analytics.total) * 100).toFixed(1) : 0}%`} />
+                            <KPICard title="Total Karyawan" value={analytics.total} Icon={Users} accent="blue" />
+                            <KPICard title="Laki-laki" value={analytics.maleCount} Icon={User} accent="blue" subtitle={`${analytics.total > 0 ? ((analytics.maleCount / analytics.total) * 100).toFixed(1) : 0}%`} />
+                            <KPICard title="Perempuan" value={analytics.femaleCount} Icon={User} accent="pink" subtitle={`${analytics.total > 0 ? ((analytics.femaleCount / analytics.total) * 100).toFixed(1) : 0}%`} />
+                            <KPICard title="Karyawan Aktif" value={analytics.activeCount} Icon={UserCheck} accent="green" subtitle={`${analytics.total > 0 ? ((analytics.activeCount / analytics.total) * 100).toFixed(1) : 0}%`} />
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.625rem' }}>
-                            <KPICard title="Rata-rata Usia" value={`${analytics.avgAge} Th`} icon="🎂" accent="purple" subtitle={`${analytics.knownAgeCount} data`} />
-                            <KPICard title="Rata-rata Masa Kerja" value={`${analytics.avgSeniority} Th`} icon="📅" accent="teal" subtitle={`${analytics.knownSeniorityCount} data`} />
-                            <KPICard title="Jumlah Agama" value={Object.keys(analytics.byReligion).length} icon="🕌" accent="orange" />
-                            <KPICard title="Jumlah Gang" value={Object.keys(analytics.byGang).length} icon="🏘️" accent="gray" />
+                            <KPICard title="Rata-rata Usia" value={`${analytics.avgAge} Th`} Icon={Cake} accent="purple" subtitle={`${analytics.knownAgeCount} data`} />
+                            <KPICard title="Rata-rata Masa Kerja" value={`${analytics.avgSeniority} Th`} Icon={Calendar} accent="teal" subtitle={`${analytics.knownSeniorityCount} data`} />
+                            <KPICard title="Jumlah Agama" value={Object.keys(analytics.byReligion).length} Icon={Church} accent="orange" />
+                            <KPICard title="Jumlah Gang" value={Object.keys(analytics.byGang).length} Icon={Home} accent="gray" />
                         </div>
 
                         {/* Religion + Division + Gang charts */}
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.625rem' }}>
-                            <HBarChart data={analytics.byReligion} title="📊 Distribusi Agama" barColor="#8b5cf6" maxItems={8} />
-                            <HBarChart data={analytics.byDivision} title="📊 Distribusi Divisi" barColor="#3b82f6" maxItems={10} />
-                            <HBarChart data={analytics.topGangs} title="📊 Top 10 Gang" barColor="#f59e0b" maxItems={10} />
+                            <HBarChart data={analytics.byReligion} title="Distribusi Agama" barColor="#8b5cf6" maxItems={8} />
+                            <HBarChart data={analytics.byDivision} title="Distribusi Divisi" barColor="#3b82f6" maxItems={10} />
+                            <HBarChart data={analytics.topGangs} title="Top 10 Gang" barColor="#f59e0b" maxItems={10} />
                         </div>
 
                         {/* Age + Seniority + Gaji */}
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.625rem' }}>
-                            <HBarChart data={analytics.ageGroups} title="📊 Distribusi Usia" barColor="#10b981" maxItems={9} />
-                            <HBarChart data={analytics.seniorityGroups} title="📊 Distribusi Masa Kerja" barColor="#06b6d4" maxItems={6} />
-                            <HBarChart data={analytics.gajiGroups} title="📊 Distribusi Upah Dasar" barColor="#ef4444" maxItems={6} />
+                            <HBarChart data={analytics.ageGroups} title="Distribusi Usia" barColor="#10b981" maxItems={9} />
+                            <HBarChart data={analytics.seniorityGroups} title="Distribusi Masa Kerja" barColor="#06b6d4" maxItems={6} />
+                            <HBarChart data={analytics.gajiGroups} title="Distribusi Upah Dasar" barColor="#ef4444" maxItems={6} />
                         </div>
 
                         {/* Religion detailed table */}
                         <div style={{ background: 'white', borderRadius: '12px', padding: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', border: '1px solid #e2e8f0' }}>
-                            <h3 style={{ fontSize: '0.875rem', fontWeight: '700', color: '#1e293b', marginBottom: '0.75rem' }}>📋 Ringkasan per Agama</h3>
+                            <h3 style={{ fontSize: '0.875rem', fontWeight: '700', color: '#1e293b', marginBottom: '0.75rem' }}>Ringkasan per Agama</h3>
                             <div style={{ overflowX: 'auto' }}>
                                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
                                     <thead>
@@ -1227,7 +1226,6 @@ export default function EmployeeDirectoryAnalytics({ defaultView = 'cards', init
                                             return (
                                                 <tr key={rel} style={{ borderBottom: '1px solid #f1f5f9' }}>
                                                     <td style={{ padding: '8px 12px' }}>
-                                                        <span style={{ fontSize: '0.9rem', marginRight: '4px' }}>{cfg.icon}</span>
                                                         <span style={{ fontWeight: '500', color: '#334155' }}>{rel}</span>
                                                     </td>
                                                     <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: '700', color: '#1e293b' }}>{count}</td>
@@ -1247,7 +1245,7 @@ export default function EmployeeDirectoryAnalytics({ defaultView = 'cards', init
 
                         {/* Gang-by-religion cross table */}
                         <div style={{ background: 'white', borderRadius: '12px', padding: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', border: '1px solid #e2e8f0' }}>
-                            <h3 style={{ fontSize: '0.875rem', fontWeight: '700', color: '#1e293b', marginBottom: '0.75rem' }}>📊 Gang × Agama</h3>
+                            <h3 style={{ fontSize: '0.875rem', fontWeight: '700', color: '#1e293b', marginBottom: '0.75rem' }}>Gang × Agama</h3>
                             <div style={{ overflowX: 'auto' }}>
                                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem' }}>
                                     <thead>
@@ -1256,7 +1254,7 @@ export default function EmployeeDirectoryAnalytics({ defaultView = 'cards', init
                                             <th style={{ padding: '6px 10px', textAlign: 'right', color: '#64748b', fontWeight: '600', borderBottom: '2px solid #e2e8f0' }}>Total</th>
                                             {Object.keys(analytics.byReligion).slice(0, 6).map(r => {
                                                 const cfg = getReligionConfig(r);
-                                                return <th key={r} style={{ padding: '6px 10px', textAlign: 'center', color: cfg.text, fontWeight: '600', borderBottom: '2px solid #e2e8f0' }}>{cfg.icon}</th>;
+                                                return <th key={r} style={{ padding: '6px 10px', textAlign: 'center', color: cfg.text, fontWeight: '600', borderBottom: '2px solid #e2e8f0' }}>{r}</th>;
                                             })}
                                         </tr>
                                     </thead>
@@ -1291,13 +1289,13 @@ export default function EmployeeDirectoryAnalytics({ defaultView = 'cards', init
                         {/* Left: Gang Groups */}
                         <div style={{ width: '220px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem', overflow: 'hidden' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-                                <span style={{ fontWeight: '700', fontSize: '0.8rem', color: '#1e293b' }}>🏘️ Grup Gang</span>
+                                <span style={{ fontWeight: '700', fontSize: '0.8rem', color: '#1e293b' }}>Grup Gang</span>
                                 <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: '600' }}>{gangGroups.length} gangs</span>
                             </div>
                             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.375rem', paddingRight: '2px' }}>
                                 {/* Religion breakdown */}
                                 <div style={{ background: '#f8fafc', borderRadius: '8px', padding: '0.625rem', border: '1px solid #e2e8f0', marginBottom: '0.25rem' }}>
-                                    <div style={{ fontSize: '0.7rem', fontWeight: '700', color: '#64748b', marginBottom: '0.375rem' }}>🕌 AGAMA</div>
+                                    <div style={{ fontSize: '0.7rem', fontWeight: '700', color: '#64748b', marginBottom: '0.375rem' }}>AGAMA</div>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.25rem' }}>
                                         {religionGroups.slice(0, 6).map(([rel, count]) => {
                                             const cfg = getReligionConfig(rel);
@@ -1313,7 +1311,7 @@ export default function EmployeeDirectoryAnalytics({ defaultView = 'cards', init
                                                     }}
                                                     title={rel}
                                                 >
-                                                    <div style={{ fontSize: '0.6rem' }}>{cfg.icon} {rel.length > 6 ? rel.substring(0, 5) + '…' : rel}</div>
+                                                    <div style={{ fontSize: '0.6rem' }}>{rel.length > 6 ? rel.substring(0, 5) + '…' : rel}</div>
                                                     <div style={{ fontSize: '0.7rem', fontWeight: '700', color: cfg.text }}>{count}</div>
                                                 </div>
                                             );

@@ -10,7 +10,7 @@ import { printReport } from '../utils/printPageSetup';
 import { PresentSlide } from '../components/present/PresentSlide';
 import { PresentController } from '../components/present/PresentController';
 import { usePresentMode } from '../components/present/usePresentMode';
-import { ArrowLeft, Filter, Download, Printer, Users, BarChart3, TrendingUp, TrendingDown, DollarSign, Search } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Filter, Download, Printer, Users, BarChart3, TrendingUp, TrendingDown, DollarSign, Search } from 'lucide-react';
 import '../styles/wages-summary-professional.css';
 import '../styles/report-print-foundation.css';
 

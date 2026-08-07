@@ -66,9 +66,9 @@ describe("DashboardService gang scope filter", () => {
     const originalGetGangProduction = service.getGangProduction;
     const originalGetHarvesterBunches = service.getHarvesterBunches;
 
-    // Fragmen SQL konvensi harvestGangSql untuk scope 'panen' (suffix 'H')
-    const HARVEST_FILTER_AGG = "RIGHT(UPPER(LTRIM(RTRIM(agg.gang_code))), 1) = 'H'";
-    const HARVEST_FILTER_H = "RIGHT(UPPER(LTRIM(RTRIM(h.gang_code))), 1) = 'H'";
+    // Fragmen SQL konvensi scopeGangSql untuk scope 'panen' (suffix 'H')
+    const HARVEST_FILTER_AGG = "RIGHT(UPPER(LTRIM(RTRIM(agg.gang_code))), 1) IN ('H')";
+    const HARVEST_FILTER_H = "RIGHT(UPPER(LTRIM(RTRIM(h.gang_code))), 1) IN ('H')";
 
     const gangRows = [
         { gang_code: "A1H", gang_description: "Panen A1", total_wage: 100, total_hk: 2, headcount: 1, total_ot: 0, total_premi: 0, total_production_db: 0 },

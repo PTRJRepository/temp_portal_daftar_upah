@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { CheckCircle } from 'lucide-react'
 import '../styles/theme.css'
 
 export default function LoginPage() {
@@ -51,10 +52,9 @@ export default function LoginPage() {
           animation: 'fadeIn 0.3s ease-out'
         }}>
           <div style={{
-            fontSize: '4rem',
             marginBottom: '1rem',
             animation: 'scaleUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
-          }}>✅</div>
+          }}><CheckCircle size={64} strokeWidth={1.5} /></div>
           <h2 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>Login Berhasil!</h2>
           <p style={{ fontSize: '1.1rem', opacity: 0.9 }}>Mengalihkan ke Dashboard...</p>
         </div>

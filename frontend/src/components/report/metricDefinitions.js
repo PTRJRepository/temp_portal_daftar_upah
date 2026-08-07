@@ -64,7 +64,7 @@ export const METRICS = {
         column: 'total_ffb_weight (tonase)',
         scope: SCOPE.PANEN,
         basis: 'unit',
-        caveat: 'Valid pada level DIVISI, bukan per gang — tonase TBS dicatat per divisi/angkutan transport. Bila tonase = 0 (sumber belum diisi), metrik tampil "-".'
+        caveat: 'Valid pada level DIVISI, bukan per gang. Tonase TBS dicatat per divisi/angkutan transport. Bila tonase = 0 (sumber belum diisi), metrik tampil "-".'
     },
     total_tonase: {
         label: 'Tonase TBS',
@@ -72,7 +72,7 @@ export const METRICS = {
         column: 'total_ffb_weight',
         scope: SCOPE.PANEN,
         basis: 'unit',
-        caveat: 'Tonase adalah milik DIVISI (TBS ditimbang per divisi/angkutan, bukan per regu panen). Didedup per divisi agar tidak double-count saat divisi punya >1 gang panen. Tonase per GANG PANEN tidak tersedia — supir TBS adalah gang transport, bukan pemanen.'
+        caveat: 'Tonase adalah milik DIVISI (TBS ditimbang per divisi/angkutan, bukan per regu panen). Didedup per divisi agar tidak double-count saat divisi punya >1 gang panen. Tonase per GANG PANEN tidak tersedia. Supir TBS adalah gang transport, bukan pemanen.'
     },
     headcount_panen: {
         label: 'Headcount Panen',
@@ -120,7 +120,7 @@ export const METRICS = {
         column: 'total_upah_bersih',
         scope: SCOPE.ALL,
         basis: 'bersih',
-        caveat: 'Take-home pay setelah potongan. Berbeda dari upah kotor — jangan dibandingkan langsung.'
+        caveat: 'Take-home pay setelah potongan. Berbeda dari upah kotor, jangan dibandingkan langsung.'
     },
     upah_kotor_per_ton: {
         label: 'Upah Kotor / Ton',
@@ -146,7 +146,7 @@ export const METRICS = {
  */
 export function interpretCostPerTon({ costPerTon, prevCostPerTon, costPerHk, tonase }) {
     if (!tonase || tonase === 0) {
-        return [{ tone: 'empty', text: 'Tonase belum diisi — cost/ton tidak dapat dihitung. Isi sumber tonase TBS untuk mengaktifkan analisis efisiensi.' }];
+        return [{ tone: 'empty', text: 'Tonase belum diisi. Cost/ton tidak dapat dihitung. Isi sumber tonase TBS untuk mengaktifkan analisis efisiensi.' }];
     }
     if (costPerTon == null) return [{ tone: 'empty', text: 'Data cost/ton belum tersedia untuk periode ini.' }];
     const out = [];

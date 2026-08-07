@@ -68,7 +68,7 @@ export default function CostOfWagePanel({ trends = [], breakdown = [] }) {
     return (
         <div style={{ ...CARD, marginBottom: '1.5rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, ...SECTION_TITLE, marginBottom: 16 }}>
-                Cost of Wage — terhadap semua satuan <MetricInfo metricKey="total_upah_kotor" />
+                Cost of Wage · terhadap semua satuan <MetricInfo metricKey="total_upah_kotor" />
             </div>
 
             {/* Ratio cards */}
@@ -84,7 +84,7 @@ export default function CostOfWagePanel({ trends = [], breakdown = [] }) {
             {/* 12-bln trend: upah/tonase vs upah/HK */}
             {trends.length > 1 && (
                 <div style={{ marginBottom: 20 }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: C.text2, marginBottom: 8 }}>Tren 12 Bulan — Cost/Ton (ungu) vs Cost/HK (oranye)</div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: C.text2, marginBottom: 8 }}>Tren 12 Bulan · Cost/Ton (ungu) vs Cost/HK (oranye)</div>
                     <div style={{ height: 240 }}>
                         <ResponsiveContainer width="100%" height="100%">
                             <ComposedChart data={trends} margin={{ top: 8, right: 36, left: 0, bottom: 0 }}>

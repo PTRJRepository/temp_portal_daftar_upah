@@ -89,8 +89,12 @@ export default function TonaseAnalysisReportPage({ onBack, initialMonth, initial
 
     // Division-first: only divisions with tonase > 0 are "produksi"
     const producingDivs = useMemo(() => breakdown.filter(d => Number(d.total_tonase) > 0), [breakdown]);
+    // Divisi ber-tonase yang belum punya data upah (upah_available=0): tonase tetap tampil,
+    // tapi cost/ton dan komponen per-ton dihitung hanya dari divisi ber-upah (0/tonase menyesatkan).
+    const producingWithUpah = useMemo(() => producingDivs.filter(d => d.upah_available !== 0), [producingDivs]);
+    const missingWageDivs = useMemo(() => producingDivs.filter(d => d.upah_available === 0), [producingDivs]);
     const meanCpt = useMemo(() => benchmarkMean(breakdown), [breakdown]);
-    const cptVals = useMemo(() => producingDivs.map(d => costPerTon(d)).filter(v => v != null), [producingDivs]);
+    const cptVals = useMemo(() => producingWithUpah.map(d => costPerTon(d)).filter(v => v != null), [producingWithUpah]);
     const minCpt = cptVals.length ? Math.min(...cptVals) : null;
     const maxCpt = cptVals.length ? Math.max(...cptVals) : null;
 
@@ -199,6 +203,12 @@ export default function TonaseAnalysisReportPage({ onBack, initialMonth, initial
                         <span>{warnings.join(' · ')}</span>
                     </div>
                 )}
+                {missingWageDivs.length > 0 && (
+                    <div style={{ marginBottom: 16, padding: '12px 16px', background: C.warnBg || '#FBF1DE', border: `1px solid #EDD9B4`, borderRadius: 10, color: C.lembur || '#B45309', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <AlertTriangle size={15} style={{ flexShrink: 0 }} />
+                        <span><b>{missingWageDivs.length} divisi memproduksi tonase tapi data upah belum masuk</b> ({missingWageDivs.map(d => d.division_code).join(', ')}). Tonase tetap dihitung; cost/ton dihitung dari divisi yang sudah punya upah.</span>
+                    </div>
+                )}
 
                 {/* KPI grid — division-level, with interpretation */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, ...SECTION_TITLE, marginBottom: 16 }}>
@@ -279,12 +289,13 @@ export default function TonaseAnalysisReportPage({ onBack, initialMonth, initial
                                 </thead>
                                 <tbody>
                                     {producingDivs.sort((a, b) => Number(b.total_tonase) - Number(a.total_tonase)).map(d => {
-                                        const cpt = costPerTon(d);
+                                        const noUpah = d.upah_available === 0;
+                                        const cpt = noUpah ? null : costPerTon(d);
                                         const vsMean = (cpt != null && meanCpt != null) ? ((cpt - meanCpt) / meanCpt) * 100 : null;
                                         return (
-                                            <tr key={d.division_code} onClick={() => setSelectedDivision(d.division_code)} style={{ cursor: 'pointer', borderBottom: `1px solid ${C.border}` }}
-                                                onMouseEnter={(e) => e.currentTarget.style.background = C.surface2} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                                                <td style={{ padding: '11px 12px', fontWeight: 800, color: C.text }}>{d.division_code}</td>
+                                            <tr key={d.division_code} onClick={() => setSelectedDivision(d.division_code)} style={{ cursor: 'pointer', borderBottom: `1px solid ${C.border}`, background: noUpah ? '#FBF1DE' : 'transparent' }}
+                                                onMouseEnter={(e) => e.currentTarget.style.background = noUpah ? '#FBF1DE' : C.surface2} onMouseLeave={(e) => e.currentTarget.style.background = noUpah ? '#FBF1DE' : 'transparent'}>
+                                                <td style={{ padding: '11px 12px', fontWeight: 800, color: C.text }}>{d.division_code}{noUpah && <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 800, color: C.lembur, border: `1px solid #EDD9B4`, background: '#fff', padding: '1px 6px', borderRadius: 6 }}>Upah belum masuk</span>}</td>
                                                 <td style={{ textAlign: 'right', padding: '11px 12px', fontVariantNumeric: 'tabular-nums' }}>{fmtNum(d.total_tonase, 2)}</td>
                                                 <td style={{ textAlign: 'right', padding: '11px 12px', color: C.text2 }}>{fmtPercent(d.tonase_share)}</td>
                                                 <td style={{ textAlign: 'right', padding: '11px 12px', fontVariantNumeric: 'tabular-nums' }}>{fmtCompact(d.total_upah_kotor)}</td>
@@ -292,8 +303,8 @@ export default function TonaseAnalysisReportPage({ onBack, initialMonth, initial
                                                     {cpt != null ? fmtCompact(cpt) : '-'}
                                                     {vsMean != null && <span style={{ fontSize: 10, color: vsMean > 0 ? C.potongan : C.upah, marginLeft: 4 }}>{vsMean > 0 ? '▲' : '▼'}{Math.abs(vsMean).toFixed(0)}%</span>}
                                                 </td>
-                                                <td style={{ textAlign: 'right', padding: '11px 12px', fontVariantNumeric: 'tabular-nums' }}>{fmtCompact(d.upah_kotor_per_hk)}</td>
-                                                <td style={{ textAlign: 'right', padding: '11px 12px', fontVariantNumeric: 'tabular-nums' }}>{fmtCompact(d.premi_per_ton)}</td>
+                                                <td style={{ textAlign: 'right', padding: '11px 12px', fontVariantNumeric: 'tabular-nums' }}>{noUpah ? '-' : fmtCompact(d.upah_kotor_per_hk)}</td>
+                                                <td style={{ textAlign: 'right', padding: '11px 12px', fontVariantNumeric: 'tabular-nums' }}>{noUpah ? '-' : fmtCompact(d.premi_per_ton)}</td>
                                                 <td style={{ textAlign: 'right', padding: '11px 12px' }}>{fmtNum(d.total_hk, 0)}</td>
                                             </tr>
                                         );
@@ -419,10 +430,10 @@ export default function TonaseAnalysisReportPage({ onBack, initialMonth, initial
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, ...SECTION_TITLE, marginBottom: 16 }}>
                             Komposisi Cost/Ton <MetricInfo metricKey="upah_kotor_per_ton" />
                         </div>
-                        {producingDivs.length === 0 ? <EmptyState message="Butuh tonase > 0" /> : (
+                        {producingWithUpah.length === 0 ? <EmptyState message="Butuh divisi dengan upah + tonase > 0" /> : (
                             <div style={{ height: 320 }}>
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <ComposedChart layout="vertical" data={producingDivs.map(d => {
+                                    <ComposedChart layout="vertical" data={producingWithUpah.map(d => {
                                         const dec = decomposeCost(d); const ton = Number(d.total_tonase);
                                         return { name: d.division_code, GajiPokok: dec.gajiPokok / ton, Lembur: dec.lembur / ton, Premi: dec.premi / ton };
                                     }).sort((a, b) => (b.GajiPokok + b.Lembur + b.Premi) - (a.GajiPokok + a.Lembur + a.Premi))} margin={{ left: 30, right: 16 }}>
@@ -445,7 +456,7 @@ export default function TonaseAnalysisReportPage({ onBack, initialMonth, initial
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, ...SECTION_TITLE, marginBottom: 16 }}>
                             Efisiensi: Produktivitas vs Cost/Ton <MetricInfo metricKey="cost_per_ton" />
                         </div>
-                        {producingDivs.length === 0 ? <EmptyState message="Butuh tonase > 0" /> : (
+                        {producingWithUpah.length === 0 ? <EmptyState message="Butuh divisi dengan upah + tonase > 0" /> : (
                             <div style={{ height: 320 }}>
                                 <ResponsiveContainer width="100%" height="100%">
                                     <ScatterChart margin={{ top: 16, right: 24, bottom: 28, left: 16 }}>
@@ -453,8 +464,8 @@ export default function TonaseAnalysisReportPage({ onBack, initialMonth, initial
                                         <XAxis type="number" dataKey="prod" name="Produktivitas" unit=" t/HK" tick={{ fontSize: 11, fill: C.muted }} label={{ value: 'Produktivitas (ton/HK)', position: 'insideBottom', offset: -10, fontSize: 11, fill: C.text2 }} />
                                         <YAxis type="number" dataKey="cpt" name="Cost/Ton" tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11, fill: C.muted }} label={{ value: 'Cost/Ton', angle: -90, position: 'insideLeft', fontSize: 11, fill: C.text2 }} />
                                         <Tooltip cursor={{ strokeDasharray: '3 3' }} formatter={(v, n) => [n === 'cpt' ? fmtIDR(v) : `${fmtNum(v, 3)} t/HK`, n === 'cpt' ? 'Cost/Ton' : 'Produktivitas']} contentStyle={{ borderRadius: 10, border: `1px solid ${C.border}`, fontSize: 13 }} />
-                                        <Scatter data={producingDivs.map(d => ({ name: d.division_code, prod: productivity(d), cpt: costPerTon(d) })).filter(p => p.cpt != null && p.prod != null)} onClick={(p) => setSelectedDivision(p.name)}>
-                                            {producingDivs.map((d, i) => {
+                                        <Scatter data={producingWithUpah.map(d => ({ name: d.division_code, prod: productivity(d), cpt: costPerTon(d) })).filter(p => p.cpt != null && p.prod != null)} onClick={(p) => setSelectedDivision(p.name)}>
+                                            {producingWithUpah.map((d, i) => {
                                                 const c = costPerTon(d); const p = productivity(d);
                                                 const eff = c != null && meanCpt != null && p != null && c < meanCpt;
                                                 const over = c != null && meanCpt != null && c > meanCpt;
@@ -468,7 +479,7 @@ export default function TonaseAnalysisReportPage({ onBack, initialMonth, initial
                         )}
                         {/* Legend per titik: daftar divisi + posisi + status */}
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8, marginTop: 12, fontSize: 12 }}>
-                            {producingDivs.map(d => {
+                            {producingWithUpah.map(d => {
                                 const c = costPerTon(d); const p = productivity(d);
                                 if (c == null || p == null) return null;
                                 const eff = c != null && meanCpt != null && c < meanCpt;

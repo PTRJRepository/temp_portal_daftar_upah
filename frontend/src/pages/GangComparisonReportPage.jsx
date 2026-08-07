@@ -74,8 +74,12 @@ export default function GangComparisonReportPage() {
     const { presenting, activeIndex, enter, exit } = usePresentMode();
 
     // Params from URL (for data fetching)
-    const month = searchParams.get('month');
-    const year = searchParams.get('year');
+    // Fallback: bulan sebelumnya (periode payroll terbaru) supaya halaman tidak
+    // stuck di "Loading Report..." bila dibuka tanpa query month/year.
+    const now = new Date();
+    now.setMonth(now.getMonth() - 1);
+    const month = searchParams.get('month') || String(now.getMonth() + 1);
+    const year = searchParams.get('year') || String(now.getFullYear());
 
     // Fetch Data
     useEffect(() => {

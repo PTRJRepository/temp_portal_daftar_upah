@@ -8,8 +8,8 @@ backend/data/users.db
 *.db
 backend/nul  
 nul 
-node_modules 
-dist 
+node_modules/
+dist/
 .worktrees/
 worktrees/
 backend/logs/
@@ -31,3 +31,20 @@ Browser Automation/manual-adjustment-grouped-tester.html
 
 # versioning release snapshots - jangan di-commit
 versions/
+
+# design/verification artifacts - throwaway, never commit
+.hallmark/
+.playwright-cli/
+.playwright-mcp/
+graphify-out/
+/*.png
+/frontend/*.png
+!dokumentasi/**/*.png
+frontend/_*.cjs
+frontend/_*.js
+frontend/sweep.log
+frontend/sweep*.log
+frontend/*build*out.txt
+frontend/build*-out.txt
+frontend/esbuild_err.txt
+frontend/printcheck*.cjs

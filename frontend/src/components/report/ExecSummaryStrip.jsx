@@ -28,8 +28,8 @@ export default function ExecSummaryStrip({ trends = [], breakdown = [], wageSpik
                 tone: d > 0 ? 'bad' : 'good',
                 icon: d > 0 ? '▲' : '▼',
                 text: d > 0
-                    ? `Biaya per ton NAIK ${Math.abs(d).toFixed(1)}% dibanding bulan lalu — total upah panen ${fmtCompact(curr.total_wage)} untuk ${Number(curr.total_tonase || 0).toLocaleString('id-ID', { maximumFractionDigits: 0 })} ton TBS.`
-                    : `Biaya per ton TURUN ${Math.abs(d).toFixed(1)}% dibanding bulan lalu — efisiensi membaik pada ${periodLabel || 'periode ini'}.`
+                    ? `Biaya per ton NAIK ${Math.abs(d).toFixed(1)}% dibanding bulan lalu · total upah panen ${fmtCompact(curr.total_wage)} untuk ${Number(curr.total_tonase || 0).toLocaleString('id-ID', { maximumFractionDigits: 0 })} ton TBS.`
+                    : `Biaya per ton TURUN ${Math.abs(d).toFixed(1)}% dibanding bulan lalu · efisiensi membaik pada ${periodLabel || 'periode ini'}.`
             });
         }
 
@@ -43,7 +43,7 @@ export default function ExecSummaryStrip({ trends = [], breakdown = [], wageSpik
             const worst = withCpt[withCpt.length - 1];
             const worstPct = ((worst.cpt - mean) / mean) * 100;
             out.push({
-                tone: 'info', icon: '★',
+                tone: 'info', icon: '●',
                 text: `${best.code} paling efisien (${fmtCompact(best.cpt)}/ton), sedangkan ${worst.code} paling tinggi (${fmtCompact(worst.cpt)}/ton, ${worstPct > 0 ? '+' : ''}${worstPct.toFixed(0)}% di atas rata-rata estate).`
             });
         }
@@ -55,7 +55,7 @@ export default function ExecSummaryStrip({ trends = [], breakdown = [], wageSpik
             const driver = premiShare >= otShare ? `premi ${premiShare.toFixed(1)}%` : `lembur ${otShare.toFixed(1)}%`;
             out.push({
                 tone: 'neutral', icon: '◆',
-                text: `Komponen variabel terbesar dalam upah kotor adalah ${driver} dari total upah — pantau jika porsinya terus membesar.`
+                text: `Komponen variabel terbesar dalam upah kotor adalah ${driver} dari total upah · pantau jika porsinya terus membesar.`
             });
         }
 
@@ -65,7 +65,7 @@ export default function ExecSummaryStrip({ trends = [], breakdown = [], wageSpik
             const code = top.gang_code ?? top.gang ?? top.name ?? top.id;
             const pct = top.increasePercent ?? top.percentage ?? 0;
             out.push({
-                tone: 'warn', icon: '⚠',
+                tone: 'warn', icon: '▲',
                 text: `${wageSpikes.length} gang menunjukkan lonjakan biaya signifikan; tertinggi ${code} (+${Number(pct).toFixed(1)}%).`
             });
         }
@@ -86,7 +86,7 @@ export default function ExecSummaryStrip({ trends = [], breakdown = [], wageSpik
     return (
         <div style={{ ...CARD, marginBottom: '1.5rem', borderLeft: `4px solid ${C.leafMid}` }}>
             <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.14em', color: C.leafMid, marginBottom: 12 }}>
-                Ringkasan Eksekutif — {periodLabel}
+                Ringkasan Eksekutif · {periodLabel}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {summary.map((s, i) => {
