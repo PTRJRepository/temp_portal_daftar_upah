@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from "bun:test";
 import { dashboardService } from "./dashboardService";
+import { dashboardRoutes } from "../api/dashboardRoutes";
 
 describe("DashboardService aggregation reads", () => {
     const service = dashboardService as any;
@@ -245,5 +246,53 @@ describe("DashboardService cost structure", () => {
             total_hk: 200,
             tonase: 370
         });
+    });
+});
+
+describe("dashboard routes headcount & cost structure", () => {
+    const service = dashboardService as any;
+    const originalHrDb = service.hrDb;
+    const originalExtendDb = service.extendDb;
+
+    afterEach(() => {
+        service.hrDb = originalHrDb;
+        service.extendDb = originalExtendDb;
+    });
+
+    it("GET /headcount-summary mengembalikan ringkasan live", async () => {
+        service.hrDb = { query: async () => [{ loc_code: "ARA", hr_emp_type: "SKU", gender: "1", join_date: null }] };
+
+        const res = await dashboardRoutes.handle(new Request("http://localhost/payroll/dashboard/headcount-summary?month=4&year=2026"));
+        const json = await res.json();
+
+        expect(json.success).toBe(true);
+        expect(json.data.total).toBe(1);
+        expect(json.data.by_division).toEqual([{ division_code: "ARA", headcount: 1 }]);
+    });
+
+    it("GET /cost-structure mengembalikan komposisi biaya", async () => {
+        service.extendDb = {
+            query: async () => [
+                { division_code: "ARA", total_wage: 1000, total_ot: 100, total_premi: 200, headcount: 10, total_hk: 200, total_potongan: 0, total_spsi: 0, total_pph21: 0, total_bpjs_pekerja: 0, total_koreksi: 0, total_tonase: 250, upah_available: 1 }
+            ]
+        };
+
+        const res = await dashboardRoutes.handle(new Request("http://localhost/payroll/dashboard/cost-structure?month=4&year=2026&scope=panen"));
+        const json = await res.json();
+
+        expect(json.success).toBe(true);
+        expect(json.data.divisions[0].upah_pokok).toBe(700);
+    });
+
+    it("GET /executive-summary memakai fallback live saat headcount agregasi kosong", async () => {
+        service.extendDb = { query: async () => [] };
+        service.hrDb = { query: async () => [{ loc_code: "ARA", hr_emp_type: "SKU", gender: "1", join_date: null }] };
+
+        const res = await dashboardRoutes.handle(new Request("http://localhost/payroll/dashboard/executive-summary?month=4&year=2026"));
+        const json = await res.json();
+
+        expect(json.success).toBe(true);
+        expect(json.data.kpi.curr_headcount).toBe(1);
+        expect(json.data.kpi.headcount_source).toBe("live");
     });
 });

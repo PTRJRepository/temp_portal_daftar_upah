@@ -50,7 +50,7 @@ export const dashboardRoutes = new Elysia({ prefix: "/payroll/dashboard" })
             const current = trends[trends.length - 1] || {};
             const prev = trends[trends.length - 2] || {};
 
-            const kpi = {
+            let kpi: any = {
                 curr_wage: current.total_wage || 0,
                 prev_wage: prev.total_wage || 0,
                 curr_ot: current.total_ot || 0,
@@ -58,6 +58,15 @@ export const dashboardRoutes = new Elysia({ prefix: "/payroll/dashboard" })
                 curr_headcount: current.total_headcount || 0,
                 prev_headcount: prev.total_headcount || 0
             };
+
+            // Fallback: bila agregasi bulan berjalan belum ada (belum di-seed),
+            // pakai headcount live dari master karyawan agar KPI tidak kosong.
+            try {
+                const headcount = await dashboardService.getHeadcountSummary(month, year);
+                kpi = dashboardService.withLiveHeadcountFallback(kpi, headcount.total);
+            } catch {
+                kpi = { ...kpi, headcount_source: kpi.curr_headcount > 0 ? 'aggregation' : 'unavailable' };
+            }
 
             return {
                 success: true,
@@ -83,6 +92,40 @@ export const dashboardRoutes = new Elysia({ prefix: "/payroll/dashboard" })
         query: t.Object({
             month: t.String(),
             year: t.String(),
+            scope: t.Optional(t.Union([t.Literal('panen'), t.Literal('maintenance'), t.Literal('transport'), t.Literal('all')]))
+        })
+    })
+    .get("/headcount-summary", async ({ query, set }) => {
+        try {
+            const month = query.month ? parseInt(query.month) : new Date().getMonth() + 1;
+            const year = query.year ? parseInt(query.year) : new Date().getFullYear();
+            const data = await dashboardService.getHeadcountSummary(month, year);
+            return { success: true, data };
+        } catch (e: any) {
+            set.status = 500;
+            return { success: false, error: e.message };
+        }
+    }, {
+        query: t.Object({
+            month: t.Optional(t.String()),
+            year: t.Optional(t.String())
+        })
+    })
+    .get("/cost-structure", async ({ query, set }) => {
+        try {
+            const month = query.month ? parseInt(query.month) : new Date().getMonth() + 1;
+            const year = query.year ? parseInt(query.year) : new Date().getFullYear();
+            const scope = ['panen','maintenance','transport','all'].includes(query.scope) ? query.scope : 'panen';
+            const data = await dashboardService.getCostStructure(month, year, scope);
+            return { success: true, data };
+        } catch (e: any) {
+            set.status = 500;
+            return { success: false, error: e.message };
+        }
+    }, {
+        query: t.Object({
+            month: t.Optional(t.String()),
+            year: t.Optional(t.String()),
             scope: t.Optional(t.Union([t.Literal('panen'), t.Literal('maintenance'), t.Literal('transport'), t.Literal('all')]))
         })
     })
