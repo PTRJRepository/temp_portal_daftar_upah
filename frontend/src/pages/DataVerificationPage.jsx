@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useReport } from '../context/ReportContext';
 import LoadingScreen from '../components/common/LoadingScreen';
 import { usePrintExpand } from '../utils/printPageSetup';
+import { getApiBase } from '../utils/httpSetup';
 import { Search, AlertTriangle, CheckCircle, XCircle, Info, Download, RefreshCw, Filter, ChevronDown, ChevronRight } from 'lucide-react';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8002';
+const API_BASE_URL = getApiBase();
 
 const STATUS_CONFIG = {
     MATCH: { color: '#047857', bg: '#ecfdf5', icon: CheckCircle, label: 'Sama' },

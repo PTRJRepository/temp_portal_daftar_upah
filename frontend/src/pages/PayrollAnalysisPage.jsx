@@ -10,6 +10,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { getApiBase } from '../utils/httpSetup';
 import { fetchGangs, fetchDivisions } from '../services/gangService';
 import ReportPrintMetadata from '../components/common/ReportPrintMetadata';
 import ReportWatermark from '../components/common/ReportWatermark';
@@ -96,7 +97,7 @@ export default function PayrollAnalysisPage({
   const fetchAggregatedData = async () => {
     if (!token || !division) return;
     try {
-      const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8002';
+      const apiUrl = getApiBase();
       const response = await fetch(
         `${apiUrl}/payroll/dashboard/aggregation/gang-data?division_code=${division}&month=${month}&year=${year}`,
         { headers: { 'Authorization': `Bearer ${token}` } }
@@ -125,7 +126,7 @@ export default function PayrollAnalysisPage({
     fetchAggregatedData();
 
     try {
-      const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8002';
+      const apiUrl = getApiBase();
       let targetDivisions = [division];
 
       // If division is "ALL", we need allDivisions. Use override if provided.
@@ -148,7 +149,10 @@ export default function PayrollAnalysisPage({
         ).then(res => res.json());
       });
 
-      const results = await Promise.all(divisionPromises);
+      // allSettled: satu divisi gagal/kosong TIDAK boleh menghapus seluruh data yang sudah render.
+      // (Promise.all lama: satu reject → catch → setRawData([]) → data 'hilang'.)
+      const settled = await Promise.allSettled(divisionPromises);
+      const results = settled.map(s => (s.status === 'fulfilled' ? (s.value || {}) : {}));
 
       let allEmployees = [];
       // [NEW] Accumulate grand_total from all divisions (single source of truth)

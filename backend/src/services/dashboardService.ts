@@ -1011,13 +1011,18 @@ export class DashboardService {
      */
     public async getDivisionDetailData(month: number, year: number, divisionCode: string): Promise<any> {
         // 1. Fetch raw employee data using DataExtractorService
-        // This reuses the logic used for spreadsheet generation to ensure consistency
-        // Use the imported singleton instance
-        // Construct SQL condition for GangCode based on Division Code prefix
-        // Assumption: GangCode starts with Division Code (e.g. A1 -> A101, A102)
-        // Ensure no SQL injection by simple sanitation (though internal use is safer)
-        const safeDivCode = divisionCode.replace(/[^a-zA-Z0-9]/g, '');
-        const gangCondition = `g.GangCode LIKE '${safeDivCode}%'`;
+        // Build gang condition dari daftar gang DIVISI yang sebenarnya (bukan prefix GangCode).
+        // Naive `GangCode LIKE 'ARA%'` SAMA SEKALI TIDAK cocok — gang ARA adalah F1C*, PG1A dst juga beda.
+        // Pakai gangService.fetchGangs(division) (path yang sama dipakai endpoint /payroll/gangs yang jalan).
+        const gangRows = await gangService.fetchGangs(divisionCode);
+        let gangCondition: string;
+        if (gangRows && gangRows.length > 0) {
+            const codes = gangRows.map((g: any) => `'${String(g.gang_code).trim().toUpperCase()}'`).join(',');
+            gangCondition = `(UPPER(RTRIM(gl.GangCode)) IN (${codes}) OR UPPER(RTRIM(g.GangCode)) IN (${codes}))`;
+        } else {
+            // Fallback: jangan ke LIKE prefix (salah untuk ARA/F-codes); pakai 1=0 supaya tidak salah saji.
+            gangCondition = "1=0";
+        }
 
         const employees = await dataExtractorService.getEmployees(gangCondition, month, year, undefined, false);
 

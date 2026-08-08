@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { buildAppPath } from '../utils/prodModeUtils';
+import { getApiBase } from '../utils/httpSetup';
 import AgGridWrapper from '../components/common/AgGridWrapper';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8002';
+const API_BASE_URL = getApiBase();
 
 // Religion visual config
 const RELIGION_COLORS = {

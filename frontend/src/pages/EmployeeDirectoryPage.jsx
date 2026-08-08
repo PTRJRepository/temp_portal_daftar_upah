@@ -2,10 +2,11 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { buildAppPath } from '../utils/prodModeUtils';
+import { getApiBase } from '../utils/httpSetup';
 import LoadingScreen from '../components/common/LoadingScreen';
 import AgGridWrapper from '../components/common/AgGridWrapper';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8002';
+const API_BASE_URL = getApiBase();
 
 async function searchEmployees(token, query, limit = 200) {
     if (!query || query.trim().length === 0) return [];

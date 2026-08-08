@@ -52,6 +52,13 @@ const getBackendURL = () => {
 const _url = getBackendURL()
 axios.defaults.baseURL = _url
 
+// Shared helper: pakai base URL yang benar utk mode ini (proxy '/backend/upah' atau direct '').
+// Ganti hardcoded 'http://localhost:8002' di halaman (PayrollAnalysis, EmployeeDirectory, dll)
+// yang gagal di mesin client / luar proxy.
+export function getApiBase() {
+  return _url
+}
+
 console.log('🔗 HTTP Setup - Backend URL:', _url)
 console.log('🌐 Current Frontend Host:', window.location.hostname)
 
