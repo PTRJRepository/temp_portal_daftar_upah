@@ -65,6 +65,17 @@ Prefix route:
 - Utility: `/health`, `/api-info`
 - `GET /payroll/locked/verify` — verifikasi token eksternal (RS256/HS256), dipakai frontend `verifyExternalToken()`; wajib ada di root + v1.5 + v2.1. Dipatch 2026-08-05 bersama fix key RSA missing di snapshot v1.5 & v2.1.export
 
+## Auth mode: via proxy vs langsung (2026-08-07)
+
+Toggle di `backend/.env` → `Config` di `backend/src/config.ts`:
+
+| Mode | `.env` | Arti |
+|------|--------|------|
+| Via proxy (default, PUBLISHED :8002) | `USE_PROXY=true` + `AUTH_MODE=external` | Terima token RS256 dari gateway (`keys/public.pem`). Super-access gateway = ADMIN/ALL di AuthService. Prefix `/backend/upah` di-strip. |
+| Standalone (mis. :8005 dev-unified) | `USE_PROXY=false` + `AUTH_MODE=internal` | Tolak RS256. Login internal HS256 + user lokal `data/users.db`. |
+
+`AUTH_MODE` default = `USE_PROXY ? "external" : "internal"`. Sejak 2026-08-07, RS256 **wajib** `AUTH_MODE=external` — di `internal` token RS256 langsung ditolak `authService.verifyToken()` (super-access gateway tidak diterima backend tanpa proxy). Frontend auto-detect via `prodModeUtils.isProdMode()` (port 3001 / path `/upah`) + toggle runtime `api_base_mode` (`httpSetup.js`).
+
 ## Perubahan yang WAJIB update file ini
 
 - [x] Ganti versi yang dipublish → **8002** (2026-08-05, 4 tempat routes-config*.json)

@@ -179,6 +179,13 @@ export class AuthService {
                 }
             } else if (header.alg === "RS256") {
                 // External Token (verify with PUBLIC KEY)
+                // HANYA dipercaya saat AUTH_MODE=external (di belakang proxy gateway).
+                // AUTH_MODE=internal (standalone tanpa proxy) menolak RS256 supaya token
+                // gateway bermode "super access" TIDAK diterima oleh backend langsung.
+                if (Config.AUTH_MODE !== "external") {
+                    console.error(`[AuthService] RS256 token ditolak: AUTH_MODE=${Config.AUTH_MODE} (RS256 hanya dipakai saat external/proxy)`);
+                    return null;
+                }
                 try {
                     const pem = await Bun.file(Config.PUBLIC_KEY_PATH).text();
                     const publicKey = await importSPKI(pem, "RS256");

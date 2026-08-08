@@ -91,7 +91,7 @@ export function StatCard({ label, value, note, color = C.upah, pct, invert, badg
         >
             <div style={{ width: 24, height: 2, background: color, marginBottom: 10 }} />
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: C.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</div>
+                <div style={{ fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: C.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</div>
                 {badge && (
                     <span style={{ fontSize: 9, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: C.premi, background: '#E3EFEC', border: '1px solid #BFD8D3', borderRadius: 999, padding: '1px 7px', flexShrink: 0 }}>{badge}</span>
                 )}
